@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=6a4ff913" />
     
@@ -519,6 +519,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -680,22 +681,15 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.execution_observer">
 <span id="neofoam-framework-execution-observer"></span><h1>neofoam.framework.execution_observer<a class="headerlink" href="#module-neofoam.framework.execution_observer" title="Link to this heading">¶</a></h1>
-<p>Hooks through which a tool watches — or pauses — a solver run.</p>
-<p>The framework calls the installed <a class="reference internal" href="#neofoam.framework.execution_observer.ExecutionObserver" title="neofoam.framework.execution_observer.ExecutionObserver"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionObserver</span></code></a> around every init
-step, every operation and every loop-predicate evaluation, and hands it the
-init order and the resolved execution graph before they run. A hook that
-blocks pauses the run right there, which is how a step-by-step debugger UI
-(e.g. the <code class="docutils literal notranslate"><span class="pre">neofoam_ui</span></code> DAG stepper) drives an unmodified solver.</p>
-<p>No observer is installed by default; the hooks then cost one <code class="docutils literal notranslate"><span class="pre">None</span></code> check.</p>
-<p>The observer is per thread (a <code class="xref py py-class docutils literal notranslate"><span class="pre">ContextVar</span></code>): a run observed
-in one thread does not report to, or block in, a run in another thread, and
-overlapping <code class="docutils literal notranslate"><span class="pre">observe()</span></code> scopes in different threads cannot undo each other.
-Threads started by an observed run do not inherit the observer, except the
-region threads of multiRun: each region reports to it from its own thread.</p>
-<p>So one observer of a multi-region run is called from several threads at once:
-its hooks must be thread safe (e.g. guard what they record with a lock). A hook
-that blocks pauses its own region’s thread; the regions coupled with it wait
-for it at their next exchange.</p>
+<p>Hooks through which a tool watches, or pauses, a solver run.</p>
+<p>The installed <a class="reference internal" href="#neofoam.framework.execution_observer.ExecutionObserver" title="neofoam.framework.execution_observer.ExecutionObserver"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionObserver</span></code></a> is called around every init step,
+operation and loop test, and is handed the init order and the resolved graph
+before they run. A hook that blocks pauses the run there: that is how a
+step-by-step debugger UI drives an unmodified solver. Without an observer the
+hooks cost one <code class="docutils literal notranslate"><span class="pre">None</span></code> check.</p>
+<p>The observer is per thread (a <code class="xref py py-class docutils literal notranslate"><span class="pre">ContextVar</span></code>); threads started
+by an observed run do not inherit it, except the region threads of a coupled
+run: there its hooks are called from several threads at once and must be thread safe.</p>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Printer</span><span class="p">(</span><span class="n">ExecutionObserver</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">before_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
@@ -720,9 +714,6 @@ for it at their next exchange.</p>
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.ExecutionObserver.after_loop_test">
 <span class="sig-name descname"><span class="pre">after_loop_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#ExecutionObserver.after_loop_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.ExecutionObserver.after_loop_test" title="Link to this definition">¶</a></dt>
 <dd><p>The predicate of loop <code class="docutils literal notranslate"><span class="pre">op</span></code> returned <code class="docutils literal notranslate"><span class="pre">result</span></code> for <code class="docutils literal notranslate"><span class="pre">iteration</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ctx.loops[-1]</span></code> is the loop’s entry for the pass it decided on: its
-<code class="docutils literal notranslate"><span class="pre">final</span></code> tells whether the pass is the loop’s final one (a coupling node’s
-leader decides it).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -747,40 +738,30 @@ leader decides it).</p>
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.ExecutionObserver.before_operation">
 <span class="sig-name descname"><span class="pre">before_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#ExecutionObserver.before_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.ExecutionObserver.before_operation" title="Link to this definition">¶</a></dt>
 <dd><p>A sequential or conditional <code class="docutils literal notranslate"><span class="pre">op</span></code> is about to run on <code class="docutils literal notranslate"><span class="pre">ctx</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ctx</span></code> is the context the operation runs on (<code class="docutils literal notranslate"><span class="pre">ctx.region</span></code> names its region).</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.ExecutionObserver.coupling_exchanged">
 <span class="sig-name descname"><span class="pre">coupling_exchanged</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.loop.html#neofoam.framework.coupling.loop.CouplingOp" title="neofoam.framework.coupling.loop.CouplingOp"><span class="pre">CouplingOp</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">side</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><span class="pre">ExchangeSide</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseModel</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#ExecutionObserver.coupling_exchanged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.ExecutionObserver.coupling_exchanged" title="Link to this definition">¶</a></dt>
 <dd><p>The region’s <code class="docutils literal notranslate"><span class="pre">coupling</span></code> op is about to hand <code class="docutils literal notranslate"><span class="pre">side</span></code> its mapped <code class="docutils literal notranslate"><span class="pre">data</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">coupling.exchange_of(side)</span></code> is its exchange, <code class="docutils literal notranslate"><span class="pre">.partner(side)</span></code> the label
-<code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;patch&gt;</span></code> of the sender.
-Reported from the op’s loop test, between <code class="docutils literal notranslate"><span class="pre">before_loop_test</span></code> and
-<code class="docutils literal notranslate"><span class="pre">after_loop_test</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.ExecutionObserver.coupling_finished">
 <span class="sig-name descname"><span class="pre">coupling_finished</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController" title="neofoam.framework.coupling.controller.CouplingController"><span class="pre">CouplingController</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingOutcome" title="neofoam.framework.coupling.controller.CouplingOutcome"><span class="pre">CouplingOutcome</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#ExecutionObserver.coupling_finished"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.ExecutionObserver.coupling_finished" title="Link to this definition">¶</a></dt>
-<dd><p>The coupling of a time step ended, as <code class="docutils literal notranslate"><span class="pre">coupling</span></code> (its group’s controller) decided.</p>
-<p><code class="docutils literal notranslate"><span class="pre">outcome</span></code> holds its passes, whether it converged and the residuals;
-reported from the leader’s thread, in its coupling op’s last loop test.</p>
+<dd><p>A time step’s coupling ended, as the leader’s <code class="docutils literal notranslate"><span class="pre">coupling</span></code> decided; leader’s thread.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.ExecutionObserver.init_steps">
 <span class="sig-name descname"><span class="pre">init_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStep" title="neofoam.framework.initialization.init_step.InitStep"><span class="pre">InitStep</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#ExecutionObserver.init_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.ExecutionObserver.init_steps" title="Link to this definition">¶</a></dt>
 <dd><p>The init steps in execution order, before the first one runs.</p>
-<p>A region’s steps carry its name in <code class="docutils literal notranslate"><span class="pre">InitStep.region</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.ExecutionObserver.operations">
 <span class="sig-name descname"><span class="pre">operations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operations" title="neofoam.framework.operations.Operations"><span class="pre">Operations</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#ExecutionObserver.operations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.ExecutionObserver.operations" title="Link to this definition">¶</a></dt>
-<dd><p>The resolved execution graph of <code class="docutils literal notranslate"><span class="pre">ctx</span></code>, before the time loop starts.</p>
-<p>Every region of a multi-region case reports its own graph, from its own
-thread; <code class="docutils literal notranslate"><span class="pre">ctx.region</span></code> names it.</p>
+<dd><p>The resolved execution graph of <code class="docutils literal notranslate"><span class="pre">ctx</span></code>, before the time loop starts; one per region.</p>
 </dd></dl>
 
 </dd></dl>
@@ -795,12 +776,6 @@ thread; <code class="docutils literal notranslate"><span class="pre">ctx.region<
 <dt class="sig sig-object py" id="neofoam.framework.execution_observer.observe">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.execution_observer.</span></span><span class="sig-name descname"><span class="pre">observe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.execution_observer.ExecutionObserver" title="neofoam.framework.execution_observer.ExecutionObserver"><span class="pre">ExecutionObserver</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.framework.execution_observer.ExecutionObserver" title="neofoam.framework.execution_observer.ExecutionObserver"><span class="pre">ExecutionObserver</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#observe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.observe" title="Link to this definition">¶</a></dt>
 <dd><p>Install <code class="docutils literal notranslate"><span class="pre">observer</span></code> in this thread for the duration of the <code class="docutils literal notranslate"><span class="pre">with</span></code> block.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neofoam.framework.execution_observer.set_observer">
-<span class="sig-prename descclassname"><span class="pre">neofoam.framework.execution_observer.</span></span><span class="sig-name descname"><span class="pre">set_observer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.execution_observer.ExecutionObserver" title="neofoam.framework.execution_observer.ExecutionObserver"><span class="pre">ExecutionObserver</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.execution_observer.ExecutionObserver" title="neofoam.framework.execution_observer.ExecutionObserver"><span class="pre">ExecutionObserver</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/execution_observer.html#set_observer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.execution_observer.set_observer" title="Link to this definition">¶</a></dt>
-<dd><p>Install <code class="docutils literal notranslate"><span class="pre">observer</span></code> in this thread (<code class="docutils literal notranslate"><span class="pre">None</span></code> removes it) and return the previous one.</p>
 </dd></dl>
 
 </section>
@@ -876,7 +851,6 @@ thread; <code class="docutils literal notranslate"><span class="pre">ctx.region<
 </li>
 <li><a class="reference internal" href="#neofoam.framework.execution_observer.current"><code class="docutils literal notranslate"><span class="pre">current()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.execution_observer.observe"><code class="docutils literal notranslate"><span class="pre">observe()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.execution_observer.set_observer"><code class="docutils literal notranslate"><span class="pre">set_observer()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -893,6 +867,6 @@ thread; <code class="docutils literal notranslate"><span class="pre">ctx.region<
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../_static/design-tabs.js?v=fcb327ea"></script>
     </body>
 </html>

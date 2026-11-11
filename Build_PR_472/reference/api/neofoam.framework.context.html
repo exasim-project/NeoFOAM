@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=6a4ff913" />
     
@@ -519,6 +519,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -691,10 +692,8 @@ It contains fields and models that are used by various components of the framewo
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.context.Context.mark_final">
 <span class="sig-name descname"><span class="pre">mark_final</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">final</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#Context.mark_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.Context.mark_final" title="Link to this definition">¶</a></dt>
-<dd><p>Mark the pass the innermost running loop is about to run as its last one.</p>
-<p>Called by a loop’s test before the pass (it sets <code class="docutils literal notranslate"><span class="pre">final</span></code> of the loop’s
-entry on <code class="xref py py-attr docutils literal notranslate"><span class="pre">loops</span></code>); the entry of the next pass is not final again
-until the test marks it.</p>
+<dd><p>Mark the pass the innermost loop is about to run as its last; call from its test.</p>
+<p>The next pass is not final again until the test marks it.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -714,25 +713,22 @@ until the test marks it.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">LoopEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#LoopEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.LoopEntry" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">LoopEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#LoopEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.LoopEntry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>A running loop, an entry of <code class="xref py py-attr docutils literal notranslate"><span class="pre">Context.loops</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">iteration</span></code> counts the loop’s passes from 0 (the time loop: its time
-steps); <code class="docutils literal notranslate"><span class="pre">first</span></code> is whether it is in its first pass. <code class="docutils literal notranslate"><span class="pre">wrapping</span></code> is whether
-the loop is a wrapping loop (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>, e.g. a coupling
-node), placed around operations of the time step. <code class="docutils literal notranslate"><span class="pre">final</span></code> is whether the
-pass is the loop’s last one: its loop test says so (<a class="reference internal" href="#neofoam.framework.context.Context.mark_final" title="neofoam.framework.context.Context.mark_final"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Context.mark_final()</span></code></a>,
-e.g. a coupling node’s leader); <code class="docutils literal notranslate"><span class="pre">False</span></code> for a loop whose test does not.</p>
+<p><code class="docutils literal notranslate"><span class="pre">iteration</span></code> counts its passes from 0; <code class="docutils literal notranslate"><span class="pre">wrapping</span></code> is whether it is a
+wrapping loop (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>); <code class="docutils literal notranslate"><span class="pre">final</span></code> is whether its test
+marked the pass as the last one (<a class="reference internal" href="#neofoam.framework.context.Context.mark_final" title="neofoam.framework.context.Context.mark_final"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Context.mark_final()</span></code></a>).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.final">
 <span class="sig-name descname"><span class="pre">final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.final" title="Link to this definition">¶</a></dt>
-<dd><p>Alias for field number 4</p>
+<dd><p>Alias for field number 3</p>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.first">
-<span class="sig-name descname"><span class="pre">first</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.first" title="Link to this definition">¶</a></dt>
-<dd><p>Alias for field number 2</p>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">first</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.first" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the loop is in its first pass.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -750,7 +746,7 @@ e.g. a coupling node’s leader); <code class="docutils literal notranslate"><sp
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.wrapping">
 <span class="sig-name descname"><span class="pre">wrapping</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.wrapping" title="Link to this definition">¶</a></dt>
-<dd><p>Alias for field number 3</p>
+<dd><p>Alias for field number 2</p>
 </dd></dl>
 
 </dd></dl>
@@ -843,6 +839,6 @@ e.g. a coupling node’s leader); <code class="docutils literal notranslate"><sp
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../_static/design-tabs.js?v=fcb327ea"></script>
     </body>
 </html>

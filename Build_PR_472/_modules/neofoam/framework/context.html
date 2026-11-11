@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6a4ff913" />
     
@@ -518,6 +518,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -701,19 +702,20 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LoopEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A running loop, an entry of :attr:`Context.loops`.</span>
 
-<span class="sd">    ``iteration`` counts the loop's passes from 0 (the time loop: its time</span>
-<span class="sd">    steps); ``first`` is whether it is in its first pass. ``wrapping`` is whether</span>
-<span class="sd">    the loop is a wrapping loop (``OperationMetadata.wraps``, e.g. a coupling</span>
-<span class="sd">    node), placed around operations of the time step. ``final`` is whether the</span>
-<span class="sd">    pass is the loop's last one: its loop test says so (:meth:`Context.mark_final`,</span>
-<span class="sd">    e.g. a coupling node's leader); ``False`` for a loop whose test does not.</span>
+<span class="sd">    ``iteration`` counts its passes from 0; ``wrapping`` is whether it is a</span>
+<span class="sd">    wrapping loop (``OperationMetadata.wraps``); ``final`` is whether its test</span>
+<span class="sd">    marked the pass as the last one (:meth:`Context.mark_final`).</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">wrapping</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">first</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether the loop is in its first pass."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span></div>
 
 
 
@@ -737,24 +739,20 @@
     <span class="c1"># names of fields (keys of ``fields``) flagged for persistence via</span>
     <span class="c1"># ``field(..., write=True)``; a per-field write backend writes exactly these.</span>
     <span class="n">write_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
-    <span class="c1"># the loops running now, outermost first: each loop op adds its entry while it</span>
-    <span class="c1"># runs and updates it before each pass (``Operation``)</span>
+    <span class="c1"># the loops running now, outermost first</span>
     <span class="n">loops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoopEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="c1"># names (``Operation.name``) of operations marked ``final`` to run in every pass</span>
-    <span class="c1"># of their wrapping loops instead, e.g. to watch them while debugging</span>
+    <span class="c1"># ``final`` operations to run in every pass of their wrapping loops, e.g. to</span>
+    <span class="c1"># watch them while debugging</span>
     <span class="n">run_every_pass</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
-    <span class="c1"># the region of a multi-region case this context belongs to; None for one region.</span>
-    <span class="c1"># ``SolverRuntime.initialize`` sets it to the runtime's region</span>
+    <span class="c1"># set by SolverRuntime.initialize; None for a single-region case</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Context.mark_final">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context.mark_final">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mark_final</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Mark the pass the innermost running loop is about to run as its last one.</span>
+<span class="w">        </span><span class="sd">"""Mark the pass the innermost loop is about to run as its last; call from its test.</span>
 
-<span class="sd">        Called by a loop's test before the pass (it sets ``final`` of the loop's</span>
-<span class="sd">        entry on :attr:`loops`); the entry of the next pass is not final again</span>
-<span class="sd">        until the test marks it.</span>
+<span class="sd">        The next pass is not final again until the test marks it.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span></div>
 </div>
@@ -796,7 +794,7 @@
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../../_static/design-tabs.js?v=fcb327ea"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 

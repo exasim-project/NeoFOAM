@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=6a4ff913" />
     
@@ -518,6 +518,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -736,7 +737,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Context</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_config_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
@@ -901,14 +901,6 @@
         <span class="k">return</span> <span class="n">func</span></div>
 
 
-<div class="viewcode-block" id="SolverSpec.finalizer">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.finalizer">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">finalizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Decorator to register the end-of-run step ``(self, ctx)`` (close files, ...)."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span> <span class="o">=</span> <span class="n">func</span>
-        <span class="k">return</span> <span class="n">func</span></div>
-
-
 <div class="viewcode-block" id="SolverSpec.operation">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">operation</span><span class="p">(</span>
@@ -958,17 +950,10 @@
         <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">coupling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RegionCoupling</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver.</span>
+<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.</span>
 
-<span class="sd">        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads</span>
-<span class="sd">        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.</span>
-<span class="sd">        ``run()`` called from Python without arguments).</span>
-
-<span class="sd">        ``region`` names the region of a multi-region case the runtime solves;</span>
-<span class="sd">        ``None`` (the default) is a single-region case. ``coupling`` is what the</span>
-<span class="sd">        region knows of the case's coupling, ``None`` when the case does not</span>
-<span class="sd">        couple the region; a solver that supports coupling makes its coupling</span>
-<span class="sd">        model from it (``ctx.models["coupling"] = Coupling(self.coupling)``).</span>
+<span class="sd">        An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.</span>
+<span class="sd">        ``coupling`` is the region's part of the case's coupling, ``None`` when uncoupled.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">SolverRuntime</span><span class="p">(</span>
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
@@ -997,9 +982,6 @@
         <span class="n">first_param</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"argv"</span><span class="p">):</span>
             <span class="n">first_param</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">argv</span>
-            <span class="c1"># an injected StagedInitRunner initializes the runtime's region</span>
-            <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"region"</span><span class="p">):</span>
-                <span class="n">first_param</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">region</span>
 
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -1035,11 +1017,8 @@
 <span class="sd">        is injected with the live ``ctx`` (so the step can reach the built models</span>
 <span class="sd">        without the runtime holding a long-lived reference to the context).</span>
 
-<span class="sd">        With ``ctx`` of a coupled region, the model operations it returns also hold</span>
-<span class="sd">        the operations of the coupling model its solver added</span>
-<span class="sd">        (``ctx.models["coupling"]``): the coupling ops and, in a transient case, the</span>
-<span class="sd">        time-step op (``Coupling.time_step``). A coupled region whose solver added</span>
-<span class="sd">        no coupling model raises ``RuntimeError`` (``SolverRuntime.coupling_model``).</span>
+<span class="sd">        With ``ctx``, the model operations also hold those of each</span>
+<span class="sd">        :class:`~neofoam.framework.solver.runtime.GraphContribution` of ``ctx.models``.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1062,19 +1041,14 @@
             <span class="p">)</span>
 
         <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">coupling</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">coupling_model</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">contributions</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">runtime</span><span class="o">.</span><span class="n">graph_contributions</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">contributions</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span>
-        <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">model_ops</span><span class="p">,</span> <span class="o">*</span><span class="n">coupling</span><span class="o">.</span><span class="n">operations</span><span class="p">()]</span>
-        <span class="n">time_step</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">time_step</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="p">,</span> <span class="o">*</span><span class="n">model_ops</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">time_step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_step</span><span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="p">,</span> <span class="o">*</span><span class="n">model_ops</span><span class="p">]</span>
+        <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">model_ops</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">contribution</span> <span class="ow">in</span> <span class="n">contributions</span><span class="p">:</span>
+            <span class="n">ops</span> <span class="o">+=</span> <span class="n">contribution</span><span class="o">.</span><span class="n">graph_operations</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Context</span><span class="p">,</span> <span class="n">ctx</span><span class="p">),</span> <span class="n">graph</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the registered end-of-run step, if any."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span><span class="p">(</span><span class="bp">self</span><span class="o">=</span><span class="n">runtime</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Operation building (called by SolverRuntime.operations)</span>
@@ -1157,7 +1131,7 @@
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../../../_static/design-tabs.js?v=fcb327ea"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 

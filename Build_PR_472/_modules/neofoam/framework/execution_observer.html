@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6a4ff913" />
     
@@ -518,6 +518,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -675,26 +676,17 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Hooks through which a tool watches — or pauses — a solver run.</span>
+<span class="sd">"""Hooks through which a tool watches, or pauses, a solver run.</span>
 
-<span class="sd">The framework calls the installed :class:`ExecutionObserver` around every init</span>
-<span class="sd">step, every operation and every loop-predicate evaluation, and hands it the</span>
-<span class="sd">init order and the resolved execution graph before they run. A hook that</span>
-<span class="sd">blocks pauses the run right there, which is how a step-by-step debugger UI</span>
-<span class="sd">(e.g. the ``neofoam_ui`` DAG stepper) drives an unmodified solver.</span>
+<span class="sd">The installed :class:`ExecutionObserver` is called around every init step,</span>
+<span class="sd">operation and loop test, and is handed the init order and the resolved graph</span>
+<span class="sd">before they run. A hook that blocks pauses the run there: that is how a</span>
+<span class="sd">step-by-step debugger UI drives an unmodified solver. Without an observer the</span>
+<span class="sd">hooks cost one ``None`` check.</span>
 
-<span class="sd">No observer is installed by default; the hooks then cost one ``None`` check.</span>
-
-<span class="sd">The observer is per thread (a :class:`~contextvars.ContextVar`): a run observed</span>
-<span class="sd">in one thread does not report to, or block in, a run in another thread, and</span>
-<span class="sd">overlapping ``observe()`` scopes in different threads cannot undo each other.</span>
-<span class="sd">Threads started by an observed run do not inherit the observer, except the</span>
-<span class="sd">region threads of multiRun: each region reports to it from its own thread.</span>
-
-<span class="sd">So one observer of a multi-region run is called from several threads at once:</span>
-<span class="sd">its hooks must be thread safe (e.g. guard what they record with a lock). A hook</span>
-<span class="sd">that blocks pauses its own region's thread; the regions coupled with it wait</span>
-<span class="sd">for it at their next exchange.</span>
+<span class="sd">The observer is per thread (a :class:`~contextvars.ContextVar`); threads started</span>
+<span class="sd">by an observed run do not inherit it, except the region threads of a coupled</span>
+<span class="sd">run: there its hooks are called from several threads at once and must be thread safe.</span>
 
 <span class="sd">Example::</span>
 
@@ -722,7 +714,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.init_step</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ExecutionObserver"</span><span class="p">,</span> <span class="s2">"current"</span><span class="p">,</span> <span class="s2">"observe"</span><span class="p">,</span> <span class="s2">"set_observer"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ExecutionObserver"</span><span class="p">,</span> <span class="s2">"current"</span><span class="p">,</span> <span class="s2">"observe"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="ExecutionObserver">
@@ -733,10 +725,7 @@
 <div class="viewcode-block" id="ExecutionObserver.init_steps">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.init_steps">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">init_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The init steps in execution order, before the first one runs.</span>
-
-<span class="sd">        A region's steps carry its name in ``InitStep.region``.</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""The init steps in execution order, before the first one runs."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.before_init_step">
@@ -754,20 +743,13 @@
 <div class="viewcode-block" id="ExecutionObserver.operations">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.operations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operations</span><span class="p">:</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The resolved execution graph of ``ctx``, before the time loop starts.</span>
-
-<span class="sd">        Every region of a multi-region case reports its own graph, from its own</span>
-<span class="sd">        thread; ``ctx.region`` names it.</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""The resolved execution graph of ``ctx``, before the time loop starts; one per region."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.before_operation">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.before_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">before_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A sequential or conditional ``op`` is about to run on ``ctx``.</span>
-
-<span class="sd">        ``ctx`` is the context the operation runs on (``ctx.region`` names its region).</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""A sequential or conditional ``op`` is about to run on ``ctx``."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.after_operation">
@@ -785,34 +767,19 @@
 <div class="viewcode-block" id="ExecutionObserver.after_loop_test">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.after_loop_test">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">after_loop_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The predicate of loop ``op`` returned ``result`` for ``iteration``.</span>
-
-<span class="sd">        ``ctx.loops[-1]`` is the loop's entry for the pass it decided on: its</span>
-<span class="sd">        ``final`` tells whether the pass is the loop's final one (a coupling node's</span>
-<span class="sd">        leader decides it).</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""The predicate of loop ``op`` returned ``result`` for ``iteration``."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.coupling_finished">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.coupling_finished">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">coupling_finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">CouplingController</span><span class="p">,</span> <span class="n">outcome</span><span class="p">:</span> <span class="n">CouplingOutcome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The coupling of a time step ended, as ``coupling`` (its group's controller) decided.</span>
-
-<span class="sd">        ``outcome`` holds its passes, whether it converged and the residuals;</span>
-<span class="sd">        reported from the leader's thread, in its coupling op's last loop test.</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.coupling_exchanged">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.coupling_exchanged">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">coupling_exchanged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">CouplingOp</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The region's ``coupling`` op is about to hand ``side`` its mapped ``data``.</span>
-
-<span class="sd">        ``coupling.exchange_of(side)`` is its exchange, ``.partner(side)`` the label</span>
-<span class="sd">        ``&lt;region&gt;.&lt;patch&gt;`` of the sender.</span>
-<span class="sd">        Reported from the op's loop test, between ``before_loop_test`` and</span>
-<span class="sd">        ``after_loop_test``.</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""The region's ``coupling`` op is about to hand ``side`` its mapped ``data``."""</span></div>
 </div>
 
 
@@ -827,16 +794,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">current</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The observer installed in this thread, or ``None``."""</span>
     <span class="k">return</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
-
-
-
-<div class="viewcode-block" id="set_observer">
-<a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.set_observer">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">set_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Install ``observer`` in this thread (``None`` removes it) and return the previous one."""</span>
-    <span class="n">previous</span> <span class="o">=</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-    <span class="n">_observer</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">previous</span></div>
 
 
 
@@ -888,7 +845,7 @@
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../../_static/design-tabs.js?v=fcb327ea"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 

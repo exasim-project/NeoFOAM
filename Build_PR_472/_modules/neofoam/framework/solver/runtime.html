@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=6a4ff913" />
     
@@ -518,6 +518,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -685,16 +686,46 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coupling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">DependencyResolver</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationCollection</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">StepBuilder</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.region</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegionCoupling</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">Operation</span><span class="p">,</span>
+        <span class="n">OperationCollection</span><span class="p">,</span>
+        <span class="n">Operations</span><span class="p">,</span>
+        <span class="n">StepBuilder</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverSpec</span>
+
+
+<div class="viewcode-block" id="GraphContribution">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.GraphContribution">[docs]</a>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphContribution</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A model of ``ctx.models`` that adds operations to its region's graph and checks it.</span>
+
+<span class="sd">    E.g. a region's coupling model: its coupling ops, and where the resolver put them.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="GraphContribution.graph_operations">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.GraphContribution.graph_operations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">graph_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The operations to add to ``graph``, the solver's operations."""</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="GraphContribution.check_graph">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.GraphContribution.check_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Operations</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when the resolved ``graph`` is wrong for the model."""</span>
+        <span class="o">...</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="SolverState">
@@ -712,15 +743,12 @@
 <div class="viewcode-block" id="core_model">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.core_model">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">core_model</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">spec_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The instantiated core model (a ``ModelRuntime``) of ``state`` whose spec is ``spec_name``.</span>
+<span class="w">    </span><span class="sd">"""The core model of ``state`` (a :class:`SolverState`) whose spec is named ``spec_name``.</span>
 
-<span class="sd">    ``state`` holds the run's ``core_models`` (a :class:`SolverState`); a solver's</span>
-<span class="sd">    execution graph step takes its core models' operations from it.</span>
+<span class="sd">    A solver's execution graph step takes its core models' operations from it.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>  <span class="c1"># noqa: PLC0415</span>
-
     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
-        <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">core_models</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">)</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">spec_name</span>
+        <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">core_models</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"spec"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">"name"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">spec_name</span>
     <span class="p">)</span></div>
 
 
@@ -740,16 +768,14 @@
     <span class="n">spec</span><span class="p">:</span> <span class="s2">"SolverSpec"</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="c1"># the region of a multi-region case this runtime solves; None for a single region</span>
+    <span class="c1"># None for a single-region case</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="c1"># what the region knows of the case's coupling (a RegionCoupling); a solver that</span>
-    <span class="c1"># supports coupling makes its coupling model from it. None: not coupled</span>
-    <span class="n">coupling</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># None: the case does not couple the region</span>
+    <span class="n">coupling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RegionCoupling</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SolverState</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SolverState</span><span class="p">)</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_config_instance</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># resolves the Depends() of this run's initializer and operations, with this</span>
-    <span class="c1"># run's cache: two runtimes of one spec (e.g. two regions) share none</span>
+    <span class="c1"># per run, so two runtimes of one spec (two regions) share no Depends() cache</span>
     <span class="n">dependency_resolver</span><span class="p">:</span> <span class="n">DependencyResolver</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">DependencyResolver</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -790,12 +816,7 @@
 <div class="viewcode-block" id="SolverRuntime.initialize">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.initialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Context"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Execute the registered initialization step.</span>
-
-<span class="sd">        The context belongs to the runtime's region (``ctx.region``), and so do</span>
-<span class="sd">        the init steps of a :class:`StagedInitRunner` injected into the</span>
-<span class="sd">        initializer (``InitStep.region``).</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Execute the registered initialization step; the context gets the runtime's region."""</span>
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
         <span class="k">return</span> <span class="n">ctx</span></div>
@@ -818,14 +839,9 @@
 <div class="viewcode-block" id="SolverRuntime.resolve_operations">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.resolve_operations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="s2">"Context"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Operations"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The runnable execution graph: ``execution_graph`` with its model</span>
-<span class="sd">        operations (optional models, the region's coupling op) merged in by</span>
-<span class="sd">        :class:`~neofoam.framework.graph.DAGResolver`.</span>
+<span class="w">        </span><span class="sd">"""The runnable execution graph: ``execution_graph`` resolved with its model operations.</span>
 
-<span class="sd">        Raises ``ValueError`` when the region's coupling model rejects the graph</span>
-<span class="sd">        (``Coupling.check``: the time step inside a serial coupling node), and</span>
-<span class="sd">        ``RuntimeError`` when the region is coupled but its solver added no</span>
-<span class="sd">        coupling model (:meth:`coupling_model`).</span>
+<span class="sd">        Each :class:`GraphContribution` of ``ctx.models`` checks the result.</span>
 <span class="sd">        Reported to the installed execution observer before it is returned.</span>
 <span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">execution_observer</span>  <span class="c1"># noqa: PLC0415</span>
@@ -833,49 +849,38 @@
 
         <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
         <span class="n">operations</span> <span class="o">=</span> <span class="n">DAGResolver</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span><span class="p">)</span><span class="o">.</span><span class="n">operations</span>
-        <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling_model</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">coupling</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">contribution</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_contributions</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+            <span class="n">contribution</span><span class="o">.</span><span class="n">check_graph</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span>
         <span class="n">observer</span> <span class="o">=</span> <span class="n">execution_observer</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">observer</span><span class="o">.</span><span class="n">operations</span><span class="p">(</span><span class="n">operations</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">operations</span></div>
 
 
-<div class="viewcode-block" id="SolverRuntime.coupling_model">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.coupling_model">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">coupling_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Context"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Coupling</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The coupling model the solver added to ``ctx`` (``ctx.models["coupling"]``).</span>
+<div class="viewcode-block" id="SolverRuntime.graph_contributions">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.graph_contributions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">graph_contributions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="s2">"Context"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GraphContribution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The models of ``ctx`` that contribute to the region's graph.</span>
 
-<span class="sd">        ``None`` when the region is not coupled (or without ``ctx``). Raises</span>
-<span class="sd">        ``RuntimeError`` when the region is coupled but the solver added none.</span>
+<span class="sd">        Raises ``RuntimeError`` when the case couples the region but none does:</span>
+<span class="sd">        its solver added no coupling model.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">coupling</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coupling"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
+        <span class="n">contributions</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">GraphContribution</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">contributions</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"region </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> is coupled in regionCoupling.yaml, but solver "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> added no coupling model; add "</span>
                 <span class="s2">"ctx.models['coupling'] = Coupling(self.coupling) in initialize"</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">coupling</span></div>
-
-
-<div class="viewcode-block" id="SolverRuntime.finalize">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.finalize">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="s2">"Context"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the registered end-of-run step (if any)."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">contributions</span></div>
 
 
 <div class="viewcode-block" id="SolverRuntime.run">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.run">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Context"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Solve the runtime's region: initialize, resolve, run, finalize; return the context."""</span>
+<span class="w">        </span><span class="sd">"""Solve the runtime's region: initialize, resolve and run; return the context."""</span>
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolve_operations</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ctx</span></div>
 
 
@@ -937,7 +942,7 @@
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../../../_static/design-tabs.js?v=fcb327ea"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 
