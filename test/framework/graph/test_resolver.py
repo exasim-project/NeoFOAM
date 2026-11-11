@@ -526,22 +526,16 @@ def test_sort_cyclic_raises() -> None:
 
 def test_rebuild_flat_from_sorted_scopes() -> None:
     """Flat builder reconstructed from sorted_scopes['root']."""
-    original = StepBuilder()
-    original.step(_seq("B", number="2"))
-    original.step(_seq("A", number="1"))
-
     sorted_scopes = {
         "root": [_seq("A", number="1"), _seq("B", number="2")],
     }
 
-    result = rebuild_builder(original, sorted_scopes)
+    result = rebuild_builder(sorted_scopes)
     assert _names_in(result) == ["A", "B"]
 
 
 def test_rebuild_single_loop() -> None:
     """Single-loop builder reconstructed with sorted loop body."""
-    original = _build_single_loop()
-
     sorted_scopes = {
         "root": [_loop_op("time_loop")],
         "time_loop": [
@@ -551,7 +545,7 @@ def test_rebuild_single_loop() -> None:
         ],
     }
 
-    result = rebuild_builder(original, sorted_scopes)
+    result = rebuild_builder(sorted_scopes)
     assert result.operations[0].operation_name == "time_loop"
     inner = _names_in(result, path=[0])
     assert inner == ["step1", "step2", "step3"]
@@ -559,8 +553,6 @@ def test_rebuild_single_loop() -> None:
 
 def test_rebuild_nested_loops() -> None:
     """Nested loops reconstructed correctly from sorted_scopes."""
-    original = _build_nested()
-
     sorted_scopes = {
         "root": [_loop_op("time_loop")],
         "time_loop": [_loop_op("inner_loop")],
@@ -571,7 +563,7 @@ def test_rebuild_nested_loops() -> None:
         ],
     }
 
-    result = rebuild_builder(original, sorted_scopes)
+    result = rebuild_builder(sorted_scopes)
     assert result.operations[0].operation_name == "time_loop"
     tl_ops = result.operations[0].sub_operations
     assert tl_ops[0].operation_name == "inner_loop"
@@ -581,21 +573,18 @@ def test_rebuild_nested_loops() -> None:
 
 def test_rebuild_empty_builder() -> None:
     """Empty builder + empty sorted_scopes → empty result."""
-    original = StepBuilder()
-    result = rebuild_builder(original, {})
+    result = rebuild_builder({})
     assert len(result.operations) == 0
 
 
 def test_rebuild_preserves_loop_op_identity() -> None:
     """Rebuilt loop op has same name as original."""
-    original = _build_single_loop()
-
     sorted_scopes = {
         "root": [_loop_op("time_loop")],
         "time_loop": [_seq("step1", number="1")],
     }
 
-    result = rebuild_builder(original, sorted_scopes)
+    result = rebuild_builder(sorted_scopes)
     loop = result.operations[0]
     assert loop.operation_name == "time_loop"
     assert isinstance(loop.func, IterativeOp)
@@ -603,8 +592,6 @@ def test_rebuild_preserves_loop_op_identity() -> None:
 
 def test_rebuild_with_extra_model_ops() -> None:
     """Sorted scopes contain model ops not in the original builder."""
-    original = _build_single_loop()
-
     sorted_scopes = {
         "root": [_loop_op("time_loop")],
         "time_loop": [
@@ -615,9 +602,90 @@ def test_rebuild_with_extra_model_ops() -> None:
         ],
     }
 
-    result = rebuild_builder(original, sorted_scopes)
+    result = rebuild_builder(sorted_scopes)
     inner = _names_in(result, path=[0])
     assert inner == ["step1", "M1", "step2", "step3"]
+
+
+def test_resolve_keeps_root_level_ops_beside_a_loop() -> None:
+    """Sequential ops at the root stay in their place around a root-level loop."""
+    builder = StepBuilder()
+    builder.step(_seq("setup", number="1"))
+    with builder.loop(_loop_op("time_loop", number="2")) as lb:
+        lb.step(_seq("step1", number="1"))
+    builder.step(_seq("teardown", number="3"))
+
+    result = DAGResolver().resolve(builder, Operations())
+
+    assert _names_in(result) == ["setup", "time_loop", "teardown"]
+    assert _names_in(result, path=[1]) == ["step1"]
+
+
+def _build_pimple_like(with_tail: bool = True) -> StepBuilder:
+    """incompressibleFluid's step: set_time_step, increment_time, the PIMPLE loop, writing."""
+    builder = StepBuilder()
+    with builder.loop(_loop_op("time_loop")) as time_builder:
+        time_builder.step(_seq("set_time_step"))
+        time_builder.step(_seq("increment_time"))
+        with time_builder.loop(_loop_op("inner_loop")) as inner_builder:
+            inner_builder.step(_seq("momentum"))
+            inner_builder.step(_seq("continuity", depends_on=["momentum"]))
+        if with_tail:
+            time_builder.step(_seq("write_output"))
+            time_builder.step(_seq("post_process"))
+    return builder
+
+
+def _time_step_op() -> Operation:
+    """The coupling's time-step op: numbered, between set_time_step and increment_time."""
+    return _seq(
+        "fluid.time_step", number="0", depends_on=["set_time_step"], before=["increment_time"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("with_tail", "expected"),
+    [
+        (
+            True,
+            [
+                "set_time_step",
+                "fluid.time_step",
+                "increment_time",
+                "inner_loop",
+                "write_output",
+                "post_process",
+            ],
+        ),
+        (False, ["set_time_step", "fluid.time_step", "increment_time", "inner_loop"]),
+    ],
+)
+def test_resolve_model_op_before_a_builder_op_keeps_the_loop_after_it(
+    with_tail: bool, expected: list[str]
+) -> None:
+    """A model op sorted before increment_time does not pull the loop ahead of it."""
+    builder = _build_pimple_like(with_tail)
+    uncoupled = DAGResolver().resolve(builder, Operations())
+    coupled = DAGResolver().resolve(builder, Operations([_time_step_op()]))
+
+    assert _names_in(coupled, path=[0]) == expected
+    assert [name for name in expected if name != "fluid.time_step"] == _names_in(
+        uncoupled, path=[0]
+    )
+    assert _names_in(coupled, path=[0, expected.index("inner_loop")]) == ["momentum", "continuity"]
+
+
+def test_resolve_model_op_after_the_ops_before_a_loop_follows_the_loop() -> None:
+    """A model op that only depends on an op stepped before a loop still sorts after the loop."""
+    builder = StepBuilder()
+    with builder.loop(_loop_op("time_loop")) as time_builder:
+        time_builder.step(_seq("start"))
+        with time_builder.loop(_loop_op("inner_loop")) as inner_builder:
+            inner_builder.step(_seq("solve"))
+
+    result = DAGResolver().resolve(builder, Operations([_seq("M", depends_on=["start"])]))
+
+    assert _names_in(result, path=[0]) == ["start", "inner_loop", "M"]
 
 
 # ===========================================================================

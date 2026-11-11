@@ -64,6 +64,18 @@ class OpType(Enum):
     OPERATION = "operation"
 
 
+@dataclass(frozen=True)
+class Placement:
+    """Where the resolver places a wrapping loop (``OperationMetadata.wraps``).
+
+    Without ``operations`` the loop wraps the whole time-step body; with them, the
+    named operations and everything downstream of them in their scope
+    (:mod:`~neofoam.framework.graph.wrapping`).
+    """
+
+    operations: tuple[str, ...] | None = None
+
+
 @dataclass
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated
@@ -85,11 +97,21 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
+    wraps: Placement | None = None  # a wrapping loop: where the resolver places it
+    first: bool = False  # run only in the first pass of the wrapping loops around it
+    final: bool = False  # run only in their final pass
 
     # DAG visualization properties
     shape: str = "box"
     color: str | None = None
     used_by: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.first and self.final:
+            raise ValueError(
+                f"operation {self.op_name} is marked first and final; an operation runs "
+                "in the first or in the final pass of its wrapping loops, not both"
+            )
 
     @property
     def is_operation(self) -> bool:
@@ -105,6 +127,7 @@ class OperationMetadata:
 
     @property
     def name(self) -> str | None:
+        """``[<domain>.]<op>``."""
         if self.op_name is None:
             return None
         if self.domain_name:

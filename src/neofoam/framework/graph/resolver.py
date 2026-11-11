@@ -16,10 +16,12 @@ from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     OperationCollection,
+    Operations,
     StepBuilder,
 )
 
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter
+from .wrapping import check_passes, wrap
 
 
 class CyclicDependencyError(Exception):
@@ -174,6 +176,7 @@ def _sort_global(
     op_map: dict[str, tuple[str, Operation]],
     tagged: list[tuple[str, Operation]],
     sorter: TopologicalSorter,
+    stepped: int | None = None,
 ) -> dict[str, list[Operation]]:
     """Topologically sort the global graph, grouping results back by scope.
 
@@ -192,6 +195,10 @@ def _sort_global(
     relative to the surrounding ops; ops may therefore precede **and** follow a
     loop in the same scope. Loops carry no edges, so interleaving them by builder
     index is always dependency-safe.
+
+    Only the builder's ops (the first ``stepped`` of ``tagged``) place a loop: after the
+    last op of its scope stepped before it, or ahead of the first stepped after it if
+    that sorts earlier.
     """
     # Builder insertion order: position in the pre-order ``tagged`` list.
     order: dict[int, int] = {id(op): i for i, (_, op) in enumerate(tagged)}
@@ -221,65 +228,42 @@ def _sort_global(
         if isinstance(op.func, IterativeOp):
             loops_by_scope[scope].append(op)
 
-    # Merge loops into each scope's sequential ops by builder order. The
-    # sequential ops keep their topological order; each loop is inserted ahead of
-    # the first sequential op stepped after it.
+    n_stepped = len(tagged) if stepped is None else stepped
     by_scope: dict[str, list[Operation]] = {}
     for scope in set(seq_by_scope) | set(loops_by_scope):
         seq = seq_by_scope[scope]
-        loops = sorted(loops_by_scope[scope], key=lambda op: order[id(op)])
+        builder_idx = [order.get(id(op), len(order)) for op in seq]
+        at: list[tuple[int, Operation]] = []
+        for loop in sorted(loops_by_scope[scope], key=lambda op: order[id(op)]):
+            loop_idx = order[id(loop)]
+            after = [i for i, idx in enumerate(builder_idx) if idx < loop_idx]
+            ahead = [i for i, idx in enumerate(builder_idx) if loop_idx < idx < n_stepped]
+            at.append((min(after[-1] + 1 if after else 0, ahead[0] if ahead else len(seq)), loop))
         merged: list[Operation] = []
         next_loop = 0
-        for seq_op in seq:
-            seq_idx = order.get(id(seq_op), len(order))
-            while next_loop < len(loops) and order[id(loops[next_loop])] < seq_idx:
-                merged.append(loops[next_loop])
+        for i, seq_op in enumerate(seq):
+            while next_loop < len(at) and at[next_loop][0] <= i:
+                merged.append(at[next_loop][1])
                 next_loop += 1
             merged.append(seq_op)
-        merged.extend(loops[next_loop:])
+        merged.extend(loop for _, loop in at[next_loop:])
         by_scope[scope] = merged
 
     return by_scope
 
 
-def _rebuild_builder(
-    original: StepBuilder,
-    sorted_scopes: dict[str, list[Operation]],
-) -> StepBuilder:
-    """Reconstruct a ``StepBuilder`` from sorted scope data.
+def _rebuild_builder(sorted_scopes: dict[str, list[Operation]]) -> StepBuilder:
+    """A ``StepBuilder`` from ``root``, each loop filled with its sorted scope, recursively."""
 
-    Walks the original builder tree to preserve nesting structure but
-    replaces each scope's operations with the sorted versions.
-    """
-    new_builder = StepBuilder()
+    def rebuild(scope: str) -> list[Operation]:
+        return [
+            dataclasses.replace(op, sub_operations=rebuild(op.operation_name or "loop"))
+            if isinstance(op.func, IterativeOp)
+            else op
+            for op in sorted_scopes.get(scope, [])
+        ]
 
-    def _rebuild(
-        original_ops: list[Operation],
-        target_builder: StepBuilder,
-    ) -> None:
-        for op in original_ops:
-            if isinstance(op.func, IterativeOp):
-                loop_name = op.operation_name or "loop"
-                sorted_ops = sorted_scopes.get(loop_name, [])
-
-                new_op = dataclasses.replace(op, sub_operations=[])
-
-                with target_builder.loop(new_op) as loop_builder:
-                    for sub_op in sorted_ops:
-                        if isinstance(sub_op.func, IterativeOp):
-                            _rebuild([sub_op], loop_builder)
-                        else:
-                            loop_builder.step(sub_op)
-
-    has_loops = any(isinstance(op.func, IterativeOp) for op in original.operations.ops)
-
-    if has_loops:
-        _rebuild(original.operations.ops, new_builder)
-    elif "root" in sorted_scopes:
-        for op in sorted_scopes["root"]:
-            new_builder.step(op)
-
-    return new_builder
+    return StepBuilder(rebuild("root"))
 
 
 class DAGResolver:
@@ -301,7 +285,20 @@ class DAGResolver:
         builder: StepBuilder,
         additional_ops: OperationCollection,
     ) -> StepBuilder:
-        tagged = _collect_tagged_ops(builder, additional_ops)
+        """The operations of ``builder`` and ``additional_ops``, ordered in their scopes.
+
+        Additional wrapping loops (``metadata.wraps``) are placed afterwards, in
+        the order given (:func:`~.wrapping.wrap`, :func:`~.wrapping.check_passes`).
+        """
+        wrapping = [op for op in additional_ops if op.metadata.wraps is not None]
+        rest = Operations([op for op in additional_ops if op.metadata.wraps is None])
+        tagged = _collect_tagged_ops(builder, rest)
         graph, op_map = _build_global_graph(tagged)
-        sorted_scopes = _sort_global(graph, op_map, tagged, sorter=self._sorter)
-        return _rebuild_builder(builder, sorted_scopes)
+        sorted_scopes = _sort_global(
+            graph, op_map, tagged, sorter=self._sorter, stepped=len(tagged) - len(rest)
+        )
+        ops = _rebuild_builder(sorted_scopes).operations.ops
+        for loop in wrapping:
+            ops = wrap(ops, loop)
+        check_passes(ops)
+        return StepBuilder(ops)

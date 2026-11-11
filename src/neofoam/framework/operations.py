@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterator, Union
 
 from neofoam import telemetry
-from neofoam.framework.context import Context
+from neofoam.framework.context import Context, LoopEntry
 
 from .types import OperationMetadata, OperationNumber
 
@@ -102,6 +102,11 @@ class Operation:
         return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
+        """Run on ``ctx``, unless its ``first``/``final`` mark skips this pass."""
+        if (self.metadata.first or self.metadata.final or ctx.run_every_pass) and self._skipped(
+            ctx
+        ):
+            return None
         if not telemetry.is_active():
             return self._execute(ctx)
         with telemetry.span(
@@ -111,18 +116,74 @@ class Operation:
         ):
             return self._execute(ctx)
 
+    def _skipped(self, ctx: Context) -> bool:
+        """Whether the pass of the wrapping loops around the operation skips it."""
+        every_pass = self.name in ctx.run_every_pass
+        if every_pass and not self.metadata.final:
+            raise ValueError(_not_final(self))
+        wrapping = [entry for entry in ctx.loops if entry.wrapping]
+        if self.metadata.first:
+            return not all(entry.first for entry in wrapping)
+        if self.metadata.final and not every_pass:
+            return not all(entry.final for entry in wrapping)
+        return False
+
     def _execute(self, ctx: Context) -> Any:
         op_type = self.operation_type
         if op_type == "conditional":
             return self.func(ctx)
         elif op_type == "iterative":
-            while self.func(ctx):
-                for op in self.sub_operations:
-                    op.run(ctx)
+            self._loop(ctx)
         elif op_type == "sequential":
             self.func(ctx)
         else:
             raise ValueError("Unknown operation type")
+
+    def _loop(self, ctx: Context) -> None:
+        """Run the loop's passes, its entry on ``ctx.loops`` while it runs."""
+        wrapping = self.metadata.wraps is not None
+        loops = ctx.loops
+        index = len(loops)
+        loops.append(LoopEntry(self.name, 0, wrapping))
+        try:
+            iteration = 0
+            while self.func(ctx):
+                for op in self.sub_operations:
+                    op.run(ctx)
+                iteration += 1
+                loops[index] = LoopEntry(self.name, iteration, wrapping)
+        finally:
+            del loops[index:]
+
+
+def _not_final(op: Operation) -> str:
+    kind = "first" if op.metadata.first else "not marked final"
+    return (
+        f"run_every_pass names {op.name}, which is {kind}; only an operation marked final "
+        "can run in every pass of its wrapping loops"
+    )
+
+
+def _check_run_every_pass(ops: list[Operation], names: set[str]) -> None:
+    """Raise ``ValueError`` unless each of ``names`` is a ``final`` operation of ``ops``."""
+    found: dict[str, Operation] = {}
+
+    def walk(scope: list[Operation]) -> None:
+        for op in scope:
+            if op.name is not None:
+                found[op.name] = op
+            walk(op.sub_operations)
+
+    walk(ops)
+    for name in sorted(names):
+        if name not in found:
+            final = sorted(other for other, op in found.items() if op.metadata.final)
+            raise ValueError(
+                f"run_every_pass names {name}, which is no operation of the graph; "
+                f"its operations marked final: {final}"
+            )
+        if not found[name].metadata.final:
+            raise ValueError(_not_final(found[name]))
 
 
 class Operations:
@@ -172,6 +233,9 @@ class Operations:
         return iter(self.ops)
 
     def run(self, ctx: Context) -> None:
+        """Run the operations on ``ctx``; ``ValueError`` if ``ctx.run_every_pass`` is invalid."""
+        if ctx.run_every_pass:
+            _check_run_every_pass(self.ops, ctx.run_every_pass)
         for operation in self.ops:
             operation.run(ctx)
 
