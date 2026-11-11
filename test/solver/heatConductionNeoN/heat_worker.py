@@ -3,19 +3,10 @@
 
 """Run a heatConductionNeoN case in the working directory; print what it computed as JSON.
 
-``python heat_worker.py single`` runs the single-region case, ``python
-heat_worker.py multi`` the ``multiRun`` case. The answer is the single stdout
-line prefixed ``#RESULT`` (OpenFOAM and NeoN write freely to stdout): per region
-``T``, its time (value, index, deltaT), each coupled patch's face centres,
-wall temperature and face values of ``T``, and the passes of the leader's
-coupling per time step.
-
-Every message of the multiRun comm_channel is pickled, as between processes
-(``InProcessCommChannel.PICKLE``), so a message that is not plain data fails.
-
-A subprocess: Kokkos and ``Foam::Time`` are per-process, and NeoN must be
-finalized after every NeoN object is gone, so the contexts never outlive
-:func:`main`.
+``python heat_worker.py single|multi``: the single-region or the ``multiRun``
+case. The answer is the stdout line prefixed ``#RESULT``. A subprocess, since
+Kokkos and ``Foam::Time`` are per process and NeoN must be finalized after its
+objects are gone, so no context outlives :func:`main`.
 """
 
 import json
@@ -24,8 +15,9 @@ from typing import Any
 
 import numpy as np
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, InProcessCommChannel
+from neofoam.framework.coupling import Coupling
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.solver.heatConductionNeoN import run as run_single
 from neofoam.solver.multiRun import run as run_multi
@@ -33,11 +25,15 @@ from neofoam.solver.multiRun import run as run_multi
 RESULT_PREFIX = "#RESULT "
 
 
-def _host(vector: Any) -> list[Any]:
+def _host(vector: Any) -> Any:
     return np.asarray(vector.copy_to_host()).tolist()
 
 
 def _region(ctx: Context) -> dict[str, Any]:
+    # T as written at the last time: pybFoam binds no boundaryField()
+    written = _host(
+        nfb.read_scalar_volume_field(ctx.models["neon_runtime"], "T").boundary_data_value()
+    )
     return {
         "T": _host(ctx.fields["T"].internal_vector()),
         "time": {"value": ctx.time.value, "index": ctx.time.index, "deltaT": ctx.time.delta_t},
@@ -47,24 +43,30 @@ def _region(ctx: Context) -> dict[str, Any]:
                 "points": np.asarray(patch.points()).tolist(),
                 "wall_T": np.asarray(patch.wall_T()).tolist(),
                 "face_T": _host(ctx.fields["T"].boundary_data_value())[patch.faces],
+                "written_T": written[patch.faces],
             }
             for patch in ctx.models["conduction"].patches
         },
     }
 
 
+def _passes(ctx: Context) -> list[int]:
+    operations = Coupling.of(ctx).operations()
+    op = operations[0].func if len(operations) else None
+    if isinstance(op, CouplingOp) and op.controller is not None:
+        return [outcome.passes for outcome in op.controller.outcomes]
+    return []
+
+
 def main(mode: str) -> dict[str, Any]:
     if mode == "single":
         return {"regions": {"case": _region(run_single(["heatConductionNeoN"]))}}
-    InProcessCommChannel.PICKLE = True
     regions = run_multi()
-    passes: dict[str, list[int]] = {}
-    for name, ctx in regions.items():
-        operations = Coupling.of(ctx).operations()
-        op = operations[0].func if len(operations) else None
-        if isinstance(op, CouplingOp) and op.controller is not None:
-            passes[name] = [outcome.passes for outcome in op.controller.outcomes]
-    return {"regions": {name: _region(ctx) for name, ctx in regions.items()}, "passes": passes}
+    passes = {name: _passes(ctx) for name, ctx in regions.items()}
+    return {
+        "regions": {name: _region(ctx) for name, ctx in regions.items()},
+        "passes": {name: counts for name, counts in passes.items() if counts},
+    }
 
 
 if __name__ == "__main__":
