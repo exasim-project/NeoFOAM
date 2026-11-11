@@ -25,8 +25,8 @@ from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import (
     neon_loop_backend_steps,
     solutionLoop,
 )
-from neofoam.solver.multiRun.configs import ControlDictConfig as CaseControlDictConfig
 from neofoam.solver.neon_runtime import NeoNControlConfig
+from neofoam.solver.regions import ControlDictConfig as CaseControlDictConfig
 from neofoam.solver.regions import region_case_dir
 
 from .conduction import ConductionProblem
