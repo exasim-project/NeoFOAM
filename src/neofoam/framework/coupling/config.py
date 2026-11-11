@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""How a case couples its regions, ``system/regionCoupling.yaml``: :class:`RegionCouplingConfig`."""
+"""How a case couples its regions, ``system/coupling.yaml``: :class:`RegionCouplingConfig`."""
 
 from functools import partial
 from typing import Annotated, Any, Literal, Optional, Sequence
@@ -149,9 +149,9 @@ class CouplingLoopConfig(BaseModel):
         )
 
 
-@IOStrategy(YAML("system/regionCoupling.yaml"))
+@IOStrategy(YAML("system/coupling.yaml"))
 class RegionCouplingConfig(BaseConfig):
-    """``system/regionCoupling.yaml``: field ports, the exchanges and the coupling loops.
+    """``system/coupling.yaml``: field ports, the exchanges and the coupling loops.
 
     ``ports`` lists each region's field ports, which an exchange names like the
     ports of its coupled patches. ``couplings`` lists the loops outer to inner,
@@ -242,7 +242,7 @@ def _free(name: str, taken: list[str]) -> str:
 def comm_channel_timeout() -> Optional[float]:
     """Seconds a region waits for a message, the case's ``commChannelTimeout``; ``None``: no end.
 
-    The case is the working directory's; without ``system/regionCoupling.yaml`` the
+    The case is the working directory's; without ``system/coupling.yaml`` the
     comm channel's default.
 
     Example::

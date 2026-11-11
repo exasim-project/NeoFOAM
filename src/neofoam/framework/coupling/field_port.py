@@ -4,7 +4,7 @@
 """Field ports: a region's field read (``out``) or written (``in``) on a location, from the yaml.
 
 A field port exists once, for every solver: the case names it in the ``ports:``
-section of ``system/regionCoupling.yaml`` and the region's :class:`Participant`
+section of ``system/coupling.yaml`` and the region's :class:`Participant`
 binds it through the :class:`FieldAccess` its solver gives. Writing changes the
 solution, so ``in`` and ``inout`` are explicit; ``out`` only reads.
 """

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``system/regionCoupling.yaml`` names the mapping and acceleration of a coupling plugin.
+"""``system/coupling.yaml`` names the mapping and acceleration of a coupling plugin.
 
 The fixture imports ``fake_plugin.py``, which registers on import, and unregisters it
 after the test, so no other test sees its types. The mapping is the identity (both

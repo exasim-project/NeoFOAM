@@ -20,7 +20,7 @@ graph and time loop on its own thread. Regions share nothing but a
      - its coupling model, ``ctx.models["coupling"] = Participant(self.coupling,
        geometry, fields)``, and the binding of its instances,
        ``coupling(ctx).add(Patch("top"), bc)``: a **port**.
-   * - case (``system/regionCoupling.yaml``)
+   * - case (``system/coupling.yaml``)
      - the **field ports** (``ports``), the **exchanges** (pairs of ports and
        their mapping) and the **coupling loops** (``couplings``).
    * - framework
@@ -28,11 +28,11 @@ graph and time loop on its own thread. Regions share nothing but a
        region's graph; the loop's last region (its **leader**) decides
        convergence.
    * - ``multiRun``
-     - reads ``regionSolvers`` and the case file, creates the comm channel, runs
+     - reads ``participants`` and the case file, creates the comm channel, runs
        every region on its own thread.
 
 Regions that exchanges connect form a **group**; its last region in
-``regionSolvers`` order agrees the time step. Each region reads its own files
+``participants`` order agrees the time step. Each region reads its own files
 under ``<region>/`` (``<region>/constant``, ``<region>/0``).
 
 The coupled instance
