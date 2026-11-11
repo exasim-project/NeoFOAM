@@ -15,7 +15,15 @@ from pydantic import BaseModel
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate, solutionLoop
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Array, Coupling, RegionCoupling, coupled
+from neofoam.framework.coupling import (
+    Array,
+    Coupling,
+    FaceData,
+    Patch,
+    RegionCoupling,
+    coupled,
+    coupling,
+)
 from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
@@ -47,13 +55,13 @@ class ProbeConfig(BaseConfig):
     deltaT: Optional[float] = None
 
 
-class X(BaseModel):
+class X(FaceData):
     """What a region that solves ``x`` exchanges."""
 
     x: Array
 
 
-class Y(BaseModel):
+class Y(FaceData):
     """What a region that solves ``y`` exchanges."""
 
     y: Array
@@ -62,16 +70,30 @@ class Y(BaseModel):
 EXCHANGE: dict[str, Union[type[X], type[Y]]] = {"x": X, "y": Y}
 
 
+class ProbeGeometry:
+    """Every patch one face at 0, or none without ``coordinates``."""
+
+    def __init__(self, coordinates: bool) -> None:
+        self.coordinates = coordinates
+
+    def face_centres(self, patch: str) -> Any:
+        return np.zeros((1, 1)) if self.coordinates else None
+
+    def face_areas(self, patch: str) -> Any:
+        return np.ones(1)
+
+    def cell_centres(self) -> Any:
+        return np.zeros((1, 1))
+
+    def cell_volumes(self) -> Any:
+        return np.ones(1)
+
+
 class ProbePatch:
     """A coupled patch of the region: keeps what arrives as ``<patch>.<name>``."""
 
-    def __init__(self, ctx: Context, field: str, patch: str, coordinates: bool) -> None:
+    def __init__(self, ctx: Context, field: str, patch: str) -> None:
         self.ctx, self.field, self.patch = ctx, field, patch
-        self.has_points = coordinates
-        Coupling.of(ctx).add(self)
-
-    def points(self) -> Any:
-        return np.zeros((1, 1)) if self.has_points else None
 
     def keep(self, data: BaseModel) -> None:
         for name, value in data:
@@ -84,10 +106,6 @@ def patch_class(field: str, received: str) -> type[ProbePatch]:
 
     @coupled
     class _Patch(ProbePatch):
-        @coupled.coordinates
-        def points(self) -> Any:
-            return super().points()
-
         @coupled.sends
         def send(self) -> Sent:  # type: ignore[valid-type]
             return Sent.model_validate({field: self.ctx.fields[field]})
@@ -100,19 +118,27 @@ def patch_class(field: str, received: str) -> type[ProbePatch]:
     return _Patch
 
 
-def add_patches(ctx: Context, config: ProbeConfig, coupling: Optional[RegionCoupling]) -> None:
+def add_patches(
+    ctx: Context, config: ProbeConfig, region_coupling: Optional[RegionCoupling]
+) -> None:
     """The region's field, its coupling model and a coupled patch per patch of ``gains``."""
     ctx.fields[config.field] = np.zeros(1)
-    ctx.models.update(probe=config, received={}, history=[], coupling=Coupling(coupling))
+    ctx.models.update(
+        probe=config,
+        received={},
+        history=[],
+        coupling=Coupling(region_coupling, ProbeGeometry(config.coordinates)),
+    )
     received: dict[str, str] = {}
     for key in config.gains:
         patch, name = key.split(".")
         if received.setdefault(patch, name) != name:
             raise ValueError(f"patch {patch} receives one field, got {received[patch]} and {name}")
-    ctx.models["patches"] = [
-        patch_class(config.field, name)(ctx, config.field, patch, config.coordinates)
-        for patch, name in sorted(received.items())
-    ]
+    ctx.models["patches"] = []
+    for patch, name in sorted(received.items()):
+        instance = patch_class(config.field, name)(ctx, config.field, patch)
+        coupling(ctx).add(Patch(patch), instance)
+        ctx.models["patches"].append(instance)
 
 
 def solve(ctx: Context, index: int) -> None:

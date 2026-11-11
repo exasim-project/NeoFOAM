@@ -67,7 +67,7 @@ def test_chain_reaches_the_fixed_point_in_one_coupling_loop(
     _assert_final(regions, {"a": 3.0, "b": 2.0, "c": 2.0}, "chain")
     assert _solves(regions) == {"a": 58, "b": 58, "c": 58}
     assert [
-        (op.label, [(s.patch, op.exchange_of(s).name) for s in op.sides], op.is_leader)
+        (op.label, [(p.name, op.exchange_of(p).name) for p in op.ports], op.is_leader)
         for op in (couple(ctx) for ctx in regions.values())
     ] == [
         ("a.coupling", [("to_b", "a-b")], False),
@@ -86,7 +86,7 @@ def test_two_interfaces_reach_the_fixed_point_in_one_loop(
     _assert_final(regions, {"a": 2.0, "b": 1.0}, "two_interfaces")
     assert _solves(regions) == {"a": 40, "b": 40}
     a = couple(regions["a"])
-    assert [a.exchange_of(side).name for side in a.sides] == ["a-b", "a-b-2"]
+    assert [a.exchange_of(port).name for port in a.ports] == ["a-b", "a-b-2"]
 
 
 @pytest.mark.xfail(
@@ -109,7 +109,7 @@ def test_no_coordinates_fails_when_the_exchange_is_built(
 ) -> None:
     _case("no_coordinates", tmp_path, monkeypatch)
 
-    with pytest.raises(ValueError, match="'nearest-neighbor' needs the coordinates of both sides"):
+    with pytest.raises(ValueError, match="'nearest-neighbor' needs the points of both ports"):
         run()
 
 
@@ -132,8 +132,10 @@ def test_renamed_fields_reach_the_fixed_point(
     regions = run()
 
     _assert_final(regions, {"a": 2.0, "b": 1.0}, "renamed_fields")
-    sides = [side for ctx in regions.values() for side in couple(ctx).sides]
-    assert [(s.sends.__name__, s.receives.__name__) for s in sides] == [("X", "Y"), ("Y", "X")]
+    ports = [port for ctx in regions.values() for port in couple(ctx).ports]
+    assert [
+        ([s.model.__name__ for s in p.sends], [s.model.__name__ for s in p.receives]) for p in ports
+    ] == [(["X"], ["Y"]), (["Y"], ["X"])]
 
 
 def test_convergence_on_unknown_data_raises(
@@ -143,6 +145,6 @@ def test_convergence_on_unknown_data_raises(
     _case("convergence_typo", tmp_path, monkeypatch)
 
     with pytest.raises(
-        ValueError, match=r"convergence RelativeConvergence on T, which no side of the node sends"
+        ValueError, match=r"convergence RelativeConvergence on T, which no port of the node sends"
     ):
         run()

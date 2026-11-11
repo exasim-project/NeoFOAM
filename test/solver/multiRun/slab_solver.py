@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate, solutionLoop
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Array, Coupling, coupled
+from neofoam.framework.coupling import Array, Coupling, FaceData, Patch, coupled, coupling
 from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
@@ -70,8 +70,6 @@ class SlabPatch:
         self.cell = 0 if patch == "left" else geometry.cells - 1
         self.kappa = geometry.diffusivity
         self.delta = geometry.length / geometry.cells / 2
-        face = geometry.origin + (0.0 if patch == "left" else geometry.length)
-        self.coordinates = np.array([[face]])
         self.ref_value = np.zeros(1)
         self.value_fraction = np.ones(1)
         self.heat_in = 0.0
@@ -94,13 +92,34 @@ class SlabPatch:
         self.value_fraction = np.asarray(value_fraction, dtype=float)
 
 
+class SlabGeometry:
+    """The slab's mesh: cells of width ``length / cells`` from ``origin``, faces of area 1."""
+
+    def __init__(self, config: "_SlabConfig") -> None:
+        self.config = config
+
+    def face_centres(self, patch: str) -> Any:
+        face = self.config.origin + (0.0 if patch == "left" else self.config.length)
+        return np.array([[face]])
+
+    def face_areas(self, patch: str) -> Any:
+        return np.ones(1)
+
+    def cell_centres(self) -> Any:
+        width = self.config.length / self.config.cells
+        return self.config.origin + width * (np.arange(self.config.cells)[:, None] + 0.5)
+
+    def cell_volumes(self) -> Any:
+        return np.full(self.config.cells, self.config.length / self.config.cells)
+
+
 class FixedTemperature(SlabPatch):
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
         self.set_mixed(ref_value=[value], value_fraction=[1.0])
 
 
-class Conduction(BaseModel):
+class Conduction(FaceData):
     """What a ``coupledConduction`` face exchanges: its sink temperature and conductance."""
 
     T_sink: Array
@@ -114,11 +133,6 @@ class CoupledConduction(SlabPatch):
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
         self.set_mixed(ref_value=[value], value_fraction=[1.0])
-        Coupling.of(ctx).add(self)
-
-    @coupled.coordinates
-    def points(self) -> Any:
-        return self.coordinates
 
     @coupled.sends
     def send(self) -> Conduction:
@@ -130,13 +144,13 @@ class CoupledConduction(SlabPatch):
         self.set_mixed(ref_value=data.T_sink, value_fraction=data.h / (data.h + self.h_own()))
 
 
-class WallTemperature(BaseModel):
+class WallTemperature(FaceData):
     """What the Neumann side sends."""
 
     T: Array
 
 
-class WallHeatFlux(BaseModel):
+class WallHeatFlux(FaceData):
     """What the Dirichlet side sends: the heat flux through the wall into its slab."""
 
     q: Array
@@ -149,11 +163,6 @@ class CoupledTemperature(SlabPatch):
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
         self.set_mixed(ref_value=[value], value_fraction=[1.0])
-        Coupling.of(ctx).add(self)
-
-    @coupled.coordinates
-    def points(self) -> Any:
-        return self.coordinates
 
     @coupled.sends
     def send(self) -> WallHeatFlux:
@@ -171,14 +180,9 @@ class CoupledHeatFlux(SlabPatch):
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
         self.set_mixed(ref_value=[value], value_fraction=[0.0])
-        Coupling.of(ctx).add(self)
 
     def wall_T(self) -> Any:
         return self.cell_T() + self.heat_in / self.h_own()
-
-    @coupled.coordinates
-    def points(self) -> Any:
-        return self.coordinates
 
     @coupled.sends
     def send(self) -> WallTemperature:
@@ -243,11 +247,14 @@ def _initialize(self: Any) -> Context:
     ctx = init.run()
     self.core_models = init.core_models
     temperature = ctx.models["temperature"]
-    ctx.models["coupling"] = Coupling(self.coupling)
+    ctx.models["coupling"] = Coupling(self.coupling, SlabGeometry(ctx.models["slab"]))
     ctx.models["patches"] = [
         _patch("left", temperature.left, ctx),
         _patch("right", temperature.right, ctx),
     ]
+    for patch in ctx.models["patches"]:
+        if hasattr(type(patch), "__coupled__"):
+            coupling(ctx).add(Patch(patch.patch), patch)
     return ctx
 
 

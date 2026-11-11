@@ -62,7 +62,7 @@ def test_coupled_slabs_convergence_on_data_no_side_sends_raises(
     _case("convergence_on_U", tmp_path, monkeypatch)
 
     with pytest.raises(
-        ValueError, match=r"convergence RelativeConvergence on U, which no side of the node sends"
+        ValueError, match=r"convergence RelativeConvergence on U, which no port of the node sends"
     ):
         run()
 
@@ -73,6 +73,6 @@ def test_coupled_slabs_of_a_region_without_a_coupled_patch_raises(
     _case("no_coupled_side", tmp_path, monkeypatch)
 
     with pytest.raises(
-        ValueError, match="exchange 'interface' connects right.left, which has no coupled side"
+        ValueError, match="exchange 'interface' connects right.left, which has no coupled instance"
     ):
         run()
