@@ -32,7 +32,7 @@ model4.config(Model4Config)
 
 
 @model4.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     return True
 
 

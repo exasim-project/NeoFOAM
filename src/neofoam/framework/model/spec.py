@@ -10,7 +10,6 @@ callables; all mutable state lives on ModelRuntime created per instantiate().
 
 from __future__ import annotations
 
-import inspect
 import re
 from pathlib import Path
 from types import SimpleNamespace
@@ -65,7 +64,7 @@ class ModelSpec:
         self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., Any]] = None
         self._build_func: Optional[Callable[..., Any]] = None
-        self._detect_func: Optional[Callable[..., Any]] = None
+        self._detect_func: Optional[Callable[[Path], bool]] = None
 
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._operation_collection_func: Optional[Callable[..., Any]] = None
@@ -225,8 +224,8 @@ class ModelSpec:
         self._build_func = func
         return func
 
-    def detect(self, func: Callable[..., bool]) -> Callable[..., bool]:
-        """Register the DETECT predicate: ``() -> bool``, or ``(case_dir: Path) -> bool``."""
+    def detect(self, func: Callable[[Path], bool]) -> Callable[[Path], bool]:
+        """Register the DETECT predicate ``(case_dir: Path) -> bool``."""
         self._detect_func = func
         return func
 
@@ -234,9 +233,7 @@ class ModelSpec:
         """True if the detect predicate passes on ``case_dir`` (default ``.``), or there is none."""
         if self._detect_func is None:
             return True
-        if inspect.signature(self._detect_func).parameters:
-            return bool(self._detect_func(Path(case_dir) if case_dir is not None else Path(".")))
-        return bool(self._detect_func())
+        return bool(self._detect_func(Path(case_dir) if case_dir is not None else Path(".")))
 
     # ------------------------------------------------------------------
     # Operation decorators

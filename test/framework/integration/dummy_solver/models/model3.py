@@ -61,7 +61,7 @@ def load(case_dir: Path, instance_id: str) -> Model3Config:
 
 
 @model3.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     return True
 
 

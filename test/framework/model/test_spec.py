@@ -86,10 +86,25 @@ def test_spec_detect_decorator_registers_predicate() -> None:
     spec = ModelSpec("M")
 
     @spec.detect
-    def detect() -> bool:
+    def detect(case_dir: Path) -> bool:
         return False
 
     assert spec.run_detect() is False
+
+
+def test_spec_run_detect_hands_the_case_dir_to_the_predicate(tmp_path: Path) -> None:
+    spec = ModelSpec("M")
+    seen: list[Path] = []
+
+    @spec.detect
+    def detect(case_dir: Path) -> bool:
+        seen.append(case_dir)
+        return True
+
+    spec.run_detect(tmp_path)
+    spec.run_detect()
+
+    assert seen == [tmp_path, Path(".")]
 
 
 def test_instantiate_without_load_raises() -> None:

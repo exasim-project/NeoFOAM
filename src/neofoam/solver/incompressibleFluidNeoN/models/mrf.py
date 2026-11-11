@@ -71,9 +71,9 @@ mrfNeoN.config(MRFPropertiesConfig)
 
 
 @mrfNeoN.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     """MRF is active exactly when the case carries ``constant/MRFProperties``."""
-    return Path(_MRF_PROPERTIES).is_file()
+    return (case_dir / _MRF_PROPERTIES).is_file()
 
 
 def _reject_time_varying_omega(config: MRFPropertiesConfig) -> None:

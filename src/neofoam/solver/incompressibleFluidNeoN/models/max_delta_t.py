@@ -8,7 +8,7 @@ backend field is injected), so the body is identical — only the family it
 registers with differs.
 """
 
-import os
+from pathlib import Path
 
 from pybFoam import dictionary
 from pydantic import Field
@@ -35,11 +35,12 @@ maxDeltaT.config(MaxDeltaTConfig)
 
 
 @maxDeltaT.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     """Active iff ``system/controlDict`` enables adaptive stepping with a ``maxDeltaT``."""
-    if not os.path.isfile("system/controlDict"):
+    control_dict = case_dir / "system" / "controlDict"
+    if not control_dict.is_file():
         return False
-    cd = dictionary.read("system/controlDict")
+    cd = dictionary.read(str(control_dict))
     adaptive = cd.found("adjustTimeStep") and cd.get[bool]("adjustTimeStep")
     return bool(adaptive and cd.found("maxDeltaT"))
 
