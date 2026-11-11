@@ -169,15 +169,15 @@ class CouplingLoopOp(IterativeOp):
                 "entities": {stream.key: stream.model.entity for stream in port.sends},
                 "geometry": self._geometries[port.name],
             }
-            self._send(self._partner_region(port), Tag.side(self.exchange_of(port).name), announced)
+            self._send(self._partner_region(port), Tag.port(self.exchange_of(port).name), announced)
         streams = [
             (port.name, stream.key, stream.names) for port in self._ports for stream in port.sends
         ]
         if not self.is_leader:
-            self._send(self._leader, self._tag("sides"), (path, streams))
+            self._send(self._leader, self._tag("streams"), (path, streams))
         for port in self._ports:
             exchange = self.exchange_of(port)
-            announced = self._receive(self._partner_region(port), Tag.side(exchange.name))
+            announced = self._receive(self._partner_region(port), Tag.port(exchange.name))
             check_received(exchange.name, announced, port)
             if port.receives:
                 self._mappers[port.name] = self._bind(exchange, announced, port)
@@ -198,7 +198,7 @@ class CouplingLoopOp(IterativeOp):
                 f"exchange '{exchange.name}' ({announced['label']} -> {port.label}): {error}"
             ) from None
 
-    def _tag(self, what: Literal["sides", "pass", "decision"]) -> str:
+    def _tag(self, what: Literal["streams", "pass", "decision"]) -> str:
         return Tag.loop(self.loop.name, what)
 
     def _loop_streams(self, path: tuple[Optional[str], ...], own: list[Any]) -> list[GroupStream]:
@@ -206,7 +206,7 @@ class CouplingLoopOp(IterativeOp):
         received = {
             region: (path, own)
             if region == self.region
-            else self._receive(region, self._tag("sides"))
+            else self._receive(region, self._tag("streams"))
             for region in self._group
         }
         paths = {region: there for region, (there, _streams) in received.items()}
