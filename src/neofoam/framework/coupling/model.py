@@ -11,7 +11,7 @@ from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .data import CoupledPort, base_name
-from .iteration._loop_op import CouplingOp
+from .iteration._loop_op import CouplingLoopOp
 from .location import Location, MeshGeometry
 
 if TYPE_CHECKING:
@@ -95,7 +95,7 @@ class Participant:
         geometries = {port.name: port.location.geometry(self.geometry) for port in self.ports}
         ops: list[Operation] = []
         for node in coupling.nodes:
-            couple = CouplingOp(coupling, node, by_node[node.name], geometries)
+            couple = CouplingLoopOp(coupling, node, by_node[node.name], geometries)
             metadata = OperationMetadata(
                 op_name=couple.label, wraps=node.placement_of(coupling.region)
             )
