@@ -3,17 +3,9 @@
 
 """Run the coupled ``multiRun`` case in the working directory; print what it computed as JSON.
 
-The fluid (incompressibleFluid) and the plate (heatConductionNeoN) of
-``cases/heatedPlate``. The answer is the single stdout line prefixed
-``#RESULT``: the fluid's coupled patches (condition, face centres, wall
-temperature, heat flux into the fluid), the plate's wall temperature and heat
-flux out of it on the same interface, both times, and the passes of the
-leader's coupling per time step.
-
-Every message of the multiRun comm_channel is pickled, as between processes
-(``InProcessCommChannel.PICKLE``). A subprocess: Kokkos and ``Foam::Time`` are
-per-process, and NeoN must be finalized after every NeoN object is gone, so the
-contexts never outlive :func:`main`.
+The answer is the stdout line prefixed ``#RESULT``. A subprocess, since Kokkos
+and ``Foam::Time`` are per process and NeoN must be finalized after its objects
+are gone, so no context outlives :func:`main`.
 """
 
 import json
@@ -21,43 +13,51 @@ from typing import Any
 
 import numpy as np
 
-from neofoam.framework.coupling import Coupling, InProcessCommChannel
+from neofoam.framework.context import Context
+from neofoam.framework.coupling import Coupling
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.solver.multiRun import run as run_multi
 
 RESULT_PREFIX = "#RESULT "
 
 
+def _passes(ctx: Context) -> list[int]:
+    operations = Coupling.of(ctx).operations()
+    op = operations[0].func if len(operations) else None
+    if isinstance(op, CouplingOp) and op.controller is not None:
+        return [outcome.passes for outcome in op.controller.outcomes]
+    return []
+
+
+def _fluid(ctx: Context) -> dict[str, Any]:
+    mesh = ctx.fields["T"].mesh()
+    return {
+        patch.patch: {
+            "type": type(patch).__name__,
+            "points": np.asarray(patch.points()).tolist(),
+            "areas": np.asarray(mesh.magSf()[patch.patch]).tolist(),
+            "wall_T": np.asarray(patch.wall_T()).tolist(),
+            "q": np.asarray(patch.heat_flux()).tolist(),
+        }
+        for patch in ctx.models["coupled_patches"]
+    }
+
+
 def main() -> dict[str, Any]:
-    InProcessCommChannel.PICKLE = True
     regions = run_multi()
     fluid, solid = regions["fluid"], regions["solid"]
-    passes: dict[str, list[int]] = {}
-    for name, ctx in regions.items():
-        operations = Coupling.of(ctx).operations()
-        op = operations[0].func if len(operations) else None
-        if isinstance(op, CouplingOp) and op.controller is not None:
-            passes[name] = [outcome.passes for outcome in op.controller.outcomes]
+    passes = {name: _passes(ctx) for name, ctx in regions.items()}
     (top,) = solid.models["conduction"].patches
     return {
-        "fluid": {
-            patch.patch: {
-                "type": type(patch).__name__,
-                "condition": patch.condition,
-                "points": np.asarray(patch.points()).tolist(),
-                "areas": np.asarray(fluid.fields["T"].mesh().magSf()[patch.patch]).tolist(),
-                "wall_T": np.asarray(patch.wall_T()).tolist(),
-                "q": np.asarray(patch.heat_flux()).tolist(),
-            }
-            for patch in fluid.models["coupled_patches"]
-        },
+        "fluid": _fluid(fluid),
+        "kept_entries": fluid.models["writer"].hook.entries,
         "solid": {
             "wall_T": np.asarray(top.wall_T()).tolist(),
             "q_out": (-np.asarray(top.heat_in)).tolist(),
             "areas": np.asarray(top.areas).tolist(),
         },
         "time": {name: ctx.time.value for name, ctx in regions.items()},
-        "passes": passes,
+        "passes": {name: counts for name, counts in passes.items() if counts},
     }
 
 

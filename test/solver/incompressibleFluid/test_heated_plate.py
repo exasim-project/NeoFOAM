@@ -3,140 +3,155 @@
 
 """Flow over a heated plate, its first three time steps: the fluid coupled to the plate.
 
-``cases/heatedPlate``: the fluid (incompressibleFluid, Boussinesq with gravity,
-laminar, 12013 cells) over the plate (heatConductionNeoN, 100 x 25 cells, 310 K
-at its bottom), coupled Dirichlet-Neumann on the fluid's ``interface``
-(``coupledTemperature``: receives the wall temperature, sends the heat flux into
-the fluid) and the plate's ``top`` (``coupledHeatFlux``), as their ``0/T``
-declare; mapped nearest-neighbor (161 graded faces against 100); serial, the
-fluid first, Aitken; the node wraps the fluid's PIMPLE loop (``inner_loop``) and
-the plate's ``solve_T``. deltaT 0.01 s to 0.03 s.
-
-The reference is the monkeypatched probe the coupled patch was built from
-(``build/heated_plate/probe4_coupled`` of the coupling-heat worktree, same case
-to 1 s): its passes per time step and its fluid wall temperature at 0.03 s.
-The case is the tutorial ``tutorials/flowOverHeatedPlate`` but for its end time
-and write interval (the tutorial runs to 1 s).
+``cases/heatedPlate`` is ``tutorials/flowOverHeatedPlate`` to 0.03 s: the fluid
+(incompressibleFluid, Boussinesq) over the plate (heatConductionNeoN),
+Dirichlet-Neumann on the fluid's ``interface`` and the plate's ``top``, 161
+against 100 faces mapped nearest-neighbor, serial with Aitken. The reference
+is the probe the coupled patch was built from (same case, same arithmetic):
+its passes and wall temperatures, printed to 1e-6 K, so ``ATOL_K`` covers that
+rounding. Nearest-neighbor between non-matching faces does not conserve the
+heat: 0.07 % at 0.03 s, ``HEAT_RTOL`` bounds it.
 """
 
-import json
-import os
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pybFoam as pyf
 import pytest
 import yaml
-from foamlib import FoamFile
 
-from neofoam.solver.incompressibleFluid.coupled_patches import coupled_entries
+from neofoam.solver.incompressibleFluid.coupled_patches import PATCH_TYPES
+from neofoam.solver.regions import coupled_entries
+from solver.incompressibleFluid._heated_plate import (
+    CASE,
+    HERE,
+    PROBE_PASSES,
+    PROBE_WALL_T,
+    mesh_copy,
+    result,
+    written_interface_T,
+)
 
-HERE = Path(__file__).parent
-CASE = HERE / "cases" / "heatedPlate"
-WORKER = HERE / "cht_worker.py"
-RESULT_PREFIX = "#RESULT "
 TUTORIAL = HERE.parents[2] / "tutorials" / "flowOverHeatedPlate"
-#: the files of the case whose times differ from the tutorial's
 CONTROL_DICTS = ("system/controlDict.yaml", "fluid/system/controlDict", "solid/system/controlDict")
-
-#: the probe at 0.03 s: passes per time step, the fluid's wall temperature (mean, min, max)
-PROBE_PASSES = [15, 16, 15]
-PROBE_WALL_T = (301.315643, 300.962216, 301.347602)
+#: endTime, writeInterval
+TUTORIAL_TIMES, CASE_TIMES = (1, 20), (0.03, 3)
+WORD_ENTRIES = (
+    "application",
+    "startFrom",
+    "stopAt",
+    "writeControl",
+    "writeFormat",
+    "writeCompression",
+    "timeFormat",
+    "runTimeModifiable",
+    "adjustTimeStep",
+)
+ATOL_K = 2e-6
+HEAT_RTOL = 2e-3
 
 
 @pytest.fixture(scope="module")
 def plate(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    case_dir = tmp_path_factory.mktemp("heatedPlate") / "case"
-    shutil.copytree(CASE, case_dir)
-    for region in ("fluid", "solid"):
-        subprocess.run(
-            ["blockMesh", "-case", str(case_dir / region)],
-            check=True,
-            capture_output=True,
-            timeout=120,
-        )
-    done = subprocess.run(
-        [sys.executable, str(WORKER)],
-        cwd=case_dir,
-        env={**os.environ, "FOAM_SIGFPE": "false"},
-        capture_output=True,
-        text=True,
-        timeout=600,
-    )
-    assert done.returncode == 0, (
-        f"cht_worker failed (rc={done.returncode}):\n{done.stdout[-2000:]}\n{done.stderr[-3000:]}"
-    )
-    answers = [line for line in done.stdout.splitlines() if line.startswith(RESULT_PREFIX)]
-    assert answers, f"cht_worker printed no result:\n{done.stdout[-2000:]}"
-    computed = dict(json.loads(answers[-1][len(RESULT_PREFIX) :]))
+    case_dir = mesh_copy(tmp_path_factory.mktemp("heatedPlate") / "case", tools=("blockMesh",))
+    computed = result([sys.executable, str(HERE / "cht_worker.py")], case_dir)
+    fluid = case_dir / "fluid"
+    computed["written_T"] = written_interface_T(fluid, fluid, case_dir.parent / "staged")
     computed["case_dir"] = case_dir
     return computed
 
 
-def test_both_regions_reach_the_end_time(plate: dict[str, Any]) -> None:
-    assert plate["time"] == pytest.approx({"fluid": 0.03, "solid": 0.03})
+def _mean_min_max(values: Any) -> tuple[float, float, float]:
+    return float(np.mean(values)), float(np.min(values)), float(np.max(values))
 
 
-def test_the_fluid_side_is_the_dirichlet_side(plate: dict[str, Any]) -> None:
+def test_heated_plate_regions_reach_the_end_time(plate: dict[str, Any]) -> None:
+    np.testing.assert_allclose(
+        [plate["time"]["fluid"], plate["time"]["solid"]], 0.03, rtol=1e-12, err_msg="end times"
+    )
+
+
+def test_heated_plate_fluid_is_the_dirichlet_side(plate: dict[str, Any]) -> None:
     assert list(plate["fluid"]) == ["interface"]
     interface = plate["fluid"]["interface"]
-    assert (interface["type"], interface["condition"]) == (
-        "CoupledTemperature",
-        "coupledTemperature",
-    )
     points = np.asarray(interface["points"])
+
+    assert interface["type"] == "CoupledTemperature"
     assert points.shape == (161, 3)
-    np.testing.assert_allclose(points[:, 1], 0.0)  # the face centres on the plate's top
+    # the face centres on the plate's top, y = 0 exactly in blockMesh's vertices
+    np.testing.assert_allclose(points[:, 1], 0.0, rtol=0, atol=1e-12, err_msg="interface y")
 
 
-def test_the_passes_and_the_wall_temperature_are_the_probes(plate: dict[str, Any]) -> None:
-    assert plate["passes"] == {"solid": PROBE_PASSES}  # the leader: the last region
-    wall_T = np.asarray(plate["fluid"]["interface"]["wall_T"])
+def test_heated_plate_passes_are_the_probes(plate: dict[str, Any]) -> None:
+    # the leader: the last region
+    assert plate["passes"] == {"solid": PROBE_PASSES}
+
+
+def test_heated_plate_wall_temperature_is_the_probes(plate: dict[str, Any]) -> None:
+    wall_T = plate["fluid"]["interface"]["wall_T"]
+
     np.testing.assert_allclose(
-        (wall_T.mean(), wall_T.min(), wall_T.max()), PROBE_WALL_T, rtol=0, atol=2e-6
+        _mean_min_max(wall_T), PROBE_WALL_T, rtol=0, atol=ATOL_K, err_msg="fluid wall T"
     )
 
 
-def test_the_heat_through_the_interface_is_the_same_on_both_sides(plate: dict[str, Any]) -> None:
+def test_heated_plate_heat_through_the_interface_is_nearly_the_same_on_both_sides(
+    plate: dict[str, Any],
+) -> None:
     fluid = plate["fluid"]["interface"]
     into_fluid = float(np.dot(fluid["q"], fluid["areas"]))
     out_of_plate = float(np.dot(plate["solid"]["q_out"], plate["solid"]["areas"]))
+
     assert into_fluid > 0
-    # nearest-neighbor between non-matching faces conserves only to about 0.1 %
-    assert into_fluid == pytest.approx(out_of_plate, rel=2e-3)
+    np.testing.assert_allclose(into_fluid, out_of_plate, rtol=HEAT_RTOL, err_msg="interface heat")
 
 
-def test_the_written_temperature_restarts_coupled(plate: dict[str, Any]) -> None:
-    # OpenFOAM's fixedValue drops the coupled entry; the writer adds it back
-    written = plate["case_dir"] / "fluid" / "0.03" / "T"
-    assert coupled_entries("T", written) == {"interface": "coupledTemperature"}
+def test_heated_plate_written_temperature_is_the_probes(plate: dict[str, Any]) -> None:
+    # writePrecision 10: 1e-7 K at 300 K
     np.testing.assert_allclose(
-        _patch_values(written, "interface"), plate["fluid"]["interface"]["wall_T"], rtol=1e-9
+        _mean_min_max(plate["written_T"]), PROBE_WALL_T, rtol=0, atol=ATOL_K, err_msg="written T"
     )
 
 
-def _patch_values(path: Path, patch: str) -> Any:
-    return np.asarray(FoamFile(path)["boundaryField"][patch]["value"], dtype=float)
+def test_heated_plate_written_temperature_restarts_coupled(plate: dict[str, Any]) -> None:
+    written = plate["case_dir"] / "fluid" / "0.03" / "T"
+
+    assert plate["kept_entries"] == {"T": {"interface": "coupledTemperature"}}
+    assert coupled_entries(written, PATCH_TYPES) == {"interface": "coupledTemperature"}
 
 
-def test_the_tutorial_is_this_case_run_to_1_s() -> None:
+def test_heated_plate_case_files_are_the_tutorials() -> None:
     files = sorted(path.relative_to(CASE) for path in CASE.rglob("*") if path.is_file())
-    assert files and all(
-        (TUTORIAL / name).read_bytes() == (CASE / name).read_bytes()
+    differ = [
+        str(name)
         for name in files
         if str(name) not in CONTROL_DICTS
+        and (TUTORIAL / name).read_bytes() != (CASE / name).read_bytes()
+    ]
+
+    assert files and differ == []
+
+
+def _entries(path: Path) -> dict[str, Any]:
+    control = pyf.dictionary.read(str(path))
+    return {
+        name: control.get_word(name) if name in WORD_ENTRIES else control.get_scalar(name)
+        for name in map(str, control.toc())
+        if name != "FoamFile"
+    }
+
+
+@pytest.mark.parametrize("name", CONTROL_DICTS)
+def test_heated_plate_is_the_tutorial_to_0_03_s(name: str) -> None:
+    read = (
+        (lambda path: dict(yaml.safe_load(path.read_text())))
+        if name.endswith(".yaml")
+        else _entries
     )
-    for name in CONTROL_DICTS:
-        tutorial, case = (_times(root / name) for root in (TUTORIAL, CASE))
-        assert (tutorial.pop("endTime"), tutorial.pop("writeInterval")) == (1, 20)
-        assert (case.pop("endTime"), case.pop("writeInterval")) == (0.03, 3)
-        assert tutorial == case
+    tutorial, case = read(TUTORIAL / name), read(CASE / name)
 
-
-def _times(path: Path) -> dict[str, Any]:
-    if path.suffix == ".yaml":
-        return dict(yaml.safe_load(path.read_text()))
-    return {key: value for key, value in FoamFile(path).as_dict().items() if key != "FoamFile"}
+    assert (tutorial.pop("endTime"), tutorial.pop("writeInterval")) == TUTORIAL_TIMES, name
+    assert (case.pop("endTime"), case.pop("writeInterval")) == CASE_TIMES, name
+    assert tutorial == case, name
