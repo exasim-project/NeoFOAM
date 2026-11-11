@@ -246,7 +246,7 @@ and a NeoN region communicates on that world. Rank 0 refuses a case that does
 not fit the run before it starts; an error on any process aborts every process.
 
 Only a region's root (its rank 0) talks to other regions, over an
-``MpiCommChannel`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
+``MpiCommChannel`` (``neofoam.framework.coupling.comm.mpi``). Its coupling ops run on
 the whole ports: the root gathers each port's geometry once and what every
 process sends of a patch or the cells, and scatters what they receive; a
 ``Global`` port sends the root's value and every process receives it. The other
