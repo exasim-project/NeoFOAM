@@ -35,7 +35,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
         "exchanges": [
             {
                 "name": "interface",
-                "sides": {"left": "right", "right": "left"},
+                "ports": {"left": "right", "right": "left"},
                 "mapping": {"type": "nearest-neighbor"},
             }
         ],
@@ -65,7 +65,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
         "exchanges": [
             {
                 "name": None,
-                "sides": {"solid": "interface", "fluid": "interface"},
+                "ports": {"solid": "interface", "fluid": "interface"},
                 "mapping": {"type": "nearest-neighbor"},
             }
         ],
@@ -86,7 +86,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
 def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
     config = RegionCouplingConfig.load(case_dir=CASES.parent / "limitations" / "cases" / "chain")
 
-    assert [(e.name, e.sides, type(e.mapping)) for e in config.exchanges] == [
+    assert [(e.name, e.ports, type(e.mapping)) for e in config.exchanges] == [
         (None, {"a": "to_b", "b": "to_a"}, NearestNeighborMapping),
         (None, {"b": "to_c", "c": "to_b"}, NearestNeighborMapping),
     ]
@@ -122,8 +122,9 @@ def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
             r"lmit\n.*Extra inputs",
         ),
         ("no_convergence", r"couplings.0.convergence\n.*at least 1 item"),
-        ("three_regions", r"exchanges.0.sides\n.*at most 2 items"),
+        ("three_regions", r"exchanges.0.ports\n.*at most 2 items"),
         ("top_level_convergence", r"couplings\n.*Field required.*\n.*\nconvergence\n.*Extra"),
+        ("sides", r"exchanges.0.ports\n.*Field required.*\n.*\nexchanges.0.sides\n.*Extra"),
     ],
 )
 def test_region_coupling_config_rejects_an_invalid_file(case: str, error: str) -> None:
@@ -198,11 +199,11 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
             r"the exchanges \['a-b'\] are in no coupling node",
         ),
         (
-            _broken("exchanges.1", {"name": "a-b", "sides": {"b": "to_c", "c": "to_b"}}),
+            _broken("exchanges.1", {"name": "a-b", "ports": {"b": "to_c", "c": "to_b"}}),
             "two exchanges are named 'a-b'",
         ),
         (
-            _broken("exchanges.1", {"name": "b-c", "sides": {"a": "to_b", "c": "to_b"}}),
+            _broken("exchanges.1", {"name": "b-c", "ports": {"a": "to_b", "c": "to_b"}}),
             r"a.to_b is in the exchanges 'a-b' and 'b-c'; a coupled port is in one exchange",
         ),
         (_broken("couplings.0.maxIteration", 5), r"couplings.0.maxIteration\n.*Extra inputs"),
