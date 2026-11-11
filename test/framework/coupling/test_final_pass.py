@@ -16,7 +16,16 @@ from typing import Any, Literal
 
 import numpy as np
 import pytest
-from framework.coupling.regions import Side, add_coupled, contexts, couple, run, solve
+from framework.coupling.regions import (
+    RecordingTransport,
+    Side,
+    add_coupled,
+    contexts,
+    couple,
+    never,
+    run,
+    solve,
+)
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context, LoopEntry
@@ -25,9 +34,7 @@ from neofoam.framework.coupling import (
     Coupling,
     CouplingNode,
     CouplingNotConvergedWarning,
-    InProcessTransport,
     Link,
-    SideChange,
 )
 from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
 from neofoam.framework.coupling.region import region_couplings
@@ -41,10 +48,6 @@ SCHEMES = pytest.mark.parametrize("scheme", ["serial", "parallel"])
 
 class _Data(BaseModel):
     x: Array
-
-
-def _never(changes: list[SideChange]) -> bool:
-    return False
 
 
 class _Region:
@@ -110,7 +113,7 @@ def test_every_region_runs_one_final_pass_after_the_data_converged(scheme: Any) 
 @SCHEMES
 def test_the_last_pass_max_iterations_allows_is_final_and_warns(scheme: Any) -> None:
     with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
-        tests, controller = _couple(scheme, convergence=[_never], max_iterations=3)
+        tests, controller = _couple(scheme, convergence=[never], max_iterations=3)
 
     for region in tests.values():
         assert _flags(region) == [(0, True, False), (1, False, False), (2, False, True)]
@@ -130,16 +133,8 @@ def test_a_single_pass_is_first_and_final(scheme: Any) -> None:
 
 
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
-    decisions: list[tuple[str, bool, bool]] = []
-
-    class _Recording(InProcessTransport):
-        def send(self, source: str, target: str, tag: str, message: Any) -> None:
-            if tag.endswith("/decision"):
-                go_on, final, _received, _fresh = message
-                decisions.append((target, go_on, final))
-            super().send(source, target, tag, message)
-
-    couplings = region_couplings(list(PATCHES), LINKS, _Recording())
+    transport = RecordingTransport()
+    couplings = region_couplings(list(PATCHES), LINKS, transport)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings.get(name))}, region=name)
         for name in PATCHES
@@ -150,6 +145,11 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
             add_coupled(ctx, patch, "x", tests[name].side())
     run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
 
+    decisions = [
+        (target, message[0], message[1])
+        for _source, target, tag, message in transport.sent
+        if tag.endswith("/decision")
+    ]
     assert decisions == [
         (region, go_on, final)
         for go_on, final in [(True, False), (True, False), (True, True), (False, False)]
@@ -172,7 +172,7 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
 
 
 def test_the_controller_tells_which_pass_is_final() -> None:
-    node = CouplingNode("coupling", ("a-b",), convergence=(_never,), max_iterations=2)
+    node = CouplingNode("coupling", ("a-b",), convergence=(never,), max_iterations=2)
     controller = CouplingController([], "c.coupling", node)
 
     assert controller.decide({}, 0) == {} and not controller.final

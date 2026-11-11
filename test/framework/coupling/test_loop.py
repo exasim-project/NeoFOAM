@@ -17,7 +17,17 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 import pytest
-from framework.coupling.regions import Side, add_coupled, contexts, couple, graph, run, solve
+from framework.coupling.regions import (
+    RecordingTransport,
+    Side,
+    add_coupled,
+    contexts,
+    couple,
+    graph,
+    never,
+    run,
+    solve,
+)
 from framework.coupling.regions import transport as transport_of
 from pydantic import BaseModel, Field
 
@@ -80,20 +90,6 @@ class _Side:
         return Side(_Data, _Data, self.send, self.receive, np.zeros((1, 1)))
 
 
-def _never(changes: list[SideChange]) -> bool:
-    return False
-
-
-class _Recording(InProcessTransport):
-    def __init__(self) -> None:
-        super().__init__()
-        self.tags: list[str] = []
-
-    def send(self, source: str, target: str, tag: str, message: Any) -> None:
-        self.tags.append(tag)
-        super().send(source, target, tag, message)
-
-
 def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
     """Couple ``a`` and ``b`` over patch ``p``, run one time step; their coupling ops."""
     regions = contexts(["a", "b"], [LINK], **loop)
@@ -114,7 +110,7 @@ def test_coupling_op_serial_side_receives_what_the_other_sent_in_the_same_pass()
     log: list[str] = []
     a, b = _Side("a", log), _Side("b", log)
 
-    _couple(a, b, convergence=[_never], max_iterations=2)
+    _couple(a, b, convergence=[never], max_iterations=2)
 
     assert log == [
         "receive_a 0.0",
@@ -132,7 +128,7 @@ def test_coupling_op_serial_side_receives_what_the_other_sent_in_the_same_pass()
 def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_before() -> None:
     a, b = _Side("a", []), _Side("b", [])
 
-    _couple(a, b, convergence=[_never], max_iterations=2, scheme="parallel")
+    _couple(a, b, convergence=[never], max_iterations=2, scheme="parallel")
 
     assert a.log == ["receive_a 0.0", "solve_a", "receive_a 1.0", "solve_a"]
     assert b.log == ["receive_b 0.0", "solve_b", "receive_b 1.0", "solve_b"]
@@ -164,9 +160,9 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
 def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
     scheme: Literal["serial", "parallel"], sent: int
 ) -> None:
-    transport = _Recording()
+    transport = RecordingTransport()
     nodes = [
-        CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(_never,), max_iterations=2)
+        CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
     couplings = region_couplings(["a", "b"], [LINK], transport, nodes=nodes)
     regions = {
@@ -201,7 +197,7 @@ def test_coupling_op_accelerates_the_data_carried_into_a_pass(
     _couple(
         a,
         b,
-        convergence=[_never],
+        convergence=[never],
         max_iterations=2,
         scheme="parallel" if parallel else "serial",
         acceleration={"a-b": acceleration},
@@ -223,7 +219,7 @@ def test_coupling_op_stops_once_the_sent_data_is_unchanged() -> None:
 def test_every_region_stops_at_max_iterations() -> None:
     a, b = _Side("a", []), _Side("b", [])
 
-    _couple(a, b, convergence=[_never], max_iterations=3)
+    _couple(a, b, convergence=[never], max_iterations=3)
 
     assert (a.solves, b.solves) == (3, 3)
 
@@ -239,7 +235,7 @@ def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
 
 def test_the_leader_warns_and_records_when_max_iterations_ends_the_loop() -> None:
     with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
-        ops = _couple(_Side("a", []), _Side("b", []), convergence=[_never], max_iterations=3)
+        ops = _couple(_Side("a", []), _Side("b", []), convergence=[never], max_iterations=3)
 
     # the last pass took both sides from 2 to 3
     assert _controller(ops).outcomes == (
@@ -409,7 +405,7 @@ def test_a_failing_region_ends_every_region_with_its_error() -> None:
     b.solve = failing  # type: ignore[method-assign]
 
     with pytest.raises(RuntimeError, match="b failed"):
-        _couple(a, b, convergence=[_never], max_iterations=10)
+        _couple(a, b, convergence=[never], max_iterations=10)
 
     assert a.solves == 3
 
@@ -491,7 +487,7 @@ def test_a_side_sending_data_that_is_not_finite_raises() -> None:
         FloatingPointError,
         match=r"coupling 'coupling': the x of region a patch p is not finite after pass 2$",
     ):
-        _couple(a, b, convergence=[_never], max_iterations=10)
+        _couple(a, b, convergence=[never], max_iterations=10)
 
 
 def test_a_relative_change_that_is_not_finite_raises() -> None:
@@ -507,7 +503,7 @@ def test_a_relative_change_that_is_not_finite_raises() -> None:
         match=r"coupling b.coupling: the relative change of the x of region b patch p is not "
         r"finite in pass 1",
     ):
-        _couple(a, b, convergence=[_never], max_iterations=10, acceleration={"a-b": acceleration})
+        _couple(a, b, convergence=[never], max_iterations=10, acceleration={"a-b": acceleration})
 
 
 def _group() -> list[GroupSide]:
@@ -534,7 +530,7 @@ def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_buil
 
 def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
     controller = CouplingController(
-        _group(), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(_never,))
+        _group(), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(never,))
     )
     assert controller.residuals == {"x": math.inf}
 

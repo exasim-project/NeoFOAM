@@ -16,7 +16,7 @@ from typing import Any
 
 import numpy as np
 import pytest
-from framework.coupling.regions import contexts, couple, graph, run, solve
+from framework.coupling.regions import contexts, couple, graph, run, solve, tree
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context
@@ -32,7 +32,6 @@ from neofoam.framework.coupling import (
 from neofoam.framework.coupling.data import ExchangeSide
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.coupling.region import region_couplings
-from neofoam.framework.operations import IterativeOp, Operation
 from neofoam.framework.types import Placement
 
 
@@ -97,15 +96,6 @@ def _pair(link: Link = CHT) -> dict[str, Context]:
 
 def _run(regions: dict[str, Context]) -> None:
     run({name: (ctx, [solve("T", lambda ctx: None)]) for name, ctx in regions.items()})
-
-
-def _tree(ops: list[Operation]) -> list[Any]:
-    return [
-        (op.operation_name, _tree(op.sub_operations))
-        if isinstance(op.func, IterativeOp)
-        else op.operation_name
-        for op in ops
-    ]
 
 
 def test_coupled_reads_the_models_off_the_annotations() -> None:
@@ -216,7 +206,7 @@ def test_each_region_gets_its_own_graph_with_its_coupling_op() -> None:
     _Flux(regions["fluid"], "wall")
 
     trees = {
-        name: _tree(graph(ctx, solve("T", lambda ctx: None)).ops) for name, ctx in regions.items()
+        name: tree(graph(ctx, solve("T", lambda ctx: None)).ops) for name, ctx in regions.items()
     }
 
     assert trees == {
