@@ -146,10 +146,7 @@ def execution_graph(
     builder = StepBuilder()
 
     # The pressure-velocity algorithm (pimple) is the first core model.
-    # We pass the spec as its own runtime — it stores configured
-    # algorithm_type / use_boussinesq attributes directly.
-    algorithm_model = self.state.core_models[0]
-    algo_ops = Operations(algorithm_model._build_operations_for(algorithm_model))
+    algo_ops = Operations(self.state.core_models[0].operations)
 
     # The main iteration loop is the solutionLoop model: its operations
     # (set_time_step / increment_time) and predicate own advancement and deltaT

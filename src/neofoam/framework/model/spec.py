@@ -71,8 +71,6 @@ class ModelSpec:
 
         self._own_extension: Optional[Extension] = None
 
-        self._dependency_resolver = DependencyResolver()
-
     @property
     def _config_class(self) -> Optional[type]:
         return self._config_classes[0] if self._config_classes else None
@@ -386,10 +384,10 @@ class ModelSpec:
             discovered = _discover_configs_from_signature(func)
             if discovered:
                 wrapped = _create_runtime_config_wrapper(
-                    func, discovered, runtime, self._dependency_resolver
+                    func, discovered, runtime, _resolver(runtime)
                 )
             else:
-                wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
+                wrapped = wrap_with_dependency_resolution(func, runtime, _resolver(runtime))
 
             op = Operation(
                 func=SequentialOp(wrapped),
@@ -430,12 +428,12 @@ class ModelSpec:
         return self._build_operations_for(runtime)
 
     def wrap_operation(self, func: Callable[..., Any], runtime: Any) -> Callable[..., Any]:
-        """Wrap ``func`` with this spec's dependency resolution.
+        """Wrap ``func`` with the dependency resolution of ``runtime``.
 
         For ``@operation_collection`` bodies, which bypass the spec's default
         operation wrapping and must wrap each exposed operation themselves.
         """
-        return wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
+        return wrap_with_dependency_resolution(func, runtime, _resolver(runtime))
 
     # ------------------------------------------------------------------
     # Plugin registration
@@ -491,3 +489,9 @@ class ModelSpec:
 def Model(name: str) -> ModelSpec:
     """Factory: create a named ModelSpec."""
     return ModelSpec(name)
+
+
+def _resolver(runtime: Any) -> DependencyResolver:
+    """The runtime's dependency resolver; a fresh one for a spec used as its own runtime."""
+    resolver = getattr(runtime, "dependency_resolver", None)
+    return resolver if isinstance(resolver, DependencyResolver) else DependencyResolver()

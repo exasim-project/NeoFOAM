@@ -9,12 +9,28 @@ PIMPLE rather than producing a missing-algorithm error so existing
 tutorial cases that specify it still run.
 """
 
+from dataclasses import dataclass
 from typing import Any
 
 import pybFoam as pyf
 
+from neofoam.framework.model import ModelRuntime, ModelSpec
+
 from .pimpleAlgorithm import pimple
 from .simpleAlgorithm import simple
+
+
+@dataclass
+class PressureVelocitySettings:
+    """One run's settings, kept off the spec that regions and runs share."""
+
+    algorithm_type: str
+    #: Set by the boussinesq model's resolve: dispatches the buoyant variants.
+    use_boussinesq: bool = False
+
+
+def _runtime(spec: ModelSpec, algorithm_type: str) -> ModelRuntime:
+    return ModelRuntime(spec=spec, name=spec.name, config=PressureVelocitySettings(algorithm_type))
 
 
 class PressureVelocityAlgorithm:
@@ -31,8 +47,8 @@ class PressureVelocityAlgorithm:
         return [pimple, simple]
 
     @classmethod
-    def detect_and_create(cls) -> Any:
-        """Detect algorithm from fvSolution and prime its state."""
+    def detect_and_create(cls) -> ModelRuntime:
+        """Detect the algorithm from fvSolution: a fresh runtime of its spec."""
         fv_solution = pyf.dictionary.read("system/fvSolution")
 
         if fv_solution.found("PIMPLE"):
@@ -44,22 +60,15 @@ class PressureVelocityAlgorithm:
         else:
             algorithm_type = "PIMPLE"
 
-        algorithm_model = simple if algorithm_type == "SIMPLE" else pimple
-        algorithm_model.algorithm_type = algorithm_type  # type: ignore[attr-defined]
-        algorithm_model.use_boussinesq = False  # type: ignore[attr-defined]
-        algorithm_model.pRefCell = None  # type: ignore[attr-defined]
-        algorithm_model.pRefValue = None  # type: ignore[attr-defined]
-        return algorithm_model
+        return _runtime(simple if algorithm_type == "SIMPLE" else pimple, algorithm_type)
 
     @classmethod
-    def create(cls, *, algorithm_type: str) -> Any:
-        """Programmatically create a pressure-velocity algorithm model."""
+    def create(cls, *, algorithm_type: str) -> ModelRuntime:
+        """Programmatically create a pressure-velocity algorithm runtime."""
         if algorithm_type in {"Simple", "SIMPLE"}:
-            simple.algorithm_type = "SIMPLE"  # type: ignore[attr-defined]
-            return simple
+            return _runtime(simple, "SIMPLE")
         if algorithm_type not in {"Pimple", "PIMPLE"}:
             raise ValueError(
                 f"Only the PIMPLE and SIMPLE algorithms are wired up; requested {algorithm_type!r}."
             )
-        pimple.algorithm_type = "PIMPLE"  # type: ignore[attr-defined]
-        return pimple
+        return _runtime(pimple, "PIMPLE")

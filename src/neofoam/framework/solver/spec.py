@@ -22,7 +22,6 @@ from neofoam.framework.config_injection import (
 )
 from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import (
-    DependencyResolver,
     wrap_with_dependency_resolution,
 )
 from neofoam.framework.operations import Operation, OperationCollection, SequentialOp
@@ -53,7 +52,6 @@ class SolverSpec:
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
-        self._dependency_resolver = DependencyResolver()
 
     @property
     def _config_class(self) -> Optional[type]:
@@ -246,7 +244,7 @@ class SolverSpec:
         if self._initialize_func is None:
             raise RuntimeError(f"No initialize function registered for solver {self.name}")
 
-        kwargs = self._dependency_resolver.resolve_arguments(self._initialize_func, None)
+        kwargs = runtime.dependency_resolver.resolve_arguments(self._initialize_func, None)
 
         sig = inspect.signature(self._initialize_func)
         if "self" in sig.parameters and "self" not in kwargs:
@@ -323,10 +321,12 @@ class SolverSpec:
             discovered = _discover_configs_from_signature(func)
             if discovered:
                 wrapped = _create_runtime_config_wrapper(
-                    func, discovered, runtime, self._dependency_resolver
+                    func, discovered, runtime, runtime.dependency_resolver
                 )
             else:
-                wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
+                wrapped = wrap_with_dependency_resolution(
+                    func, runtime, runtime.dependency_resolver
+                )
 
             op = Operation(
                 func=SequentialOp(wrapped),

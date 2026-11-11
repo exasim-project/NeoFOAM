@@ -5,8 +5,8 @@
 
 Adapted from ``feat/python_solvers`` to the SolverSpec/ModelSpec API in
 ``stack/python_arch``. Includes the boussinesq momentum/continuity
-variants so the buoyancy plugin can swap them in via
-``pimple.use_boussinesq``.
+variants so the buoyancy plugin can swap them in via the run's
+``use_boussinesq`` setting (``runtime.config``).
 
 Each operation declares the ``system/fvSchemes`` entries it discretises
 and the ``system/fvSolution`` solvers it needs via
@@ -54,7 +54,6 @@ from neofoam.foam.algorithm_configs import (
     PimpleAlgorithmConfig,
 )
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
@@ -178,7 +177,9 @@ def build(self: Any) -> list[Any]:
     been flipped (by the boussinesq plugin during resolve), the
     pressure-reference dependency list adds ``p_rgh`` and the
     reference cell logic adapts to use the modified-pressure field.
+    ``self`` is the run's runtime; its ``config`` holds those settings.
     """
+    settings = self.config
 
     def create_phi(context: dict[str, Any]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
@@ -198,11 +199,10 @@ def build(self: Any) -> list[Any]:
     def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         p = context["fields.p"]
         mesh = context["mesh"]
-        use_boussinesq: bool = getattr(pimple, "use_boussinesq", False)
-        p_rgh = context.get("fields.p_rgh") if use_boussinesq else None
+        p_rgh = context.get("fields.p_rgh") if settings.use_boussinesq else None
 
         fv_solution = pyf.dictionary.read("system/fvSolution")
-        algo_dict = fv_solution.subDict(pimple.algorithm_type)  # type: ignore[attr-defined]
+        algo_dict = fv_solution.subDict(settings.algorithm_type)
         pressure_field = p_rgh if p_rgh is not None else p
         field_name = "p_rgh" if p_rgh is not None else "p"
 
@@ -241,7 +241,7 @@ def build(self: Any) -> list[Any]:
     ]
 
     pressure_ref_deps = ["fields.p", "mesh"]
-    if getattr(pimple, "use_boussinesq", False):
+    if settings.use_boussinesq:
         pressure_ref_deps.append("fields.p_rgh")
     init_steps.append(
         model(
@@ -593,7 +593,7 @@ def _alias_operation(
 def collected_operations(self: Any) -> Operations:
     """Wrap momentum/continuity inside the PIMPLE inner loop.
 
-    Dispatches to boussinesq variants when ``self.use_boussinesq`` is set
+    Dispatches to boussinesq variants when the run's ``use_boussinesq`` is set
     (the boussinesq plugin flips that flag during its resolve stage).
     """
     model_ops = Operations()
@@ -604,7 +604,7 @@ def collected_operations(self: Any) -> Operations:
         )
     )
 
-    if getattr(self, "use_boussinesq", False):
+    if self.config.use_boussinesq:
         momentum_op = momentum_boussinesq
         continuity_op = continuity_boussinesq
     else:
@@ -614,18 +614,14 @@ def collected_operations(self: Any) -> Operations:
         # centres, which a mesh move would silently invalidate.
         model_ops.add(
             _alias_operation(
-                wrap_with_dependency_resolution(mesh_update, self, pimple._dependency_resolver),
+                pimple.wrap_operation(mesh_update, self),
                 operation_name="mesh_update",
                 depends_on=[],
             )
         )
 
-    wrapped_momentum = wrap_with_dependency_resolution(
-        momentum_op, self, pimple._dependency_resolver
-    )
-    wrapped_continuity = wrap_with_dependency_resolution(
-        continuity_op, self, pimple._dependency_resolver
-    )
+    wrapped_momentum = pimple.wrap_operation(momentum_op, self)
+    wrapped_continuity = pimple.wrap_operation(continuity_op, self)
 
     model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(

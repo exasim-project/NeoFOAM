@@ -119,10 +119,7 @@ def execution_graph(
     builder = StepBuilder()
 
     # The pressure-velocity algorithm (pimpleNeoN) is the first core model.
-    # The spec is passed as its own runtime — it stores the configured
-    # algorithm_type attribute directly.
-    algorithm_model = self.state.core_models[0]
-    algo_ops = Operations(algorithm_model._build_operations_for(algorithm_model))
+    algo_ops = Operations(self.state.core_models[0].operations)
 
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)

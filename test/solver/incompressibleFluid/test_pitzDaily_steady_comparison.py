@@ -17,6 +17,12 @@ code that the ``returncode == 0`` assertion turns into a normal test failure.
 The history behind this test — the SIMPLE gap it originally captured as an
 ``xfail`` — is described in
 ``report/incompressibleFluid-steady-state-limitations.md``.
+
+Tolerance: relative L2 at most ``1e-9`` after five SIMPLE iterations at
+``writePrecision 17``. Not bitwise: pybFoam is built with FMA on ``x86-64-v3``, the
+prebuilt simpleFoam is not, and ``relTol 0.1`` grows that round-off ~2x per
+iteration. At five it is at most 1.5e-11; a 1e-6 relative change to the U relaxation
+factor or ``nu`` gives 6.9e-7 or more.
 """
 
 import shutil
@@ -24,10 +30,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from .comparison_helpers import (
-    compare_solver_fields,
+    get_time_directories,
+    read_internal_fields,
+    relative_l2_error,
     setup_case,
 )
 
@@ -38,14 +44,12 @@ FIELDS_TO_COMPARE = [
     ("epsilon", "volScalarField"),
 ]
 
-# A small, fixed SIMPLE-iteration budget (deltaT 1 -> one outer step per unit
-# time). pitzDaily/kEpsilon needs a few hundred iterations to satisfy the case's
-# residualControl, so at 50 iterations neither solver hits residualControl and
-# native simpleFoam runs the full budget — both do the same number of outer
-# steps, making the field diff a fair like-for-like comparison once the
-# framework solver can actually run a steady case.
-_END_TIME = 50.0
-_WRITE_INTERVAL = 50.0
+# Five SIMPLE iterations (deltaT 1), far below residualControl, so both solvers do
+# the same number of outer steps; five, not more: see the module docstring.
+_END_TIME = 5.0
+_WRITE_INTERVAL = 5.0
+_WRITE_PRECISION = 17
+_REL_L2_TOL = 1e-9
 
 # The framework solver runs in its own interpreter: on a SIMPLE case it aborts
 # via FOAM's ``FatalIOError`` -> ``::exit()``, which would kill the test process
@@ -59,17 +63,7 @@ run(["incompressibleFluid"])
 
 
 def test_framework_matches_native_simpleFoam() -> None:
-    """incompressibleFluid vs native simpleFoam on the steady pitzDaily case.
-
-    The framework solver runs the ``SIMPLE`` algorithm and its ``U/p/k/epsilon``
-    fields are compared to native ``simpleFoam`` at ``rtol=1e-10/atol=1e-15``.
-
-    The fixed ``_END_TIME=50`` budget validates *algorithm parity*: at 50 outer
-    iterations neither solver satisfies the case's ``residualControl``, so both
-    do the same number of SIMPLE passes and the comparison is like-for-like.
-    ``residualControl``-driven termination is exercised separately by the
-    ``SolutionControl`` unit tests, not here.
-    """
+    """incompressibleFluid (SIMPLE) matches native simpleFoam after five iterations."""
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / "pitzDaily_steady"
 
@@ -77,8 +71,10 @@ def test_framework_matches_native_simpleFoam() -> None:
     case_native = repo_root / "test_cases" / "pitzDaily_steady_native"
 
     try:
-        setup_case(source_case, case_framework, _END_TIME, _WRITE_INTERVAL)
-        setup_case(source_case, case_native, _END_TIME, _WRITE_INTERVAL)
+        for case in (case_framework, case_native):
+            setup_case(
+                source_case, case, _END_TIME, _WRITE_INTERVAL, write_precision=_WRITE_PRECISION
+            )
 
         framework = subprocess.run(
             [sys.executable, "-c", _FRAMEWORK_DRIVER],
@@ -100,15 +96,24 @@ def test_framework_matches_native_simpleFoam() -> None:
         )
         assert native.returncode == 0, f"simpleFoam failed: {native.stderr}"
 
-        all_match, failed_fields, failed_details = compare_solver_fields(
-            case_framework, case_native, FIELDS_TO_COMPARE, rtol=1e-10, atol=1e-15
+        final_framework = get_time_directories(case_framework)[-1]
+        final_native = get_time_directories(case_native)[-1]
+        assert final_framework.name == final_native.name == "5", (
+            f"final times {final_framework.name} / {final_native.name}, expected 5"
         )
-        if not all_match:
-            parts = []
-            for fname in failed_fields:
-                max_abs, max_rel = failed_details.get(fname, (float("nan"), float("nan")))
-                parts.append(f"{fname}(abs={max_abs:.3e}, rel={max_rel:.3e})")
-            pytest.fail("Field values differ between solvers: " + ", ".join(parts))
+        names = [name for name, _ in FIELDS_TO_COMPARE]
+        framework_fields = read_internal_fields(case_framework, final_framework, names)
+        native_fields = read_internal_fields(case_native, final_native, names)
+        errors = {
+            name: relative_l2_error(framework_fields[name], native_fields[name]) for name in names
+        }
+        for name, error in errors.items():
+            print(f"[pitzDaily_steady] {name}: relative L2 = {error:.3e}")
+        failures = [f"{n}={e:.3e}" for n, e in errors.items() if not e <= _REL_L2_TOL]
+        assert not failures, (
+            f"pitzDaily_steady: incompressibleFluid vs simpleFoam relative L2 above "
+            f"{_REL_L2_TOL:.0e} for " + ", ".join(failures)
+        )
     finally:
         for tc in [case_framework, case_native]:
             if tc.exists():

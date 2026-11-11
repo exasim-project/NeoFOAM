@@ -267,10 +267,11 @@ def detect_model() -> bool:
 
 @boussinesq.resolve
 def resolve(_config: BoussinesqConfig, ctx: ConfigContext) -> None:
-    """Flip ``use_boussinesq`` on the pressure-velocity algorithm spec.
+    """Flip ``use_boussinesq`` on the run's pressure-velocity settings.
 
-    The algorithm spec is registered in ConfigContext under its ``name``
-    (e.g. ``"Pimple"``). Setting this flag steers
+    The algorithm runtime is registered in ConfigContext under its ``name``
+    (e.g. ``"Pimple"``); its ``config`` holds this run's settings, so the
+    module-level spec stays untouched. Setting this flag steers
     :func:`pimpleAlgorithm.collected_operations` to dispatch the
     boussinesq variants and adds ``p_rgh`` to the pressure-reference
     dependency list.
@@ -278,7 +279,7 @@ def resolve(_config: BoussinesqConfig, ctx: ConfigContext) -> None:
     for algo_name in ("Pimple", "Simple", "Piso"):
         pressure_model = ctx.get(algo_name) if ctx.contains(algo_name) else None
         if pressure_model is not None:
-            pressure_model.use_boussinesq = True
+            pressure_model.config.use_boussinesq = True
             return
 
 
