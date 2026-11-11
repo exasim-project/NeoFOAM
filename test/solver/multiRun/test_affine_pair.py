@@ -70,8 +70,8 @@ def test_affine_pair_regions_couple_through_their_coupling_ops(regions: Regions)
         (("b", "interface"), "x"),
     ]
     assert (a_op.partner(a_side), b_op.partner(b_side)) == ("b.interface", "a.interface")
-    link = a_op.link_of(a_side)
-    assert (link.name, type(link.mapping)) == ("a-b", NearestNeighborMapping)
+    exchange = a_op.exchange_of(a_side)
+    assert (exchange.name, type(exchange.mapping)) == ("a-b", NearestNeighborMapping)
 
 
 @pytest.mark.parametrize("region", ["a", "b"])

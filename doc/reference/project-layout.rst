@@ -32,7 +32,7 @@ the linked reference pages for the full API.
     - ``graph/`` — operation-graph sort, resolution, validation, and
       visualization, and the loops that wrap fields (``wrapping``). See
       :mod:`neofoam.framework.graph`.
-    - ``coupling/`` — ``@coupled`` boundary conditions, the ``Link`` of two
+    - ``coupling/`` — ``@coupled`` boundary conditions, the ``Exchange`` of two
       patches, a ``CouplingOp`` per region and node, the ``CommChannel`` between
       regions and the mapping, acceleration and convergence families. See
       :mod:`neofoam.framework.coupling`.
