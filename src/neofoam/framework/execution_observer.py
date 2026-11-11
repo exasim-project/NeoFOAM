@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from neofoam.framework.context import Context
     from neofoam.framework.coupling.data import CoupledPort
     from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
-    from neofoam.framework.coupling.iteration._loop_op import CouplingOp
+    from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
 
@@ -72,7 +72,9 @@ class ExecutionObserver:
     def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
         """A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread."""
 
-    def coupling_exchanged(self, coupling: CouplingOp, port: CoupledPort, data: BaseModel) -> None:
+    def coupling_exchanged(
+        self, coupling: CouplingLoopOp, port: CoupledPort, data: BaseModel
+    ) -> None:
         """The region's ``coupling`` op is about to hand ``port`` its mapped ``data``."""
 
 

@@ -44,7 +44,7 @@ def _state(loops: _Loops) -> str:
 _Decision = tuple[bool, bool, dict[_Local, Optional[Data]], frozenset[_Local]]
 
 
-class CouplingOp(IterativeOp):
+class CouplingLoopOp(IterativeOp):
     """A region's coupling node: a loop whose test exchanges the node's ports' data.
 
     Labelled ``<region>.<node>``. The first test tells each partner what the

@@ -29,7 +29,7 @@ from neofoam.framework.coupling import (
     coupling,
 )
 from neofoam.framework.coupling.exchanges import participant_exchanges
-from neofoam.framework.coupling.iteration._loop_op import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
 from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
@@ -174,10 +174,10 @@ def add_coupled(ctx: Context, patch: str, side: Side) -> None:
     coupling(ctx).add(Patch(patch), instance)
 
 
-def couple(ctx: Context, index: int = 0) -> CouplingOp:
+def couple(ctx: Context, index: int = 0) -> CouplingLoopOp:
     """The region's coupling op of its ``index`` th node."""
     op = coupling(ctx).operations()[index].func
-    assert isinstance(op, CouplingOp)
+    assert isinstance(op, CouplingLoopOp)
     return op
 
 

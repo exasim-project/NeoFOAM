@@ -48,7 +48,7 @@ from neofoam.framework.coupling.iteration._leader import (
     CouplingOutcome,
     Leader,
 )
-from neofoam.framework.coupling.iteration._loop_op import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
 
@@ -84,7 +84,7 @@ class _Side:
         return Side(_Data, _Data, self.send, self.receive, np.zeros((1, 1)))
 
 
-def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
+def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingLoopOp]:
     """Couple ``a`` and ``b`` over patch ``p``, run one time step; their coupling ops."""
     regions = contexts(["a", "b"], [EXCHANGE], **loop)
     for side in (a, b):
@@ -93,7 +93,7 @@ def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
     return {name: couple(ctx) for name, ctx in regions.items()}
 
 
-def _controller(ops: dict[str, CouplingOp]) -> Leader:
+def _controller(ops: dict[str, CouplingLoopOp]) -> Leader:
     controller = ops["b"].controller
     assert controller is not None
     return controller
@@ -239,7 +239,7 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
         def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
             finished.append((coupling.label, outcome))
 
-        def coupling_exchanged(self, coupling: CouplingOp, side: Any, data: BaseModel) -> None:
+        def coupling_exchanged(self, coupling: CouplingLoopOp, side: Any, data: BaseModel) -> None:
             exchanged.append((coupling.label, coupling.partner(side), float(getattr(data, "x")[0])))
 
     with observe(_Observer()):
@@ -264,7 +264,7 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
     (loop,) = graph(regions["a"], solve("x", lambda ctx: None)).ops
 
     op = loop.func
-    assert op is couple(regions["a"]) and isinstance(op, CouplingOp)
+    assert op is couple(regions["a"]) and isinstance(op, CouplingLoopOp)
     assert (loop.operation_name, loop.metadata.wraps) == ("a.coupling", Placement())
     assert [sub.operation_name for sub in loop.sub_operations] == ["solve_x"]
     (port,) = op.ports

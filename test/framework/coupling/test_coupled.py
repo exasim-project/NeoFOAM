@@ -35,7 +35,7 @@ from neofoam.framework.coupling import (
     coupled,
     coupling,
 )
-from neofoam.framework.coupling.iteration._loop_op import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
 from neofoam.framework.coupling.strategies.mapping import (
     AreaIntegralMapping,
     ProbeMapping,
@@ -207,7 +207,7 @@ def test_the_owner_binds_a_coupled_instance_to_its_location() -> None:
     wall = _bind(region, "right", _Wall)
 
     (operation,) = coupling(region).operations()
-    assert isinstance(operation.func, CouplingOp)
+    assert isinstance(operation.func, CouplingLoopOp)
     assert (operation.operation_name, operation.metadata.wraps) == ("solid.coupling", Placement())
     (port,) = operation.func.ports
     assert (port.region, port.name, port.location) == ("solid", "right", Patch("right"))

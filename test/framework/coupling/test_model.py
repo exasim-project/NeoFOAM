@@ -10,7 +10,7 @@ from framework.coupling.regions import add_coupled, contexts, fixed, graph, solv
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import CouplingLoop, Exchange, IdentityMapping, Patch, coupling
-from neofoam.framework.coupling.iteration._loop_op import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
 from neofoam.framework.types import Placement
 
 EXCHANGE = Exchange("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
@@ -28,7 +28,7 @@ def test_the_coupling_model_builds_one_coupling_op_once() -> None:
     (couple_op,) = model.operations()
 
     assert model.operations() is model.operations()
-    assert isinstance(couple_op.func, CouplingOp)
+    assert isinstance(couple_op.func, CouplingLoopOp)
     assert couple_op.metadata.wraps == Placement()
     assert [port.name for port in couple_op.func.ports] == ["p", "q"]
     with pytest.raises(ValueError, match="a.p is added after the region's graph was built"):
