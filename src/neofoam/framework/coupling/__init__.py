@@ -20,6 +20,7 @@ from .comm.channel import (
     CouplingTimeout,
 )
 from .comm.in_process import InProcessCommChannel
+from .config import RegionCouplingConfig
 from .coupled import CoupledPort, coupled
 from .data import Array, CellData, FaceData, ProbeData, Scalar, ValueData
 from .exchanges import CouplingLoop, Exchange, ParticipantExchanges, participant_exchanges
@@ -78,6 +79,7 @@ __all__ = [
     "ProbeData",
     "ProbeMapping",
     "ParticipantExchanges",
+    "RegionCouplingConfig",
     "RelativeConvergence",
     "Scalar",
     "StreamChange",
