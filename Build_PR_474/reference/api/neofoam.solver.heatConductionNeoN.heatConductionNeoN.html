@@ -527,6 +527,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -690,12 +691,10 @@
 <h1>neofoam.solver.heatConductionNeoN.heatConductionNeoN<a class="headerlink" href="#neofoam-solver-heatconductionneon-heatconductionneon" title="Link to this heading">¶</a></h1>
 <dl class="py data">
 <dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.heatConductionNeoN">
-<span class="sig-prename descclassname"><span class="pre">neofoam.solver.heatConductionNeoN.</span></span><span class="sig-name descname"><span class="pre">heatConductionNeoN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;neofoam.solver.heatConductionNeoN.heatConductionNeoN._NeoNSolverSpec</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.heatConductionNeoN" title="Link to this definition">¶</a></dt>
-<dd><p>A solver whose runtimes need NeoN: instantiating one brings NeoN up.</p>
-<p>Kokkos is initialized once per process and finalized (at exit) on the thread
-that initialized it. <code class="docutils literal notranslate"><span class="pre">multiRun</span></code> instantiates every region on the main thread
-and runs it on a thread of its own, so NeoN comes up here, not in the
-initializer.</p>
+<span class="sig-prename descclassname"><span class="pre">neofoam.solver.heatConductionNeoN.</span></span><span class="sig-name descname"><span class="pre">heatConductionNeoN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;neofoam.framework.solver.spec.SolverSpec</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.heatConductionNeoN" title="Link to this definition">¶</a></dt>
+<dd><p>Immutable solver definition. Read-only after module import.</p>
+<p>Decorator methods store callables only; execution is delegated to
+SolverRuntime so that multiple runtimes can coexist independently.</p>
 </dd></dl>
 
 </section>

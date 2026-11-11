@@ -527,6 +527,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -688,10 +689,7 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.solver.heatConductionNeoN">
 <span id="neofoam-solver-heatconductionneon"></span><h1>neofoam.solver.heatConductionNeoN<a class="headerlink" href="#module-neofoam.solver.heatConductionNeoN" title="Link to this heading">¶</a></h1>
-<p>heatConductionNeoN solver package.</p>
-<p><code class="docutils literal notranslate"><span class="pre">laplacianFoam</span></code> on NeoN: heat conduction <code class="docutils literal notranslate"><span class="pre">∂T/∂t</span> <span class="pre">=</span> <span class="pre">∇·(DT</span> <span class="pre">∇T)</span></code>, with the
-coupled patches <code class="docutils literal notranslate"><span class="pre">coupledTemperature</span></code> / <code class="docutils literal notranslate"><span class="pre">coupledHeatFlux</span></code> of a multi-region
-case (<code class="docutils literal notranslate"><span class="pre">multiRun</span></code>).</p>
+<p>heatConductionNeoN: heat conduction on NeoN, with coupled regions in <code class="docutils literal notranslate"><span class="pre">multiRun</span></code>.</p>
 <p class="rubric">Modules</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -700,16 +698,16 @@ case (<code class="docutils literal notranslate"><span class="pre">multiRun</spa
 <td><p>The NeoN finite-volume discretisation behind heatConductionNeoN.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.solver.heatConductionNeoN.configs.html#module-neofoam.solver.heatConductionNeoN.configs" title="neofoam.solver.heatConductionNeoN.configs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configs</span></code></a></p></td>
-<td><p>Case configs of heatConductionNeoN: an OpenFOAM case, read through pybFoam.</p></td>
+<td><p>The case configs of heatConductionNeoN; the NeoN runtime reads the rest of the case.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.solver.heatConductionNeoN.coupled_patches.html#module-neofoam.solver.heatConductionNeoN.coupled_patches" title="neofoam.solver.heatConductionNeoN.coupled_patches"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coupled_patches</span></code></a></p></td>
-<td><p>The coupled patches of <code class="docutils literal notranslate"><span class="pre">T</span></code>: a Dirichlet-Neumann pair on NeoN patches.</p></td>
+<td><p>The coupled patches of <code class="docutils literal notranslate"><span class="pre">T</span></code>, a Dirichlet-Neumann pair on <code class="docutils literal notranslate"><span class="pre">calculated</span></code> NeoN patches.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.solver.heatConductionNeoN.create_fields.html#module-neofoam.solver.heatConductionNeoN.create_fields" title="neofoam.solver.heatConductionNeoN.create_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_fields</span></code></a></p></td>
-<td><p>3-stage initialization for the heatConductionNeoN solver.</p></td>
+<td><p>Staged initialization of heatConductionNeoN: the time loop, the NeoN runtime, <code class="docutils literal notranslate"><span class="pre">T</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.solver.heatConductionNeoN.heatConductionNeoN.html#neofoam.solver.heatConductionNeoN.heatConductionNeoN" title="neofoam.solver.heatConductionNeoN.heatConductionNeoN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">heatConductionNeoN</span></code></a></p></td>
-<td><p>A solver whose runtimes need NeoN: instantiating one brings NeoN up.</p></td>
+<td><p>Immutable solver definition.</p></td>
 </tr>
 </tbody>
 </table>

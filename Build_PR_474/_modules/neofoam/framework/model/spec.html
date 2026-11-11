@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1164,7 +1165,7 @@
 <div class="viewcode-block" id="ModelSpec.wrap_operation">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.viscosity.viscosityModel.html#neofoam.framework.model.spec.ModelSpec.wrap_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">wrap_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Wrap ``func`` with this spec's dependency resolution.</span>
+<span class="w">        </span><span class="sd">"""Wrap ``func`` with the dependency resolution of ``runtime``.</span>
 
 <span class="sd">        For ``@operation_collection`` bodies, which bypass the spec's default</span>
 <span class="sd">        operation wrapping and must wrap each exposed operation themselves.</span>
@@ -1239,11 +1240,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DependencyResolver</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The dependency resolver of a model's run: its runtime's.</span>
-
-<span class="sd">    A spec used as its own runtime (no ``dependency_resolver``) gets a fresh one,</span>
-<span class="sd">    so the spec keeps no run state.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""The runtime's dependency resolver; a fresh one for a spec used as its own runtime."""</span>
     <span class="n">resolver</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">runtime</span><span class="p">,</span> <span class="s2">"dependency_resolver"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">resolver</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolver</span><span class="p">,</span> <span class="n">DependencyResolver</span><span class="p">)</span> <span class="k">else</span> <span class="n">DependencyResolver</span><span class="p">()</span>
 </pre></div>

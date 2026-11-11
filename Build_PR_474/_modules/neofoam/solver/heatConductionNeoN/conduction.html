@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -697,14 +698,11 @@
 <div class="viewcode-block" id="ConductionProblem">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.conduction.html#neofoam.solver.heatConductionNeoN.conduction.ConductionProblem">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConductionProblem</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Transient heat conduction ``dT/dt = laplacian(alpha, T) + Q/(rho cp)``.</span>
+<span class="w">    </span><span class="sd">"""Transient heat conduction ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``.</span>
 
-<span class="sd">    ``alpha = k / (rho cp)``. The ``ddt(T)`` and ``laplacian(alpha,T)`` schemes of</span>
-<span class="sd">    ``system/fvSchemes`` (Euler, or ``steadyState`` for a steady solve). Each patch</span>
-<span class="sd">    of ``patches`` adds its terms to the right-hand side (a coupled Neumann side its</span>
-<span class="sd">    heat flux). :meth:`start_step` makes the current ``T`` the old time and</span>
-<span class="sd">    :meth:`solve` computes ``T`` one step past it, so a step can be re-solved (a</span>
-<span class="sd">    pass of the region's coupling op). One instance per run.</span>
+<span class="sd">    Each of ``patches`` adds its terms to the right-hand side. :meth:`solve`</span>
+<span class="sd">    always starts from the old time :meth:`start_step` set, so a coupling pass</span>
+<span class="sd">    can re-solve the step. One instance per run.</span>
 
 <span class="sd">    Example::</span>
 
@@ -744,9 +742,7 @@
             <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">patch</span><span class="o">.</span><span class="n">terms</span><span class="p">():</span>
                 <span class="n">equation</span> <span class="o">=</span> <span class="n">equation</span> <span class="o">-</span> <span class="n">term</span>
         <span class="n">nfb</span><span class="o">.</span><span class="n">PDESolverScalar</span><span class="p">(</span><span class="n">equation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">)</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-        <span class="c1"># OpenFOAM's fvMatrix::solve corrects the boundary of the solved field, NeoN's</span>
-        <span class="c1"># does not: without it a zeroGradient patch keeps the old face value. A coupled</span>
-        <span class="c1"># patch is ``calculated``: its values stay.</span>
+        <span class="c1"># NeoN's solve, unlike OpenFOAM's, leaves a zeroGradient patch at its old values</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
             <span class="n">patch</span><span class="o">.</span><span class="n">solved</span><span class="p">()</span></div>

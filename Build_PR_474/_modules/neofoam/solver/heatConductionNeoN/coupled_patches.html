@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -686,11 +687,9 @@
 <span class="c1"># NB: no ``from __future__ import annotations`` — ``@coupled`` reads the</span>
 <span class="c1"># ``sends`` / ``receives`` annotations as live classes.</span>
 
-<span class="sd">"""The coupled patches of ``T``: a Dirichlet-Neumann pair on NeoN patches.</span>
+<span class="sd">"""The coupled patches of ``T``, a Dirichlet-Neumann pair on ``calculated`` NeoN patches.</span>
 
-<span class="sd">A patch of ``0/T`` is coupled when it names its condition in a ``coupled``</span>
-<span class="sd">entry; its ``type`` is ``calculated``, so NeoN leaves its values to the</span>
-<span class="sd">coupling (``correct_boundary_conditions`` keeps them)::</span>
+<span class="sd">A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::</span>
 
 <span class="sd">    interface</span>
 <span class="sd">    {</span>
@@ -699,17 +698,8 @@
 <span class="sd">        value       uniform 300;</span>
 <span class="sd">    }</span>
 
-<span class="sd">- ``coupledTemperature`` (:class:`CoupledTemperature`), the Dirichlet side: its</span>
-<span class="sd">  faces take the partner's wall temperature (``set_patch_fixed_values``), it</span>
-<span class="sd">  sends the heat flux through them into its own region.</span>
-<span class="sd">- ``coupledHeatFlux`` (:class:`CoupledHeatFlux`), the Neumann side: the heat</span>
-<span class="sd">  flux into the partner leaves its own region, as an explicit source in the</span>
-<span class="sd">  cells next to its faces (NeoN sets no per-face gradient from Python); it sends</span>
-<span class="sd">  its wall temperature and, after each solve, stores it as the patch's values</span>
-<span class="sd">  (what is written).</span>
-
-<span class="sd">The heat flux is per face area, ``k dT/dn``. The points are the face centres:</span>
-<span class="sd">the partner's faces need not match.</span>
+<span class="sd">NeoN sets no per-face gradient from Python, so the Neumann side applies its heat</span>
+<span class="sd">flux as an explicit source in the cells next to its faces.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -717,35 +707,16 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">neon._neon</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>  <span class="c1"># NeoN Python bindings</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">,</span> <span class="n">coupled</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coupling</span><span class="p">,</span> <span class="n">coupled</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.regions</span><span class="w"> </span><span class="kn">import</span> <span class="n">WallHeatFlux</span><span class="p">,</span> <span class="n">WallTemperature</span><span class="p">,</span> <span class="n">coupled_entries</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_host</span><span class="p">(</span><span class="n">vector</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A NeoN vector as a numpy array on the host."""</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">vector</span><span class="o">.</span><span class="n">copy_to_host</span><span class="p">())</span>
-
-
-<div class="viewcode-block" id="WallTemperature">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.WallTemperature">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">WallTemperature</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""What the Neumann side sends: its wall temperature, per face."""</span>
-
-    <span class="n">T</span><span class="p">:</span> <span class="n">Array</span></div>
-
-
-
-<div class="viewcode-block" id="WallHeatFlux">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.WallHeatFlux">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">WallHeatFlux</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""What the Dirichlet side sends: the heat flux through its faces into its region."""</span>
-
-    <span class="n">q</span><span class="p">:</span> <span class="n">Array</span></div>
-
 
 
 <div class="viewcode-block" id="NeoNPatch">
@@ -765,7 +736,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">owners</span> <span class="o">=</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">face_owners</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">areas</span> <span class="o">=</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">face_areas</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">centres</span> <span class="o">=</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">face_centers</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
-        <span class="c1"># the conductance between a face and its cell, per face area</span>
+        <span class="c1"># per face area</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"conduction"</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">k</span> <span class="o">*</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">delta_coeffs</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cell_T</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -782,14 +753,14 @@
 <div class="viewcode-block" id="NeoNPatch.terms">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.terms">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">terms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""What the patch adds to the right-hand side of the equation of its field."""</span>
+<span class="w">        </span><span class="sd">"""The terms the patch adds to the right-hand side."""</span>
         <span class="k">return</span> <span class="p">[]</span></div>
 
 
 <div class="viewcode-block" id="NeoNPatch.solved">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.solved">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">solved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""After its field is solved (and its boundary corrected)."""</span></div>
+<span class="w">        </span><span class="sd">"""Called after the field is solved and its boundary corrected."""</span></div>
 </div>
 
 
@@ -798,11 +769,11 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledTemperature">[docs]</a>
 <span class="nd">@coupled</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledTemperature</span><span class="p">(</span><span class="n">NeoNPatch</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The Dirichlet side: its faces take the partner's wall temperature, it sends its heat flux."""</span>
+<span class="w">    </span><span class="sd">"""The Dirichlet side: takes the partner's wall temperature, sends its heat flux."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_wall_T</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wall_T</span><span class="p">())</span>  <span class="c1"># fixed at its value in 0/T until the partner sends</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_wall_T</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wall_T</span><span class="p">())</span>
         <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">coordinates</span>
@@ -823,18 +794,14 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux">[docs]</a>
 <span class="nd">@coupled</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledHeatFlux</span><span class="p">(</span><span class="n">NeoNPatch</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The Neumann side: the heat flux into the partner's region leaves its own; it sends its wall</span>
-<span class="sd">    temperature."""</span>
+<span class="w">    </span><span class="sd">"""The Neumann side: takes the partner's heat flux, sends its wall temperature."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="n">rt</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"neon_runtime"</span><span class="p">]</span>
-        <span class="c1"># dT/dt gains q A / (rho cp V) in a cell from the heat flux q through its face</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">capacities</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"conduction"</span><span class="p">]</span><span class="o">.</span><span class="n">rho_cp</span> <span class="o">*</span> <span class="n">_host</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="o">.</span><span class="n">cell_volumes</span><span class="p">)</span>
-        <span class="c1"># the heat flux through each face into the region; its source in the cells.</span>
-        <span class="c1"># It starts as the flux its value in 0/T gives: the wall temperature it sends</span>
-        <span class="c1"># until the partner's heat flux arrives is that value.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_uniform_volume_field</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"heatIn(</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="c1"># until the partner sends, the heat flux its value in 0/T gives</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_heat_in</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">wall_T</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_T</span><span class="p">()))</span>
         <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
@@ -856,11 +823,9 @@
 <div class="viewcode-block" id="CoupledHeatFlux.solved">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.solved">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">solved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Store the wall temperature it sends as the face values of the field, so the</span>
-<span class="sd">        written field holds it. Only the face values: the equation reads the patch from</span>
-<span class="sd">        the boundary's refValue / valueFraction / refGrad, which stay (the heat flux is</span>
-<span class="sd">        the source). Face by face: the only write into a part of the boundary values</span>
-<span class="sd">        NeoN binds, on any executor."""</span>
+<span class="w">        </span><span class="sd">"""Store the sent wall temperature as the face values, so the written ``T`` holds it."""</span>
+        <span class="c1"># face by face: the only write into part of the boundary values NeoN binds on any</span>
+        <span class="c1"># executor; refValue / refGrad stay, the equation reads the flux from the source</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">boundary_data_value</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">face</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">stop</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">wall_T</span><span class="p">()):</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">fill_range</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">face</span><span class="p">,</span> <span class="n">face</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
@@ -885,35 +850,18 @@
     <span class="s2">"coupledHeatFlux"</span><span class="p">:</span> <span class="n">CoupledHeatFlux</span><span class="p">,</span>
 <span class="p">}</span>
 
+<span class="n">_PATCH_TYPES</span> <span class="o">=</span> <span class="p">{</span><span class="n">condition</span><span class="p">:</span> <span class="s2">"calculated"</span> <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">COUPLED_PATCHES</span><span class="p">}</span>
+
 
 <div class="viewcode-block" id="coupled_patches">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.coupled_patches">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">coupled_patches</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">NeoNPatch</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The coupled patches of ``field``: the ``coupled`` entries of its start-time file.</span>
-
-<span class="sd">    Raises ``ValueError`` for a condition it does not know, or a coupled patch not</span>
-<span class="sd">    ``calculated``. A coupled patch in a region the case does not couple raises</span>
-<span class="sd">    from ``Coupling.add``.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""The coupled patches of ``field``, from the ``coupled`` entries of its start-time file."""</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"solution_loop"</span><span class="p">]</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span> <span class="o">/</span> <span class="n">field</span>
-    <span class="n">boundary</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">)</span>
-    <span class="n">patches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NeoNPatch</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">boundary</span><span class="o">.</span><span class="n">toc</span><span class="p">()):</span>
-        <span class="n">entry</span> <span class="o">=</span> <span class="n">boundary</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"coupled"</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get_word</span><span class="p">(</span><span class="s2">"coupled"</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">COUPLED_PATCHES</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: patch </span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2"> is coupled as </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">COUPLED_PATCHES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get_word</span><span class="p">(</span><span class="s2">"type"</span><span class="p">))</span> <span class="o">!=</span> <span class="s2">"calculated"</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: the coupled patch </span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2"> has type </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">get_word</span><span class="p">(</span><span class="s1">'type'</span><span class="p">)</span><span class="si">}</span><span class="s2">; a coupled "</span>
-                <span class="s2">"patch is 'calculated' (its values come from the coupling)"</span>
-            <span class="p">)</span>
-        <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">COUPLED_PATCHES</span><span class="p">[</span><span class="n">name</span><span class="p">](</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">patches</span></div>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">COUPLED_PATCHES</span><span class="p">[</span><span class="n">condition</span><span class="p">](</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">coupled_entries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_PATCH_TYPES</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">]</span></div>
 
 </pre></div>
         </article>

@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -683,12 +684,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Case configs of heatConductionNeoN: an OpenFOAM case, read through pybFoam.</span>
-
-<span class="sd">The mesh (``constant/polyMesh``), ``0/T``, ``system/fvSchemes`` and</span>
-<span class="sd">``system/fvSolution`` are read by the NeoN runtime; ``system/controlDict`` and</span>
-<span class="sd">``constant/thermalProperties`` by these configs.</span>
-<span class="sd">"""</span>
+<span class="sd">"""The case configs of heatConductionNeoN; the NeoN runtime reads the rest of the case."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
 
@@ -711,9 +707,6 @@
 <span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/thermalProperties"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ThermalPropertiesConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""``constant/thermalProperties`` — constant solid properties (SI units).</span>
-
-<span class="sd">    The diffusivity is ``alpha = k / (rho cp)``; the heat flux a coupled patch</span>
-<span class="sd">    exchanges is ``k dT/dn``.</span>
 
 <span class="sd">    Example::</span>
 

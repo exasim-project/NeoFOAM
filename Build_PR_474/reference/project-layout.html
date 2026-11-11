@@ -527,6 +527,7 @@
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -695,8 +696,7 @@ the linked reference pages for the full API.</p>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">io/</span></code></dt><dd><p>Binds config classes to files (<code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> + <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy</span></code>), writes and
 deep-merges case files, and exposes the frontend-agnostic config-introspection
-surface (<code class="docutils literal notranslate"><span class="pre">schema.py</span></code>). <code class="docutils literal notranslate"><span class="pre">load</span></code>/<code class="docutils literal notranslate"><span class="pre">save</span></code> take an optional <code class="docutils literal notranslate"><span class="pre">region</span></code>, which
-reads a multi-region case’s <code class="docutils literal notranslate"><span class="pre">constant/&lt;region&gt;/...</span></code> (OpenFOAM.org layout).</p>
+surface (<code class="docutils literal notranslate"><span class="pre">schema.py</span></code>).</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">fields/</span></code></dt><dd><p>Boundary-condition types, <code class="docutils literal notranslate"><span class="pre">FieldValue</span></code> scalar/vector values, and the
 synthesised <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> field schemas.</p>
@@ -716,12 +716,10 @@ and <code class="docutils literal notranslate"><span class="pre">InitializerBuil
 <li><p><code class="docutils literal notranslate"><span class="pre">graph/</span></code> — operation-graph sort, resolution, validation, and
 visualization, and the loops that wrap fields (<code class="docutils literal notranslate"><span class="pre">wrapping</span></code>). See
 <a class="reference internal" href="api/neofoam.framework.graph.html#module-neofoam.framework.graph" title="neofoam.framework.graph"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.framework.graph</span></code></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">coupling/</span></code> — <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> boundary conditions, the <code class="docutils literal notranslate"><span class="pre">Exchange</span></code> of a
-side with its <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code> (identity, nearest-neighbor), a <code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code> per
-region, the leader’s <code class="docutils literal notranslate"><span class="pre">CouplingController</span></code>, the point-to-point
-<code class="docutils literal notranslate"><span class="pre">Transport</span></code> between regions, a thread per region (<code class="docutils literal notranslate"><span class="pre">run_regions</span></code>),
-and the strategies (constant/Aitken relaxation, relative
-convergence), each a <code class="docutils literal notranslate"><span class="pre">PluginSystem</span></code> family. See <a class="reference internal" href="api/neofoam.framework.coupling.html#module-neofoam.framework.coupling" title="neofoam.framework.coupling"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.framework.coupling</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">coupling/</span></code> — <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> boundary conditions, the <code class="docutils literal notranslate"><span class="pre">Link</span></code> of two
+patches, a <code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code> per region and node, the <code class="docutils literal notranslate"><span class="pre">Transport</span></code> between
+regions and the mapping, acceleration and convergence families. See
+<a class="reference internal" href="api/neofoam.framework.coupling.html#module-neofoam.framework.coupling" title="neofoam.framework.coupling"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.framework.coupling</span></code></a>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">validation/</span></code> — case-correctness checks: a registry of isolated checks
 with a structurally honest <code class="docutils literal notranslate"><span class="pre">ok</span></code>.</p></li>
 </ul>
@@ -732,11 +730,14 @@ measurement registry; time-step rules are opt-in models.</p>
 <dt><code class="docutils literal notranslate"><span class="pre">solver/incompressibleFluid/</span></code></dt><dd><p>The reference solver: its <code class="docutils literal notranslate"><span class="pre">SolverSpec</span></code>, field wiring, and the
 PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">solver/multiRun/</span></code></dt><dd><p>Several solvers, one per region, in one case (OpenFOAM.org <code class="docutils literal notranslate"><span class="pre">foamMultiRun</span></code>
-layout): <code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code> lists <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code> and each region
-reads <code class="docutils literal notranslate"><span class="pre">constant/&lt;region&gt;/</span></code>, <code class="docutils literal notranslate"><span class="pre">0/&lt;region&gt;/</span></code>. A launcher: every region runs
-its own graph and time loop on its own thread; <code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>
-lists the <code class="docutils literal notranslate"><span class="pre">exchanges</span></code> between patches, whose data goes through a transport.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">solver/multiRun/</span></code></dt><dd><p>Several solvers, one per region, in one case: <code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code>
+lists <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code>, each region reads <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/</span></code>, and every region
+runs on its own thread; <code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code> lists the
+<code class="docutils literal notranslate"><span class="pre">exchanges</span></code> and <code class="docutils literal notranslate"><span class="pre">couplings</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">solver/regions.py</span></code></dt><dd><p>What the solvers share to run as the regions of a <code class="docutils literal notranslate"><span class="pre">multiRun</span></code> case, such as
+the case’s <code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">ControlDictConfig</span></code>), so a
+single-region solver does not import <code class="docutils literal notranslate"><span class="pre">multiRun</span></code>.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">turbulence/</span></code></dt><dd><p>The momentum-transport plugin family: the bundled models (<code class="docutils literal notranslate"><span class="pre">models/</span></code>) and
 <code class="docutils literal notranslate"><span class="pre">select_turbulence_model</span></code>, which builds the native-NeoN or the pybFoam

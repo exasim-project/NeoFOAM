@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -683,37 +684,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""The coupling of a region: its coupling op.</span>
+<span class="sd">"""A region's coupling op: the loop of one coupling node in the region's graph.</span>
 
-<span class="sd">Vocabulary:</span>
-
-<span class="sd">- a **coupled side** (:class:`~neofoam.framework.coupling.data.ExchangeSide`) is</span>
-<span class="sd">  what a boundary condition declares on its patch: what it sends and receives</span>
-<span class="sd">  (one pydantic model each), and its points; an **exchange**</span>
-<span class="sd">  (:class:`~neofoam.framework.coupling.data.Exchange`) joins it with the side of</span>
-<span class="sd">  another region (its partner), its mapping maps the partner's data onto the</span>
-<span class="sd">  side's points (:mod:`~neofoam.framework.coupling.data`);</span>
-<span class="sd">- a **coupling node** (:class:`~neofoam.framework.coupling.CouplingNode`) is a</span>
-<span class="sd">  named coupling loop over some exchanges; a region's **coupling op**</span>
-<span class="sd">  (:class:`CouplingOp`, ``&lt;region&gt;.&lt;node&gt;``) is the node's loop in the region:</span>
-<span class="sd">  it wraps where the node's placement says (by default the whole body of the</span>
-<span class="sd">  top scope, or of the node before), and the resolver nests the operations that</span>
-<span class="sd">  solve them inside it. At the start of each pass its loop test hands every side</span>
-<span class="sd">  of the region in the node what its partner sent, mapped onto the side's points;</span>
-<span class="sd">- the **leader** of a node, the last region in stepping order of the regions</span>
-<span class="sd">  the node's exchanges connect, owns the node's **controller**</span>
-<span class="sd">  (:class:`~neofoam.framework.coupling.controller.CouplingController`), which</span>
-<span class="sd">  decides after each pass whether the node's data converged and which pass is</span>
-<span class="sd">  the node's **final** one. Every region runs the same passes, the final one</span>
-<span class="sd">  marked final on its loop entry (``LoopEntry.final``), and leaves the node's</span>
-<span class="sd">  loop after it;</span>
-<span class="sd">- all data between regions goes through the region's</span>
-<span class="sd">  :class:`~neofoam.framework.coupling.transport.Transport`: no region reads</span>
-<span class="sd">  another region's objects.</span>
-
-<span class="sd">A boundary condition declares its side with :func:`~neofoam.framework.coupling.coupled`,</span>
-<span class="sd">which adds itself to its region's coupling model</span>
-<span class="sd">(:class:`~neofoam.framework.coupling.Coupling`); the model builds the coupling op.</span>
+<span class="sd">Each region runs the same passes of a node: at the start of each pass its op's</span>
+<span class="sd">loop test hands every side what its partner sent, mapped onto the side's</span>
+<span class="sd">points, as the node's leader decided (fresh from this pass or carried). All</span>
+<span class="sd">data between regions goes through the transport; no region reads another's</span>
+<span class="sd">objects.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -724,114 +701,76 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingController</span><span class="p">,</span> <span class="n">GroupSide</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span><span class="p">,</span> <span class="n">Exchange</span><span class="p">,</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">_array_names</span><span class="p">,</span> <span class="n">_arrays</span><span class="p">,</span> <span class="n">_check_received</span><span class="p">,</span> <span class="n">_kinds</span><span class="p">,</span> <span class="n">_sent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span><span class="p">,</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">_check_received</span><span class="p">,</span> <span class="n">_sent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundMapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span><span class="p">,</span> <span class="n">Tag</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.region</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">RegionCoupling</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.region</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">Link</span><span class="p">,</span> <span class="n">RegionCoupling</span>
 
 
-<span class="c1"># The loops enclosing a region's coupling op, outermost first, as (name, iteration):</span>
-<span class="c1"># a coupling op by its node's name, other loops by their names; iteration from 0.</span>
+<span class="c1"># the loops enclosing a coupling op, outermost first: (name, iteration from 0)</span>
 <span class="n">_Loops</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_path</span><span class="p">(</span><span class="n">names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""``time_loop &gt; ab``: the names of enclosing loops, ``top`` for none."""</span>
+<span class="w">    </span><span class="sd">"""``time_loop &gt; ab``, or ``top``."""</span>
     <span class="k">return</span> <span class="s2">" &gt; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"top"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_state</span><span class="p">(</span><span class="n">loops</span><span class="p">:</span> <span class="n">_Loops</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""``time_loop#3 &gt; ab#1``: ``loops`` with their passes (from 1), ``top`` for none."""</span>
+<span class="w">    </span><span class="sd">"""``time_loop#3 &gt; ab#1`` (passes from 1), or ``top``."""</span>
     <span class="k">return</span> <span class="s2">" &gt; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">#</span><span class="si">{</span><span class="n">iteration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="n">loops</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"top"</span>
 
 
-<span class="c1"># The leader's decision for one region: another pass?, is it the final one?, what</span>
-<span class="c1"># each of its sides receives, by patch: the carried data, or None: what its partner</span>
-<span class="c1"># sends in this pass; and the patches whose partner receives that (the region sends</span>
-<span class="c1"># their data at its next loop test, after the pass).</span>
+<span class="c1"># the leader's decision for a region: another pass?, final?, by patch the carried</span>
+<span class="c1"># data or None (receive it fresh), and the patches whose data to send fresh</span>
 <span class="n">_Decision</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]],</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
 
 
 <div class="viewcode-block" id="CouplingOp">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.loop.html#neofoam.framework.coupling.loop.CouplingOp">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingOp</span><span class="p">(</span><span class="n">IterativeOp</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A region's coupling node: a loop whose test exchanges the node's sides' data, per pass.</span>
+<span class="w">    </span><span class="sd">"""A region's coupling node: a loop whose test exchanges the node's sides' data.</span>
 
-<span class="sd">    Built from what the region knows of the case's coupling (``coupling``: its</span>
-<span class="sd">    exchanges, the group's regions, its transport), the ``node`` (its exchanges)</span>
-<span class="sd">    and the region's coupled ``sides`` of the node (the region's</span>
-<span class="sd">    :class:`~neofoam.framework.coupling.Coupling` builds it, each side on an</span>
-<span class="sd">    exchange of the node); raises ``ValueError`` when a patch has two sides, or</span>
-<span class="sd">    an exchange of the node in the region none. The resolver places it</span>
-<span class="sd">    as the node's placement for the region says (``metadata.wraps``). Its label</span>
-<span class="sd">    is ``&lt;region&gt;.&lt;node&gt;``; its messages to other regions are tagged by node</span>
-<span class="sd">    (``&lt;node&gt;/sides``, ``&lt;node&gt;/pass``, ``&lt;node&gt;/decision``) or by exchange</span>
-<span class="sd">    (``side:&lt;exchange&gt;``, ``data:&lt;exchange&gt;``).</span>
-
-<span class="sd">    A node runs equally often in all its regions, so it sits in the same loops</span>
-<span class="sd">    in each: the first test tells the leader the names of the loops enclosing</span>
-<span class="sd">    the op (``Context.loops``, a coupling op by its node's name), and every</span>
-<span class="sd">    test their passes; the leader raises ``ValueError`` when they differ.</span>
-
-<span class="sd">    Its loop test runs before each pass. The first test ever exchanges the</span>
-<span class="sd">    sides' models and points with the partner regions and checks each exchange.</span>
-<span class="sd">    Each test then sends what every side sends now to the node's leader, and to</span>
-<span class="sd">    the partner of every side the leader's decision before named (the partner</span>
-<span class="sd">    receives it fresh, in the pass of that decision); the leader decides for the</span>
-<span class="sd">    node and tells every region to go on or stop, and whether the pass is the</span>
-<span class="sd">    node's final one, which the test marks on the loop's entry</span>
-<span class="sd">    (``Context.mark_final``: an operation marked ``final`` runs in it). On</span>
-<span class="sd">    another pass every side gets what the leader decided: what its partner sends</span>
-<span class="sd">    at its next test (fresh), or what the leader carried, mapped onto its points</span>
-<span class="sd">    with the exchange's mapping, validated as its ``receives`` model, reported to</span>
-<span class="sd">    the execution observer (``coupling_exchanged``) and handed to its</span>
-<span class="sd">    ``receive``. Not thread safe.</span>
+<span class="sd">    Labelled ``&lt;region&gt;.&lt;node&gt;``; placed by the node's placement for the region.</span>
+<span class="sd">    The first test exchanges the sides' models and points with the partners and</span>
+<span class="sd">    checks them; every test sends the leader what the sides send, gets its</span>
+<span class="sd">    decision, marks the final pass and hands each side its mapped data.</span>
+<span class="sd">    Raises ``ValueError`` when a patch has two sides, an exchange none, or the</span>
+<span class="sd">    regions' ops sit in different loops or times. Not thread safe.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">RegionCoupling</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ExchangeSide</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_test</span><span class="p">)</span>
-        <span class="c1">#: The region of the op.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">region</span>
-        <span class="c1">#: The coupling node of the op.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">node</span> <span class="o">=</span> <span class="n">node</span>
-        <span class="c1">#: The name of the operation: ``&lt;region&gt;.&lt;node&gt;``.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span> <span class="o">=</span> <span class="n">coupling</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">transport</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_links</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">node_links</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="c1"># the regions of the node, in stepping order; the last one leads it</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">node_group</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_leader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_exchanges</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]:</span> <span class="n">Exchange</span><span class="p">(</span>
-                <span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">link</span><span class="o">.</span><span class="n">partner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">),</span> <span class="n">link</span><span class="o">.</span><span class="n">mapping</span>
-            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_by_patch</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]:</span> <span class="n">link</span>
             <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_links</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sides</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">()</span>
-        <span class="c1"># set at the first test: the bound mapping per patch, and the leader's controller</span>
+        <span class="c1"># set at the first test</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mappers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BoundMapping</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CouplingController</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="c1"># the patches whose data the partner receives fresh: the leader's last decision</span>
+        <span class="c1"># the patches whose data the partner receives fresh, as the leader last decided</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Raise ``ValueError`` unless every exchange of the node has exactly one side.</span>
-
-<span class="sd">        That every side has an exchange of the node :meth:`Coupling.add</span>
-<span class="sd">        &lt;neofoam.framework.coupling.Coupling.add&gt;` checked, and</span>
-<span class="sd">        :meth:`Coupling.operations &lt;neofoam.framework.coupling.Coupling.operations&gt;`</span>
-<span class="sd">        hands each node the sides on its exchanges' patches.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` unless every exchange of the node has exactly one side."""</span>
         <span class="n">patches</span> <span class="o">=</span> <span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">patches</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -839,10 +778,10 @@
                     <span class="sa">f</span><span class="s2">"two coupled sides on patch </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">; an exchange joins patches "</span>
                     <span class="s2">"with one coupled side each"</span>
                 <span class="p">)</span>
-        <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exchanges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_patch</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">patch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">patches</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' connects </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">, which has no "</span>
+                    <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' connects </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">, which has no "</span>
                     <span class="s2">"coupled side (no coupled boundary condition on that patch)"</span>
                 <span class="p">)</span>
 
@@ -853,13 +792,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_leader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether this coupling op decides for its node (its region steps last of the node's)."""</span>
+<span class="w">        </span><span class="sd">"""Whether this op decides for its node: its region steps last of the node's."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leader</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">leader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The region that decides for the node: the last of its regions in stepping order."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leader</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -868,29 +802,26 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">controller</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CouplingController</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The leader's controller, built at its first loop test; ``None`` elsewhere."""</span>
+<span class="w">        </span><span class="sd">"""The leader's controller, built at its first loop test; ``None`` in other regions."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span>
 
-<div class="viewcode-block" id="CouplingOp.exchange_of">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.loop.html#neofoam.framework.coupling.loop.CouplingOp.exchange_of">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">exchange_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Exchange</span><span class="p">:</span>
+<div class="viewcode-block" id="CouplingOp.link_of">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.loop.html#neofoam.framework.coupling.loop.CouplingOp.link_of">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">link_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Link</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The exchange ``side`` belongs to."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exchanges</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_patch</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="CouplingOp.partner">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.loop.html#neofoam.framework.coupling.loop.CouplingOp.partner">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">partner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""``&lt;region&gt;.&lt;patch&gt;`` of the side ``side`` receives from."""</span>
-        <span class="n">region</span><span class="p">,</span> <span class="n">patch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">partner</span>
+        <span class="n">region</span><span class="p">,</span> <span class="n">patch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">partner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">"</span></div>
 
 
-    <span class="c1"># --- the loop test ------------------------------------------------------------------------</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">loops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enclosing</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-        <span class="c1"># the passes the op ran in this time step: its own entry on ctx.loops counts them</span>
         <span class="n">iteration</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">iteration</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">(</span><span class="n">loops</span><span class="p">)</span>
@@ -898,8 +829,8 @@
         <span class="n">current</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">:</span> <span class="n">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">patch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">:</span>
-                <span class="n">exchange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">current</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">])</span>
+                <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">partner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">current</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">])</span>
         <span class="n">go_on</span><span class="p">,</span> <span class="n">final</span><span class="p">,</span> <span class="n">decided</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decide</span><span class="p">(</span>
             <span class="n">current</span><span class="p">,</span> <span class="n">time</span> <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">loops</span><span class="p">,</span> <span class="n">iteration</span>
         <span class="p">)</span>
@@ -912,12 +843,7 @@
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_enclosing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Loops</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The loops enclosing the op, outermost first: ``ctx.loops`` without its own entry.</span>
-
-<span class="sd">        The op runs its test with its own entry last on ``ctx.loops``. A</span>
-<span class="sd">        coupling op of the region (``&lt;region&gt;.&lt;node&gt;``) is named by its node, so</span>
-<span class="sd">        that the regions' loops compare.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""``ctx.loops`` without the op's own entry; coupling ops by node name, to compare."""</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">nodes</span><span class="p">}</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">entry</span><span class="o">.</span><span class="n">iteration</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loops</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -930,57 +856,45 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loops</span><span class="p">:</span> <span class="n">_Loops</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Tell each partner its side (models, points), the leader the region's sides; check.</span>
-
-<span class="sd">        The leader also gets the names of the ``loops`` enclosing the op. Raises</span>
-<span class="sd">        ``ValueError`` when a side does not receive what its partner sends or its</span>
-<span class="sd">        mapping cannot map between their points; in the leader, when the regions'</span>
-<span class="sd">        ops sit in different loops or the controller cannot be built.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Tell each partner its side and the leader the region's sides and loops; check them."""</span>
         <span class="n">path</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_iteration</span> <span class="ow">in</span> <span class="n">loops</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
-            <span class="n">exchange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
+            <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
             <span class="n">announced</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"label"</span><span class="p">:</span> <span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
                 <span class="s2">"model"</span><span class="p">:</span> <span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
-                <span class="s2">"kinds"</span><span class="p">:</span> <span class="n">_kinds</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="p">),</span>
+                <span class="s2">"fields"</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="o">.</span><span class="n">model_fields</span><span class="p">),</span>
                 <span class="s2">"points"</span><span class="p">:</span> <span class="n">side</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
             <span class="p">}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">side</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">announced</span><span class="p">)</span>
-        <span class="n">sides</span> <span class="o">=</span> <span class="p">[(</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">,</span> <span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">_array_names</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="p">))</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">partner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">side</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">announced</span><span class="p">)</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="p">[(</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">,</span> <span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leader</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_leader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">(</span><span class="s2">"sides"</span><span class="p">),</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sides</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
-            <span class="n">exchange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
-            <span class="n">announced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_receive</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">side</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
-            <span class="n">_check_received</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">announced</span><span class="p">,</span> <span class="n">side</span><span class="p">)</span>
+            <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
+            <span class="n">announced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_receive</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">partner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">side</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">_check_received</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">announced</span><span class="p">,</span> <span class="n">side</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">mapper</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">announced</span><span class="p">[</span><span class="s2">"points"</span><span class="p">],</span> <span class="n">side</span><span class="o">.</span><span class="n">coordinates</span><span class="p">)</span>
+                <span class="n">mapper</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">announced</span><span class="p">[</span><span class="s2">"points"</span><span class="p">],</span> <span class="n">side</span><span class="o">.</span><span class="n">coordinates</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">announced</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">announced</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mappers</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapper</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leader</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_node_sides</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sides</span><span class="p">),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                <span class="n">node</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span> <span class="o">=</span> <span class="n">CouplingController</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_node_sides</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sides</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sides"</span><span class="p">,</span> <span class="s2">"pass"</span><span class="p">,</span> <span class="s2">"decision"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The transport tag ``&lt;node&gt;/&lt;what&gt;`` of the node's messages (:meth:`Tag.node`)."""</span>
+<span class="w">        </span><span class="sd">"""The tag of the node's message ``what``."""</span>
         <span class="k">return</span> <span class="n">Tag</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">what</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_node_sides</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span> <span class="n">own</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span> <span class="n">own</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The leader: the sides of every region of the node, as the regions told it.</span>
-
-<span class="sd">        Raises ``ValueError`` when the regions' ops sit in different loops (``path``:</span>
-<span class="sd">        the names of the loops enclosing the leader's).</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""The leader: every region's sides; ``ValueError`` when their loops differ."""</span>
         <span class="n">received</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">region</span><span class="p">:</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">own</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">region</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
@@ -1000,23 +914,15 @@
         <span class="p">}</span>
         <span class="n">exchange</span> <span class="o">=</span> <span class="p">{</span><span class="n">end</span><span class="p">:</span> <span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_links</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="n">GroupSide</span><span class="p">(</span>
-                <span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">other</span><span class="p">[(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">)],</span> <span class="n">exchange</span><span class="p">[(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">)]</span>
-            <span class="p">)</span>
+            <span class="n">GroupSide</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">other</span><span class="p">[(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">)],</span> <span class="n">exchange</span><span class="p">[(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">)])</span>
             <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="p">(</span><span class="n">_path</span><span class="p">,</span> <span class="n">sides</span><span class="p">)</span> <span class="ow">in</span> <span class="n">received</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">arrays</span> <span class="ow">in</span> <span class="n">sides</span>
+            <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">sides</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_decide</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Data</span><span class="p">],</span> <span class="n">time</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">loops</span><span class="p">:</span> <span class="n">_Loops</span><span class="p">,</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Decision</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The node leader's decision for this region, from what its sides send now (by patch).</span>
-
-<span class="sd">        ``time`` is the region's time as a time step's coupling starts, else</span>
-<span class="sd">        ``None``; ``loops`` the loops enclosing the op, with their passes;</span>
-<span class="sd">        ``iteration`` the passes the op ran in this time step. The leader raises</span>
-<span class="sd">        ``ValueError`` when the regions' times or loops' passes differ.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""The leader's decision for this region; the leader checks the regions' times and loops."""</span>
         <span class="n">leader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leader</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leader</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">leader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">(</span><span class="s2">"pass"</span><span class="p">),</span> <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">loops</span><span class="p">,</span> <span class="n">current</span><span class="p">))</span>
@@ -1052,7 +958,6 @@
             <span class="n">iteration</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">received</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">region</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">}</span>
-        <span class="c1"># the patches of each region whose partner receives their data fresh</span>
         <span class="n">fresh</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">region</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">controller</span><span class="o">.</span><span class="n">sides</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1071,17 +976,12 @@
         <span class="k">return</span> <span class="n">decisions</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_hand_over</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">decided</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Map what the partner of ``side`` sent onto its points and hand it over.</span>
-
-<span class="sd">        ``decided`` is the leader's decision: the carried data by patch, or</span>
-<span class="sd">        ``None`` where the partner's data of this pass is to be received.</span>
-<span class="sd">        """</span>
-        <span class="n">exchange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Map what the partner of ``side`` sent (or the carried data) onto it and hand it over."""</span>
+        <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">link_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">decided</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_receive</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
-        <span class="n">mapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mappers</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">](</span><span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">mapped</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
-        <span class="n">received</span> <span class="o">=</span> <span class="n">side</span><span class="o">.</span><span class="n">receives</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="o">**</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">mapped</span><span class="p">})</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_receive</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">partner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Tag</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">received</span> <span class="o">=</span> <span class="n">side</span><span class="o">.</span><span class="n">receives</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mappers</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">](</span><span class="n">data</span><span class="p">))</span>
         <span class="n">observer</span> <span class="o">=</span> <span class="n">execution_observer</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">observer</span><span class="o">.</span><span class="n">coupling_exchanged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">received</span><span class="p">)</span>

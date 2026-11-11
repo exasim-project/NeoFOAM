@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -683,19 +684,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""3-stage initialization for the heatConductionNeoN solver.</span>
-
-<span class="sd">LOAD    → the time loop, the field writer and the thermal properties of the case</span>
-<span class="sd">BUILD   → lazy InitSteps for the NeoN runtime, the mesh, ``fields.T`` and</span>
-<span class="sd">          ``models.conduction`` (:class:`~.conduction.ConductionProblem`)</span>
-
-<span class="sd">The NeoN ``RunTime`` is built as in ``incompressibleFluidNeoN``: a pybFoam</span>
-<span class="sd">``Foam::Time`` on the case, the adapter (``create_adapter_run_time``) on it, its</span>
-<span class="sd">OpenFOAM ``fvSchemes`` / ``fvSolution`` mapped to NeoN once. Its mesh is the</span>
-<span class="sd">case's default region (``constant/polyMesh``): a region of a multi-region case</span>
-<span class="sd">is a case directory of its own (see :func:`region_case_dir`), stepping on the</span>
-<span class="sd">times of the case's ``system/controlDict.yaml``.</span>
-<span class="sd">"""</span>
+<span class="sd">"""Staged initialization of heatConductionNeoN: the time loop, the NeoN runtime, ``T``."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
@@ -719,133 +708,122 @@
     <span class="n">neon_loop_backend_steps</span><span class="p">,</span>
     <span class="n">solutionLoop</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.multiRun.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControlDictConfig</span> <span class="k">as</span> <span class="n">CaseControlDictConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.neon_runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeoNControlConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.regions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControlDictConfig</span> <span class="k">as</span> <span class="n">CaseControlDictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.regions</span><span class="w"> </span><span class="kn">import</span> <span class="n">region_case_dir</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conduction</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConductionProblem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControlDictConfig</span><span class="p">,</span> <span class="n">ThermalPropertiesConfig</span>
 
 
-<div class="viewcode-block" id="region_case_dir">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.create_fields.html#neofoam.solver.heatConductionNeoN.create_fields.region_case_dir">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">region_case_dir</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The case directory of ``region``: ``&lt;region&gt;/`` of the working directory, or ``.``.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_time_models</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The time loop and writer: on the case's ``controlDict.yaml`` for a region."""</span>
+    <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">solutionLoop</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">),</span> <span class="n">fieldWriter</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">CaseControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">solutionLoop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"solutionLoop_main"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">times</span><span class="p">),</span>
+        <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">fieldWriter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"fieldWriter_main"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">times</span><span class="p">),</span>
+    <span class="p">)</span>
 
-<span class="sd">    NeoFOAM's runtime reads the mesh of the default region only</span>
-<span class="sd">    (``constant/polyMesh``), so a region of a multi-region case is an OpenFOAM</span>
-<span class="sd">    case of its own: ``&lt;region&gt;/{0,constant,system}``, next to the case's</span>
-<span class="sd">    ``system/controlDict.yaml`` (``regionSolvers``) and ``system/regionCoupling.yaml``.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">region</span><span class="p">)</span> <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span></div>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_runtime_steps</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The argList, ``Foam::Time`` and NeoN runtime on ``case_dir``, and its mesh."""</span>
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">NeoNControlConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span><span class="o">.</span><span class="n">executor</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_neon_runtime</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">rt</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_adapter_run_time</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">],</span> <span class="n">executor</span><span class="p">)</span>
+        <span class="n">rt</span><span class="o">.</span><span class="n">fv_schemes_dict</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">map_fv_schemes</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">fv_schemes_dict</span><span class="p">)</span>
+        <span class="n">nfb</span><span class="o">.</span><span class="n">map_solver_settings</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"solvers"</span><span class="p">),</span> <span class="s2">"T"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rt</span>
+
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">lazy</span><span class="p">(</span><span class="s2">"_arg_list"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">pyf</span><span class="o">.</span><span class="n">argList</span><span class="p">([</span><span class="o">*</span><span class="n">argv</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)])),</span>
+        <span class="c1"># Foam::Time keeps a raw reference to the argList: both live for the run</span>
+        <span class="n">lazy</span><span class="p">(</span><span class="s2">"_foam_time"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_arg_list"</span><span class="p">]),</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_arg_list"</span><span class="p">]),</span>
+        <span class="n">lazy</span><span class="p">(</span><span class="s2">"_neon_runtime"</span><span class="p">,</span> <span class="n">create_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]),</span>
+        <span class="n">init_model</span><span class="p">(</span><span class="s2">"neon_runtime"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]),</span>
+        <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]),</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_steps</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The init steps on the loaded ``core_models``."""</span>
+    <span class="n">solution_loop_model</span><span class="p">,</span> <span class="n">field_writer_model</span><span class="p">,</span> <span class="n">_control</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">core_models</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">inject_writer_hook</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">NeoNWriteHook</span><span class="p">:</span>
+        <span class="n">hook</span> <span class="o">=</span> <span class="n">NeoNWriteHook</span><span class="p">(</span><span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">scalar_names</span><span class="o">=</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,),</span> <span class="n">vector_names</span><span class="o">=</span><span class="p">())</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="s2">"models.writer"</span><span class="p">]</span><span class="o">.</span><span class="n">hook</span> <span class="o">=</span> <span class="n">hook</span>
+        <span class="k">return</span> <span class="n">hook</span>
+
+    <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_runtime_steps</span><span class="p">(</span><span class="n">argv</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">))</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">(</span>
+        <span class="p">[(</span><span class="s2">"solution_loop_model"</span><span class="p">,</span> <span class="n">solution_loop_model</span><span class="p">),</span> <span class="p">(</span><span class="s2">"field_writer_model"</span><span class="p">,</span> <span class="n">field_writer_model</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_loop_backend_steps</span><span class="p">())</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">field</span><span class="p">(</span>
+            <span class="s2">"T"</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_scalar_volume_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="s2">"T"</span><span class="p">),</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span>
+            <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">init_model</span><span class="p">(</span>
+            <span class="s2">"conduction"</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ConductionProblem</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.T"</span><span class="p">],</span> <span class="n">properties</span><span class="p">),</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.T"</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">init_model</span><span class="p">(</span><span class="s2">"writer_hook"</span><span class="p">,</span> <span class="n">inject_writer_hook</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.writer"</span><span class="p">,</span> <span class="s2">"_neon_runtime"</span><span class="p">])</span>
+    <span class="p">)</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">init_model</span><span class="p">(</span>
+            <span class="s2">"step_reporter"</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]</span><span class="o">.</span><span class="n">printExecutionTime</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">init_model</span><span class="p">(</span>
+            <span class="s2">"solutionLoop"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">solution_loop_model</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.solution_loop"</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="create_init">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.create_fields.html#neofoam.solver.heatConductionNeoN.create_fields.create_init">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build a fresh :class:`StagedInitRunner` for heatConductionNeoN on ``region``'s case.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A fresh :class:`StagedInitRunner` of heatConductionNeoN on ``region``'s case.</span>
 
-<span class="sd">    A region of a multi-region case steps on the case's times, as every region of</span>
-<span class="sd">    a ``multiRun`` case does: its time loop and writer read</span>
-<span class="sd">    ``system/controlDict.yaml``; a single-region case reads ``system/controlDict``.</span>
+<span class="sd">    A region steps on the times of the case's ``system/controlDict.yaml``, a</span>
+<span class="sd">    single-region case (``region=None``) on its ``system/controlDict``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        ctx = create_init(None, ["heatConductionNeoN"]).run()</span>
 <span class="sd">    """</span>
     <span class="n">spec_builder</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">"heatConductionNeoN"</span><span class="p">)</span>
-    <span class="n">resolved_case_dir</span> <span class="o">=</span> <span class="n">region_case_dir</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+    <span class="n">case_dir</span> <span class="o">=</span> <span class="n">region_case_dir</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
 
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">solution_loop_model</span> <span class="o">=</span> <span class="n">solutionLoop</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span>
-            <span class="n">field_writer_model</span> <span class="o">=</span> <span class="n">fieldWriter</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">times</span> <span class="o">=</span> <span class="n">CaseControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
-            <span class="n">solution_loop_model</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span>
-                <span class="n">spec</span><span class="o">=</span><span class="n">solutionLoop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"solutionLoop_main"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">times</span>
-            <span class="p">)</span>
-            <span class="n">field_writer_model</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span>
-                <span class="n">spec</span><span class="o">=</span><span class="n">fieldWriter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"fieldWriter_main"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">times</span>
-            <span class="p">)</span>
         <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">solution_loop_model</span><span class="p">,</span>
-            <span class="n">field_writer_model</span><span class="p">,</span>
-            <span class="n">ControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">ThermalPropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">),</span>
+            <span class="o">*</span><span class="n">_time_models</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">),</span>
+            <span class="n">ControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">ThermalPropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">),</span>
         <span class="p">]</span>
         <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span><span class="n">core_models</span><span class="o">=</span><span class="n">core_models</span><span class="p">,</span> <span class="n">optional_models</span><span class="o">=</span><span class="p">[])</span>
 
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-        <span class="n">solution_loop_model</span><span class="p">,</span> <span class="n">field_writer_model</span><span class="p">,</span> <span class="n">_control</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">core_models</span>
-        <span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">runner</span><span class="o">.</span><span class="n">argv</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)]</span>
-        <span class="n">executor</span> <span class="o">=</span> <span class="n">NeoNControlConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">)</span><span class="o">.</span><span class="n">executor</span>
+        <span class="k">return</span> <span class="n">_build_steps</span><span class="p">(</span><span class="n">core_models</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">create_arg_list</span><span class="p">(</span><span class="n">_ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">argList</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">create_foam_time</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="c1"># Foam::Time keeps a raw reference to the argList: both stay alive for</span>
-            <span class="c1"># the run (the NeoNTimeSync backend pins them).</span>
-            <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_arg_list"</span><span class="p">])</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">create_neon_runtime</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="n">rt</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_adapter_run_time</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">],</span> <span class="n">executor</span><span class="p">)</span>
-            <span class="n">rt</span><span class="o">.</span><span class="n">fv_schemes_dict</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">map_fv_schemes</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">fv_schemes_dict</span><span class="p">)</span>
-            <span class="n">nfb</span><span class="o">.</span><span class="n">map_solver_settings</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"solvers"</span><span class="p">),</span> <span class="s2">"T"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">rt</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">create_t</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_scalar_volume_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="s2">"T"</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">create_conduction</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ConductionProblem</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ConductionProblem</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.T"</span><span class="p">],</span> <span class="n">properties</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">inject_writer_hook</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">NeoNWriteHook</span><span class="p">:</span>
-            <span class="n">hook</span> <span class="o">=</span> <span class="n">NeoNWriteHook</span><span class="p">(</span><span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">scalar_names</span><span class="o">=</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,),</span> <span class="n">vector_names</span><span class="o">=</span><span class="p">())</span>
-            <span class="n">ctx</span><span class="p">[</span><span class="s2">"models.writer"</span><span class="p">]</span><span class="o">.</span><span class="n">hook</span> <span class="o">=</span> <span class="n">hook</span>
-            <span class="k">return</span> <span class="n">hook</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">make_reporter</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="n">registry</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]</span>
-            <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">registry</span><span class="o">.</span><span class="n">printExecutionTime</span><span class="p">()</span>
-
-        <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"_arg_list"</span><span class="p">,</span> <span class="n">create_arg_list</span><span class="p">))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"_foam_time"</span><span class="p">,</span> <span class="n">create_foam_time</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_arg_list"</span><span class="p">]))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"_neon_runtime"</span><span class="p">,</span> <span class="n">create_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">init_model</span><span class="p">(</span>
-                <span class="s2">"neon_runtime"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">])</span>
-        <span class="p">)</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="p">(</span><span class="s2">"solution_loop_model"</span><span class="p">,</span> <span class="n">solution_loop_model</span><span class="p">),</span>
-                <span class="p">(</span><span class="s2">"field_writer_model"</span><span class="p">,</span> <span class="n">field_writer_model</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_loop_backend_steps</span><span class="p">())</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">create_t</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init_model</span><span class="p">(</span><span class="s2">"conduction"</span><span class="p">,</span> <span class="n">create_conduction</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.T"</span><span class="p">]))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">init_model</span><span class="p">(</span>
-                <span class="s2">"writer_hook"</span><span class="p">,</span> <span class="n">inject_writer_hook</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.writer"</span><span class="p">,</span> <span class="s2">"_neon_runtime"</span><span class="p">]</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init_model</span><span class="p">(</span><span class="s2">"step_reporter"</span><span class="p">,</span> <span class="n">make_reporter</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">init_model</span><span class="p">(</span>
-                <span class="s2">"solutionLoop"</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">solution_loop_model</span><span class="p">,</span>
-                <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.solution_loop"</span><span class="p">],</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
-
-    <span class="n">runner</span> <span class="o">=</span> <span class="n">StagedInitRunner</span><span class="p">(</span><span class="n">spec_builder</span><span class="o">.</span><span class="n">finalize</span><span class="p">(),</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">runner</span></div>
+    <span class="k">return</span> <span class="n">StagedInitRunner</span><span class="p">(</span><span class="n">spec_builder</span><span class="o">.</span><span class="n">finalize</span><span class="p">(),</span> <span class="n">argv</span><span class="o">=</span><span class="n">argv</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

@@ -527,6 +527,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.regions.html">neofoam.solver.regions</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -688,35 +689,17 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.solver.heatConductionNeoN.create_fields">
 <span id="neofoam-solver-heatconductionneon-create-fields"></span><h1>neofoam.solver.heatConductionNeoN.create_fields<a class="headerlink" href="#module-neofoam.solver.heatConductionNeoN.create_fields" title="Link to this heading">¶</a></h1>
-<p>3-stage initialization for the heatConductionNeoN solver.</p>
-<p>LOAD    → the time loop, the field writer and the thermal properties of the case
-BUILD   → lazy InitSteps for the NeoN runtime, the mesh, <code class="docutils literal notranslate"><span class="pre">fields.T</span></code> and</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">models.conduction</span></code> (<a class="reference internal" href="neofoam.solver.heatConductionNeoN.conduction.html#neofoam.solver.heatConductionNeoN.conduction.ConductionProblem" title="neofoam.solver.heatConductionNeoN.conduction.ConductionProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConductionProblem</span></code></a>)</p>
-</div></blockquote>
-<p>The NeoN <code class="docutils literal notranslate"><span class="pre">RunTime</span></code> is built as in <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code>: a pybFoam
-<code class="docutils literal notranslate"><span class="pre">Foam::Time</span></code> on the case, the adapter (<code class="docutils literal notranslate"><span class="pre">create_adapter_run_time</span></code>) on it, its
-OpenFOAM <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> / <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> mapped to NeoN once. Its mesh is the
-case’s default region (<code class="docutils literal notranslate"><span class="pre">constant/polyMesh</span></code>): a region of a multi-region case
-is a case directory of its own (see <a class="reference internal" href="#neofoam.solver.heatConductionNeoN.create_fields.region_case_dir" title="neofoam.solver.heatConductionNeoN.create_fields.region_case_dir"><code class="xref py py-func docutils literal notranslate"><span class="pre">region_case_dir()</span></code></a>), stepping on the
-times of the case’s <code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code>.</p>
+<p>Staged initialization of heatConductionNeoN: the time loop, the NeoN runtime, <code class="docutils literal notranslate"><span class="pre">T</span></code>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.create_fields.create_init">
-<span class="sig-prename descclassname"><span class="pre">neofoam.solver.heatConductionNeoN.create_fields.</span></span><span class="sig-name descname"><span class="pre">create_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.initialization.staged.runner.html#neofoam.framework.initialization.staged.runner.StagedInitRunner" title="neofoam.framework.initialization.staged.runner.StagedInitRunner"><span class="pre">StagedInitRunner</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/create_fields.html#create_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.create_fields.create_init" title="Link to this definition">¶</a></dt>
-<dd><p>Build a fresh <code class="xref py py-class docutils literal notranslate"><span class="pre">StagedInitRunner</span></code> for heatConductionNeoN on <code class="docutils literal notranslate"><span class="pre">region</span></code>’s case.</p>
-<p>A region of a multi-region case steps on the case’s times, as every region of
-a <code class="docutils literal notranslate"><span class="pre">multiRun</span></code> case does: its time loop and writer read
-<code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code>; a single-region case reads <code class="docutils literal notranslate"><span class="pre">system/controlDict</span></code>.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.create_fields.region_case_dir">
-<span class="sig-prename descclassname"><span class="pre">neofoam.solver.heatConductionNeoN.create_fields.</span></span><span class="sig-name descname"><span class="pre">region_case_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/create_fields.html#region_case_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.create_fields.region_case_dir" title="Link to this definition">¶</a></dt>
-<dd><p>The case directory of <code class="docutils literal notranslate"><span class="pre">region</span></code>: <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/</span></code> of the working directory, or <code class="docutils literal notranslate"><span class="pre">.</span></code>.</p>
-<p>NeoFOAM’s runtime reads the mesh of the default region only
-(<code class="docutils literal notranslate"><span class="pre">constant/polyMesh</span></code>), so a region of a multi-region case is an OpenFOAM
-case of its own: <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/{0,constant,system}</span></code>, next to the case’s
-<code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code>) and <code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>.</p>
+<span class="sig-prename descclassname"><span class="pre">neofoam.solver.heatConductionNeoN.create_fields.</span></span><span class="sig-name descname"><span class="pre">create_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.initialization.staged.runner.html#neofoam.framework.initialization.staged.runner.StagedInitRunner" title="neofoam.framework.initialization.staged.runner.StagedInitRunner"><span class="pre">StagedInitRunner</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/create_fields.html#create_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.create_fields.create_init" title="Link to this definition">¶</a></dt>
+<dd><p>A fresh <code class="xref py py-class docutils literal notranslate"><span class="pre">StagedInitRunner</span></code> of heatConductionNeoN on <code class="docutils literal notranslate"><span class="pre">region</span></code>’s case.</p>
+<p>A region steps on the times of the case’s <code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code>, a
+single-region case (<code class="docutils literal notranslate"><span class="pre">region=None</span></code>) on its <code class="docutils literal notranslate"><span class="pre">system/controlDict</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">create_init</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="s2">"heatConductionNeoN"</span><span class="p">])</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -778,7 +761,6 @@ case of its own: <code class="docutils literal notranslate"><span class="pre">&l
             <ul>
 <li><a class="reference internal" href="#">neofoam.solver.heatConductionNeoN.create_fields</a><ul>
 <li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.create_fields.create_init"><code class="docutils literal notranslate"><span class="pre">create_init()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.create_fields.region_case_dir"><code class="docutils literal notranslate"><span class="pre">region_case_dir()</span></code></a></li>
 </ul>
 </li>
 </ul>
