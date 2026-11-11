@@ -684,9 +684,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LoopEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A running loop, an entry of :attr:`Context.loops`.</span>
 
-<span class="sd">    ``iteration`` counts its passes from 0; ``wrapping`` is whether it is a</span>
-<span class="sd">    wrapping loop (``OperationMetadata.wraps``); ``final`` is whether its test</span>
-<span class="sd">    marked the pass as the last one (:meth:`Context.mark_final`).</span>
+<span class="sd">    ``iteration`` counts passes from 0; ``final`` is set by the loop's test</span>
+<span class="sd">    (:meth:`Context.mark_final`).</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -723,8 +722,7 @@
     <span class="n">write_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
     <span class="c1"># the loops running now, outermost first</span>
     <span class="n">loops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoopEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="c1"># ``final`` operations to run in every pass of their wrapping loops, e.g. to</span>
-    <span class="c1"># watch them while debugging</span>
+    <span class="c1"># ``final`` operations to run in every pass too, e.g. to watch them while debugging</span>
     <span class="n">run_every_pass</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Context.mark_final">
