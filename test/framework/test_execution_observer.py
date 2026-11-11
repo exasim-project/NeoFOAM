@@ -134,7 +134,7 @@ def test_observer_is_per_thread() -> None:
         thread = threading.Thread(target=other)
         thread.start()
         entered.wait(5)
-        assert current() is first  # the other thread's scope does not leak here
+        assert current() is first
     release.set()  # the first scope ended while the second is still open
     thread.join(5)
     assert seen == {"inside": second, "after": None}
