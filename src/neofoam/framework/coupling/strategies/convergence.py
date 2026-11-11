@@ -16,7 +16,7 @@ from ..comm.channel import Data
 
 
 class StreamChange(NamedTuple):
-    """What one stream sent in the previous and in the current pass, for a convergence check."""
+    """What one stream sent in the previous and the current iteration, for a convergence check."""
 
     previous: Data
     current: Data
@@ -24,7 +24,7 @@ class StreamChange(NamedTuple):
 
 @PluginSystem.register(discriminator_variable="convergence", discriminator="type")
 class CouplingConvergence(BaseModel):
-    """Whether a coupling loop converged, by each stream's change in the last pass; a plugin family.
+    """Whether a coupling loop converged, by each stream's last change; a plugin family.
 
     ``data`` names the data field a measure compares (``T``), ``None`` for all of them.
     """

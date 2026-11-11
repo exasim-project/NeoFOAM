@@ -24,7 +24,7 @@ from ..strategies.convergence import StreamChange
 
 
 def unchanged(changes: list[StreamChange]) -> bool:
-    """Converged once no stream's data changes by more than round-off between two passes."""
+    """Converged once no stream's data changes by more than round-off between two iterations."""
     return all(
         np.allclose(change.current[name], change.previous[name], rtol=1e-12, atol=0.0)
         for change in changes
@@ -36,11 +36,11 @@ def unchanged(changes: list[StreamChange]) -> bool:
 class CouplingOutcome:
     """How the coupling loop of one time step ended.
 
-    ``passes`` includes the final one; ``residuals`` is each data field's relative
-    change in the last pass (``inf`` where none measured it).
+    ``iterations`` includes the final one; ``residuals`` is each data field's relative
+    change in the last iteration (``inf`` where none measured it).
     """
 
-    passes: int
+    iterations: int
     converged: bool
     residuals: dict[str, float] = field(default_factory=dict)
 
@@ -96,13 +96,13 @@ Loops = tuple[tuple[Optional[str], int], ...]
 LocalStream = tuple[str, str]
 
 
-# the leader's decision for a region: another pass?, final?, by received stream the
+# the leader's decision for a region: another iteration?, final?, by received stream the
 # carried data or None (receive it fresh), and the sent streams to send fresh
 Decision = tuple[bool, bool, dict[LocalStream, Optional[Data]], frozenset[LocalStream]]
 
 
 def _state(loops: Loops) -> str:
-    """``time_loop#3 > ab#1`` (passes from 1), or ``top``."""
+    """``time_loop#3 > ab#1`` (iterations from 1), or ``top``."""
     return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
 
 
@@ -124,9 +124,9 @@ class GroupStream:
 
 
 class Leader:
-    """The leader's part of a coupling loop: after each pass, whether another runs and which.
+    """The leader's part of a coupling loop: after each iteration, whether another runs and which.
 
-    Final pass as :class:`CouplingLoop` describes; warns when more than one of
+    Final iteration as :class:`CouplingLoop` describes; warns when more than one of
     ``max_iterations`` ends the loop unconverged (one is explicit coupling). A port
     receives a stream fresh when the loop is serial and its sender steps earlier,
     else the carried data, relaxed. Not thread safe.
@@ -151,13 +151,13 @@ class Leader:
         self._convergence = tuple(loop.convergence)
         self._max_iterations = loop.max_iterations
         self._acceleration = dict(loop.acceleration)
-        # whether a stream's receiver takes what it sent in this pass
+        # whether a stream's receiver takes what it sent in this iteration
         self._fresh = {
             stream.id: not parallel and rank[stream.region] < rank[stream.partner[0]]
             for stream in ordered
         }
         self._outcome: Optional[CouplingOutcome] = None
-        # nothing counts as converged before a pass measured it
+        # nothing counts as converged before an iteration measured it
         self._unmeasured = {name: math.inf for stream in ordered for name in stream.names}
         self._check_convergence()
         self._residuals = dict(self._unmeasured)
@@ -182,7 +182,7 @@ class Leader:
 
     @property
     def final(self) -> bool:
-        """Whether the pass :meth:`decide` started last is the final one."""
+        """Whether the iteration :meth:`decide` started last is the final one."""
         return self._final
 
     @property
@@ -195,16 +195,16 @@ class Leader:
 
     @property
     def residuals(self) -> dict[str, float]:
-        """Each field's relative change in the last pass; ``inf`` before one measured it."""
+        """Each field's relative change in the last iteration; ``inf`` before one measured it."""
         return dict(self._residuals)
 
     def fresh(self, stream: StreamId) -> bool:
-        """Whether the receiver of ``stream`` takes what it sent in this pass."""
+        """Whether the receiver of ``stream`` takes what it sent in this iteration."""
         return self._fresh[stream]
 
     def decisions(self, sent_by: dict[str, Any], iteration: int) -> dict[str, Decision]:
-        """Each region's decision on the pass the regions sent: what it receives, sends fresh."""
-        self._check_pass(sent_by, iteration)
+        """Each region's decision on the iteration sent: what it receives, sends fresh."""
+        self._check_iteration(sent_by, iteration)
         current: dict[StreamId, Data] = {
             (region, port, key): data
             for region, (_when, _loops, streams) in sent_by.items()
@@ -229,8 +229,8 @@ class Leader:
             for region, by_stream in received.items()
         }
 
-    def _check_pass(self, sent_by: dict[str, Any], iteration: int) -> None:
-        """Raise ``ValueError`` unless the regions entered the pass at one time and loop state."""
+    def _check_iteration(self, sent_by: dict[str, Any], iteration: int) -> None:
+        """Raise ``ValueError`` unless the regions entered this iteration alike: time and loops."""
         times = {region: when for region, (when, _loops, _data) in sent_by.items()}
         if len(set(times.values())) > 1:
             raise ValueError(
@@ -241,18 +241,18 @@ class Leader:
         if len(set(states.values())) > 1:
             where = ", ".join(f"{region}: {_state(there)}" for region, there in states.items())
             raise ValueError(
-                f"coupling '{self._name}': its regions entered pass {iteration + 1} "
+                f"coupling '{self._name}': its regions entered iteration {iteration + 1} "
                 f"in different loop states: {where}"
             )
 
     def decide(
         self, current: dict[StreamId, Data], iteration: int
     ) -> Optional[dict[StreamId, Data]]:
-        """Each stream's carried data for the next pass; ``None`` at the end."""
+        """Each stream's carried data for the next iteration; ``None`` at the end."""
         current = {stream_id: current[stream_id] for stream_id in self._order}
         if iteration == 0:
             self._carried = current
-            return self._start_pass(iteration + 1, final=self._max_iterations <= 1)
+            return self._start_iteration(iteration + 1, final=self._max_iterations <= 1)
         changes = {
             stream_id: StreamChange(self._carried[stream_id], current[stream_id])
             for stream_id in self._order
@@ -265,8 +265,8 @@ class Leader:
         self._carried = current
         if self._converged(changes):
             self._converged_before_final = True
-            return self._start_pass(iteration + 1, final=True)
-        return self._start_pass(iteration + 1, final=iteration + 1 >= self._max_iterations)
+            return self._start_iteration(iteration + 1, final=True)
+        return self._start_iteration(iteration + 1, final=iteration + 1 >= self._max_iterations)
 
     def _relative_changes(
         self, changes: dict[StreamId, StreamChange], iteration: int
@@ -279,7 +279,7 @@ class Leader:
                 if not math.isfinite(value):
                     raise FloatingPointError(
                         f"coupling {self.label}: the relative change of the {name} of "
-                        f"{region}.{port} is not finite in pass {iteration}"
+                        f"{region}.{port} is not finite in iteration {iteration}"
                     )
                 _keep_largest(residuals, name, value)
         return residuals
@@ -291,8 +291,8 @@ class Leader:
             return bool(unchanged(listed))
         return all(bool(measure(listed)) for measure in self._convergence)
 
-    def _finish(self, passes: int, converged: bool) -> None:
-        outcome = CouplingOutcome(passes, converged, dict(self._residuals))
+    def _finish(self, iterations: int, converged: bool) -> None:
+        outcome = CouplingOutcome(iterations, converged, dict(self._residuals))
         self._outcome = outcome
         self._final = False
         self._converged_before_final = False
@@ -304,14 +304,14 @@ class Leader:
                 f"{name} {value:.3g}" for name, value in outcome.residuals.items()
             )
             warnings.warn(
-                f"coupling {self.label} did not converge in {outcome.passes} passes "
+                f"coupling {self.label} did not converge in {outcome.iterations} iterations "
                 f"(max_iterations); relative change: {residuals or 'n/a'}",
                 CouplingNotConvergedWarning,
                 stacklevel=_stacklevel(),
             )
 
-    def _start_pass(self, number: int, final: bool) -> dict[StreamId, Data]:
-        """Start pass ``number`` (from 1): what each stream carries, relaxed."""
+    def _start_iteration(self, number: int, final: bool) -> dict[StreamId, Data]:
+        """Start iteration ``number`` (from 1): what each stream carries, relaxed."""
         if number == 1:
             self._residuals = dict(self._unmeasured)
         self._final = final

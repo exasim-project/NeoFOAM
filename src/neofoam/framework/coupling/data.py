@@ -163,7 +163,7 @@ def check_rows(stream: Stream, data: Data, size: Optional[int], port: CoupledPor
 def sent(stream: Stream, port: CoupledPort, loop: str, when: tuple[int, Any]) -> Data:
     """What ``stream`` sends now, as float copies; ``FloatingPointError`` when not finite.
 
-    ``when``: the pass (from 0) and the time.
+    ``when``: the iteration (from 0) and the time.
     """
     model = stream.method()
     if not isinstance(model, stream.model):
@@ -175,7 +175,7 @@ def sent(stream: Stream, port: CoupledPort, loop: str, when: tuple[int, Any]) ->
     for name, values in data.items():
         if not np.all(np.isfinite(values)):
             iteration, time = when
-            after = f"after pass {iteration}" if iteration else "before the first pass"
+            after = f"after iteration {iteration}" if iteration else "before the first iteration"
             at = "" if time is None else f" (t={time})"
             raise FloatingPointError(
                 f"coupling '{loop}': the {name} of {port.label} is not finite {after}{at}"

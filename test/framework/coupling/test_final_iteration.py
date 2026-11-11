@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The final pass of a coupling loop, as its leader decides it for every region.
+"""The final iteration of a coupling loop, as its leader decides it for every region.
 
 Regions ``a``, ``b``, ``c`` in a row, one loop, c leads; ``write`` is marked
-``final`` and runs in the final pass only.
+``final`` and runs in the final iteration only.
 """
 
 from __future__ import annotations
@@ -51,17 +51,17 @@ class _Data(FaceData):
 
 
 class _Region:
-    """A test region: solving sets its ports' value to ``fixed``; it logs its passes and writes."""
+    """A test region: solving sets its ports' value to ``fixed``; logs its iterations and writes."""
 
     def __init__(self, name: str, fixed: float) -> None:
         self.name = name
         self.fixed = fixed
         self.value = 0.0
-        self.passes: list[LoopEntry] = []
+        self.iterations: list[LoopEntry] = []
         self.writes = 0
 
     def solve(self, ctx: Context) -> None:
-        self.passes.append(ctx.loops[-1])
+        self.iterations.append(ctx.loops[-1])
         self.value = self.fixed
 
     def write(self, ctx: Context) -> None:
@@ -97,33 +97,33 @@ def _couple(
 
 
 def _flags(region: _Region) -> list[tuple[int, bool, bool]]:
-    return [(entry.iteration, entry.first, entry.final) for entry in region.passes]
+    return [(entry.iteration, entry.first, entry.final) for entry in region.iterations]
 
 
 @SCHEMES
-def test_every_region_runs_one_final_pass_after_the_data_converged(scheme: Any) -> None:
+def test_every_region_runs_one_final_iteration_after_the_data_converged(scheme: Any) -> None:
     tests, outcomes = _couple(scheme, max_iterations=10)
 
-    # the values change in the first pass, not in the second: the third is final
+    # the values change in the first iteration, not in the second: the third is final
     for region in tests.values():
         assert _flags(region) == [(0, True, False), (1, False, False), (2, False, True)]
         assert region.writes == 1
-    assert outcomes == (CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),)
+    assert outcomes == (CouplingOutcome(iterations=3, converged=True, residuals={"x": 0.0}),)
 
 
 @SCHEMES
-def test_the_last_pass_max_iterations_allows_is_final_and_warns(scheme: Any) -> None:
-    with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
+def test_the_last_iteration_max_iterations_allows_is_final_and_warns(scheme: Any) -> None:
+    with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 iterations"):
         tests, outcomes = _couple(scheme, convergence=[never], max_iterations=3)
 
     for region in tests.values():
         assert _flags(region) == [(0, True, False), (1, False, False), (2, False, True)]
         assert region.writes == 1
-    assert [(o.passes, o.converged) for o in outcomes] == [(3, False)]
+    assert [(o.iterations, o.converged) for o in outcomes] == [(3, False)]
 
 
 @SCHEMES
-def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
+def test_a_single_iteration_is_first_and_final_and_explicit(scheme: Any) -> None:
     """``max_iterations: 1`` is explicit coupling: no not-converged warning."""
     with warnings.catch_warnings():
         warnings.simplefilter("error", CouplingNotConvergedWarning)
@@ -132,10 +132,10 @@ def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
     for region in tests.values():
         assert _flags(region) == [(0, True, True)]
         assert region.writes == 1
-    assert [o.passes for o in outcomes] == [1]
+    assert [o.iterations for o in outcomes] == [1]
 
 
-def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
+def test_the_leader_sends_every_region_whether_the_iteration_is_final() -> None:
     comm_channel = RecordingCommChannel()
     loops = [CouplingLoop("coupling", ("a-b", "b-c"))]
     couplings = participant_exchanges(list(PATCHES), EXCHANGES, comm_channel, loops)
@@ -158,7 +158,7 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     ]
 
 
-def test_the_leader_relaxes_the_data_carried_into_the_final_pass() -> None:
+def test_the_leader_relaxes_the_data_carried_into_the_final_iteration() -> None:
     iterations: list[int] = []
 
     def acceleration(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
@@ -168,4 +168,4 @@ def test_the_leader_relaxes_the_data_carried_into_the_final_pass() -> None:
     _tests, outcomes = _couple("parallel", max_iterations=10, acceleration={"a-b": acceleration})
 
     assert iterations == [1, 2, 3]
-    assert outcomes[-1].passes == 3
+    assert outcomes[-1].iterations == 3

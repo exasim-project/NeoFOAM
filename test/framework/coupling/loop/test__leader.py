@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The Leader on hand-made streams: convergence, relaxation, final pass, residuals."""
+"""The Leader on hand-made streams: convergence, relaxation, final iteration, residuals."""
 
 from __future__ import annotations
 
@@ -62,13 +62,13 @@ def test_a_convergence_on_a_field_no_port_sends_raises_as_the_leader_is_built() 
         )
 
 
-def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
+def test_a_field_reports_an_infinite_residual_until_an_iteration_measured_it() -> None:
     leader = Leader(
         _group(), "b.coupling", CouplingLoop("coupling", ("a-b",), convergence=(never,)), ("a", "b")
     )
     assert leader.residuals == {"x": math.inf}
 
-    # the first decision starts the first pass: nothing measured yet
+    # the first decision starts the first iteration: nothing measured yet
     leader.decide({("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}, 0)
     assert leader.residuals == {"x": math.inf}
 
@@ -151,7 +151,7 @@ def test_a_loop_without_convergence_converges_once_the_data_is_unchanged() -> No
     assert leader.decide(_data(1.0, 2.0, 3.0, 5.0), 3) is None
 
 
-def test_the_leader_tells_which_pass_is_final() -> None:
+def test_the_leader_tells_which_iteration_is_final() -> None:
     loop = CouplingLoop("coupling", ("a-b",), convergence=(never,), max_iterations=2)
     leader = Leader([], "c.coupling", loop, ("c",))
 
@@ -164,7 +164,7 @@ def test_the_leader_tells_which_pass_is_final() -> None:
     assert not leader.final
 
 
-def test_explicit_coupling_runs_one_pass_without_a_not_converged_warning() -> None:
+def test_explicit_coupling_runs_one_iteration_without_a_not_converged_warning() -> None:
     loop = CouplingLoop("coupling", ("a-b",), convergence=(never,), max_iterations=1)
     leader = Leader(_group(), "b.coupling", loop, ("a", "b"))
     data = {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}
@@ -174,7 +174,7 @@ def test_explicit_coupling_runs_one_pass_without_a_not_converged_warning() -> No
         warnings.simplefilter("error", CouplingNotConvergedWarning)
         assert leader.decide(data, 1) is None
 
-    assert leader.outcome is not None and leader.outcome.passes == 1
+    assert leader.outcome is not None and leader.outcome.iterations == 1
 
 
 def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_loop() -> None:
@@ -195,5 +195,5 @@ def test_the_leader_keeps_the_outcome_of_the_last_time_step_only() -> None:
         leader.decide({**data, ("b", "p", "x"): {"x": np.full(1, value + 1.0)}}, 1)
 
     # b's x went 3 -> 4 in the second time step (1 -> 2 in the first); observers get both
-    assert leader.outcome == CouplingOutcome(passes=1, converged=False, residuals={"x": 0.25})
+    assert leader.outcome == CouplingOutcome(iterations=1, converged=False, residuals={"x": 0.25})
     assert not hasattr(leader, "outcomes")
