@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling import coupling
 from neofoam.solver.multiRun import run
 from solver.multiRun.case_files import copy_case
 from solver.multiRun.slab_solver import slab
@@ -57,4 +57,4 @@ def test_uncoupled_regions_step_the_same_times(regions: dict[str, Context]) -> N
 
 def test_uncoupled_regions_run_without_coupling_ops(regions: dict[str, Context]) -> None:
     for ctx in regions.values():
-        assert len(Coupling.of(ctx).operations()) == 0
+        assert len(coupling(ctx).operations()) == 0

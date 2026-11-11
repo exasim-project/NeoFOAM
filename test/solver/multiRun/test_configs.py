@@ -47,7 +47,10 @@ def test_region_coupling_config_reads_every_entry() -> None:
                 "exchanges": [
                     {"name": "interface", "acceleration": {"type": "aitken", "relaxation": 0.5}}
                 ],
-                "convergence": [{"data": "T", "type": "relative", "limit": 1e-12}],
+                "convergence": [
+                    {"data": "T_sink", "type": "relative", "limit": 1e-12},
+                    {"data": "h", "type": "relative", "limit": 1e-12},
+                ],
                 "wraps": {},
             }
         ],
@@ -200,7 +203,7 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         ),
         (
             _broken("exchanges.1", {"name": "b-c", "sides": {"a": "to_b", "c": "to_b"}}),
-            r"a.to_b is in the exchanges 'a-b' and 'b-c'; a coupled patch is in one exchange",
+            r"a.to_b is in the exchanges 'a-b' and 'b-c'; a coupled port is in one exchange",
         ),
         (_broken("couplings.0.maxIteration", 5), r"couplings.0.maxIteration\n.*Extra inputs"),
         (
