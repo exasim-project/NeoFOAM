@@ -3,11 +3,9 @@
 
 """multiRun under ``mpirun``: MPI_COMM_WORLD split into the regions of ``regionSolvers``.
 
-The regions take the ranks in blocks of their ``processes``, in stepping order
-(:class:`RegionLayout`); that is OpenFOAM's split under ``-parallel -world
-<region>``, which every region runs, also one on one process (``processor0``).
-The split is collective over every process, so every region takes part.
-mpi4py (the extra ``neofoam[mpi]``) is imported here only, under MPI only.
+Every region runs ``-parallel -world <region>``, also one on one process (``processor0``):
+OpenFOAM's split under ``-world`` is collective over every process. mpi4py, the extra
+``neofoam[mpi]``, is imported under MPI only.
 """
 
 import atexit
@@ -179,7 +177,6 @@ def failure(error: BaseException) -> str:
     return "".join(traceback.format_exception(error))
 
 
-# what must outlive the run: an OpenFOAM argList finalizes MPI as it is destroyed
 _ALIVE: list[Any] = []
 
 

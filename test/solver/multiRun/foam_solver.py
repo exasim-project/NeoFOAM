@@ -40,7 +40,6 @@ from neofoam.io import YAML, IOStrategy
 #: The diffusivity times the time step, in m^2: stable on the test meshes (cells >= 0.2 m).
 DIFFUSIVITY = 0.01
 
-#: The environment variable naming a region that fails in its second time step.
 FAIL_VARIABLE = "FOAM_DIFFUSION_FAIL"
 
 

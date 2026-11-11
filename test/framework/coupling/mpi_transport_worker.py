@@ -172,12 +172,10 @@ def region_comm() -> None:
     assert len(back) == rows
     if rows:
         np.testing.assert_array_equal(back, 2 * local)
-    # a vector of one value per row too
     flat = comm.gather(np.arange(float(rows)))
     if comm.is_root:
         assert flat is not None and flat[1] == expected_counts
     assert comm.bcast(("decision", color) if comm.is_root else None) == ("decision", color)
-    # no points anywhere, or on some processes only
     nothing = comm.gather(None)
     assert nothing == ((None, None) if comm.is_root else None)
     if comm.is_root:

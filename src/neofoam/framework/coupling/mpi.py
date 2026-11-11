@@ -3,18 +3,10 @@
 
 """Coupling across MPI processes: :class:`MpiTransport` between regions, :class:`RegionComm` within.
 
-Only a region's root, rank 0 of its communicator, talks to other regions. Its
-coupling ops run on the whole patches: what the sides of every process send is
-gathered to the root, what they receive is scattered back. The other processes
-run a follower op in place of each coupling op. Communicators are mpi4py's,
-duck-typed (the launcher imports mpi4py).
-
-Example::
-
-    channel = MPI.COMM_WORLD.Dup()                       # every process
-    comm = MPI.COMM_WORLD.Split(color, key=world.rank)    # the region's processes
-    comm_channel = MpiTransport(channel, {"left": 0, "right": 2}, region) if comm.rank == 0 else None
-    coupling = replace(coupling, comm_channel=comm_channel, comm=RegionComm(comm))
+Only a region's root, rank 0 of its communicator, talks to other regions: its coupling
+ops run on the whole patches, gathered from its processes and scattered back, while
+the others run a follower op. Communicators are mpi4py's, duck-typed: only the
+launcher imports mpi4py.
 """
 
 from __future__ import annotations
@@ -48,15 +40,11 @@ _FIRST_PAUSE, _LONGEST_PAUSE = 1e-5, 1e-3
 class MpiTransport(_Mailbox):
     """A comm channel between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.
 
-    ``channel`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD),
-    ``roots`` maps each region of the group to its root's rank in it, and
-    ``region`` is this root's. A receive fails as one of
-    :class:`~neofoam.framework.coupling.InProcessCommChannel`, but a deadlock
-    between processes is told by the timeout only. :meth:`close` waits at most
-    ``timeout`` seconds for the other roots. Not thread safe.
+    ``channel`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD); ``roots``
+    maps each region of the group to its root's rank in it. A deadlock between processes
+    shows as a timeout only. Not thread safe.
     """
 
-    #: The one MPI tag of the coupling's messages.
     TAG = 7
 
     def __init__(
@@ -77,7 +65,6 @@ class MpiTransport(_Mailbox):
         self.channel = channel
         self.roots = dict(roots)
         self.region = region
-        # (target, tag, request) of every send not known to be complete
         self._sends: list[tuple[str, str, Any]] = []
         self._left = False
         self._pause = _FIRST_PAUSE
@@ -99,8 +86,7 @@ class MpiTransport(_Mailbox):
     def close(self, region: str) -> None:
         """This root's region leaves; wait until every other root closed and every send completed.
 
-        Raises :class:`CouplingTimeout` after ``timeout`` seconds, naming the
-        roots that did not close and the sends not complete. Closing again does nothing.
+        Raises :class:`CouplingTimeout` after ``timeout`` s; closing twice is a no-op.
         """
         self._own(region, "closes")
         if self._left:
@@ -137,7 +123,7 @@ class MpiTransport(_Mailbox):
             )
 
     def _tell(self, kind: str) -> None:
-        """Tell every other root that this region left (``kind``: closed or aborted)."""
+        """Tell every other root that this region left."""
         payload = pickle.dumps((self.region, kind, None, None))
         for other in self.roots:
             if other != self.region:

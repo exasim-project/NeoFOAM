@@ -140,8 +140,7 @@ def mpi_coupling(
 ) -> Optional[ParticipantExchanges]:
     """The coupling of a region on MPI processes, from ``planned``; ``None`` if not coupled.
 
-    The region's root talks to the group's roots over ``channel``; its other
-    processes have no comm channel.
+    Only the region's root gets a comm channel, over ``channel``.
     """
     if planned is None:
         return None

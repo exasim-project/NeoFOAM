@@ -3,16 +3,11 @@
 
 """multiRun under ``mpirun``: each region on processes of its own gives its run on threads.
 
-The regions are ``heatConductionNeoN``'s ``coupledBlocks`` (4 x 3 and 3 x 5
-cells), decomposed along y (``cases/regions_on_processes/parts<n>``), so the
-interface spans every process of a region; ``uncoupled`` drops the coupling.
-They run ``foamDiffusion`` (``foam_solver.py``, OpenFOAM only) or
-``heatConductionNeoN``. ``mpi_worker.py`` prints each process's cell centres,
-``T`` and side data; cells are matched by centre. Tolerances: OpenFOAM's
-explicit diffusion differs by round-off only (rtol 1e-12); NeoN and the
-coupled interface by the PCG tolerance 1e-12 of ``T`` amplified over the
-coupling passes (rtol 1e-9). Each ``mpirun`` runs in a subprocess with a
-timeout, so a hang fails it.
+The regions are ``heatConductionNeoN``'s ``coupledBlocks`` (4 x 3 and 3 x 5 cells),
+decomposed along y so the interface spans every process of a region; ``uncoupled``
+drops the coupling. Cells are matched by centre. Tolerances: OpenFOAM's explicit
+diffusion differs by round-off only (rtol 1e-12); NeoN and the coupled interface by
+the PCG tolerance 1e-12 of ``T`` amplified over the coupling passes (rtol 1e-9).
 """
 
 import json

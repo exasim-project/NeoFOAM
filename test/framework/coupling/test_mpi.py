@@ -3,10 +3,9 @@
 
 """The MPI comm channel between region roots, and a region's processes (:class:`RegionComm`).
 
-Without MPI the comm channel runs over an in-memory channel (``FakeChannel``, in
-order per pair as MPI); a comm channel call that should return is run under a
-hang guard (``_within``). Under ``mpirun`` ``mpi_transport_worker.py`` runs each
-scenario on real processes, in a subprocess with a timeout.
+Without MPI the comm channel runs over an in-memory channel (``FakeChannel``, in order per
+pair as MPI); under ``mpirun`` ``mpi_transport_worker.py`` runs each scenario on real
+processes, in a subprocess with a timeout.
 """
 
 from __future__ import annotations
