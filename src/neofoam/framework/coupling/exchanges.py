@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""What one region knows of the coupling of a case: :class:`RegionCoupling`.
+"""What one region knows of the coupling of a case: :class:`ParticipantExchanges`.
 
 A serial pass waits for the whole pass of the regions that step before it, so a
 serial node may neither enclose a node coupling two of its regions nor hold their
@@ -72,8 +72,8 @@ class CouplingLoop:
 
 
 @dataclass(frozen=True)
-class RegionCoupling:
-    """What region ``region`` knows of its case's coupling, built by :func:`region_couplings`.
+class ParticipantExchanges:
+    """What region ``region`` knows of its case's coupling, built by :func:`participant_exchanges`.
 
     ``group``: the regions coupled with it in stepping order; ``exchanges``: the
     group's exchanges; ``nodes``: those with an exchange of this region, outer to inner.
@@ -121,18 +121,18 @@ class RegionCoupling:
         return _group(self.region, self.group, self.node_exchanges(node))
 
 
-def region_couplings(
+def participant_exchanges(
     regions: Sequence[str],
     exchanges: Sequence[Exchange],
     comm_channel: CommChannel,
     nodes: Sequence[CouplingLoop],
-) -> dict[str, RegionCoupling]:
+) -> dict[str, ParticipantExchanges]:
     """The coupling of every region ``exchanges`` connect, by region.
 
     ``regions`` are in stepping order, ``nodes`` outer to inner.
     """
-    check_couplings(regions, exchanges, nodes)
-    couplings: dict[str, RegionCoupling] = {}
+    check_exchanges(regions, exchanges, nodes)
+    couplings: dict[str, ParticipantExchanges] = {}
     for region in regions:
         group = _group(region, regions, exchanges)
         if region in couplings or len(group) < 2:
@@ -143,20 +143,20 @@ def region_couplings(
                 exchange.name for exchange in group_exchanges if member in dict(exchange.ends)
             }
             member_nodes = tuple(node for node in nodes if touching & set(node.exchanges))
-            couplings[member] = RegionCoupling(
+            couplings[member] = ParticipantExchanges(
                 member, group, group_exchanges, comm_channel, member_nodes
             )
     return couplings
 
 
-def check_couplings(
+def check_exchanges(
     regions: Sequence[str], exchanges: Sequence[Exchange], nodes: Sequence[CouplingLoop]
 ) -> None:
     """Raise ``ValueError`` unless ``exchanges`` and ``nodes`` couple ``regions`` consistently.
 
     The one check of a case's coupling, for the Python API and the case's config.
     """
-    _check_exchanges(regions, exchanges)
+    _check_ends(regions, exchanges)
     names = [exchange.name for exchange in exchanges]
     in_node: dict[str, str] = {}
     for node in nodes:
@@ -180,7 +180,7 @@ def check_couplings(
     _check_serial_nesting(nodes, exchanges)
 
 
-def _check_exchanges(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
+def _check_ends(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
     named = sorted(
         {region for exchange in exchanges for region, _port in exchange.ends} - set(regions)
     )

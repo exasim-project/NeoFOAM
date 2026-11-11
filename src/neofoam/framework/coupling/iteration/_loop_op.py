@@ -19,7 +19,7 @@ from ._leader import GroupStream, Leader, StreamId
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from ..exchanges import CouplingLoop, Exchange, RegionCoupling
+    from ..exchanges import CouplingLoop, Exchange, ParticipantExchanges
 
 
 # the loops enclosing a coupling op, outermost first: (name, iteration from 0)
@@ -56,7 +56,7 @@ class CouplingOp(IterativeOp):
 
     def __init__(
         self,
-        coupling: RegionCoupling,
+        coupling: ParticipantExchanges,
         node: CouplingLoop,
         ports: Sequence[CoupledPort],
         geometries: Mapping[str, Geometry],

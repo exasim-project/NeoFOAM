@@ -14,7 +14,7 @@ from ..comm.channel import Tag
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from ..exchanges import RegionCoupling
+    from ..exchanges import ParticipantExchanges
 
 
 SET_TIME_STEP = "set_time_step"
@@ -47,7 +47,7 @@ def serial_holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -
 
 
 class TimeStep:
-    def __init__(self, coupling: RegionCoupling) -> None:
+    def __init__(self, coupling: ParticipantExchanges) -> None:
         self._coupling = coupling
 
     def __call__(self, ctx: Context) -> None:

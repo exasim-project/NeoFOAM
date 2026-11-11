@@ -43,7 +43,7 @@ from neofoam.framework.coupling import (
     InProcessCommChannel,
     coupling,
 )
-from neofoam.framework.coupling.exchanges import region_couplings
+from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.coupling.iteration._leader import (
     CouplingOutcome,
     Leader,
@@ -133,7 +133,7 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     log: list[str] = []
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
     node = CouplingLoop("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
-    couplings = region_couplings(["a", "b"], [EXCHANGE], InProcessCommChannel(), nodes=[node])
+    couplings = participant_exchanges(["a", "b"], [EXCHANGE], InProcessCommChannel(), nodes=[node])
     regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     for side in (a, b):
         add_coupled(regions[side.name], "p", side.side())
@@ -155,7 +155,7 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
     nodes = [
         CouplingLoop("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
-    couplings = region_couplings(["a", "b"], [EXCHANGE], comm_channel, nodes=nodes)
+    couplings = participant_exchanges(["a", "b"], [EXCHANGE], comm_channel, nodes=nodes)
     regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     a, b = _Side("a", []), _Side("b", [])
     for side in (a, b):

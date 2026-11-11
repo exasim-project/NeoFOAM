@@ -34,7 +34,7 @@ from neofoam.framework.coupling import (
     Exchange,
     FaceData,
 )
-from neofoam.framework.coupling.exchanges import region_couplings
+from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
@@ -135,7 +135,7 @@ def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     comm_channel = RecordingCommChannel()
     nodes = [CouplingLoop("coupling", ("a-b", "b-c"))]
-    couplings = region_couplings(list(PATCHES), EXCHANGES, comm_channel, nodes)
+    couplings = participant_exchanges(list(PATCHES), EXCHANGES, comm_channel, nodes)
     regions = {name: context(name, couplings.get(name)) for name in PATCHES}
     tests = {name: _Region(name, 1.0) for name in PATCHES}
     for name, ctx in regions.items():

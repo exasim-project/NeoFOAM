@@ -14,10 +14,10 @@ from neofoam.framework.coupling import (
     Exchange,
     InProcessCommChannel,
     NearestNeighborMapping,
-    RegionCoupling,
+    ParticipantExchanges,
     coupling,
 )
-from neofoam.framework.coupling.exchanges import region_couplings
+from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.types import Placement
 
 X = Exchange("x", (("a", "p"), ("b", "p")))
@@ -34,14 +34,16 @@ def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
         r"well; .* make 'fsi' parallel",
     ):
-        region_couplings(["a", "b"], [X, Y], InProcessCommChannel(), nodes=nodes)
+        participant_exchanges(["a", "b"], [X, Y], InProcessCommChannel(), nodes=nodes)
 
 
 def test_a_serial_node_may_enclose_a_node_sharing_one_region() -> None:
     exchanges = [X, Exchange("z", (("b", "q"), ("c", "q")))]
     nodes = [CouplingLoop("ab", ("x",), scheme="serial"), CouplingLoop("bc", ("z",))]
 
-    couplings = region_couplings(["a", "b", "c"], exchanges, InProcessCommChannel(), nodes=nodes)
+    couplings = participant_exchanges(
+        ["a", "b", "c"], exchanges, InProcessCommChannel(), nodes=nodes
+    )
 
     assert [node.scheme for node in couplings["b"].nodes] == ["serial", "serial"]
 
@@ -89,9 +91,9 @@ def test_a_node_is_serial_by_default() -> None:
         "acceleration of another exchange",
     ],
 )
-def test_region_couplings_check_the_nodes(nodes: list[CouplingLoop], error: str) -> None:
+def test_participant_exchanges_check_the_nodes(nodes: list[CouplingLoop], error: str) -> None:
     with pytest.raises(ValueError, match=error):
-        region_couplings(["a", "b", "c"], [X, Y], InProcessCommChannel(), nodes=nodes)
+        participant_exchanges(["a", "b", "c"], [X, Y], InProcessCommChannel(), nodes=nodes)
 
 
 def test_two_exchanges_of_one_name_raise() -> None:
@@ -100,7 +102,7 @@ def test_two_exchanges_of_one_name_raise() -> None:
     with pytest.raises(
         ValueError, match="two exchanges are named 'x'; an exchange's name is unique"
     ):
-        region_couplings(
+        participant_exchanges(
             ["a", "b"], [X, twin], InProcessCommChannel(), nodes=[CouplingLoop("n", ("x",))]
         )
 
@@ -109,7 +111,7 @@ def test_an_exchange_maps_by_nearest_neighbor_by_default() -> None:
     assert Exchange("x", (("a", "p"), ("b", "p"))).mapping == NearestNeighborMapping()
 
 
-def _coupling(ctx: Context) -> RegionCoupling:
+def _coupling(ctx: Context) -> ParticipantExchanges:
     region_coupling = coupling(ctx).coupling
     assert region_coupling is not None
     return region_coupling
@@ -138,9 +140,9 @@ def test_unconnected_groups_of_exchanges_get_a_leader_each() -> None:
         (Exchange("x", (("a", "p"), ("a", "q"))), "exchange 'x' joins two ports of region a"),
     ],
 )
-def test_region_couplings_check_the_links(exchange: Exchange, error: str) -> None:
+def test_participant_exchanges_check_the_links(exchange: Exchange, error: str) -> None:
     with pytest.raises(ValueError, match=error):
-        region_couplings(
+        participant_exchanges(
             ["a", "b"], [exchange], InProcessCommChannel(), [CouplingLoop("n", ("x",))]
         )
 
@@ -149,13 +151,13 @@ def test_a_patch_is_in_one_exchange() -> None:
     exchanges = [Exchange("x", (("a", "p"), ("b", "p"))), Exchange("y", (("a", "p"), ("b", "q")))]
 
     with pytest.raises(ValueError, match="a.p is in the exchanges 'x' and 'y'"):
-        region_couplings(
+        participant_exchanges(
             ["a", "b"], exchanges, InProcessCommChannel(), [CouplingLoop("n", ("x", "y"))]
         )
 
 
 def test_a_region_no_exchange_names_is_not_coupled() -> None:
-    couplings = region_couplings(
+    couplings = participant_exchanges(
         ["a", "b", "c"], [X], InProcessCommChannel(), [CouplingLoop("n", ("x",))]
     )
 
