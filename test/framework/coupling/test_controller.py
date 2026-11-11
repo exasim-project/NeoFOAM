@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Any
 
 import numpy as np
@@ -162,6 +163,19 @@ def test_the_controller_tells_which_pass_is_final() -> None:
     # the warning points at the caller outside the framework
     assert warned[0].filename == __file__
     assert not controller.final
+
+
+def test_explicit_coupling_runs_one_pass_without_a_not_converged_warning() -> None:
+    node = CouplingNode("coupling", ("a-b",), convergence=(never,), max_iterations=1)
+    controller = CouplingController(_group(), "b.coupling", node, ("a", "b"))
+    data = {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}
+
+    assert controller.decide(data, 0) is not None and controller.final
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", CouplingNotConvergedWarning)
+        assert controller.decide(data, 1) is None
+
+    assert controller.outcomes[-1].passes == 1
 
 
 def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_node() -> None:
