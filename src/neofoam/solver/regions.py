@@ -3,23 +3,29 @@
 
 """What the solvers share to run as the coupled regions of a ``multiRun`` case."""
 
+import gzip
+import re
 from pathlib import Path
-from typing import Any, Mapping, Optional
+from typing import Any, Literal, Mapping, Optional
 
 import pybFoam as pyf
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator
 
+from neofoam.algorithms.field_writer.writer import FieldHook
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.framework.coupling import Array, FaceData
 from neofoam.io import YAML, IOStrategy
 
 __all__ = [
     "ControlDictConfig",
+    "CoupledEntriesWriteHook",
     "ParticipantConfig",
     "WallHeatFlux",
     "WallTemperature",
     "coupled_entries",
+    "keep_coupled_entries",
     "region_case_dir",
+    "restore_coupled_entries",
 ]
 
 
@@ -123,3 +129,83 @@ def coupled_entries(path: Path, patch_types: Mapping[str, str]) -> dict[str, str
             )
         entries[patch] = condition
     return entries
+
+
+def restore_coupled_entries(path: Path, entries: Mapping[str, str]) -> None:
+    """Add ``coupled <condition>;`` to each patch of ``entries`` in the written field file ``path``.
+
+    For a file as OpenFOAM writes it (``path.gz`` if compressed): the entry goes
+    first in the patch's block; a patch that has one is left alone. Raises
+    ``ValueError`` when the file has no such patch.
+    """
+    compressed = not path.is_file() and path.with_name(path.name + ".gz").is_file()
+    target = path.with_name(path.name + ".gz") if compressed else path
+    data = gzip.decompress(target.read_bytes()) if compressed else target.read_bytes()
+    boundary = data.find(b"boundaryField")
+    if boundary < 0:
+        raise ValueError(f"{target}: no boundaryField to add the coupled entries to")
+    for patch, condition in entries.items():
+        opening = re.compile(rb"\n    " + re.escape(patch.encode()) + rb"[ \t]*\n    \{[ \t]*\n")
+        found = opening.search(data, boundary)
+        if found is None:
+            raise ValueError(
+                f"{target}: no patch {patch} in boundaryField to add 'coupled {condition}' to"
+            )
+        head = data[found.end() : found.end() + 4096].split(b"\n    }", 1)[0]
+        if re.search(rb"^\s*coupled\s", head.split(b"value", 1)[0], re.MULTILINE):
+            continue
+        entry = f"        coupled         {condition};\n".encode()
+        data = data[: found.end()] + entry + data[found.end() :]
+    target.write_bytes(gzip.compress(data) if compressed else data)
+
+
+@FieldHook.register
+class CoupledEntriesWriteHook(FieldHook):
+    """Write through ``inner``, then add the ``coupled`` entries back to the written files.
+
+    Neither OpenFOAM's ``fixedValue`` nor NeoN's ``calculated`` writes the
+    entry, so without it a written time restarts uncoupled. ``entries``: field
+    -> patch -> condition; ``time`` is the ``Foam::Time`` the files are written at.
+    Build it with :func:`keep_coupled_entries`.
+    """
+
+    field_hook_type: Literal["coupledEntries"] = "coupledEntries"
+    inner: Any
+    time: Any
+    case_dir: Path
+    entries: dict[str, dict[str, str]]
+
+    def time_directory(self) -> Path:
+        """The directory of the current time, ``processor<N>/`` on more than one process."""
+        case = self.case_dir
+        if pyf.Pstream.parRun() and pyf.Pstream.nProcs() > 1:
+            case = case / f"processor{pyf.Pstream.myProcNo()}"
+        return case / str(self.time.timeName())
+
+    def write_fields(self, fields: Mapping[str, Any]) -> None:
+        self.inner.write_fields(fields)
+        directory = self.time_directory()
+        for field, patches in self.entries.items():
+            restore_coupled_entries(directory / field, patches)
+
+
+def keep_coupled_entries(
+    writer: Any, time: Any, case_dir: Path, entries: Mapping[str, Mapping[str, str]]
+) -> None:
+    """Make ``writer`` (a ``FieldWriter``) add the ``coupled`` entries back after each write.
+
+    Use it in a coupled solver's init with what :func:`coupled_entries` read;
+    nothing changes when no patch is coupled.
+
+    Example::
+
+        keep_coupled_entries(ctx.models["writer"], foam_time, Path("solid"), {"T": entries})
+    """
+    if not any(entries.values()):
+        return
+    writer.hook = CoupledEntriesWriteHook(
+        inner=writer.hook,
+        time=time,
+        case_dir=Path(case_dir),
+        entries={field: dict(patches) for field, patches in entries.items() if patches},
+    )

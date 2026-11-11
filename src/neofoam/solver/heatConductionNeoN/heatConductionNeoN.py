@@ -23,7 +23,6 @@ from neofoam.framework.coupling import Participant, Patch, coupling
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
 from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.types import OperationMetadata
-from neofoam.solver.coupled_entries import keep_coupled_entries
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import SolutionLoopPredicate
 from neofoam.solver.neon_runtime import (
     NeoNControlConfig,
@@ -32,10 +31,10 @@ from neofoam.solver.neon_runtime import (
     check_written_patches,
     ensure_neon_initialized,
 )
-from neofoam.solver.regions import region_case_dir
+from neofoam.solver.regions import coupled_entries, keep_coupled_entries, region_case_dir
 
 from .configs import ControlDictConfig, ThermalPropertiesConfig
-from .coupled_patches import coupled_patches
+from .coupled_patches import PATCH_TYPES, coupled_patches
 from .create_fields import create_init
 
 heatConductionNeoN = Solver("heatConductionNeoN")
@@ -56,20 +55,16 @@ def initialize(self: Any) -> Context:
     if self.coupling is not None:
         time_dir = case_dir / ctx.models["solution_loop"].timeName()
         check_written_patches(self.coupling.field_ports, time_dir)
+    entries = coupled_entries(case_dir / ctx.models["solution_loop"].timeName() / "T", PATCH_TYPES)
     runtime = ctx.models["neon_runtime"]
     ctx.models["coupling"] = Participant(
         self.coupling, NeoNGeometry(runtime), NeoNFields(runtime, ctx.fields)
     )
-    patches = coupled_patches("T", ctx, case_dir)
+    patches = coupled_patches("T", ctx, entries)
     for patch, bc in patches.items():
         coupling(ctx).add(Patch(patch), bc)
     ctx.models["conduction"].patches = list(patches.values())
-    keep_coupled_entries(
-        ctx.models["writer"],
-        ctx.models["foam_time"],
-        case_dir,
-        {"T": {patch: bc.condition for patch, bc in patches.items()}},
-    )
+    keep_coupled_entries(ctx.models["writer"], ctx.models["foam_time"], case_dir, {"T": entries})
     return ctx
 
 

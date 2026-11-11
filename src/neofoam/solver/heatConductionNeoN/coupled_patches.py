@@ -5,8 +5,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import neon._neon as nn
 import numpy as np
@@ -14,7 +13,7 @@ import numpy as np
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import coupled
-from neofoam.solver.regions import WallHeatFlux, WallTemperature, coupled_entries
+from neofoam.solver.regions import WallHeatFlux, WallTemperature
 
 
 def _host(vector: Any) -> Any:
@@ -24,9 +23,6 @@ def _host(vector: Any) -> Any:
 
 class NeoNPatch:
     """A patch of the NeoN field ``field``: its faces, their cells and the conductance between."""
-
-    #: the name of its condition, its ``coupled`` entry in the field file
-    condition: str = ""
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         rt = ctx.models["neon_runtime"]
@@ -65,8 +61,6 @@ class NeoNPatch:
 class CoupledTemperature(NeoNPatch):
     """The Dirichlet side: takes the partner's wall temperature, sends its heat flux."""
 
-    condition = "coupledTemperature"
-
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)
         self.set_wall_T(self.wall_T())
@@ -87,8 +81,6 @@ class CoupledHeatFlux(NeoNPatch):
     NeoN sets no per-face gradient from Python, so the heat flux enters as an explicit
     source in the cells next to the faces.
     """
-
-    condition = "coupledHeatFlux"
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)
@@ -132,13 +124,12 @@ COUPLED_PATCHES: dict[str, type[NeoNPatch]] = {
     "coupledHeatFlux": CoupledHeatFlux,
 }
 
-_PATCH_TYPES = {condition: "calculated" for condition in COUPLED_PATCHES}
+#: the ``type`` of a coupled patch of each condition, for ``coupled_entries``
+PATCH_TYPES = {condition: "calculated" for condition in COUPLED_PATCHES}
 
 
-def coupled_patches(field: str, ctx: Context, case_dir: Path) -> dict[str, NeoNPatch]:
-    """The coupled patches of ``field`` by patch, from the ``coupled`` entries of its start time."""
-    path = case_dir / ctx.models["solution_loop"].timeName() / field
+def coupled_patches(field: str, ctx: Context, entries: Mapping[str, str]) -> dict[str, NeoNPatch]:
+    """The coupled patches of ``field`` by patch; ``entries``: patch -> condition."""
     return {
-        patch: COUPLED_PATCHES[condition](field, patch, ctx)
-        for patch, condition in coupled_entries(path, _PATCH_TYPES).items()
+        patch: COUPLED_PATCHES[condition](field, patch, ctx) for patch, condition in entries.items()
     }

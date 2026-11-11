@@ -19,11 +19,7 @@ This module adds only what is backend-specific (DIP):
   from ``controlDict`` ``writeBackend`` by :func:`make_field_hook`;
 * :func:`writer_backend_steps` — the init steps that inject the selected hook into
   the framework-built ``FieldWriter`` and register the per-step timing reporter
-  (``step_reporter``) the framework ``write_output`` consults;
-* re-exported from :mod:`neofoam.solver.coupled_entries`:
-  :class:`CoupledEntriesWriteHook` (:func:`keep_coupled_entries`) — after another
-  hook wrote, adds the ``coupled`` entries of the coupled patches back, which
-  OpenFOAM's ``fixedValue`` drops on write, so a written time restarts coupled.
+  (``step_reporter``) the framework ``write_output`` consults.
 """
 
 from typing import Any, Literal, Mapping
@@ -37,11 +33,6 @@ from neofoam.algorithms.field_writer.field_writer import (  # re-exported for th
 )
 from neofoam.algorithms.field_writer.writer import FieldHook
 from neofoam.framework.initialization import InitStep, model
-from neofoam.solver.coupled_entries import (  # re-exported: the fluid's coupled patches
-    CoupledEntriesWriteHook,
-    keep_coupled_entries,
-    restore_coupled_entries,
-)
 
 from ..configs import ControlDictConfig
 
@@ -53,9 +44,6 @@ __all__ = [
     "PerFieldWriteHook",
     "make_field_hook",
     "writer_backend_steps",
-    "CoupledEntriesWriteHook",
-    "keep_coupled_entries",
-    "restore_coupled_entries",
 ]
 
 

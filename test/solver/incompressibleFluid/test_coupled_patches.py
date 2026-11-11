@@ -13,7 +13,6 @@ with ``Coupling.add`` stubbed (adding a side needs a coupled case: the coupled
 run is ``test_heated_plate.py``).
 """
 
-import gzip
 import os
 import shutil
 import subprocess
@@ -26,19 +25,15 @@ import pytest
 
 from neofoam.framework.coupling import Coupling
 from neofoam.solver.incompressibleFluid.coupled_patches import (
+    PATCH_TYPES,
     CoupledTemperature,
     _boussinesq_config,
-    coupled_entries,
-    coupled_patches,
 )
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
-from neofoam.solver.incompressibleFluid.models.field_writer import (
-    CoupledEntriesWriteHook,
-    keep_coupled_entries,
-    restore_coupled_entries,
-)
+from neofoam.solver.regions import coupled_entries
 
 CASE = Path(__file__).parent / "cases" / "heatedChannel"
+ENTRIES = Path(__file__).parents[1] / "cases" / "coupledEntries"
 RHO_CP, NU, PR = 5000.0, 2e-4, 0.01
 DELTA_COEFF = 1.0 / 0.05  # the wall cells are 0.1 high
 
@@ -168,132 +163,13 @@ def test_the_boussinesq_model_is_required() -> None:
 
 # --- the boundary defines the coupling ------------------------------------------
 
-_T = """FoamFile {{ version 2.0; format ascii; class volScalarField; object T; }}
-dimensions [0 0 0 1 0 0 0]; internalField uniform 300;
-boundaryField {{
- inlet {{ type fixedValue; value uniform 300; }}
- interface {{ type {type}; coupled {coupled}; value uniform 310; }}
- top {{ type zeroGradient; }}
-}}
-"""
+
+def test_coupled_entries_of_the_fluid_are_fixed_value_patches() -> None:
+    T = Path(__file__).parent / "cases" / "heatedPlate" / "fluid" / "0" / "T"
+
+    assert coupled_entries(T, PATCH_TYPES) == {"interface": "coupledTemperature"}
 
 
-def test_the_coupled_entries_of_a_field_file(tmp_path: Path) -> None:
-    path = tmp_path / "T"
-    path.write_text(_T.format(type="fixedValue", coupled="coupledTemperature"))
-    assert coupled_entries("T", path) == {"interface": "coupledTemperature"}
-
-
-@pytest.mark.parametrize(
-    ("patch_type", "coupled", "message"),
-    [
-        ("fixedValue", "coupledHeatFlux", "coupled as 'coupledHeatFlux'; known"),
-        ("calculated", "coupledTemperature", "has type calculated; .* is 'fixedValue'"),
-    ],
-)
-def test_a_coupled_entry_is_checked(
-    tmp_path: Path, patch_type: str, coupled: str, message: str
-) -> None:
-    path = tmp_path / "T"
-    path.write_text(_T.format(type=patch_type, coupled=coupled))
-    with pytest.raises(ValueError, match=message):
-        coupled_entries("T", path)
-
-
-def test_a_case_without_the_field_file_has_no_coupled_patches(tmp_path: Path) -> None:
-    ctx = SimpleNamespace(models={"solution_loop": SimpleNamespace(timeName=lambda: "0")})
-    assert coupled_patches("T", ctx, tmp_path) == []  # type: ignore[arg-type]
-
-
-# --- the writer adds the coupled entries back --------------------------------------
-
-#: as OpenFOAM's fixedValue writes a patch: no ``coupled`` entry
-_WRITTEN = b"""FoamFile
-{
-    version     2.0;
-    format      ascii;
-    class       volScalarField;
-    object      T;
-}
-
-dimensions      [0 0 0 1 0 0 0];
-
-internalField   uniform 300;
-
-boundaryField
-{
-    inlet
-    {
-        type            fixedValue;
-        value           uniform 300;
-    }
-    interface
-    {
-        type            fixedValue;
-        value           nonuniform List<scalar> 2(301.5 302.5);
-    }
-    interfaceToo
-    {
-        type            zeroGradient;
-    }
-}
-"""
-
-
-def test_the_coupled_entry_is_added_back(tmp_path: Path) -> None:
-    path = tmp_path / "T"
-    path.write_bytes(_WRITTEN)
-    restore_coupled_entries(path, {"interface": "coupledTemperature"})
-    assert coupled_entries("T", path) == {"interface": "coupledTemperature"}
-    # only that patch, the rest of the file as written
-    assert (
-        path.read_bytes().replace(b"        coupled         coupledTemperature;\n", b"") == _WRITTEN
-    )
-    restore_coupled_entries(path, {"interface": "coupledTemperature"})  # once
-    assert path.read_bytes().count(b"coupled ") == 1
-
-
-def test_the_coupled_entry_is_added_back_to_a_compressed_file(tmp_path: Path) -> None:
-    (tmp_path / "T.gz").write_bytes(gzip.compress(_WRITTEN))
-    restore_coupled_entries(tmp_path / "T", {"interface": "coupledTemperature"})
-    assert not (tmp_path / "T").exists()
-    assert (
-        b"    {\n        coupled         coupledTemperature;\n"
-        b"        type            fixedValue;\n"
-        b"        value           nonuniform" in gzip.decompress((tmp_path / "T.gz").read_bytes())
-    )
-
-
-def test_a_patch_the_written_file_lacks_raises(tmp_path: Path) -> None:
-    path = tmp_path / "T"
-    path.write_bytes(_WRITTEN)
-    with pytest.raises(ValueError, match="no patch wall in boundaryField"):
-        restore_coupled_entries(path, {"wall": "coupledTemperature"})
-
-
-def test_the_writer_hook_adds_them_after_each_write(tmp_path: Path) -> None:
-    class _Inner:
-        """Writes T as OpenFOAM does, at the current time."""
-
-        def __init__(self) -> None:
-            self.time = "0.5"
-
-        def write_fields(self, fields: Any) -> None:
-            (tmp_path / "fluid" / self.time).mkdir(parents=True)
-            (tmp_path / "fluid" / self.time / "T").write_bytes(_WRITTEN)
-
-    inner = _Inner()
-    writer = SimpleNamespace(hook=inner)
-    keep_coupled_entries(writer, None, tmp_path / "fluid", {"T": {}})
-    assert writer.hook is inner  # nothing coupled, nothing changes
-    time = SimpleNamespace(timeName=lambda: inner.time)
-    keep_coupled_entries(
-        writer, time, tmp_path / "fluid", {"T": {"interface": "coupledTemperature"}}
-    )
-    assert isinstance(writer.hook, CoupledEntriesWriteHook) and writer.hook.inner is inner
-    for written in ("0.5", "1"):
-        inner.time = written
-        writer.hook.write_fields({})
-        assert coupled_entries("T", tmp_path / "fluid" / written / "T") == {
-            "interface": "coupledTemperature"
-        }
+def test_coupled_entries_of_the_fluid_reject_a_calculated_patch() -> None:
+    with pytest.raises(ValueError, match="has type calculated; a coupledTemperature patch is "):
+        coupled_entries(ENTRIES / "coupled", PATCH_TYPES)

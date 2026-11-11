@@ -33,7 +33,7 @@ from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
 from neofoam.preprocess import SetFieldsConfig
-from neofoam.solver.regions import region_case_dir
+from neofoam.solver.regions import coupled_entries, keep_coupled_entries, region_case_dir
 from neofoam.telemetry import TelemetrySettings
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
@@ -41,9 +41,8 @@ from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
 
 from .configs import ControlDictConfig, TelemetryDictConfig
-from .coupled_patches import coupled_patches
+from .coupled_patches import PATCH_TYPES, coupled_patches
 from .create_fields import create_init
-from .models.field_writer import keep_coupled_entries
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import SolutionLoopPredicate
@@ -132,15 +131,13 @@ def initialize(self: Any) -> Context:
     self.core_models = init.core_models
     self.optional_models = init.optional_models
     case_dir = region_case_dir(self.region)
+    start_T = case_dir / ctx.models["solution_loop"].timeName() / "T"
+    entries = coupled_entries(start_T, PATCH_TYPES) if start_T.is_file() else {}
     ctx.models["coupling"] = Coupling(self.coupling)
-    patches = coupled_patches("T", ctx, case_dir)
-    ctx.models["coupled_patches"] = patches
-    keep_coupled_entries(
-        ctx.models["writer"],
-        ctx.fields["T"].mesh().time() if patches else None,
-        case_dir,
-        {"T": {patch.patch: patch.condition for patch in patches}},
-    )
+    ctx.models["coupled_patches"] = coupled_patches("T", ctx, entries)
+    if entries:
+        time = ctx.fields["T"].mesh().time()
+        keep_coupled_entries(ctx.models["writer"], time, case_dir, {"T": entries})
     return ctx
 
 
