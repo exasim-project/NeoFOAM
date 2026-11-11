@@ -31,7 +31,7 @@ from neofoam.framework.initialization import (
 from neofoam.framework.model import ModelRuntime, ModelSpec
 from neofoam.framework.tools import tool_graph_steps
 from neofoam.postprocess import postProcess
-from neofoam.solver.multiRun.configs import ControlDictConfig as CaseControlDictConfig
+from neofoam.solver.regions import ControlDictConfig as CaseControlDictConfig
 from neofoam.solver.regions import region_case_dir
 from neofoam.tools.run import detect_tools
 from neofoam.turbulence.config import TurbulencePropertiesConfig
