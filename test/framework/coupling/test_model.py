@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A region's coupling model: which sides it takes and the coupling ops it builds of them."""
+"""A region's coupling model: which ports it takes and the coupling ops it builds of them."""
 
 from __future__ import annotations
 

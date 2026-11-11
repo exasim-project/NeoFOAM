@@ -3,7 +3,7 @@
 
 """Several coupling loops: one op per loop of a region, each with its own leader.
 
-Every side sends a fixed value, so every loop converges after its second pass.
+Every port sends a fixed value, so every loop converges after its second pass.
 """
 
 from __future__ import annotations
