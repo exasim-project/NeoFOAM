@@ -22,7 +22,7 @@ from pybFoam import fvc
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate, solutionLoop
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling import Participant
 from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
@@ -102,7 +102,7 @@ def _initialize(self: Any) -> Context:
     ctx = init.run()
     self.core_models = init.core_models
     # an uncoupled region: no port asks the geometry
-    ctx.models["coupling"] = Coupling(self.coupling, FakeGeometry())
+    ctx.models["coupling"] = Participant(self.coupling, FakeGeometry())
     return ctx
 
 

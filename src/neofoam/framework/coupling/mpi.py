@@ -21,16 +21,17 @@ from pydantic import BaseModel
 
 from neofoam.framework.operations import IterativeOp
 
-from .comm_channel import DEFAULT_TIMEOUT, CouplingTimeout, _Mailbox, _pickled
+from .comm.channel import DEFAULT_TIMEOUT, CouplingTimeout
+from .comm.in_process import _Mailbox, _pickled
 from .coupled import CoupledPort
 from .data import Stream, sent
+from .iteration._loop_op import CouplingLoopOp
 from .location import Geometry
-from .loop import CouplingOp
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .region import CouplingNode, RegionCoupling
+    from .exchanges import CouplingLoop, ParticipantExchanges
 
 # What travels between roots, pickled: (source region, kind, tag, message).
 _MESSAGE, _CLOSED, _ABORTED = "message", "closed", "aborted"
@@ -221,16 +222,16 @@ class RegionComm:
 
     def coupling_op(
         self,
-        coupling: RegionCoupling,
-        node: CouplingNode,
+        coupling: ParticipantExchanges,
+        loop: CouplingLoop,
         ports: Sequence[CoupledPort],
         geometries: Mapping[str, Geometry],
     ) -> IterativeOp:
-        """The loop of ``node`` here: the coupling op on the root, a follower elsewhere."""
+        """The loop of ``loop`` here: the coupling op on the root, a follower elsewhere."""
         parts = [_Port(self, port, geometries[port.name]) for port in ports]
         if self.is_root:
-            return _RootOp(coupling, node, parts, self)
-        return _FollowerOp(node, parts, self)
+            return _RootOp(coupling, loop, parts, self)
+        return _FollowerOp(loop, parts, self)
 
     def time_step(self, agree: Callable[[Context], None]) -> Callable[[Context], None]:
         """``agree`` on the root; its time step on every process of the region."""
@@ -298,13 +299,13 @@ class _Port:
                 stream.method(self._comm.bcast(received))
 
 
-class _RootOp(CouplingOp):
+class _RootOp(CouplingLoopOp):
     """The coupling op on a region's root: on the whole ports, its decision broadcast."""
 
     def __init__(
         self,
-        coupling: RegionCoupling,
-        node: CouplingNode,
+        coupling: ParticipantExchanges,
+        loop: CouplingLoop,
         parts: Sequence[_Port],
         comm: RegionComm,
     ) -> None:
@@ -313,7 +314,7 @@ class _RootOp(CouplingOp):
         self._whole: dict[str, dict[str, BaseModel]] = {part.port.name: {} for part in parts}
         super().__init__(
             coupling,
-            node,
+            loop,
             [self._whole_port(part) for part in parts],
             {part.port.name: part.geometry for part in parts},
         )
@@ -346,9 +347,9 @@ class _RootOp(CouplingOp):
 class _FollowerOp(IterativeOp):
     """A coupling op's place on a region's other processes: the root decides for them."""
 
-    def __init__(self, node: CouplingNode, parts: Sequence[_Port], comm: RegionComm) -> None:
+    def __init__(self, loop: CouplingLoop, parts: Sequence[_Port], comm: RegionComm) -> None:
         super().__init__(self._test)
-        self.node = node
+        self.loop = loop
         self._comm = comm
         self._parts = list(parts)
 
@@ -356,7 +357,7 @@ class _FollowerOp(IterativeOp):
         when = (ctx.loops[-1].iteration, getattr(ctx.time, "value", None))
         for part in self._parts:
             for stream in part.port.sends:
-                data = sent(stream, part.port, self.node.name, when)
+                data = sent(stream, part.port, self.loop.name, when)
                 if _spread(part.port):
                     for name in stream.names:
                         part.gather(data[name])
