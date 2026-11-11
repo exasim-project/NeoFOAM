@@ -27,11 +27,11 @@ multiRun = Solver("multiRun")
 multiRun.config(ControlDictConfig)
 
 
-def transport_timeout() -> Optional[float]:
-    """Seconds a region waits for a message (``transportTimeout``); ``None``: no end."""
+def comm_channel_timeout() -> Optional[float]:
+    """Seconds a region waits for a message (``commChannelTimeout``); ``None``: no end."""
     if not RegionCouplingConfig.get_default_path().exists():
         return DEFAULT_TIMEOUT
-    return RegionCouplingConfig.load().transportTimeout or None
+    return RegionCouplingConfig.load().commChannelTimeout or None
 
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
@@ -52,7 +52,7 @@ def run() -> dict[str, Context]:
     """
     config = ControlDictConfig.load(case_dir=Path("."))
     regions = list(config.regionSolvers)
-    comm_channel = InProcessCommChannel(timeout=transport_timeout())
+    comm_channel = InProcessCommChannel(timeout=comm_channel_timeout())
     coupling = couplings(regions, comm_channel)
     runtimes = {
         region: resolve_solver(name).instantiate(region=region, coupling=coupling.get(region))

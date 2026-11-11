@@ -51,7 +51,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
                 "wraps": {},
             }
         ],
-        "transportTimeout": 600.0,
+        "commChannelTimeout": 600.0,
     }
 
 
@@ -76,7 +76,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
                 "wraps": {},
             }
         ],
-        "transportTimeout": 600.0,
+        "commChannelTimeout": 600.0,
     }
 
 
@@ -245,6 +245,6 @@ def test_region_coupling_config_rejects_a_broken_chain(data: dict[str, Any], mes
 
 
 @pytest.mark.parametrize("seconds", [-1, float("inf")])
-def test_region_coupling_config_rejects_a_broken_transport_timeout(seconds: float) -> None:
-    with pytest.raises(ValidationError, match="transportTimeout"):
-        RegionCouplingConfig.model_validate({**_chain(), "transportTimeout": seconds})
+def test_region_coupling_config_rejects_a_broken_comm_channel_timeout(seconds: float) -> None:
+    with pytest.raises(ValidationError, match="commChannelTimeout"):
+        RegionCouplingConfig.model_validate({**_chain(), "commChannelTimeout": seconds})
