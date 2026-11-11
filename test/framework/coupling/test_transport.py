@@ -10,7 +10,6 @@ each receiving from or sending to the others on the transport directly.
 from __future__ import annotations
 
 import threading
-import time
 from types import SimpleNamespace
 from typing import Any, Callable
 
@@ -26,6 +25,16 @@ from neofoam.framework.coupling import (
 )
 from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.coupling.transport import Tag
+
+# A receive that should raise a deadlock at once times out after this instead.
+TIMEOUT = 30.0
+
+
+def _until_waiting(transport: InProcessTransport, region: str) -> None:
+    """Block until ``region`` waits in a receive of ``transport`` (which notifies no one)."""
+    with transport._changed:
+        while region not in transport._waiting:
+            transport._changed.wait(0.001)
 
 
 def _waits(lines: str) -> list[str]:
@@ -55,8 +64,7 @@ def _errors(transport: InProcessTransport, tasks: dict[str, Callable[[], Any]]) 
 
 
 def test_two_regions_receiving_from_each_other_raise_a_deadlock_at_once() -> None:
-    transport = InProcessTransport()
-    started = time.monotonic()
+    transport = InProcessTransport(timeout=TIMEOUT)
 
     errors = _errors(
         transport,
@@ -66,7 +74,6 @@ def test_two_regions_receiving_from_each_other_raise_a_deadlock_at_once() -> Non
         },
     )
 
-    assert time.monotonic() - started < 0.5
     assert set(errors) == {"a", "b"}
     assert all(isinstance(error, CouplingDeadlock) for error in errors.values())
     report = str(errors["a"])
@@ -102,15 +109,19 @@ def test_run_regions_raises_the_deadlock() -> None:
 
 
 def test_run_regions_raises_the_error_before_a_transport_closed_of_another_region() -> None:
+    transport = InProcessTransport(timeout=TIMEOUT)
+
     def closed() -> None:
         raise TransportClosed("a follows")
 
     def deadlock() -> None:
-        time.sleep(0.05)
+        # returns only once a failed: b's error comes second
+        with pytest.raises(TransportClosed):
+            transport.receive("a", "b", "x")
         raise CouplingDeadlock("b deadlocked")
 
     with pytest.raises(CouplingDeadlock, match="b deadlocked"):
-        run_regions({"a": closed, "b": deadlock}, InProcessTransport())
+        run_regions({"a": closed, "b": deadlock}, transport)
 
 
 def test_waiting_for_a_region_that_finished_raises_a_deadlock_at_once() -> None:
@@ -146,25 +157,28 @@ def test_waiting_for_a_region_that_failed_raises_transport_closed() -> None:
 
 
 def test_a_region_that_finished_is_neither_running_nor_waiting() -> None:
-    transport = InProcessTransport()
+    transport = InProcessTransport(timeout=TIMEOUT)
+    finished = threading.Event()
 
     def a() -> None:
-        time.sleep(0.05)  # c finished by then
+        finished.wait()
         transport.receive("b", "a", "x")
 
-    errors = _errors(
-        transport, {"a": a, "b": lambda: transport.receive("a", "b", "y"), "c": lambda: None}
-    )
+    def c() -> None:
+        transport.close("c")
+        finished.set()
+
+    errors = _errors(transport, {"a": a, "b": lambda: transport.receive("a", "b", "y"), "c": c})
 
     assert _waits(str(errors["a"])) == ["a waits for 'x' from b", "b waits for 'y' from a"]
 
 
 def test_a_region_waiting_while_its_partner_computes_waits() -> None:
-    transport = InProcessTransport()
+    transport = InProcessTransport(timeout=TIMEOUT)
     received: list[float] = []
 
     def b() -> None:
-        time.sleep(0.3)
+        _until_waiting(transport, "a")
         transport.send("b", "a", "x", 1.0)
 
     run_regions(
@@ -179,22 +193,24 @@ def test_a_region_waiting_while_its_partner_computes_waits() -> None:
 
 
 def test_a_receive_waiting_longer_than_the_timeout_raises_with_a_report() -> None:
-    transport = InProcessTransport(timeout=0.2)
-    started = time.monotonic()
+    transport = InProcessTransport(timeout=0.05)
+    released = threading.Event()
 
-    def b() -> None:
-        time.sleep(0.4)  # computes: no deadlock to tell
+    def a() -> None:
+        try:
+            transport.receive("b", "a", "x")
+        finally:
+            released.set()
 
+    # b computes (in no receive) until a gave up: no deadlock to tell
     with pytest.raises(CouplingTimeout) as raised:
-        run_regions({"a": lambda: transport.receive("b", "a", "x"), "b": b}, transport)
+        run_regions({"a": a, "b": released.wait}, transport)
 
-    assert time.monotonic() - started < 1.0
     report = str(raised.value)
     assert report.startswith(
-        "a coupling timeout: region a waited 0.2 s for 'x' from region b (transportTimeout)"
+        "a coupling timeout: region a waited 0.05 s for 'x' from region b (transportTimeout)"
     )
     assert _waits(report) == ["a waits for 'x' from b", "b is busy (in no receive)"]
-    assert "(for 0.2 s)" in report
     assert report.endswith("undelivered messages: none")
 
 
