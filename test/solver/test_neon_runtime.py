@@ -35,11 +35,18 @@ pinned by ``sys.last_traceback`` must still exit cleanly, no ``host_abort``.
 
 The abort only fires at interpreter shutdown, so it cannot be observed in-process
 — the test drives a subprocess and asserts on its exit code and stderr.
+
+**A patch a field port writes is ``calculated``.** ``check_written_patches`` reads
+the field files only, so it runs on ``cases/writtenPatches`` without NeoN: the
+ports of each variant's ``system/regionCoupling.yaml`` against region ``plant``'s
+``0/T``, whose ``inlet`` is ``fixedValue``, ``outlet`` ``zeroGradient`` and
+``interface`` ``calculated``.
 """
 
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -50,9 +57,12 @@ pytest.importorskip("neon._neon")  # skip when the NeoN bindings are not built
 
 import neon._neon as nn  # noqa: E402
 
+from neofoam.framework.coupling import FieldPort  # noqa: E402
 from neofoam.solver import neon_runtime  # noqa: E402
+from neofoam.solver.multiRun.configs import RegionCouplingConfig  # noqa: E402
 from neofoam.solver.neon_runtime import (  # noqa: E402
     _gpu_init_report,
+    check_written_patches,
     ensure_neon_initialized,
     requested_executor,
 )
@@ -60,6 +70,7 @@ from neofoam.tooling.casebuild import from_template, patch  # noqa: E402
 
 #: The lid-driven cavity case; its controlDict carries ``executor Serial``.
 SETUP_PIMPLE = Path(__file__).parents[1] / "setup_pimple"
+WRITTEN_PATCHES = Path(__file__).parent / "cases" / "writtenPatches"
 
 # An ordinal no machine exposes: Kokkos selects it, the CUDA runtime rejects it,
 # and the healthy device is never touched.
@@ -213,3 +224,42 @@ def test_finalize_does_not_abort_with_neon_object_pinned_by_traceback() -> None:
     )
     assert "deallocated after Kokkos::finalize" not in result.stderr
     assert "solve failed and recorded" in result.stdout
+
+
+def _plant_ports(variant: str) -> list[FieldPort]:
+    """Region ``plant``'s field ports in the ``regionCoupling.yaml`` of ``variant``."""
+    config = RegionCouplingConfig.load(case_dir=WRITTEN_PATCHES / variant)
+    return config.field_ports()["plant"]
+
+
+@pytest.mark.parametrize(
+    ("variant", "message"),
+    [
+        pytest.param(
+            "inOnFixedValue",
+            "field port 'T_in' writes patch 'inlet' of the NeoN field T, whose type is "
+            "fixedValue; NeoN reapplies a patch's own condition, so a written patch must be "
+            "calculated",
+            id="inOnFixedValue",
+        ),
+        pytest.param(
+            "inoutOnZeroGradient",
+            "field port 'T_wall' writes patch 'outlet' of the NeoN field T, whose type is "
+            "zeroGradient;",
+            id="inoutOnZeroGradient",
+        ),
+    ],
+)
+def test_check_written_patches_rejects_a_written_patch_that_is_not_calculated(
+    variant: str, message: str
+) -> None:
+    ports = _plant_ports(variant)
+
+    with pytest.raises(ValueError, match=re.escape(message)):
+        check_written_patches(ports, WRITTEN_PATCHES / "plant" / "0")
+
+
+def test_check_written_patches_accepts_a_calculated_patch() -> None:
+    ports = _plant_ports("inOnCalculated")
+
+    check_written_patches(ports, WRITTEN_PATCHES / "plant" / "0")

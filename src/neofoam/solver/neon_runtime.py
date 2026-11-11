@@ -20,13 +20,15 @@ import atexit
 import gc
 import os
 import sys
-from typing import Any, Mapping
+from pathlib import Path
+from typing import Any, Iterable, Mapping
 
 import neon._neon as nn  # NeoN Python bindings
 import numpy as np
+import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
-from neofoam.framework.coupling import Patch
+from neofoam.framework.coupling import FieldPort, Patch
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 _neon_initialized = False
@@ -173,7 +175,8 @@ class NeoNFields:
 
     A patch reads its boundary values and is written as fixed values; the cells
     read and write the internal values. A patch it writes is ``calculated`` in
-    ``0/<field>``: a boundary correction re-applies any other condition.
+    ``0/<field>``, as :func:`check_written_patches` checks: a boundary correction
+    re-applies any other condition.
     """
 
     def __init__(self, runtime: Any, fields: Mapping[str, Any]) -> None:
@@ -193,3 +196,29 @@ class NeoNFields:
             self.fields[field].set_patch_fixed_values(index, values)
         else:
             nfb.copy_from_host(self.fields[field], values)
+
+
+def check_written_patches(ports: Iterable[FieldPort], time_dir: Path) -> None:
+    """Raise ``ValueError`` unless every patch a field port writes is ``calculated``.
+
+    Call it at start-up, before the ports are bound to :class:`NeoNFields`: NeoN
+    reapplies a patch's own condition when it corrects the boundary, which would
+    silently overwrite the written values. ``time_dir`` holds the field files the
+    NeoN fields were read from, the start time of the region's case.
+
+    Example::
+
+        check_written_patches(region_coupling.field_ports, Path("0"))
+    """
+    for port in ports:
+        if not port.receives or port.patch is None:
+            continue
+        path = time_dir / port.field
+        boundary = pyf.dictionary.read(str(path)).subDict("boundaryField")
+        patch_type = str(boundary.subDict(port.patch).get_word("type"))
+        if patch_type != "calculated":
+            raise ValueError(
+                f"{path}: field port '{port.name}' writes patch '{port.patch}' of the NeoN field "
+                f"{port.field}, whose type is {patch_type}; NeoN reapplies a patch's own "
+                "condition, so a written patch must be calculated"
+            )
