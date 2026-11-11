@@ -15,9 +15,9 @@ import pytest
 
 from neofoam.framework.coupling import (
     AitkenRelaxation,
+    CouplingConfig,
     InProcessCommChannel,
     ParticipantExchanges,
-    RegionCouplingConfig,
     RelativeConvergence,
 )
 from neofoam.framework.coupling import config as config_module
@@ -100,7 +100,7 @@ def test_run_hands_the_comm_channel_timeout_to_the_comm_channel(
         raise _Stop
 
     shutil.copytree(CASES.parent / "limitations" / "cases" / "pair", tmp_path / "case")
-    config = RegionCouplingConfig.load(case_dir=tmp_path / "case")
+    config = CouplingConfig.load(case_dir=tmp_path / "case")
     config.commChannelTimeout = 3
     config.save(case_dir=tmp_path / "case")
     monkeypatch.chdir(tmp_path / "case")
