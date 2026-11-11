@@ -10,7 +10,6 @@ listed in ``system/regionCoupling.yaml`` exchange their data.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
@@ -18,9 +17,9 @@ from neofoam.framework.coupling import (
     InProcessCommChannel,
     ParticipantExchanges,
     RegionCouplingConfig,
+    comm_channel_timeout,
+    run_participants,
 )
-from neofoam.framework.coupling.comm.channel import DEFAULT_TIMEOUT
-from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.solver import Solver
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig
@@ -28,13 +27,6 @@ from neofoam.solver.regions import ControlDictConfig
 multiRun = Solver("multiRun")
 
 multiRun.config(ControlDictConfig)
-
-
-def comm_channel_timeout() -> Optional[float]:
-    """Seconds a region waits for a message (``commChannelTimeout``); ``None``: no end."""
-    if not RegionCouplingConfig.get_default_path().exists():
-        return DEFAULT_TIMEOUT
-    return RegionCouplingConfig.load().commChannelTimeout or None
 
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, ParticipantExchanges]:

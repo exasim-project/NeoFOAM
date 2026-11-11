@@ -237,3 +237,18 @@ def _free(name: str, taken: list[str]) -> str:
         number += 1
         free = f"{name}-{number}"
     return free
+
+
+def comm_channel_timeout() -> Optional[float]:
+    """Seconds a region waits for a message, the case's ``commChannelTimeout``; ``None``: no end.
+
+    The case is the working directory's; without ``system/regionCoupling.yaml`` the
+    comm channel's default.
+
+    Example::
+
+        InProcessCommChannel(timeout=comm_channel_timeout())
+    """
+    if not RegionCouplingConfig.get_default_path().exists():
+        return DEFAULT_TIMEOUT
+    return RegionCouplingConfig.load().commChannelTimeout or None
