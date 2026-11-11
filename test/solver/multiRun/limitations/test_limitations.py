@@ -141,7 +141,7 @@ def test_renamed_fields_reach_the_fixed_point(
 def test_convergence_on_unknown_data_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``data: T`` matches no side (both solve x): the leader raises building its controller."""
+    """``data: T`` matches no port (both solve x): the leader region raises building its Leader."""
     _case("convergence_typo", tmp_path, monkeypatch)
 
     with pytest.raises(

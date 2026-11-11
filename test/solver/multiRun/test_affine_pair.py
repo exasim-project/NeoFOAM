@@ -95,10 +95,10 @@ def test_affine_pair_records_the_coupling_outcome_of_every_time_step(
     case: tuple[Regions, Outcomes],
 ) -> None:
     regions, recorded = case
-    controller = couple(regions["b"]).controller
-    assert controller is not None
+    leader = couple(regions["b"]).controller
+    assert leader is not None
 
-    outcomes = recorded.of(controller.label)
+    outcomes = recorded.of(leader.label)
 
     assert [(o.passes, o.converged) for o in outcomes] == [(PASSES, True), (2, True)]
     # a changed by 2**-20 of a_21 = 2 - 2**-20 in the final pass: 2**-21 within 1e-6

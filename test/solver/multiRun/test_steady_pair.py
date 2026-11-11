@@ -57,10 +57,10 @@ def test_steady_pair_leader_records_an_outcome_per_outer_iteration(
     case: tuple[dict[str, Context], Outcomes],
 ) -> None:
     regions, outcomes = case
-    controller = couple(regions["b"]).controller
-    assert controller is not None
+    leader = couple(regions["b"]).controller
+    assert leader is not None
 
-    assert [(o.passes, o.converged) for o in outcomes.of(controller.label)] == [
+    assert [(o.passes, o.converged) for o in outcomes.of(leader.label)] == [
         (21, True),
         (2, True),
         (2, True),
