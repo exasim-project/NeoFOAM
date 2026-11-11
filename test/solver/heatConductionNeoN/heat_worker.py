@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run a heatConductionNeoN case (``single|multi``), print the ``#RESULT`` JSON line.
+"""Run a heatConductionNeoN case (``single|multi|geometry``), print the ``#RESULT`` JSON line.
 
 A subprocess: Kokkos and ``Foam::Time`` are per process, and NeoN must be finalized
 after its objects are gone.
@@ -15,10 +15,12 @@ import numpy as np
 
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling import coupling
 from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.solver.heatConductionNeoN import heatConductionNeoN
 from neofoam.solver.heatConductionNeoN import run as run_single
 from neofoam.solver.multiRun import run as run_multi
+from neofoam.solver.neon_runtime import NeoNGeometry
 
 RESULT_PREFIX = "#RESULT "
 
@@ -38,7 +40,7 @@ def _region(ctx: Context) -> dict[str, Any]:
         "patches": {
             patch.patch: {
                 "type": type(patch).__name__,
-                "points": np.asarray(patch.points()).tolist(),
+                "points": np.asarray(coupling(ctx).geometry.face_centres(patch.patch)).tolist(),
                 "wall_T": np.asarray(patch.wall_T()).tolist(),
                 "face_T": _host(ctx.fields["T"].boundary_data_value())[patch.faces],
                 "written_T": written[patch.faces],
@@ -49,14 +51,50 @@ def _region(ctx: Context) -> dict[str, Any]:
 
 
 def _passes(ctx: Context) -> list[int]:
-    operations = Coupling.of(ctx).operations()
+    operations = coupling(ctx).operations()
     op = operations[0].func if len(operations) else None
     if isinstance(op, CouplingOp) and op.controller is not None:
         return [outcome.passes for outcome in op.controller.outcomes]
     return []
 
 
+def _geometry() -> dict[str, Any]:
+    """NeoN's geometry of the case beside OpenFOAM's, per patch and for the cells."""
+    ctx = heatConductionNeoN.instantiate(argv=["heatConductionNeoN"]).initialize()
+    runtime = ctx.models["neon_runtime"]
+    mesh, neon = runtime.mesh, NeoNGeometry(runtime)
+    boundary = mesh.boundary()
+    patches = [str(boundary[index].name()) for index in range(len(boundary))]
+    return {
+        "patches": {
+            name: {
+                "neon": {
+                    "centres": neon.face_centres(name).tolist(),
+                    "areas": neon.face_areas(name).tolist(),
+                },
+                "foam": {
+                    "centres": np.asarray(mesh.Cf()[name]).tolist(),
+                    "areas": np.asarray(mesh.magSf()[name]).tolist(),
+                },
+            }
+            for name in patches
+        },
+        "cells": {
+            "neon": {
+                "centres": neon.cell_centres().tolist(),
+                "volumes": neon.cell_volumes().tolist(),
+            },
+            "foam": {
+                "centres": np.asarray(mesh.C().internalField()).tolist(),
+                "volumes": np.asarray(mesh.V()).tolist(),
+            },
+        },
+    }
+
+
 def main(mode: str) -> dict[str, Any]:
+    if mode == "geometry":
+        return _geometry()
     if mode == "single":
         return {"regions": {"case": _region(run_single(["heatConductionNeoN"]))}}
     regions = run_multi()

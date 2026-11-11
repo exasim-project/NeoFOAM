@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-# NB: no ``from __future__ import annotations`` — ``@coupled`` reads the
-# ``sends`` / ``receives`` annotations as live classes.
-
 """Coupled patches of ``T``: a Dirichlet-Neumann pair on ``calculated`` NeoN patches."""
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
@@ -14,7 +13,7 @@ import numpy as np
 
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, coupled
+from neofoam.framework.coupling import coupled
 from neofoam.solver.regions import WallHeatFlux, WallTemperature, coupled_entries
 
 
@@ -37,7 +36,6 @@ class NeoNPatch:
         self.faces = slice(offset[self.patch_id], offset[self.patch_id + 1])
         self.owners = _host(boundary.face_owners())[self.faces]
         self.areas = _host(boundary.face_areas())[self.faces]
-        self.centres = _host(boundary.face_centers())[self.faces]
         # per face area
         self.h = ctx.models["conduction"].properties.k * _host(boundary.delta_coeffs())[self.faces]
 
@@ -67,11 +65,6 @@ class CoupledTemperature(NeoNPatch):
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)
         self.set_wall_T(self.wall_T())
-        Coupling.of(ctx).add(self)
-
-    @coupled.coordinates
-    def points(self) -> Any:
-        return self.centres
 
     @coupled.sends
     def send(self) -> WallHeatFlux:
@@ -97,7 +90,6 @@ class CoupledHeatFlux(NeoNPatch):
         self.source = nfb.create_uniform_volume_field(rt, f"heatIn({patch})", 0.0)
         # until the partner sends, the heat flux its value in 0/T gives
         self._set_heat_in(self.h * (super().wall_T() - self.cell_T()))
-        Coupling.of(ctx).add(self)
 
     def _set_heat_in(self, heat_in: Any) -> None:
         self.heat_in = np.asarray(heat_in, dtype=float)
@@ -119,10 +111,6 @@ class CoupledHeatFlux(NeoNPatch):
         for face, value in zip(range(self.faces.start, self.faces.stop), self.wall_T()):
             nn.fill_range(values, float(value), face, face + 1)
 
-    @coupled.coordinates
-    def points(self) -> Any:
-        return self.centres
-
     @coupled.sends
     def send(self) -> WallTemperature:
         return WallTemperature(T=self.wall_T())
@@ -140,10 +128,10 @@ COUPLED_PATCHES: dict[str, type[NeoNPatch]] = {
 _PATCH_TYPES = {condition: "calculated" for condition in COUPLED_PATCHES}
 
 
-def coupled_patches(field: str, ctx: Context, case_dir: Path) -> list[NeoNPatch]:
-    """The coupled patches of ``field``, from the ``coupled`` entries of its start-time file."""
+def coupled_patches(field: str, ctx: Context, case_dir: Path) -> dict[str, NeoNPatch]:
+    """The coupled patches of ``field`` by patch, from the ``coupled`` entries of its start time."""
     path = case_dir / ctx.models["solution_loop"].timeName() / field
-    return [
-        COUPLED_PATCHES[condition](field, patch, ctx)
+    return {
+        patch: COUPLED_PATCHES[condition](field, patch, ctx)
         for patch, condition in coupled_entries(path, _PATCH_TYPES).items()
-    ]
+    }
