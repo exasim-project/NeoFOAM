@@ -2,12 +2,11 @@ exchanges:
   - name: interface
     sides: {left: right, right: left}
     mapping: nearest-neighbor
-scheme: parallel
-acceleration:
-  type: aitken
-  relaxation: 0.5
-convergence:
-  - type: relative
-    data: T
-    limit: 1.0e-12
-maxIterations: 100
+couplings:
+  - name: coupling
+    scheme: parallel
+    maxIterations: 100
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-12}

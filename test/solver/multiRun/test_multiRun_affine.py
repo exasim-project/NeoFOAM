@@ -37,6 +37,7 @@ from neofoam.framework.coupling import (
     Coupling,
     CouplingAcceleration,
     CouplingNotConvergedWarning,
+    NearestNeighborMapping,
 )
 from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
 from neofoam.framework.coupling.loop import CouplingOp
@@ -129,7 +130,7 @@ def test_multiRun_affine_regions_couple_through_their_coupling_ops(ctx: Regions)
     ]
     assert (a_op.partner(a_side), b_op.partner(b_side)) == ("b.interface", "a.interface")
     link = a_op.link_of(a_side)
-    assert (link.name, link.mapping.type) == ("a-b", "nearest-neighbor")
+    assert (link.name, type(link.mapping)) == ("a-b", NearestNeighborMapping)
     assert b_op.link_of(b_side).name == "a-b"
 
 

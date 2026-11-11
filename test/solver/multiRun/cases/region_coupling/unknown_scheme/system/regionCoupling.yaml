@@ -1,7 +1,8 @@
 exchanges:
   - sides: {solid: interface, fluid: interface}
-scheme: implicit
-convergence:
-  - type: relative
-    data: T
-    limit: 1.0e-5
+couplings:
+  - name: thermal
+    scheme: implicit
+    exchanges: [solid-fluid]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}

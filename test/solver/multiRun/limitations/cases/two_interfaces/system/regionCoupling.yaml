@@ -2,7 +2,9 @@
 exchanges:
   - sides: {a: p1, b: q1}
   - sides: {a: p2, b: q2}
-convergence:
-  - type: relative
-    data: x
-    limit: 1.0e-6
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [a-b, a-b-2]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}

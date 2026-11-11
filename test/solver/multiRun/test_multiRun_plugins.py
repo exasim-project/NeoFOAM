@@ -79,7 +79,7 @@ def test_region_coupling_reads_the_options_of_a_plugin_strategy(
     config = RegionCouplingConfig.load(case_dir=_case(tmp_path, "strategies"))
 
     mapping: Any = config.exchanges[0].mapping
-    acceleration: Any = config.couplings[0].exchanges[0].acceleration  # type: ignore[index]
+    acceleration: Any = config.couplings[0].exchanges[0].acceleration
     assert (type(mapping), mapping.radius) == (plugin.RadialBasis, 0.25)
     assert (type(acceleration), acceleration.columns) == (plugin.QuasiNewton, 3)
 

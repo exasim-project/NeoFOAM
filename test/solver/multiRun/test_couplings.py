@@ -3,14 +3,13 @@
 
 """``couplings`` of ``system/regionCoupling.yaml``: the coupling nodes multiRun builds.
 
-The regions ``a``, ``b`` and ``c`` form a chain: the exchange ``a-b`` joins
-a's ``to_b`` with b's ``to_a``, ``b-c`` b's ``to_c`` with c's ``to_b``. With
-``couplings`` the file lists the nodes outer to inner; without it one node
-``coupling`` holds every exchange. Every broken rule fails as the file loads.
+``cases/couplings/chain`` couples the chain a - b - c in two nodes, outer to
+inner. A broken file is that file loaded, one entry changed, and validated.
 """
 
 import copy
 import importlib
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +19,6 @@ from pydantic import ValidationError
 
 from neofoam.framework.coupling import (
     AitkenRelaxation,
-    ConstantRelaxation,
     InProcessCommChannel,
     RegionCoupling,
     RelativeConvergence,
@@ -29,71 +27,36 @@ from neofoam.framework.types import Placement
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
 
 MULTI_RUN = importlib.import_module("neofoam.solver.multiRun.multiRun")
+CASES = Path(__file__).parent / "cases"
+CHAIN = CASES / "couplings" / "chain"
 REGIONS = ["a", "b", "c"]
-EXCHANGES = [
-    {"sides": {"a": "to_b", "b": "to_a"}},
-    {"sides": {"b": "to_c", "c": "to_b"}},
-]
-NODES: dict[str, Any] = {
-    "exchanges": EXCHANGES,
-    "scheme": "parallel",
-    "couplings": [
-        {
-            "name": "outer",
-            "maxIterations": 7,
-            "exchanges": [{"name": "b-c", "acceleration": {"type": "aitken", "relaxation": 0.5}}],
-            "convergence": [
-                {"type": "relative", "data": "x", "limit": 1e-6},
-                {"type": "relative", "data": "y", "limit": 1e-3},
-            ],
-        },
-        {
-            "name": "inner",
-            "exchanges": ["a-b"],
-            "convergence": [{"type": "relative", "data": "x", "limit": 1e-8}],
-            "wraps": {"b": {"operations": ["solve_x"]}},
-        },
-    ],
-}
 
 
-def _couplings(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, data: Any
-) -> dict[str, RegionCoupling]:
-    """multiRun's coupling of the regions as ``data`` written to the case file describes."""
-    (tmp_path / "system").mkdir()
-    (tmp_path / "system" / "regionCoupling.yaml").write_text(yaml.safe_dump(data))
-    monkeypatch.chdir(tmp_path)
+def _chain() -> dict[str, Any]:
+    data: dict[str, Any] = yaml.safe_load((CHAIN / "system" / "regionCoupling.yaml").read_text())
+    return data
+
+
+def _couplings(case: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """multiRun's coupling of the regions a, b and c in a copy of ``case``."""
+    shutil.copytree(case, tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
     result: dict[str, RegionCoupling] = MULTI_RUN.couplings(REGIONS, InProcessCommChannel())
     return result
 
 
-def test_couplings_reads_the_nodes_outer_to_inner() -> None:
-    config = RegionCouplingConfig.model_validate(NODES)
-
-    outer, inner = config.nodes()
-    assert [outer.name, inner.name] == ["outer", "inner"]
-    assert [(e.name, e.acceleration) for e in inner.exchanges] == [("a-b", None)]
-    assert outer.exchanges[0].acceleration is not None
-    assert outer.exchanges[0].acceleration.type == "aitken"
-    assert [(c.data, c.limit) for c in outer.convergence] == [("x", 1e-6), ("y", 1e-3)]
-    assert (outer.maxIterations, inner.maxIterations) == (7, 100)
-    assert outer.wraps == {}
-    assert inner.wraps["b"].model_dump() == {"operations": ["solve_x"]}
-
-
 def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    couplings = _couplings(tmp_path, monkeypatch, NODES)
+    couplings = _couplings(CHAIN, tmp_path, monkeypatch)
 
     assert [node.name for node in couplings["b"].nodes] == ["outer", "inner"]
     assert [node.name for node in couplings["a"].nodes] == ["inner"]
     assert [node.name for node in couplings["c"].nodes] == ["outer"]
-    assert [node.scheme for node in couplings["b"].nodes] == ["parallel", "parallel"]
     outer, inner = couplings["b"].nodes
-    assert (outer.exchanges, outer.max_iterations) == (("b-c",), 7)
+    assert (outer.exchanges, outer.max_iterations, outer.scheme) == (("b-c",), 7, "parallel")
+    assert (inner.exchanges, inner.max_iterations) == (("a-b",), 100)
     assert isinstance(outer.acceleration["b-c"], AitkenRelaxation)
     assert inner.acceleration == {}
-    assert [(type(c), c.data, c.limit) for c in outer.convergence] == [  # type: ignore[attr-defined]
+    assert [(type(c), c.data, c.limit) for c in outer.convergence] == [
         (RelativeConvergence, "x", 1e-6),
         (RelativeConvergence, "y", 1e-3),
     ]
@@ -102,115 +65,50 @@ def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.M
     assert outer.placement_of("b") == Placement()
 
 
-def test_couplings_without_nodes_puts_every_exchange_in_one_node(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    data = {
-        "exchanges": EXCHANGES,
-        "acceleration": {"type": "constant", "relaxation": 0.7},
-        "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}],
-        "maxIterations": 9,
-    }
+def test_couplings_gives_every_node_an_acceleration_of_its_own() -> None:
+    config = RegionCouplingConfig.load(case_dir=CHAIN)
 
-    couplings = _couplings(tmp_path, monkeypatch, data)
+    first, second = config.nodes()[0], config.nodes()[0]
 
-    (node,) = couplings["a"].nodes
-    assert couplings["b"].nodes == couplings["c"].nodes == (node,)
-    assert (node.name, node.exchanges, node.max_iterations) == ("coupling", ("a-b", "b-c"), 9)
-    assert sorted(node.acceleration) == ["a-b", "b-c"]
-    assert all(
-        type(a) is ConstantRelaxation and a.relaxation == 0.7 for a in node.acceleration.values()
-    )
-    assert node.acceleration["a-b"] is not node.acceleration["b-c"]
-    assert node.placement == {}
+    assert first.acceleration["b-c"] is not second.acceleration["b-c"]
 
 
-def test_couplings_without_nodes_and_acceleration_relaxes_nothing() -> None:
-    data = {
-        "exchanges": EXCHANGES,
-        "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}],
-    }
+def test_a_node_without_a_scheme_is_serial() -> None:
+    data = _chain()
+    del data["couplings"][1]["scheme"]
 
-    (node,) = RegionCouplingConfig.model_validate(data).nodes()
+    nodes = RegionCouplingConfig.model_validate(data).nodes()
 
-    assert (node.name, node.maxIterations) == ("coupling", 100)
-    assert [(e.name, e.acceleration) for e in node.exchanges] == [("a-b", None), ("b-c", None)]
-
-
-def test_couplings_takes_the_scheme_per_node_by_default_the_file_s(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    data = _broken("scheme", "serial")
-    data["couplings"][0]["scheme"] = "parallel"
-
-    couplings = _couplings(tmp_path, monkeypatch, data)
-
-    assert [(node.name, node.scheme) for node in couplings["b"].nodes] == [
+    assert [(node.name, node.scheme) for node in nodes] == [
         ("outer", "parallel"),
         ("inner", "serial"),
-    ]
-
-
-def test_couplings_are_parallel_by_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    data = {
-        "exchanges": EXCHANGES,
-        "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}],
-    }
-
-    couplings = _couplings(tmp_path, monkeypatch, data)
-
-    assert RegionCouplingConfig.model_validate(data).scheme == "parallel"
-    assert [node.scheme for node in couplings["a"].nodes] == ["parallel"]
-    nodes = {key: value for key, value in NODES.items() if key != "scheme"}
-    assert [node.scheme for node in RegionCouplingConfig.model_validate(nodes).nodes()] == [
-        "parallel",
-        "parallel",
     ]
 
 
 def test_couplings_a_serial_node_may_enclose_a_chained_node(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # outer couples b and c, inner a and b: they share b only
-    couplings = _couplings(tmp_path, monkeypatch, _broken("couplings.0.scheme", "serial"))
+    """outer couples b and c, inner a and b: they share b only."""
+    data = _chain()
+    data["couplings"][0]["scheme"] = "serial"
 
-    assert [node.scheme for node in couplings["b"].nodes] == ["serial", "parallel"]
+    nodes = RegionCouplingConfig.model_validate(data).nodes()
+
+    assert [node.scheme for node in nodes] == ["serial", "parallel"]
 
 
-def test_couplings_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    data = {
-        "exchanges": [
-            {"name": "fsi-ab", "sides": {"a": "to_b", "b": "to_a"}},
-            {"name": "cht-ab", "sides": {"a": "wall", "b": "wall"}},
-        ],
-        "couplings": [
-            {
-                "name": "fsi",
-                "scheme": "serial",
-                "exchanges": ["fsi-ab"],
-                "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}],
-            },
-            {
-                "name": "cht",
-                "exchanges": ["cht-ab"],
-                "convergence": [{"type": "relative", "data": "y", "limit": 1e-6}],
-            },
-        ],
-    }
-
+def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises_as_the_file_loads() -> None:
     with pytest.raises(
-        ValueError,
+        ValidationError,
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
         r"well; .* make 'fsi' parallel",
     ):
-        _couplings(tmp_path, monkeypatch, data)
+        RegionCouplingConfig.load(case_dir=CASES / "couplings" / "serial_encloses")
 
 
 def _broken(path: str, value: Any) -> dict[str, Any]:
-    """``NODES`` with the entry at ``path`` (``.``-separated keys and indices) set to ``value``."""
-    data = copy.deepcopy(NODES)
+    """The chain with the entry at ``path`` (``.``-separated keys and indices) set to ``value``."""
+    data = copy.deepcopy(_chain())
     *parents, last = path.split(".")
     target: Any = data
     for key in parents:
@@ -228,12 +126,20 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         (_broken("couplings.1.name", "outer"), "two coupling nodes are named 'outer'"),
         (
             _broken("couplings.1.exchanges", ["a-b", "b-c"]),
-            "exchange 'b-c' is in the nodes 'outer' and 'inner'",
+            "exchange 'b-c' is in the coupling nodes 'outer' and 'inner'",
         ),
         (_broken("couplings.1.exchanges", ["b-c-2"]), "names the exchange 'b-c-2', which does not"),
         (
-            {**NODES, "couplings": NODES["couplings"][:1]},
+            _broken("couplings", _chain()["couplings"][:1]),
             r"the exchanges \['a-b'\] are in no coupling node",
+        ),
+        (
+            _broken("exchanges.1", {"name": "a-b", "sides": {"b": "to_c", "c": "to_b"}}),
+            "two exchanges are named 'a-b'",
+        ),
+        (
+            _broken("exchanges.1", {"name": "b-c", "sides": {"a": "to_b", "c": "to_b"}}),
+            r"a.to_b is in the exchanges 'a-b' and 'b-c'; a coupled patch is in one exchange",
         ),
         (_broken("couplings.0.maxIteration", 5), r"couplings.0.maxIteration\n.*Extra inputs"),
         (
@@ -251,30 +157,24 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         ),
         (
             _broken("couplings.1.wraps", {"c": {"operations": ["solve_x"]}}),
-            r"node 'inner' wraps the regions \['c'\], which it does not couple",
+            r"node 'inner' places its op in the regions \['c'\], which it does not couple",
         ),
-        (
-            {**NODES, "maxIterations": 5},
-            r"with couplings the nodes set \['maxIterations'\]; remove the top-level",
-        ),
-        (
-            {**NODES, "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}]},
-            r"remove the top-level \['convergence'\]",
-        ),
-        ({**NODES, "coupling": []}, r"coupling\n.*Extra inputs"),
+        (_broken("maxIterations", 5), r"maxIterations\n.*Extra inputs"),
+        (_broken("coupling", []), r"coupling\n.*Extra inputs"),
     ],
     ids=[
-        "duplicate-name",
+        "duplicate-node-name",
         "exchange-in-two-nodes",
         "unknown-exchange",
         "exchange-in-no-node",
+        "duplicate-exchange-name",
+        "patch-in-two-exchanges",
         "typo-in-a-node",
         "unknown-acceleration",
         "typo-in-wraps",
         "downstream-in-wraps",
         "wraps-a-region-of-another-node",
         "top-level-maxIterations",
-        "top-level-convergence",
         "typo-at-the-top",
     ],
 )
@@ -283,20 +183,29 @@ def test_couplings_rejects_a_broken_file(data: dict[str, Any], message: str) -> 
         RegionCouplingConfig.model_validate(data)
 
 
-def test_couplings_rejects_a_broken_file_as_it_loads(
+def test_couplings_of_a_region_the_case_does_not_run_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    with pytest.raises(ValidationError, match="two coupling nodes are named 'outer'"):
-        _couplings(tmp_path, monkeypatch, _broken("couplings.1.name", "outer"))
+    shutil.copytree(CHAIN, tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
+
+    with pytest.raises(ValueError, match=r"couple the regions \['c'\], which are not in"):
+        MULTI_RUN.couplings(["a", "b"], InProcessCommChannel())
 
 
 def _timeout(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, data: Any = None, env: Any = None
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any = "none", env: Any = None
 ) -> Any:
-    """multiRun's comm channel timeout with ``data`` as the case file (none: no file) and ``env``."""
+    """multiRun's comm channel timeout, the chain's ``transportTimeout`` set to ``seconds``.
+
+    ``"none"``: no case file; ``"default"``: the file as it is.
+    """
     (tmp_path / "system").mkdir()
-    if data is not None:
-        (tmp_path / "system" / "regionCoupling.yaml").write_text(yaml.safe_dump(data))
+    if seconds != "none":
+        config = RegionCouplingConfig.load(case_dir=CHAIN)
+        if seconds != "default":
+            config.transportTimeout = seconds
+        config.save(case_dir=tmp_path)
     monkeypatch.chdir(tmp_path)
     if env is None:
         monkeypatch.delenv(MULTI_RUN.TIMEOUT_VARIABLE, raising=False)
@@ -306,29 +215,21 @@ def _timeout(
 
 
 @pytest.mark.parametrize(
-    ("data", "timeout"),
-    [
-        (None, 600.0),
-        (dict(NODES), 600.0),
-        ({**NODES, "transportTimeout": 5}, 5.0),
-        ({**NODES, "transportTimeout": 0}, None),
-        ({**NODES, "transportTimeout": None}, None),
-    ],
+    ("seconds", "timeout"),
+    [("none", 600.0), ("default", 600.0), (5, 5.0), (0, None), (None, None)],
     ids=["no-file", "default", "seconds", "zero", "null"],
 )
 def test_the_transport_timeout_is_the_file_s(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, data: Any, timeout: Any
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any, timeout: Any
 ) -> None:
-    assert _timeout(tmp_path, monkeypatch, data) == timeout
+    assert _timeout(tmp_path, monkeypatch, seconds) == timeout
 
 
 @pytest.mark.parametrize(("env", "timeout"), [("2.5", 2.5), ("0", None)])
 def test_the_environment_variable_overrides_the_file_s_transport_timeout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str, timeout: Any
 ) -> None:
-    data = {**NODES, "transportTimeout": 5}
-
-    assert _timeout(tmp_path, monkeypatch, data, env) == timeout
+    assert _timeout(tmp_path, monkeypatch, 5, env) == timeout
 
 
 @pytest.mark.parametrize("env", ["soon", "-1", "inf"])
@@ -342,7 +243,7 @@ def test_a_broken_environment_variable_raises(
 @pytest.mark.parametrize("seconds", [-1, float("inf")])
 def test_a_broken_transport_timeout_raises(seconds: float) -> None:
     with pytest.raises(ValidationError, match="transportTimeout"):
-        RegionCouplingConfig.model_validate({**NODES, "transportTimeout": seconds})
+        RegionCouplingConfig.model_validate({**_chain(), "transportTimeout": seconds})
 
 
 def test_run_hands_the_transport_timeout_to_the_transport(
@@ -357,11 +258,8 @@ def test_run_hands_the_transport_timeout_to_the_transport(
         timeouts.append(timeout)
         raise _Stop
 
-    (tmp_path / "system").mkdir()
-    (tmp_path / "system" / "controlDict.yaml").write_text(
-        yaml.safe_dump({"endTime": 1.0, "deltaT": 1.0, "regionSolvers": {"a": "x", "b": "x"}})
-    )
-    monkeypatch.chdir(tmp_path)
+    shutil.copytree(CASES.parent / "limitations" / "cases" / "pair", tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
     monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, "3")
     monkeypatch.setattr(MULTI_RUN, "InProcessCommChannel", comm_channel)
 

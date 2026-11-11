@@ -1,0 +1,11 @@
+# Laid over cases/coupled_slabs: a convergence measure on U, which no side sends.
+exchanges:
+  - name: interface
+    sides: {left: right, right: left}
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [interface]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-12}
+      - {type: relative, data: U, limit: 1.0e-12}

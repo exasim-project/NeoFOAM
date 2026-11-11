@@ -1,0 +1,14 @@
+# Laid over cases/coupled_slabs: a parallel node around each region's solve_T.
+exchanges:
+  - name: interface
+    sides: {left: right, right: left}
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-12}
+    wraps:
+      left: {operations: [solve_T]}
+      right: {operations: [solve_T]}
