@@ -301,7 +301,9 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -689,7 +691,7 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.solver.neon_runtime">
 <span id="neofoam-solver-neon-runtime"></span><h1>neofoam.solver.neon_runtime<a class="headerlink" href="#module-neofoam.solver.neon_runtime" title="Link to this heading">¶</a></h1>
-<p>Process-wide NeoN (Kokkos) runtime initialization.</p>
+<p>Process-wide NeoN (Kokkos) runtime initialization, and a NeoN run’s mesh geometry and fields.</p>
 <p>Kokkos may only be initialized/finalized once per process. Every NeoN-backed
 solver calls <a class="reference internal" href="#neofoam.solver.neon_runtime.ensure_neon_initialized" title="neofoam.solver.neon_runtime.ensure_neon_initialized"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensure_neon_initialized()</span></code></a> before touching NeoN so repeated
 solver runs in one process (e.g. the test suite) reuse a single initialization;
@@ -724,6 +726,34 @@ solver’s config schema; read through <a class="reference internal" href="#neof
 <dt class="sig sig-object py" id="neofoam.solver.neon_runtime.NeoNControlConfig.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.solver.neon_runtime.NeoNControlConfig.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.solver.neon_runtime.NeoNFields">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.neon_runtime.</span></span><span class="sig-name descname"><span class="pre">NeoNFields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/solver/neon_runtime.html#NeoNFields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.neon_runtime.NeoNFields" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldAccess</span></code> of a NeoN run’s volume fields.</p>
+<p>A patch reads its boundary values and is written as fixed values; the cells
+read and write the internal values. A patch it writes is <code class="docutils literal notranslate"><span class="pre">calculated</span></code> in
+<code class="docutils literal notranslate"><span class="pre">0/&lt;field&gt;</span></code>: a boundary correction re-applies any other condition.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.solver.neon_runtime.NeoNGeometry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.neon_runtime.</span></span><span class="sig-name descname"><span class="pre">NeoNGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/solver/neon_runtime.html#NeoNGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.neon_runtime.NeoNGeometry" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">MeshGeometry</span></code> of a NeoN run, from its mesh.</p>
+<p>A patch’s faces are its slice of NeoN’s boundary faces, flat in patch order.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"coupling"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Coupling</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">NeoNGeometry</span><span class="p">(</span><span class="n">rt</span><span class="p">),</span> <span class="n">NeoNFields</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.solver.neon_runtime.NeoNGeometry.faces">
+<span class="sig-name descname"><span class="pre">faces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">slice</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/neon_runtime.html#NeoNGeometry.faces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.neon_runtime.NeoNGeometry.faces" title="Link to this definition">¶</a></dt>
+<dd><p>The slice of NeoN’s boundary faces that are <code class="docutils literal notranslate"><span class="pre">patch</span></code>’s.</p>
 </dd></dl>
 
 </dd></dl>
@@ -810,6 +840,11 @@ the <code class="docutils literal notranslate"><span class="pre">-executor</span
 <li><a class="reference internal" href="#">neofoam.solver.neon_runtime</a><ul>
 <li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNControlConfig"><code class="docutils literal notranslate"><span class="pre">NeoNControlConfig</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNControlConfig.model_config"><code class="docutils literal notranslate"><span class="pre">NeoNControlConfig.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNFields"><code class="docutils literal notranslate"><span class="pre">NeoNFields</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNGeometry"><code class="docutils literal notranslate"><span class="pre">NeoNGeometry</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNGeometry.faces"><code class="docutils literal notranslate"><span class="pre">NeoNGeometry.faces()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.solver.neon_runtime.ensure_neon_initialized"><code class="docutils literal notranslate"><span class="pre">ensure_neon_initialized()</span></code></a></li>

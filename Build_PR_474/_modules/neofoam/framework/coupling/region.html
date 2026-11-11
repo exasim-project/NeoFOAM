@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -696,34 +698,36 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextvars</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Placement</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">kernels</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.comm_channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">CommChannel</span><span class="p">,</span> <span class="n">CommChannelClosed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.field_port</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldPort</span><span class="p">,</span> <span class="n">check_field_ports</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingAcceleration</span><span class="p">,</span> <span class="n">CouplingConvergence</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Link">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Link">[docs]</a>
+<div class="viewcode-block" id="Exchange">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Exchange">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Link</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One exchange of a case: its unique name, its two ends ``(region, patch)``, its mapping.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Exchange</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One exchange of a case: its unique name, its two ends ``(region, port)``, its mapping.</span>
 
-<span class="sd">    Nearest-neighbor by default, which needs the coordinates of both patches;</span>
-<span class="sd">    :class:`~neofoam.framework.coupling.IdentityMapping` for patches sharing their points.</span>
+<span class="sd">    The exchange pairs what one port sends with what the other receives, by data</span>
+<span class="sd">    model. Nearest-neighbor by default, which needs the points of both ports;</span>
+<span class="sd">    :class:`~neofoam.framework.coupling.IdentityMapping` for ports sharing their entities.</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">ends</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">End</span><span class="p">]</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">CouplingMapping</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">kernels</span><span class="o">.</span><span class="n">default_mapping</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Link.partner">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Link.partner">[docs]</a>
+<div class="viewcode-block" id="Exchange.partner">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Exchange.partner">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">partner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">End</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The end of the exchange that is not in ``region``."""</span>
         <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ends</span>
@@ -774,15 +778,16 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">RegionCoupling</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What region ``region`` knows of its case's coupling, built by :func:`region_couplings`.</span>
 
-<span class="sd">    ``group``: the regions coupled with it in stepping order; ``links``: the</span>
+<span class="sd">    ``group``: the regions coupled with it in stepping order; ``exchanges``: the</span>
 <span class="sd">    group's exchanges; ``nodes``: those with an exchange of this region, outer to inner.</span>
 <span class="sd">    """</span>
 
     <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">group</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-    <span class="n">links</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Link</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">exchanges</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Exchange</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">comm_channel</span><span class="p">:</span> <span class="n">CommChannel</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">field_ports</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">FieldPort</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">leader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -795,35 +800,37 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">leader</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">patches</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The patches of this region that an exchange connects."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ports</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The ports of this region that an exchange connects."""</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
-            <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchanges</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="RegionCoupling.node_links">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling.node_links">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">node_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Link</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<div class="viewcode-block" id="RegionCoupling.node_exchanges">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling.node_exchanges">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">node_exchanges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Exchange</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""The exchanges of ``node`` in this region's group."""</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">link</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span> <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">exchange</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchanges</span> <span class="k">if</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RegionCoupling.node_of">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling.node_of">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">node_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CouplingNode</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The node whose exchange connects ``patch`` of this region."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">node_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CouplingNode</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The node whose exchange connects ``port`` of this region."""</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_links</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span> <span class="o">==</span> <span class="n">patch</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_exchanges</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">dict</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">)</span> <span class="o">==</span> <span class="n">port</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">node</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no coupling node has an exchange on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no coupling node has an exchange on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RegionCoupling.node_group">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling.node_group">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">node_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""The regions ``node`` connects with this region, itself included, in stepping order."""</span>
-        <span class="k">return</span> <span class="n">_group</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_links</span><span class="p">(</span><span class="n">node</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">_group</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_exchanges</span><span class="p">(</span><span class="n">node</span><span class="p">))</span></div>
 </div>
 
 
@@ -832,26 +839,35 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.region_couplings">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">region_couplings</span><span class="p">(</span>
     <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">],</span>
+    <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">],</span>
     <span class="n">comm_channel</span><span class="p">:</span> <span class="n">CommChannel</span><span class="p">,</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">],</span>
+    <span class="n">field_ports</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FieldPort</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RegionCoupling</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The coupling of every region ``links`` connect, by region.</span>
+<span class="w">    </span><span class="sd">"""The coupling of every region ``exchanges`` connect, by region.</span>
 
-<span class="sd">    ``regions`` are in stepping order, ``nodes`` outer to inner.</span>
+<span class="sd">    ``regions`` are in stepping order, ``nodes`` outer to inner; ``field_ports``:</span>
+<span class="sd">    each region's field ports of the yaml.</span>
 <span class="sd">    """</span>
-    <span class="n">check_couplings</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">links</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
+    <span class="n">check_couplings</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">field_ports</span><span class="p">)</span>
     <span class="n">couplings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RegionCoupling</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">regions</span><span class="p">:</span>
-        <span class="n">group</span> <span class="o">=</span> <span class="n">_group</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">regions</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">_group</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">regions</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">couplings</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">group_links</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">link</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">group</span><span class="p">)</span>
+        <span class="n">group_exchanges</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">exchange</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span> <span class="k">if</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">group</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
-            <span class="n">touching</span> <span class="o">=</span> <span class="p">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">group_links</span> <span class="k">if</span> <span class="n">member</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)}</span>
+            <span class="n">touching</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">group_exchanges</span> <span class="k">if</span> <span class="n">member</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span>
+            <span class="p">}</span>
             <span class="n">member_nodes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">touching</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">))</span>
             <span class="n">couplings</span><span class="p">[</span><span class="n">member</span><span class="p">]</span> <span class="o">=</span> <span class="n">RegionCoupling</span><span class="p">(</span>
-                <span class="n">member</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">group_links</span><span class="p">,</span> <span class="n">comm_channel</span><span class="p">,</span> <span class="n">member_nodes</span>
+                <span class="n">member</span><span class="p">,</span>
+                <span class="n">group</span><span class="p">,</span>
+                <span class="n">group_exchanges</span><span class="p">,</span>
+                <span class="n">comm_channel</span><span class="p">,</span>
+                <span class="n">member_nodes</span><span class="p">,</span>
+                <span class="nb">tuple</span><span class="p">((</span><span class="n">field_ports</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="p">())),</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">couplings</span></div>
 
@@ -860,70 +876,79 @@
 <div class="viewcode-block" id="check_couplings">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.check_couplings">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_couplings</span><span class="p">(</span>
-    <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">],</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">]</span>
+    <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">],</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">],</span>
+    <span class="n">field_ports</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FieldPort</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise ``ValueError`` unless ``links`` and ``nodes`` couple ``regions`` consistently.</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` unless ``exchanges``, ``nodes`` and ``field_ports`` fit ``regions``.</span>
 
 <span class="sd">    The one check of a case's coupling, for the Python API and the case's config.</span>
 <span class="sd">    """</span>
-    <span class="n">_check_links</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">]</span>
+    <span class="n">_check_exchanges</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">)</span>
+    <span class="n">check_field_ports</span><span class="p">(</span><span class="n">exchanges</span><span class="p">,</span> <span class="n">field_ports</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span><span class="p">]</span>
     <span class="n">in_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">other</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">other</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">node</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"two coupling nodes are named '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; a node's name is unique"</span><span class="p">)</span>
-        <span class="n">_check_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">in_node</span><span class="p">:</span>
+        <span class="n">_check_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">exchange_name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">exchange_name</span> <span class="ow">in</span> <span class="n">in_node</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">exchange</span><span class="si">}</span><span class="s2">' is in the coupling nodes '</span><span class="si">{</span><span class="n">in_node</span><span class="p">[</span><span class="n">exchange</span><span class="p">]</span><span class="si">}</span><span class="s2">' and "</span>
-                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; an exchange is in exactly one node"</span>
+                    <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">exchange_name</span><span class="si">}</span><span class="s2">' is in the coupling nodes "</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">in_node</span><span class="p">[</span><span class="n">exchange_name</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; an exchange is in exactly "</span>
+                    <span class="s2">"one node"</span>
                 <span class="p">)</span>
-            <span class="n">in_node</span><span class="p">[</span><span class="n">exchange</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">in_node</span><span class="p">[</span><span class="n">exchange_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
     <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">in_node</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"the exchanges </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> are in no coupling node; each exchange is in exactly one "</span>
             <span class="sa">f</span><span class="s2">"node (the nodes: </span><span class="si">{</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">nodes</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
-    <span class="n">_check_serial_nesting</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span></div>
+    <span class="n">_check_serial_nesting</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">)</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_check_links</span><span class="p">(</span><span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">named</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">region</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_patch</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">regions</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_exchanges</span><span class="p">(</span><span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">named</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">region</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_port</span> <span class="ow">in</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">named</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"the exchanges couple the regions </span><span class="si">{</span><span class="n">named</span><span class="si">}</span><span class="s2">, which are not in </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">]</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span><span class="p">]</span>
     <span class="n">owner</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"two exchanges are named '</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; an exchange's name is unique"</span><span class="p">)</span>
-        <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span>
+    <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"two exchanges are named '</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; an exchange's name is unique"</span>
+            <span class="p">)</span>
+        <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span>
         <span class="k">if</span> <span class="n">first</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">second</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' joins two patches of region </span><span class="si">{</span><span class="n">first</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' joins two ports of region </span><span class="si">{</span><span class="n">first</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">owner</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">end</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">end</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is in the exchanges '</span><span class="si">{</span><span class="n">owner</span><span class="p">[</span><span class="n">end</span><span class="p">]</span><span class="si">}</span><span class="s2">' and "</span>
-                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; a coupled patch is in one exchange"</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; a coupled port is in one exchange"</span>
                 <span class="p">)</span>
-            <span class="n">owner</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">owner</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_check_node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"coupling node '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' has no exchange"</span><span class="p">)</span>
-    <span class="n">unknown_exchanges</span> <span class="o">=</span> <span class="p">[</span><span class="n">exchange</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span> <span class="k">if</span> <span class="n">exchange</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+    <span class="n">unknown_exchanges</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">unknown_exchanges</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"coupling node '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' names the exchange '</span><span class="si">{</span><span class="n">unknown_exchanges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">', which "</span>
             <span class="sa">f</span><span class="s2">"does not exist; the exchanges are </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="n">regions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_regions</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">links</span><span class="p">))</span>
+    <span class="n">regions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_regions</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">))</span>
     <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">placement</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">regions</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -938,16 +963,21 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_regions</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="p">{</span><span class="n">region</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_regions</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">region</span>
+        <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span>
+        <span class="k">if</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span>
+        <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span>
+    <span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_check_serial_nesting</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">],</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_serial_nesting</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">],</span> <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">outer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nodes</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">outer</span><span class="o">.</span><span class="n">parallel</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="k">for</span> <span class="n">inner</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
-            <span class="n">shared</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_regions</span><span class="p">(</span><span class="n">outer</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_regions</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">links</span><span class="p">))</span>
+            <span class="n">shared</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_regions</span><span class="p">(</span><span class="n">outer</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_regions</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">))</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shared</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"coupling '</span><span class="si">{</span><span class="n">outer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' is serial but encloses '</span><span class="si">{</span><span class="n">inner</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">', which "</span>
@@ -957,13 +987,13 @@
                 <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_group</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The regions connected with ``region`` over ``links``, itself included, in stepping order."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_group</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">exchanges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Exchange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The regions ``exchanges`` connect with ``region``, itself included, in stepping order."""</span>
     <span class="n">group</span><span class="p">,</span> <span class="n">todo</span> <span class="o">=</span> <span class="p">{</span><span class="n">region</span><span class="p">},</span> <span class="p">[</span><span class="n">region</span><span class="p">]</span>
     <span class="k">while</span> <span class="n">todo</span><span class="p">:</span>
         <span class="n">current</span> <span class="o">=</span> <span class="n">todo</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
-            <span class="n">ends</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_patch</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span><span class="p">:</span>
+            <span class="n">ends</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_port</span> <span class="ow">in</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span>
             <span class="k">if</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">ends</span><span class="p">:</span>
                 <span class="n">todo</span> <span class="o">+=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ends</span> <span class="o">-</span> <span class="n">group</span><span class="p">)</span>
                 <span class="n">group</span> <span class="o">|=</span> <span class="n">ends</span>

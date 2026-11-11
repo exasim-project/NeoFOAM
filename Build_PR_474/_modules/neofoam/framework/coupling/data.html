@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -684,124 +686,276 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""What a coupled side exchanges: :data:`Array` fields, the side, and what it sends."""</span>
+<span class="sd">"""What a port exchanges: data models of :data:`Array` or :data:`Scalar` fields, the port."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">PlainValidator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.comm_channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
 
-<span class="c1"># (region, patch)</span>
+<span class="c1"># (region, port)</span>
 <span class="n">End</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_ArrayKind</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Marks a field of an exchange model as :data:`Array`."""</span>
+<span class="w">    </span><span class="sd">"""Marks a field of a data model as :data:`Array`."""</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ScalarKind</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Marks a field of a data model as :data:`Scalar`."""</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_array</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
 
-<span class="c1"># A field of an exchange model: one value (or row) per point of the patch.</span>
+<span class="c1"># A field of a data model: one value (or row) per entity of the location, in mesh order.</span>
 <span class="n">Array</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_ArrayKind</span><span class="p">(),</span> <span class="n">PlainValidator</span><span class="p">(</span><span class="n">_as_array</span><span class="p">)]</span>
 
+<span class="c1"># A field of a ValueData model: one number.</span>
+<span class="n">Scalar</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">_ScalarKind</span><span class="p">(),</span> <span class="n">PlainValidator</span><span class="p">(</span><span class="nb">float</span><span class="p">)]</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_Data</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The data models' base: ``entity`` names what one row is."""</span>
+
+    <span class="n">entity</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">field_kind</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="n">_ArrayKind</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_check_arrays</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="FaceData">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.FaceData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FaceData</span><span class="p">(</span><span class="n">_Data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Data with one row per face of a :class:`~neofoam.framework.coupling.Patch`.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        class WallTemperature(FaceData):</span>
+<span class="sd">            T: Array</span>
+<span class="sd">    """</span>
+
+    <span class="n">entity</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"face"</span></div>
+
+
+
+<div class="viewcode-block" id="CellData">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.CellData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CellData</span><span class="p">(</span><span class="n">_Data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Data with one row per cell of :class:`~neofoam.framework.coupling.Cells`."""</span>
+
+    <span class="n">entity</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"cell"</span></div>
+
+
+
+<div class="viewcode-block" id="ValueData">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ValueData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValueData</span><span class="p">(</span><span class="n">_Data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One value per field (:data:`Scalar`), on a :class:`~neofoam.framework.coupling.Global`."""</span>
+
+    <span class="n">entity</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"value"</span>
+    <span class="n">field_kind</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="n">_ScalarKind</span></div>
+
+
+
+<div class="viewcode-block" id="ProbeData">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ProbeData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProbeData</span><span class="p">(</span><span class="n">_Data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Data with one row per point of a ``probe`` mapping, on a ``Global``."""</span>
+
+    <span class="n">entity</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"probe"</span></div>
+
+
+
+<div class="viewcode-block" id="base_name">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.base_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">base_name</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_Data</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The base of ``model``: ``FaceData``, ``CellData``, ``ValueData`` or ``ProbeData``."""</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+        <span class="n">base</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="p">(</span><span class="n">FaceData</span><span class="p">,</span> <span class="n">CellData</span><span class="p">,</span> <span class="n">ValueData</span><span class="p">,</span> <span class="n">ProbeData</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_model">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.check_model">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">_Data</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``model`` if it is a data model with fields of its kind; ``TypeError`` naming ``owner``."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">_Data</span><span class="p">)</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">entity</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">owner</span><span class="si">}</span><span class="s2"> declares </span><span class="si">{</span><span class="n">model</span><span class="si">!r}</span><span class="s2">, which is no FaceData, CellData, ValueData or ProbeData"</span>
+        <span class="p">)</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">field_kind</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">_ArrayKind</span><span class="p">)</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">metadata</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span> <span class="k">for</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">metadata</span><span class="p">):</span>
+            <span class="n">wanted</span> <span class="o">=</span> <span class="s2">"Scalar"</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">_ScalarKind</span> <span class="k">else</span> <span class="s2">"Array"</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"the field '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' of the exchange model </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> is not Array: "</span>
-                <span class="s2">"an exchange model holds Array fields only, one value per point of the patch"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2">: a </span><span class="si">{</span><span class="n">base_name</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2"> holds "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> fields only"</span>
             <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> has no field"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span></div>
 
 
-<div class="viewcode-block" id="ExchangeSide">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide">[docs]</a>
+
+<div class="viewcode-block" id="key">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">key</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What pairs a sent with a received model: their field names, ``T`` or ``T_sink,h``."""</span>
+    <span class="k">return</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="Stream">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.Stream">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ExchangeSide</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A coupled side of a region: its patch, the field it couples, its models and points.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Stream</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One data model a port sends or receives, and the bound method that does it."""</span>
 
-<span class="sd">    ``receive`` gets data already mapped onto its ``coordinates`` (one row per</span>
-<span class="sd">    point, or ``None``). Built by</span>
-<span class="sd">    :meth:`~neofoam.framework.coupling.Coupling.add` for a ``@coupled`` instance.</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CoupledPort">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.CoupledPort">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CoupledPort</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A named coupled location of a region: what it sends and receives there, by data key.</span>
+
+<span class="sd">    Built by :meth:`~neofoam.framework.coupling.Coupling.add`, named after its</span>
+<span class="sd">    location, or for a field port of the yaml; several instances on one port merge.</span>
 <span class="sd">    """</span>
 
     <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">sends</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span>
-    <span class="n">receives</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span>
-    <span class="n">send</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">BaseModel</span><span class="p">]</span>
-    <span class="n">receive</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
-    <span class="n">coordinates</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">_check_arrays</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sends</span><span class="p">)</span>
-        <span class="n">_check_arrays</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">receives</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"coordinates"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">location</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">sends</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Stream</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">receives</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Stream</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">End</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The side's end of its exchange."""</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The number of points of the patch (rows of ``coordinates``), or ``None``."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+<span class="w">        </span><span class="sd">"""The port's end of its exchange."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""``&lt;region&gt;.&lt;patch&gt;``."""</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="si">}</span><span class="s2">"</span></div>
+<span class="w">        </span><span class="sd">"""``&lt;region&gt;.&lt;port&gt;``."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The data field names the port sends or receives."""</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">sends</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">receives</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">stream</span><span class="o">.</span><span class="n">names</span><span class="p">}</span>
+
+<div class="viewcode-block" id="CoupledPort.merged">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.CoupledPort.merged">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">merged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">CoupledPort</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CoupledPort</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""This port with ``other``'s streams; ``ValueError`` when a field name repeats."""</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">location</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> is bound to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">; a port's "</span>
+                <span class="s2">"name names one location"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"sends"</span><span class="p">,</span> <span class="s2">"receives"</span><span class="p">):</span>
+            <span class="n">mine</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">stream</span><span class="o">.</span><span class="n">names</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">role</span><span class="p">):</span>
+                <span class="n">twice</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mine</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">names</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">twice</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"two @coupled.</span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">twice</span><span class="p">)</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">; a port "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2"> each data field once"</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">CoupledPort</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sends</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">sends</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">receives</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">receives</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_check_received</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">announced</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">sent</span><span class="p">,</span> <span class="n">received</span> <span class="o">=</span> <span class="n">announced</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">receives</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)</span>
-    <span class="n">what_sent</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">announced</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (sent by </span><span class="si">{</span><span class="n">announced</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
-    <span class="n">what_received</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">receives</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> (received by </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span>
-    <span class="n">problems</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">' is in </span><span class="si">{</span><span class="n">what_sent</span><span class="si">}</span><span class="s2"> only"</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sent</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">received</span><span class="p">]</span>
-    <span class="n">problems</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">' is in </span><span class="si">{</span><span class="n">what_received</span><span class="si">}</span><span class="s2"> only"</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">received</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sent</span><span class="p">]</span>
+<div class="viewcode-block" id="check_received">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.check_received">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_received</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">announced</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">port</span><span class="p">:</span> <span class="n">CoupledPort</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` unless ``port`` receives exactly what its partner sends."""</span>
+    <span class="n">sent</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">announced</span><span class="p">[</span><span class="s2">"sends"</span><span class="p">]</span>
+    <span class="n">received</span> <span class="o">=</span> <span class="p">{</span><span class="n">stream</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="n">port</span><span class="o">.</span><span class="n">receives</span><span class="p">}</span>
+    <span class="n">problems</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">announced</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2"> sends </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">fields</span><span class="si">}</span><span class="s2">), </span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> receives nothing with </span><span class="si">{</span><span class="n">fields</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">fields</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">sent</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">fields</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">received</span>
+    <span class="p">]</span>
+    <span class="n">problems</span> <span class="o">+=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> receives </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">fields</span><span class="si">}</span><span class="s2">), </span><span class="si">{</span><span class="n">announced</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2"> sends nothing with </span><span class="si">{</span><span class="n">fields</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">fields</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">received</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">fields</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sent</span>
+    <span class="p">]</span>
     <span class="k">if</span> <span class="n">problems</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">': each side must receive what the other sends: "</span>
-            <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">problems</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exchange '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">': "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">problems</span><span class="p">))</span></div>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""What ``side`` sends now, as float copies; ``FloatingPointError`` when not finite."""</span>
-    <span class="n">sent</span> <span class="o">=</span> <span class="n">side</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="p">):</span>
+
+<div class="viewcode-block" id="check_rows">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.check_rows">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_rows</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">port</span><span class="p">:</span> <span class="n">CoupledPort</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` unless ``data`` has a row per entity of the port (``size``)."""</span>
+    <span class="n">entity</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">entity</span>
+    <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">entity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"face"</span><span class="p">,</span> <span class="s2">"cell"</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> sends </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows of </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"but its location </span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">entity</span><span class="si">}</span><span class="s2">s; an array has one row "</span>
+                <span class="s2">"per entity, in mesh order"</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sent">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.sent">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sent</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="n">CoupledPort</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">when</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What ``stream`` sends now, as float copies; ``FloatingPointError`` when not finite.</span>
+
+<span class="sd">    ``when``: the pass (from 0) and the time.</span>
+<span class="sd">    """</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">method</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"the coupled side </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> declares it sends </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, "</span>
-            <span class="sa">f</span><span class="s2">"but its send() returned </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> declares it sends </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, but its "</span>
+            <span class="sa">f</span><span class="s2">"@coupled.sends returned </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="o">.</span><span class="n">model_fields</span><span class="p">}</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">stream</span><span class="o">.</span><span class="n">names</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
-            <span class="n">when</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"after pass </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">iteration</span> <span class="k">else</span> <span class="s2">"before the first pass"</span>
+            <span class="n">iteration</span><span class="p">,</span> <span class="n">time</span> <span class="o">=</span> <span class="n">when</span>
+            <span class="n">after</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"after pass </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">iteration</span> <span class="k">else</span> <span class="s2">"before the first pass"</span>
             <span class="n">at</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">" (t=</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2">)"</span>
             <span class="k">raise</span> <span class="ne">FloatingPointError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"coupling '</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">': the </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> of region </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> patch </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"is not finite </span><span class="si">{</span><span class="n">when</span><span class="si">}{</span><span class="n">at</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"coupling '</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">': the </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not finite </span><span class="si">{</span><span class="n">after</span><span class="si">}{</span><span class="n">at</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-    <span class="k">return</span> <span class="n">data</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
 </pre></div>
         </article>
       </div>

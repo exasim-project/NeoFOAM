@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -684,10 +686,9 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="c1"># NB: no ``from __future__ import annotations`` — ``@coupled`` reads the</span>
-<span class="c1"># ``sends`` / ``receives`` annotations as live classes.</span>
-
 <span class="sd">"""Coupled patches of ``T``: a Dirichlet-Neumann pair on ``calculated`` NeoN patches."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
@@ -697,7 +698,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coupling</span><span class="p">,</span> <span class="n">coupled</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">coupled</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.regions</span><span class="w"> </span><span class="kn">import</span> <span class="n">WallHeatFlux</span><span class="p">,</span> <span class="n">WallTemperature</span><span class="p">,</span> <span class="n">coupled_entries</span>
 
 
@@ -722,7 +723,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">faces</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">offset</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">patch_id</span><span class="p">],</span> <span class="n">offset</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">patch_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">owners</span> <span class="o">=</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">face_owners</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">areas</span> <span class="o">=</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">face_areas</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">centres</span> <span class="o">=</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">face_centers</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
         <span class="c1"># per face area</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"conduction"</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">k</span> <span class="o">*</span> <span class="n">_host</span><span class="p">(</span><span class="n">boundary</span><span class="o">.</span><span class="n">delta_coeffs</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
 
@@ -761,11 +761,6 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_wall_T</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wall_T</span><span class="p">())</span>
-        <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-    <span class="nd">@coupled</span><span class="o">.</span><span class="n">coordinates</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">centres</span>
 
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">sends</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WallHeatFlux</span><span class="p">:</span>
@@ -794,7 +789,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_uniform_volume_field</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"heatIn(</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="c1"># until the partner sends, the heat flux its value in 0/T gives</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_heat_in</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">wall_T</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_T</span><span class="p">()))</span>
-        <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_heat_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heat_in</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">heat_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">heat_in</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
@@ -822,10 +816,6 @@
             <span class="n">nn</span><span class="o">.</span><span class="n">fill_range</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">face</span><span class="p">,</span> <span class="n">face</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
-    <span class="nd">@coupled</span><span class="o">.</span><span class="n">coordinates</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">centres</span>
-
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">sends</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WallTemperature</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">WallTemperature</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wall_T</span><span class="p">())</span>
@@ -846,13 +836,13 @@
 
 <div class="viewcode-block" id="coupled_patches">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.coupled_patches">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">coupled_patches</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">NeoNPatch</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The coupled patches of ``field``, from the ``coupled`` entries of its start-time file."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">coupled_patches</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NeoNPatch</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The coupled patches of ``field`` by patch, from the ``coupled`` entries of its start time."""</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"solution_loop"</span><span class="p">]</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span> <span class="o">/</span> <span class="n">field</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">COUPLED_PATCHES</span><span class="p">[</span><span class="n">condition</span><span class="p">](</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">patch</span><span class="p">:</span> <span class="n">COUPLED_PATCHES</span><span class="p">[</span><span class="n">condition</span><span class="p">](</span><span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">coupled_entries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_PATCH_TYPES</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-    <span class="p">]</span></div>
+    <span class="p">}</span></div>
 
 </pre></div>
         </article>

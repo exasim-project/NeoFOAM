@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.kernels" href="neofoam.framework.coupling.kernels.html"><link rel="prev" title="neofoam.framework.coupling.coupled" href="neofoam.framework.coupling.coupled.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.field_port" href="neofoam.framework.coupling.field_port.html"><link rel="prev" title="neofoam.framework.coupling.coupled" href="neofoam.framework.coupling.coupled.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.framework.coupling.data.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -301,7 +301,9 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5 current current-page"><a class="current reference internal" href="#">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -689,33 +691,145 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.coupling.data">
 <span id="neofoam-framework-coupling-data"></span><h1>neofoam.framework.coupling.data<a class="headerlink" href="#module-neofoam.framework.coupling.data" title="Link to this heading">¶</a></h1>
-<p>What a coupled side exchanges: <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> fields, the side, and what it sends.</p>
+<p>What a port exchanges: data models of <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> or <code class="xref py py-data docutils literal notranslate"><span class="pre">Scalar</span></code> fields, the port.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">ExchangeSide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sends</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receive</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#ExchangeSide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CellData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">CellData</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#CellData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.CellData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Data</span></code></p>
+<p>Data with one row per cell of <code class="xref py py-class docutils literal notranslate"><span class="pre">Cells</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CellData.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.CellData.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CoupledPort">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">CoupledPort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sends</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.framework.coupling.data.Stream" title="neofoam.framework.coupling.data.Stream"><span class="pre">Stream</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.framework.coupling.data.Stream" title="neofoam.framework.coupling.data.Stream"><span class="pre">Stream</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#CoupledPort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.CoupledPort" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A coupled side of a region: its patch, the field it couples, its models and points.</p>
-<p><code class="docutils literal notranslate"><span class="pre">receive</span></code> gets data already mapped onto its <code class="docutils literal notranslate"><span class="pre">coordinates</span></code> (one row per
-point, or <code class="docutils literal notranslate"><span class="pre">None</span></code>). Built by
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">add()</span></code> for a <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> instance.</p>
+<p>A named coupled location of a region: what it sends and receives there, by data key.</p>
+<p>Built by <code class="xref py py-meth docutils literal notranslate"><span class="pre">add()</span></code>, named after its
+location, or for a field port of the yaml; several instances on one port merge.</p>
 <dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide.end">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide.end" title="Link to this definition">¶</a></dt>
-<dd><p>The side’s end of its exchange.</p>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CoupledPort.end">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.data.CoupledPort.end" title="Link to this definition">¶</a></dt>
+<dd><p>The port’s end of its exchange.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide.label">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide.label" title="Link to this definition">¶</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;patch&gt;</span></code>.</p>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CoupledPort.label">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.CoupledPort.label" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;port&gt;</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CoupledPort.merged">
+<span class="sig-name descname"><span class="pre">merged</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort" title="neofoam.framework.coupling.data.CoupledPort"><span class="pre">CoupledPort</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort" title="neofoam.framework.coupling.data.CoupledPort"><span class="pre">CoupledPort</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#CoupledPort.merged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.CoupledPort.merged" title="Link to this definition">¶</a></dt>
+<dd><p>This port with <code class="docutils literal notranslate"><span class="pre">other</span></code>’s streams; <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when a field name repeats.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide.points">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">points</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide.points" title="Link to this definition">¶</a></dt>
-<dd><p>The number of points of the patch (rows of <code class="docutils literal notranslate"><span class="pre">coordinates</span></code>), or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.CoupledPort.names">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">names</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.data.CoupledPort.names" title="Link to this definition">¶</a></dt>
+<dd><p>The data field names the port sends or receives.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.FaceData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">FaceData</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#FaceData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.FaceData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Data</span></code></p>
+<p>Data with one row per face of a <code class="xref py py-class docutils literal notranslate"><span class="pre">Patch</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WallTemperature</span><span class="p">(</span><span class="n">FaceData</span><span class="p">):</span>
+    <span class="n">T</span><span class="p">:</span> <span class="n">Array</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.FaceData.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.FaceData.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ProbeData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">ProbeData</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#ProbeData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.ProbeData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Data</span></code></p>
+<p>Data with one row per point of a <code class="docutils literal notranslate"><span class="pre">probe</span></code> mapping, on a <code class="docutils literal notranslate"><span class="pre">Global</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ProbeData.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ProbeData.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.Stream">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">Stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#Stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.Stream" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>One data model a port sends or receives, and the bound method that does it.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ValueData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">ValueData</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#ValueData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.ValueData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Data</span></code></p>
+<p>One value per field (<code class="xref py py-data docutils literal notranslate"><span class="pre">Scalar</span></code>), on a <code class="xref py py-class docutils literal notranslate"><span class="pre">Global</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ValueData.field_kind">
+<span class="sig-name descname"><span class="pre">field_kind</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ValueData.field_kind" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">_ScalarKind</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ValueData.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ValueData.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.base_name">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">base_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">_Data</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#base_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.base_name" title="Link to this definition">¶</a></dt>
+<dd><p>The base of <code class="docutils literal notranslate"><span class="pre">model</span></code>: <code class="docutils literal notranslate"><span class="pre">FaceData</span></code>, <code class="docutils literal notranslate"><span class="pre">CellData</span></code>, <code class="docutils literal notranslate"><span class="pre">ValueData</span></code> or <code class="docutils literal notranslate"><span class="pre">ProbeData</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.check_model">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">check_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">_Data</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#check_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.check_model" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">model</span></code> if it is a data model with fields of its kind; <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> naming <code class="docutils literal notranslate"><span class="pre">owner</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.check_received">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">check_received</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">announced</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort" title="neofoam.framework.coupling.data.CoupledPort"><span class="pre">CoupledPort</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#check_received"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.check_received" title="Link to this definition">¶</a></dt>
+<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> unless <code class="docutils literal notranslate"><span class="pre">port</span></code> receives exactly what its partner sends.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.check_rows">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">check_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.coupling.data.Stream" title="neofoam.framework.coupling.data.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort" title="neofoam.framework.coupling.data.CoupledPort"><span class="pre">CoupledPort</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#check_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.check_rows" title="Link to this definition">¶</a></dt>
+<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> unless <code class="docutils literal notranslate"><span class="pre">data</span></code> has a row per entity of the port (<code class="docutils literal notranslate"><span class="pre">size</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.key">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.key" title="Link to this definition">¶</a></dt>
+<dd><p>What pairs a sent with a received model: their field names, <code class="docutils literal notranslate"><span class="pre">T</span></code> or <code class="docutils literal notranslate"><span class="pre">T_sink,h</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.data.sent">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">sent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.coupling.data.Stream" title="neofoam.framework.coupling.data.Stream"><span class="pre">Stream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort" title="neofoam.framework.coupling.data.CoupledPort"><span class="pre">CoupledPort</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">when</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#sent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.sent" title="Link to this definition">¶</a></dt>
+<dd><p>What <code class="docutils literal notranslate"><span class="pre">stream</span></code> sends now, as float copies; <code class="docutils literal notranslate"><span class="pre">FloatingPointError</span></code> when not finite.</p>
+<p><code class="docutils literal notranslate"><span class="pre">when</span></code>: the pass (from 0) and the time.</p>
 </dd></dl>
 
 </section>
@@ -725,12 +839,12 @@ point, or <code class="docutils literal notranslate"><span class="pre">None</spa
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="neofoam.framework.coupling.kernels.html">
+          <a class="next-page" href="neofoam.framework.coupling.field_port.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam.framework.coupling.kernels</div>
+                <div class="title">neofoam.framework.coupling.field_port</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -776,12 +890,37 @@ point, or <code class="docutils literal notranslate"><span class="pre">None</spa
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.framework.coupling.data</a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide"><code class="docutils literal notranslate"><span class="pre">ExchangeSide</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.end"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.end</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.label"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.label</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.points"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.points</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CellData"><code class="docutils literal notranslate"><span class="pre">CellData</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CellData.model_config"><code class="docutils literal notranslate"><span class="pre">CellData.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort"><code class="docutils literal notranslate"><span class="pre">CoupledPort</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort.end"><code class="docutils literal notranslate"><span class="pre">CoupledPort.end</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort.label"><code class="docutils literal notranslate"><span class="pre">CoupledPort.label</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort.merged"><code class="docutils literal notranslate"><span class="pre">CoupledPort.merged()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.CoupledPort.names"><code class="docutils literal notranslate"><span class="pre">CoupledPort.names</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.FaceData"><code class="docutils literal notranslate"><span class="pre">FaceData</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.FaceData.model_config"><code class="docutils literal notranslate"><span class="pre">FaceData.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.ProbeData"><code class="docutils literal notranslate"><span class="pre">ProbeData</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.ProbeData.model_config"><code class="docutils literal notranslate"><span class="pre">ProbeData.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.Stream"><code class="docutils literal notranslate"><span class="pre">Stream</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.ValueData"><code class="docutils literal notranslate"><span class="pre">ValueData</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.ValueData.field_kind"><code class="docutils literal notranslate"><span class="pre">ValueData.field_kind</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.ValueData.model_config"><code class="docutils literal notranslate"><span class="pre">ValueData.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.base_name"><code class="docutils literal notranslate"><span class="pre">base_name()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.check_model"><code class="docutils literal notranslate"><span class="pre">check_model()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.check_received"><code class="docutils literal notranslate"><span class="pre">check_received()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.check_rows"><code class="docutils literal notranslate"><span class="pre">check_rows()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.key"><code class="docutils literal notranslate"><span class="pre">key()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.data.sent"><code class="docutils literal notranslate"><span class="pre">sent()</span></code></a></li>
 </ul>
 </li>
 </ul>

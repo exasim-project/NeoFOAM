@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -684,7 +686,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""A region's coupling model, ``ctx.models["coupling"]``: a :class:`Coupling`."""</span>
+<span class="sd">"""A region's coupling model ``ctx.models["coupling"]``, a :class:`Coupling`; :func:`coupling`."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -693,8 +695,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">field_port</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.comm_channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExchangeSide</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoupledPort</span><span class="p">,</span> <span class="n">base_name</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.field_port</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldAccess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.location</span><span class="w"> </span><span class="kn">import</span> <span class="n">Location</span><span class="p">,</span> <span class="n">MeshGeometry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingOp</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -706,64 +711,87 @@
 <div class="viewcode-block" id="Coupling">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Coupling</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The coupling of one region: its coupled sides and the operations they need.</span>
+<span class="w">    </span><span class="sd">"""The coupling of one region: its coupled ports and the operations they need.</span>
 
-<span class="sd">    A solver that supports coupling adds it in its init, before its boundary</span>
-<span class="sd">    conditions, and each ``@coupled`` boundary condition adds itself::</span>
+<span class="sd">    A solver that supports coupling adds it in its init, with its mesh geometry,</span>
+<span class="sd">    before it binds its coupled instances to their locations::</span>
 
-<span class="sd">        ctx.models["coupling"] = Coupling(self.coupling)</span>
+<span class="sd">        ctx.models["coupling"] = Coupling(self.coupling, FoamGeometry(mesh))</span>
 <span class="sd">        ...</span>
-<span class="sd">        Coupling.of(ctx).add(self)</span>
+<span class="sd">        coupling(ctx).add(Patch("top"), bc)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RegionCoupling</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coupling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RegionCoupling</span><span class="p">],</span>
+        <span class="n">geometry</span><span class="p">:</span> <span class="n">MeshGeometry</span><span class="p">,</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FieldAccess</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span> <span class="o">=</span> <span class="n">coupling</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExchangeSide</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">geometry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ports</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CoupledPort</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Operations</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bind_field_ports</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Coupling.of">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.of">[docs]</a>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Coupling</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The coupling model of the region ``ctx``; ``ValueError`` when its solver added none."""</span>
-        <span class="n">coupling</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coupling"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the solver of region </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> does not support coupling"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">coupling</span></div>
-
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bind_field_ports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FieldAccess</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Bind the region's field ports of the yaml through the solver's ``fields``."""</span>
+        <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
+        <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">coupling</span><span class="o">.</span><span class="n">field_ports</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"region </span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> has the field ports "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">[</span><span class="n">port</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">port</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">coupling</span><span class="o">.</span><span class="n">field_ports</span><span class="p">]</span><span class="si">}</span><span class="s2"> (system/regionCoupling.yaml: "</span>
+                <span class="s2">"ports), but its solver gives no field access"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">field_ports</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bind</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">port</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">field_port</span><span class="o">.</span><span class="n">instance</span><span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">fields</span><span class="p">))</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">sides</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ExchangeSide</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The region's coupled sides, in the order they were added."""</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ports</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CoupledPort</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The region's coupled ports, in the order they were added."""</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ports</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
 <div class="viewcode-block" id="Coupling.add">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.add">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Add the side of the ``@coupled`` ``instance``, before the graph is built."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Location</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Bind the ``@coupled`` ``instance`` to ``location``, before the graph is built.</span>
+
+<span class="sd">        Instances on one location merge into its port, named after the location.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bind</span><span class="p">(</span><span class="n">location</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Location</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">declaration</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="s2">"__coupled__"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> is not @coupled"</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">attribute</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"field"</span><span class="p">,</span> <span class="s2">"patch"</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attribute</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"@coupled </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> sets no self.</span><span class="si">{</span><span class="n">attribute</span><span class="si">}</span><span class="s2"> in __init__"</span>
-                <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"no exchange connects the coupled side on patch </span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">patch</span><span class="si">}</span><span class="s2">: the case "</span>
-                <span class="s2">"does not couple its region (system/regionCoupling.yaml: exchanges)"</span>
-            <span class="p">)</span>
-        <span class="n">side</span> <span class="o">=</span> <span class="n">declaration</span><span class="o">.</span><span class="n">side</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">patch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"no exchange connects the coupled side of </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">; a coupled boundary "</span>
-                <span class="s2">"condition needs its exchange (system/regionCoupling.yaml: exchanges)"</span>
-            <span class="p">)</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">CoupledPort</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_region</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">location</span><span class="p">,</span>
+            <span class="n">declaration</span><span class="o">.</span><span class="n">streams</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">"sends"</span><span class="p">),</span>
+            <span class="n">declaration</span><span class="o">.</span><span class="n">streams</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">"receives"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">_check_entities</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> is added after the region's graph was built"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">side</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> is added after the region's graph was built"</span><span class="p">)</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ports</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ports</span><span class="p">[</span><span class="n">port</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">port</span> <span class="k">if</span> <span class="n">known</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">known</span><span class="o">.</span><span class="n">merged</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_region</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
+        <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"no exchange connects the port </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: the case does not couple its "</span>
+                <span class="s2">"region (system/regionCoupling.yaml: exchanges)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">ports</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"no exchange connects the port </span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">; a coupled "</span>
+                <span class="s2">"instance needs its exchange (system/regionCoupling.yaml: exchanges)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">coupling</span><span class="o">.</span><span class="n">region</span>
 
 <div class="viewcode-block" id="Coupling.operations">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.operations">[docs]</a>
@@ -771,30 +799,37 @@
 <span class="w">        </span><span class="sd">"""The region's coupling ops, one per node, outer to inner; built once."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
-            <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">by_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExchangeSide</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">nodes</span><span class="p">}</span>
-                <span class="n">in_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
-                    <span class="n">name</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">node_of</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
-                    <span class="k">if</span> <span class="n">in_node</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">!=</span> <span class="n">name</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">"field </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2"> of region </span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> is coupled in the "</span>
-                            <span class="sa">f</span><span class="s2">"nodes '</span><span class="si">{</span><span class="n">in_node</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">); a "</span>
-                            <span class="s2">"region's field is in at most one coupling node"</span>
-                        <span class="p">)</span>
-                    <span class="n">by_node</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
-                <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
-                    <span class="n">couple</span> <span class="o">=</span> <span class="n">CouplingOp</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">by_node</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-                    <span class="n">metadata</span> <span class="o">=</span> <span class="n">OperationMetadata</span><span class="p">(</span>
-                        <span class="n">op_name</span><span class="o">=</span><span class="n">couple</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">wraps</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">placement_of</span><span class="p">(</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="n">ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Operation</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">couple</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">()</span> <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="n">coupling</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">RegionCoupling</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
+        <span class="n">by_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_node</span><span class="p">(</span><span class="n">coupling</span><span class="p">)</span>
+        <span class="n">geometries</span> <span class="o">=</span> <span class="p">{</span><span class="n">port</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">port</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="p">)</span> <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">}</span>
+        <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="n">couple</span> <span class="o">=</span> <span class="n">CouplingOp</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">by_node</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">geometries</span><span class="p">)</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">OperationMetadata</span><span class="p">(</span>
+                <span class="n">op_name</span><span class="o">=</span><span class="n">couple</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">wraps</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">placement_of</span><span class="p">(</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Operation</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">couple</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Operations</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_by_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">RegionCoupling</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">CoupledPort</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""The ports by node; ``ValueError`` when a data field is in two nodes."""</span>
+        <span class="n">by_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">CoupledPort</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">nodes</span><span class="p">}</span>
+        <span class="n">in_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">node_of</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">in_node</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">!=</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"the data </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2"> of region </span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> is coupled in the nodes "</span>
+                        <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">in_node</span><span class="p">[</span><span class="n">data</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">); a region's data field "</span>
+                        <span class="s2">"is in at most one coupling node"</span>
+                    <span class="p">)</span>
+            <span class="n">by_node</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">by_node</span>
 
 <div class="viewcode-block" id="Coupling.graph_operations">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.graph_operations">[docs]</a>
@@ -857,6 +892,32 @@
             <span class="p">)</span></div>
 </div>
 
+
+
+<div class="viewcode-block" id="coupling">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.coupling">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coupling</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Coupling</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The coupling model of the region ``ctx``; ``ValueError`` when its solver added none.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        coupling(ctx).add(Patch("top"), bc)</span>
+<span class="sd">    """</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coupling"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the solver of region </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> does not support coupling"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_entities</span><span class="p">(</span><span class="n">port</span><span class="p">:</span> <span class="n">CoupledPort</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``TypeError`` unless every model of ``port`` lives on its location's entities."""</span>
+    <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="n">port</span><span class="o">.</span><span class="n">sends</span><span class="p">,</span> <span class="o">*</span><span class="n">port</span><span class="o">.</span><span class="n">receives</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">entity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">port</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">base_name</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">, which "</span>
+                <span class="sa">f</span><span class="s2">"does not live on </span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
 
 
 <span class="n">SET_TIME_STEP</span> <span class="o">=</span> <span class="s2">"set_time_step"</span>

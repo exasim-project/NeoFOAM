@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -717,7 +719,7 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingController</span><span class="p">,</span> <span class="n">CouplingOutcome</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExchangeSide</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoupledPort</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingOp</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.init_step</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span>
@@ -786,8 +788,8 @@
 
 <div class="viewcode-block" id="ExecutionObserver.coupling_exchanged">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.coupling_exchanged">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">coupling_exchanged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">CouplingOp</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The region's ``coupling`` op is about to hand ``side`` its mapped ``data``."""</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coupling_exchanged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">CouplingOp</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="n">CoupledPort</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The region's ``coupling`` op is about to hand ``port`` its mapped ``data``."""</span></div>
 </div>
 
 

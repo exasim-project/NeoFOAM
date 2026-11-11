@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -684,7 +686,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Process-wide NeoN (Kokkos) runtime initialization.</span>
+<span class="sd">"""Process-wide NeoN (Kokkos) runtime initialization, and a NeoN run's mesh geometry and fields.</span>
 
 <span class="sd">Kokkos may only be initialized/finalized once per process. Every NeoN-backed</span>
 <span class="sd">solver calls :func:`ensure_neon_initialized` before touching NeoN so repeated</span>
@@ -703,9 +705,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">neon._neon</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>  <span class="c1"># NeoN Python bindings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 <span class="n">_neon_initialized</span> <span class="o">=</span> <span class="kc">False</span>
@@ -816,6 +822,79 @@
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">_gpu_init_report</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
     <span class="n">_neon_initialized</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">_finalize_neon</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_host</span><span class="p">(</span><span class="n">vector</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A NeoN vector as a numpy array on the host."""</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">vector</span><span class="o">.</span><span class="n">copy_to_host</span><span class="p">())</span>
+
+
+<div class="viewcode-block" id="NeoNGeometry">
+<a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.NeoNGeometry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeoNGeometry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The :class:`~neofoam.framework.coupling.MeshGeometry` of a NeoN run, from its mesh.</span>
+
+<span class="sd">    A patch's faces are its slice of NeoN's boundary faces, flat in patch order.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        ctx.models["coupling"] = Coupling(coupling, NeoNGeometry(rt), NeoNFields(rt, ctx.fields))</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="o">=</span> <span class="n">runtime</span>
+
+<div class="viewcode-block" id="NeoNGeometry.faces">
+<a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.NeoNGeometry.faces">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">faces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">slice</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The slice of NeoN's boundary faces that are ``patch``'s."""</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">boundary</span><span class="p">()</span><span class="o">.</span><span class="n">findPatchID</span><span class="p">(</span><span class="n">patch</span><span class="p">))</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">nf_mesh</span><span class="o">.</span><span class="n">boundary_mesh</span><span class="p">()</span><span class="o">.</span><span class="n">offset</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="n">offset</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">offset</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">face_centres</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">nf_mesh</span><span class="o">.</span><span class="n">boundary_mesh</span><span class="p">()</span><span class="o">.</span><span class="n">face_centers</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">(</span><span class="n">patch</span><span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">face_areas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">nf_mesh</span><span class="o">.</span><span class="n">boundary_mesh</span><span class="p">()</span><span class="o">.</span><span class="n">face_areas</span><span class="p">())[</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="p">(</span><span class="n">patch</span><span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cell_centres</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">nf_mesh</span><span class="o">.</span><span class="n">cell_centers</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cell_volumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">nf_mesh</span><span class="o">.</span><span class="n">cell_volumes</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="NeoNFields">
+<a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.NeoNFields">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeoNFields</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The :class:`~neofoam.framework.coupling.FieldAccess` of a NeoN run's volume fields.</span>
+
+<span class="sd">    A patch reads its boundary values and is written as fixed values; the cells</span>
+<span class="sd">    read and write the internal values. A patch it writes is ``calculated`` in</span>
+<span class="sd">    ``0/&lt;field&gt;``: a boundary correction re-applies any other condition.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">NeoNGeometry</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">Patch</span><span class="p">):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">boundary_data_value</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">_host</span><span class="p">(</span><span class="n">values</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">faces</span><span class="p">(</span><span class="n">location</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">internal_vector</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">Patch</span><span class="p">):</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">boundary</span><span class="p">()</span><span class="o">.</span><span class="n">findPatchID</span><span class="p">(</span><span class="n">location</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">set_patch_fixed_values</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nfb</span><span class="o">.</span><span class="n">copy_from_host</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="n">values</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

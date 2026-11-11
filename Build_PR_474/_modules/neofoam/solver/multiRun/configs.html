@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -705,7 +707,8 @@
     <span class="n">CouplingConvergence</span><span class="p">,</span>
     <span class="n">CouplingMapping</span><span class="p">,</span>
     <span class="n">CouplingNode</span><span class="p">,</span>
-    <span class="n">Link</span><span class="p">,</span>
+    <span class="n">Exchange</span><span class="p">,</span>
+    <span class="n">FieldPort</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.comm_channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TIMEOUT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_mapping</span>
@@ -748,13 +751,33 @@
 <div class="viewcode-block" id="ExchangeConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.ExchangeConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExchangeConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One exchange: the coupled patch of each of its two regions; ``name`` defaults to theirs."""</span>
+<span class="w">    </span><span class="sd">"""One exchange: the port of each of its two regions; ``name`` defaults to theirs."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">sides</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ports</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">default_mapping</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FieldPortConfig">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.FieldPortConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FieldPortConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A field port of ``ports:``: the region's ``field`` on ``patch`` (none: its cells).</span>
+
+<span class="sd">    ``direction`` ``out`` reads it (the default), ``in`` writes it, ``inout`` both.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">patch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"in"</span><span class="p">,</span> <span class="s2">"inout"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"out"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">field_port</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldPort</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">FieldPort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span></div>
 
 
 
@@ -830,16 +853,22 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.RegionCouplingConfig">[docs]</a>
 <span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"system/regionCoupling.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RegionCouplingConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""``system/regionCoupling.yaml``: the exchanges between regions and the coupling nodes.</span>
+<span class="w">    </span><span class="sd">"""``system/regionCoupling.yaml``: field ports, the exchanges and the coupling nodes.</span>
 
-<span class="sd">    ``couplings`` lists the nodes outer to inner, each exchange in one; checked on load.</span>
+<span class="sd">    ``ports`` lists each region's field ports, which an exchange names like the</span>
+<span class="sd">    ports of its coupled patches. ``couplings`` lists the nodes outer to inner,</span>
+<span class="sd">    each exchange in one; checked on load.</span>
 <span class="sd">    ``commChannelTimeout`` is in seconds, ``0`` or ``null`` without end. Without the file</span>
 <span class="sd">    no region is coupled.</span>
 
 <span class="sd">    Example::</span>
 
+<span class="sd">        ports:</span>
+<span class="sd">          fluid:</span>
+<span class="sd">            - {name: T_out, field: T, patch: outlet}   # direction: out</span>
 <span class="sd">        exchanges:</span>
-<span class="sd">          - {name: wall, sides: {fluid: wall, solid: right}, mapping: nearest-neighbor}</span>
+<span class="sd">          - {name: wall, ports: {fluid: wall, solid: right}, mapping: nearest-neighbor}</span>
+<span class="sd">          - {name: mean_T, ports: {fluid: T_out, controller: T_meas}, mapping: area-mean}</span>
 <span class="sd">        couplings:</span>
 <span class="sd">          - name: thermal</span>
 <span class="sd">            scheme: serial</span>
@@ -854,21 +883,31 @@
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
+    <span class="n">ports</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">FieldPortConfig</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">exchanges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExchangeConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">couplings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CouplingNodeConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">commChannelTimeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">allow_inf_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RegionCouplingConfig.links">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.RegionCouplingConfig.links">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Link</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""One link per exchange; a default name another exchange has is numbered (``a-b-2``)."""</span>
-        <span class="n">links</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Link</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
-            <span class="n">taken</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">]</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">_free</span><span class="p">(</span><span class="s2">"-"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">sides</span><span class="p">),</span> <span class="n">taken</span><span class="p">)</span>
-            <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Link</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">),</span> <span class="n">exchange</span><span class="o">.</span><span class="n">mapping</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">links</span></div>
+<div class="viewcode-block" id="RegionCouplingConfig.coupling_exchanges">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.RegionCouplingConfig.coupling_exchanges">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coupling_exchanges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Exchange</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The exchanges; a default name another exchange has is numbered (``a-b-2``)."""</span>
+        <span class="n">exchanges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Exchange</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
+            <span class="n">taken</span> <span class="o">=</span> <span class="p">[</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span><span class="p">]</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">_free</span><span class="p">(</span><span class="s2">"-"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">ports</span><span class="p">),</span> <span class="n">taken</span><span class="p">)</span>
+            <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ports</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="n">exchanges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Exchange</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">),</span> <span class="n">config</span><span class="o">.</span><span class="n">mapping</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">exchanges</span></div>
+
+
+<div class="viewcode-block" id="RegionCouplingConfig.field_ports">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.RegionCouplingConfig.field_ports">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">field_ports</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">FieldPort</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Each region's field ports."""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">region</span><span class="p">:</span> <span class="p">[</span><span class="n">port</span><span class="o">.</span><span class="n">field_port</span><span class="p">()</span> <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">ports</span><span class="p">]</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">ports</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="RegionCouplingConfig.nodes">
@@ -880,9 +919,11 @@
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"RegionCouplingConfig"</span><span class="p">:</span>
-        <span class="n">links</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span><span class="p">()</span>
-        <span class="n">regions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">region</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_patch</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">))</span>
-        <span class="n">check_couplings</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">links</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+        <span class="n">exchanges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling_exchanges</span><span class="p">()</span>
+        <span class="n">regions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">region</span> <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">exchanges</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_patch</span> <span class="ow">in</span> <span class="n">exchange</span><span class="o">.</span><span class="n">ends</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">check_couplings</span><span class="p">(</span><span class="n">regions</span><span class="p">,</span> <span class="n">exchanges</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_ports</span><span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 

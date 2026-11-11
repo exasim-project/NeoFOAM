@@ -301,7 +301,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -691,7 +693,7 @@
 <h1>Region coupling<a class="headerlink" href="#region-coupling" title="Link to this heading">¶</a></h1>
 <p>A multi-region case (<code class="docutils literal notranslate"><span class="pre">multiRun</span></code>) runs one solver per region, each with its own
 graph and time loop on its own thread. Regions share nothing but a
-<strong>comm channel</strong>, point to point; coupled patches exchange data over it.</p>
+<strong>comm channel</strong>, point to point; coupled ports exchange data over it.</p>
 <div class="table-wrapper docutils container">
 <table class="docutils align-default">
 <thead>
@@ -700,25 +702,29 @@ graph and time loop on its own thread. Regions share nothing but a
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>boundary condition (<code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code>)</p></td>
-<td><p>its side: the field it couples, what it sends and receives (a pydantic
-model per direction), its points. It adds itself to its region’s
-coupling model (<code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).add(self)</span></code>).</p></td>
+<tr class="row-even"><td><p>coupled instance (<code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code>: a boundary condition, a source)</p></td>
+<td><p>what it sends and receives, a data model each, in the mesh order of its
+location; no patch, geometry or context.</p></td>
 </tr>
-<tr class="row-odd"><td><p>solver</p></td>
-<td><p>its coupling model, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span> <span class="pre">=</span> <span class="pre">Coupling(self.coupling)</span></code>,
-added in its init before its boundary conditions.</p></td>
+<tr class="row-odd"><td><p>location (<code class="docutils literal notranslate"><span class="pre">Patch(name)</span></code>, <code class="docutils literal notranslate"><span class="pre">Cells()</span></code>, <code class="docutils literal notranslate"><span class="pre">Global(name)</span></code>)</p></td>
+<td><p>the part of the mesh, and so the geometry: face centres and areas, cell
+centres and volumes, from the region’s <code class="docutils literal notranslate"><span class="pre">MeshGeometry</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p>case (<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>)</p></td>
-<td><p>the <strong>exchanges</strong> (pairs of patches and their mapping) and the
-<strong>coupling nodes</strong> (<code class="docutils literal notranslate"><span class="pre">couplings</span></code>).</p></td>
+<tr class="row-even"><td><p>solver</p></td>
+<td><p>its coupling model, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span> <span class="pre">=</span> <span class="pre">Coupling(self.coupling,</span>
+<span class="pre">geometry,</span> <span class="pre">fields)</span></code>, and the binding of its instances,
+<code class="docutils literal notranslate"><span class="pre">coupling(ctx).add(Patch(&quot;top&quot;),</span> <span class="pre">bc)</span></code>: a <strong>port</strong>.</p></td>
 </tr>
-<tr class="row-odd"><td><p>framework</p></td>
+<tr class="row-odd"><td><p>case (<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>)</p></td>
+<td><p>the <strong>field ports</strong> (<code class="docutils literal notranslate"><span class="pre">ports</span></code>), the <strong>exchanges</strong> (pairs of ports and
+their mapping) and the <strong>coupling nodes</strong> (<code class="docutils literal notranslate"><span class="pre">couplings</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p>framework</p></td>
 <td><p>one coupling op <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code> per node of a region, placed in the
 region’s graph; the node’s last region (its <strong>leader</strong>) decides
 convergence.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">multiRun</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">multiRun</span></code></p></td>
 <td><p>reads <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code> and the case file, creates the comm channel, runs
 every region on its own thread.</p></td>
 </tr>
@@ -728,42 +734,58 @@ every region on its own thread.</p></td>
 <p>Regions that exchanges connect form a <strong>group</strong>; its last region in
 <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code> order agrees the time step. Each region reads its own files
 under <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/</span></code> (<code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/constant</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/0</span></code>).</p>
-<section id="the-coupled-boundary-condition">
-<h2>The coupled boundary condition<a class="headerlink" href="#the-coupled-boundary-condition" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WallTemperature</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">T</span><span class="p">:</span> <span class="n">Array</span>             <span class="c1"># one value per point; Array fields only</span>
+<section id="the-coupled-instance">
+<h2>The coupled instance<a class="headerlink" href="#the-coupled-instance" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WallTemperature</span><span class="p">(</span><span class="n">FaceData</span><span class="p">):</span>     <span class="c1"># one row per face of a Patch</span>
+    <span class="n">T</span><span class="p">:</span> <span class="n">Array</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">WallHeatFlux</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WallHeatFlux</span><span class="p">(</span><span class="n">FaceData</span><span class="p">):</span>
     <span class="n">q</span><span class="p">:</span> <span class="n">Array</span>
 
 
 <span class="nd">@coupled</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">CoupledHeatFlux</span><span class="p">(</span><span class="n">Patch</span><span class="p">):</span>        <span class="c1"># sets self.field and self.patch</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">)</span>
-        <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-    <span class="nd">@coupled</span><span class="o">.</span><span class="n">coordinates</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
-
+<span class="k">class</span><span class="w"> </span><span class="nc">CoupledHeatFlux</span><span class="p">(</span><span class="n">NeoNPatch</span><span class="p">):</span>
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">sends</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WallTemperature</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wall_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WallTemperature</span><span class="p">:</span> <span class="o">...</span>
 
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">receives</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">WallHeatFlux</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>   <span class="c1"># already mapped</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">heat_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">WallHeatFlux</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>   <span class="c1"># already mapped</span>
+
+
+<span class="c1"># solver init</span>
+<span class="n">coupling</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Patch</span><span class="p">(</span><span class="s2">"top"</span><span class="p">),</span> <span class="n">CoupledHeatFlux</span><span class="p">(</span><span class="o">...</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The annotations are the declaration; the side names no partner, loop or
-mapping. <code class="docutils literal notranslate"><span class="pre">add</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when no exchange connects the patch.
+<p>The annotations are the declaration (string annotations resolve, so
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">__future__</span> <span class="pre">import</span> <span class="pre">annotations</span></code> is fine). A class sends, receives or
+both, each data field once; <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> checks this as the class is defined.
+The base class names the entity of a row: <code class="docutils literal notranslate"><span class="pre">FaceData</span></code> lives on a <code class="docutils literal notranslate"><span class="pre">Patch</span></code>,
+<code class="docutils literal notranslate"><span class="pre">CellData</span></code> on <code class="docutils literal notranslate"><span class="pre">Cells</span></code>, <code class="docutils literal notranslate"><span class="pre">ValueData</span></code> (<code class="docutils literal notranslate"><span class="pre">Scalar</span></code> fields) and <code class="docutils literal notranslate"><span class="pre">ProbeData</span></code>
+(a row per probe point) on a <code class="docutils literal notranslate"><span class="pre">Global</span></code>. Instances bound to one location merge
+into its port. <code class="docutils literal notranslate"><span class="pre">add</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when no exchange connects the port;
+at start-up an array with another row count than its location raises.
 <code class="docutils literal notranslate"><span class="pre">test/solver/multiRun/cases/dirichlet_neumann_slabs</span></code> couples two slabs this
 way (<code class="docutils literal notranslate"><span class="pre">test/solver/multiRun/slab_solver.py</span></code>).</p>
+<p><strong>Field ports.</strong> A region’s field on a location needs no Python: the case
+names it, and the solver’s <code class="docutils literal notranslate"><span class="pre">FieldAccess</span></code> reads or writes it. <code class="docutils literal notranslate"><span class="pre">direction</span></code>
+is <code class="docutils literal notranslate"><span class="pre">out</span></code> (read, the default), <code class="docutils literal notranslate"><span class="pre">in</span></code> (write) or <code class="docutils literal notranslate"><span class="pre">inout</span></code>; an exchange of two
+field ports connects <code class="docutils literal notranslate"><span class="pre">out</span></code> to <code class="docutils literal notranslate"><span class="pre">in</span></code> or <code class="docutils literal notranslate"><span class="pre">inout</span></code> to <code class="docutils literal notranslate"><span class="pre">inout</span></code>, and a field
+on a location is written by one port (checked as the file loads).</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">fluid</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">T_out</span><span class="p p-Indicator">,</span><span class="nt"> field</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">,</span><span class="nt"> patch</span><span class="p">:</span><span class="w"> </span><span class="nv">outlet</span><span class="p p-Indicator">}</span><span class="w">             </span><span class="c1"># Patch("outlet"), out</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">T_cells</span><span class="p p-Indicator">,</span><span class="nt"> field</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">}</span><span class="w">                          </span><span class="c1"># the cells</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">U_in</span><span class="p p-Indicator">,</span><span class="nt"> field</span><span class="p">:</span><span class="w"> </span><span class="nv">U</span><span class="p p-Indicator">,</span><span class="nt"> patch</span><span class="p">:</span><span class="w"> </span><span class="nv">inlet</span><span class="p p-Indicator">,</span><span class="nt"> direction</span><span class="p">:</span><span class="w"> </span><span class="nv">in</span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
 </section>
 <section id="the-case-file">
 <h2>The case file<a class="headerlink" href="#the-case-file" title="Link to this heading">¶</a></h2>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">exchanges</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">wall</span><span class="p p-Indicator">,</span><span class="nt"> solid</span><span class="p">:</span><span class="w"> </span><span class="nv">right</span><span class="p p-Indicator">}}</span><span class="w">   </span><span class="c1"># mapping: nearest-neighbor</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">inlet</span><span class="p p-Indicator">,</span><span class="nt"> pipe</span><span class="p">:</span><span class="w"> </span><span class="nv">outlet</span><span class="p p-Indicator">},</span><span class="nt"> mapping</span><span class="p">:</span><span class="w"> </span><span class="nv">identity</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># name: fluid-pipe</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">wall</span><span class="p p-Indicator">,</span><span class="nt"> solid</span><span class="p">:</span><span class="w"> </span><span class="nv">right</span><span class="p p-Indicator">}}</span><span class="w">   </span><span class="c1"># mapping: nearest-neighbor</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">inlet</span><span class="p p-Indicator">,</span><span class="nt"> pipe</span><span class="p">:</span><span class="w"> </span><span class="nv">outlet</span><span class="p p-Indicator">},</span><span class="nt"> mapping</span><span class="p">:</span><span class="w"> </span><span class="nv">identity</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># name: fluid-pipe</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">mean</span><span class="p p-Indicator">,</span><span class="nt"> ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">T_out</span><span class="p p-Indicator">,</span><span class="nt"> controller</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">},</span><span class="nt"> mapping</span><span class="p">:</span><span class="w"> </span><span class="nv">area-mean</span><span class="p p-Indicator">}</span>
 <span class="nt">couplings</span><span class="p">:</span><span class="w">                       </span><span class="c1"># outer to inner; each exchange in exactly one</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wall</span><span class="w">                   </span><span class="c1"># the ops &lt;region&gt;.wall</span>
 <span class="w">    </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">serial</span><span class="w">               </span><span class="c1"># serial (default) | parallel</span>
@@ -771,8 +793,9 @@ way (<code class="docutils literal notranslate"><span class="pre">test/solver/mu
 <span class="w">    </span><span class="nt">exchanges</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> acceleration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">aitken</span><span class="p p-Indicator">,</span><span class="nt"> relaxation</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">}}</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fluid-pipe</span><span class="w">               </span><span class="c1"># a plain name: no acceleration</span>
-<span class="w">    </span><span class="nt">convergence</span><span class="p">:</span><span class="w">                 </span><span class="c1"># every measure must hold</span>
+<span class="w">    </span><span class="nt">convergence</span><span class="p">:</span><span class="w">                 </span><span class="c1"># every measure must hold; data: a data field</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">relative</span><span class="p p-Indicator">,</span><span class="nt"> data</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">,</span><span class="nt"> limit</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-6</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">relative</span><span class="p p-Indicator">,</span><span class="nt"> data</span><span class="p">:</span><span class="w"> </span><span class="nv">q</span><span class="p p-Indicator">,</span><span class="nt"> limit</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-6</span><span class="p p-Indicator">}</span>
 <span class="w">    </span><span class="nt">wraps</span><span class="p">:</span><span class="w">                       </span><span class="c1"># per region; default: the whole time step</span>
 <span class="w">      </span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">solve_T</span><span class="p p-Indicator">]}</span>
 <span class="w">      </span><span class="nt">pipe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">inner_loop</span><span class="p p-Indicator">]}</span><span class="w">   </span><span class="c1"># a loop, held whole</span>
@@ -784,7 +807,38 @@ downstream of them; without it the op wraps the body of the node before it, or
 the whole time step. <code class="docutils literal notranslate"><span class="pre">mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> and <code class="docutils literal notranslate"><span class="pre">convergence</span></code> name a
 strategy of the families <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code>, <code class="docutils literal notranslate"><span class="pre">CouplingAcceleration</span></code> and
 <code class="docutils literal notranslate"><span class="pre">CouplingConvergence</span></code> by <code class="docutils literal notranslate"><span class="pre">type</span></code>, with its options.</p>
-<p><strong>Serial or parallel.</strong> Parallel: a side receives what its partner sent in the
+<p>An exchange pairs what one port sends with what the other receives by the data
+models’ field names, one message per model; each direction needs a pair. The
+mapping moves a model between the locations’ entities:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>mapping</p></th>
+<th class="head"><p>maps</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nearest-neighbor</span></code> (default), <code class="docutils literal notranslate"><span class="pre">identity</span></code></p></td>
+<td><p>faces to faces, cells to cells (<code class="docutils literal notranslate"><span class="pre">identity</span></code>: also values)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">area-mean</span></code>, <code class="docutils literal notranslate"><span class="pre">area-integral</span></code></p></td>
+<td><p>a patch’s faces to one value, weighted by the face areas</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">volume-mean</span></code>, <code class="docutils literal notranslate"><span class="pre">volume-integral</span></code></p></td>
+<td><p>the cells to one value, weighted by the cell volumes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">uniform</span></code></p></td>
+<td><p>one value to every face or cell</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">probe</span></code> (<code class="docutils literal notranslate"><span class="pre">{type:</span> <span class="pre">probe,</span> <span class="pre">points:</span> <span class="pre">[[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">...]}</span></code>)</p></td>
+<td><p>the cells nearest each point to a row each (<code class="docutils literal notranslate"><span class="pre">ProbeData</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The value mappings take scalar fields only. A region’s data field (<code class="docutils literal notranslate"><span class="pre">T</span></code>,
+<code class="docutils literal notranslate"><span class="pre">q</span></code>) is in at most one coupling node.</p>
+<p><strong>Serial or parallel.</strong> Parallel: a port receives what its partner sent in the
 pass before. Serial: from a region that steps before its own, what it sent in
 the same pass, so a serial pass waits for the partner’s whole pass. Hence a
 serial node may neither enclose a node coupling two of its regions nor hold
@@ -792,7 +846,7 @@ their time step: place it around named operations or make it parallel. A
 steady region has no time step, so a serial node may wrap it whole.</p>
 <p>The file is checked as it loads, by the same <code class="docutils literal notranslate"><span class="pre">check_couplings</span></code> as
 <code class="docutils literal notranslate"><span class="pre">region_couplings</span></code>: unknown keys, types or options, an exchange in no node
-or in two, two exchanges or nodes of one name, a patch in two exchanges, a
+or in two, two exchanges or nodes of one name, a port in two exchanges, a
 <code class="docutils literal notranslate"><span class="pre">wraps</span></code> region the node does not couple, and a serial node enclosing a node
 of two of its regions. A serial node holding the time step is found as the
 region’s graph is resolved.</p>
@@ -816,15 +870,17 @@ region’s graph is resolved.</p>
 the leader, which sends back the smallest. Ops marked <code class="docutils literal notranslate"><span class="pre">first</span></code> (the time-step
 ops, a solver’s old-time storage) run in the first pass of a coupling loop
 only.</p>
-<p><strong>A pass.</strong> The first loop test exchanges what each side sends and receives
-and its points, binds the mappings once and builds the leader’s controller.
-Each test then sends the sides’ data (serial: to later partners at once) and
-the leader’s decision, convergence and acceleration included, comes back; on
-another pass each side receives its partner’s data, mapped and validated. All
+<p><strong>A pass.</strong> The first loop test tells each partner what a port sends and its
+geometry, checks the pairs, binds the mappings once and builds the leader’s
+controller. Each test then sends the ports’ data, a stream per data model
+(serial: to later partners at once), and the leader’s decision, convergence
+and acceleration (per exchange, over its streams) included, comes back; on
+another pass each port receives its partner’s data, mapped and validated. All
 regions leave the loop on the same pass.</p>
 <p><strong>The final pass.</strong> Once every measure holds, the leader runs one more pass,
 the final one; the last pass <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> allows is final regardless (it
-warns, <code class="docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code>). Ops marked <code class="docutils literal notranslate"><span class="pre">final</span></code> (such as
+warns, <code class="docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code>). <code class="docutils literal notranslate"><span class="pre">maxIterations:</span> <span class="pre">1</span></code> is explicit
+coupling: one pass, no warning. Ops marked <code class="docutils literal notranslate"><span class="pre">final</span></code> (such as
 <code class="docutils literal notranslate"><span class="pre">write_output</span></code>) run in the final pass only.</p>
 <p><strong>Failures.</strong> A region that fails closes the comm channel, so none waits for it
 forever. A deadlock raises <code class="docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code> at once; as a fallback a receive
@@ -852,7 +908,9 @@ leaves its values to the coupling:</p>
 <code class="docutils literal notranslate"><span class="pre">q</span> <span class="pre">=</span> <span class="pre">k</span> <span class="pre">dT/dn</span></code> into its region (<code class="docutils literal notranslate"><span class="pre">WallHeatFlux</span></code>); <code class="docutils literal notranslate"><span class="pre">coupledHeatFlux</span></code> takes
 that flux as an explicit source in the cells of its faces and sends its wall
 temperature (<code class="docutils literal notranslate"><span class="pre">WallTemperature</span></code>, both in <code class="docutils literal notranslate"><span class="pre">neofoam.solver.regions</span></code>). The
-points are the face centres, so the faces need not match. Each region is an
+solver binds each to <code class="docutils literal notranslate"><span class="pre">Patch(name)</span></code>; <code class="docutils literal notranslate"><span class="pre">NeoNGeometry</span></code>
+(<code class="docutils literal notranslate"><span class="pre">neofoam.solver.neon_runtime</span></code>) gives the face centres, so the faces need not
+match, and <code class="docutils literal notranslate"><span class="pre">NeoNFields</span></code> the field ports’ access. Each region is an
 OpenFOAM case of its own under <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;/</span></code>, beside the case’s
 <code class="docutils literal notranslate"><span class="pre">system/controlDict.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>.
 <code class="docutils literal notranslate"><span class="pre">tutorials/heatConductionNeoN/coupledBlocks</span></code> couples two blocks through 3
@@ -869,16 +927,21 @@ against 5 faces, serial with Aitken around <code class="docutils literal notrans
 </thead>
 <tbody>
 <tr class="row-even"><td><p>mapping</p></td>
-<td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code>: <code class="docutils literal notranslate"><span class="pre">bind(source,</span> <span class="pre">target)</span></code> once, returning the
+<td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code>: <code class="docutils literal notranslate"><span class="pre">kinds</span></code> (the entities it maps) and
+<code class="docutils literal notranslate"><span class="pre">bind(source,</span> <span class="pre">target)</span></code> once on both ports’ <code class="docutils literal notranslate"><span class="pre">Geometry</span></code>, returning the
 <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">-&gt;</span> <span class="pre">data</span></code> map of every pass.</p></td>
 </tr>
-<tr class="row-odd"><td><p>acceleration</p></td>
+<tr class="row-odd"><td><p>backend</p></td>
+<td><p>a <code class="docutils literal notranslate"><span class="pre">MeshGeometry</span></code> (face centres and areas, cell centres and volumes)
+and a <code class="docutils literal notranslate"><span class="pre">FieldAccess</span></code> (read and write a field on a location).</p></td>
+</tr>
+<tr class="row-even"><td><p>acceleration</p></td>
 <td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingAcceleration</span></code>: <code class="docutils literal notranslate"><span class="pre">__call__(carried</span> <span class="pre">data,</span> <span class="pre">iteration)</span> <span class="pre">-&gt;</span> <span class="pre">data</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p>convergence</p></td>
+<tr class="row-odd"><td><p>convergence</p></td>
 <td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingConvergence</span></code>: <code class="docutils literal notranslate"><span class="pre">__call__(list</span> <span class="pre">of</span> <span class="pre">SideChange)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p>comm channel</p></td>
+<tr class="row-even"><td><p>comm channel</p></td>
 <td><p>a <code class="docutils literal notranslate"><span class="pre">CommChannel</span></code> (a Protocol): <code class="docutils literal notranslate"><span class="pre">send</span></code> (never blocks), <code class="docutils literal notranslate"><span class="pre">receive</span></code>
 (blocks; in order per tag), <code class="docutils literal notranslate"><span class="pre">close</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">abort</span></code>.</p></td>
 </tr>
@@ -954,7 +1017,7 @@ with its family as its module is imported; the case file then names it:</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Region coupling</a><ul>
-<li><a class="reference internal" href="#the-coupled-boundary-condition">The coupled boundary condition</a></li>
+<li><a class="reference internal" href="#the-coupled-instance">The coupled instance</a></li>
 <li><a class="reference internal" href="#the-case-file">The case file</a></li>
 <li><a class="reference internal" href="#how-it-runs">How it runs</a></li>
 <li><a class="reference internal" href="#a-neon-solver-heatconductionneon">A NeoN solver: heatConductionNeoN</a></li>
