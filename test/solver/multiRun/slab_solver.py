@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate, solutionLoop
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Array, Coupling, FaceData, Patch, coupled, coupling
+from neofoam.framework.coupling import Array, FaceData, Participant, Patch, coupled, coupling
 from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
@@ -269,7 +269,7 @@ def _initialize(self: Any) -> Context:
     ctx = init.run()
     self.core_models = init.core_models
     temperature = ctx.models["temperature"]
-    ctx.models["coupling"] = Coupling(
+    ctx.models["coupling"] = Participant(
         self.coupling, SlabGeometry(ctx.models["slab"]), SlabFields(ctx)
     )
     ctx.models["patches"] = [

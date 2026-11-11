@@ -10,19 +10,26 @@ converged. The limit 1e-6 is relative: the fixed point holds to 1e-5.
 
 import numpy as np
 import pytest
-from framework.coupling.regions import couple
+from framework.coupling.regions import Outcomes, couple
 
 from neofoam.framework.context import Context
+from neofoam.framework.execution_observer import observe
 from neofoam.solver.multiRun import run
 from solver.multiRun.case_files import copy_case
 
 
 @pytest.fixture(scope="module")
-def regions(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Context]:
+def case(tmp_path_factory: pytest.TempPathFactory) -> tuple[dict[str, Context], Outcomes]:
     run_dir = copy_case("steady_pair", tmp_path_factory.mktemp("steady") / "case")
-    with pytest.MonkeyPatch.context() as monkeypatch:
+    outcomes = Outcomes()
+    with pytest.MonkeyPatch.context() as monkeypatch, observe(outcomes):
         monkeypatch.chdir(run_dir)
-        return run()
+        return run(), outcomes
+
+
+@pytest.fixture(scope="module")
+def regions(case: tuple[dict[str, Context], Outcomes]) -> dict[str, Context]:
+    return case[0]
 
 
 def _passes(regions: dict[str, Context], region: str) -> list[int]:
@@ -47,12 +54,13 @@ def test_steady_pair_couples_in_every_outer_iteration_without_a_time(
 
 
 def test_steady_pair_leader_records_an_outcome_per_outer_iteration(
-    regions: dict[str, Context],
+    case: tuple[dict[str, Context], Outcomes],
 ) -> None:
+    regions, outcomes = case
     controller = couple(regions["b"]).controller
     assert controller is not None
 
-    assert [(o.passes, o.converged) for o in controller.outcomes] == [
+    assert [(o.passes, o.converged) for o in outcomes.of(controller.label)] == [
         (21, True),
         (2, True),
         (2, True),

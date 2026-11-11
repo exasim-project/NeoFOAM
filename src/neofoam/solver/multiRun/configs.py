@@ -20,14 +20,14 @@ from pydantic import (
 from neofoam.framework.coupling import (
     CouplingAcceleration,
     CouplingConvergence,
+    CouplingLoop,
     CouplingMapping,
-    CouplingNode,
     Exchange,
     FieldPort,
 )
-from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
-from neofoam.framework.coupling.kernels import default_mapping
-from neofoam.framework.coupling.region import check_couplings
+from neofoam.framework.coupling.comm.channel import DEFAULT_TIMEOUT
+from neofoam.framework.coupling.exchanges import check_exchanges
+from neofoam.framework.coupling.strategies.mapping import default_mapping
 from neofoam.framework.types import Placement
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
@@ -107,14 +107,14 @@ class PlacementConfig(BaseModel):
     operations: Optional[list[str]] = None
 
 
-class CouplingNodeConfig(BaseModel):
+class CouplingLoopConfig(BaseModel):
     """One coupling node of ``couplings``."""
 
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    scheme: Literal["serial", "parallel"] = CouplingNode.scheme
-    maxIterations: int = Field(default=CouplingNode.max_iterations, gt=0)
+    scheme: Literal["serial", "parallel"] = CouplingLoop.scheme
+    maxIterations: int = Field(default=CouplingLoop.max_iterations, gt=0)
     exchanges: list[NodeExchangeConfig] = Field(min_length=1)
     convergence: list[ConvergenceConfig] = Field(min_length=1)
     wraps: dict[str, PlacementConfig] = Field(default_factory=dict)
@@ -126,9 +126,9 @@ class CouplingNodeConfig(BaseModel):
             return [{"name": entry} if isinstance(entry, str) else entry for entry in value]
         return value
 
-    def coupling_node(self) -> CouplingNode:
+    def coupling_loop(self) -> CouplingLoop:
         """The node, with an acceleration of its own per exchange (they keep state)."""
-        return CouplingNode(
+        return CouplingLoop(
             self.name,
             tuple(exchange.name for exchange in self.exchanges),
             max_iterations=self.maxIterations,
@@ -180,7 +180,7 @@ class RegionCouplingConfig(BaseConfig):
 
     ports: dict[str, list[FieldPortConfig]] = Field(default_factory=dict)
     exchanges: list[ExchangeConfig] = Field(min_length=1)
-    couplings: list[CouplingNodeConfig] = Field(min_length=1)
+    couplings: list[CouplingLoopConfig] = Field(min_length=1)
     commChannelTimeout: Optional[float] = Field(default=DEFAULT_TIMEOUT, ge=0, allow_inf_nan=False)
 
     def coupling_exchanges(self) -> list[Exchange]:
@@ -199,9 +199,9 @@ class RegionCouplingConfig(BaseConfig):
             region: [port.field_port() for port in ports] for region, ports in self.ports.items()
         }
 
-    def nodes(self) -> list[CouplingNode]:
+    def nodes(self) -> list[CouplingLoop]:
         """The coupling nodes, outer to inner."""
-        return [node.coupling_node() for node in self.couplings]
+        return [node.coupling_loop() for node in self.couplings]
 
     @model_validator(mode="after")
     def _check(self) -> "RegionCouplingConfig":
@@ -209,7 +209,7 @@ class RegionCouplingConfig(BaseConfig):
         regions = list(
             dict.fromkeys(region for exchange in exchanges for region, _patch in exchange.ends)
         )
-        check_couplings(regions, exchanges, self.nodes(), self.field_ports())
+        check_exchanges(regions, exchanges, self.nodes(), self.field_ports())
         return self
 
 

@@ -14,11 +14,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 import yaml
-from framework.coupling.regions import couple, tree
+from framework.coupling.regions import Outcomes, couple, tree
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import CouplingNotConvergedWarning, NearestNeighborMapping
-from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
+from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.operations import Operation, Operations
@@ -42,10 +42,16 @@ def _variant(variant: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
 
 
 @pytest.fixture(scope="module")
-def regions(tmp_path_factory: pytest.TempPathFactory) -> Regions:
-    with pytest.MonkeyPatch.context() as monkeypatch:
+def case(tmp_path_factory: pytest.TempPathFactory) -> tuple[Regions, Outcomes]:
+    outcomes = Outcomes()
+    with pytest.MonkeyPatch.context() as monkeypatch, observe(outcomes):
         monkeypatch.chdir(copy_case("affine_pair", tmp_path_factory.mktemp("affine") / "case"))
-        return run()
+        return run(), outcomes
+
+
+@pytest.fixture(scope="module")
+def regions(case: tuple[Regions, Outcomes]) -> Regions:
+    return case[0]
 
 
 def test_affine_pair_regions_read_their_own_config(regions: Regions) -> None:
@@ -85,11 +91,14 @@ def test_affine_pair_second_time_step_starts_converged(regions: Regions) -> None
     assert [len(_history(regions, region, 2)) for region in ("a", "b")] == [2, 2]
 
 
-def test_affine_pair_records_the_coupling_outcome_of_every_time_step(regions: Regions) -> None:
+def test_affine_pair_records_the_coupling_outcome_of_every_time_step(
+    case: tuple[Regions, Outcomes],
+) -> None:
+    regions, recorded = case
     controller = couple(regions["b"]).controller
     assert controller is not None
 
-    outcomes = controller.outcomes
+    outcomes = recorded.of(controller.label)
 
     assert [(o.passes, o.converged) for o in outcomes] == [(PASSES, True), (2, True)]
     # a changed by 2**-20 of a_21 = 2 - 2**-20 in the final pass: 2**-21 within 1e-6
@@ -161,7 +170,7 @@ class _Recorder(ExecutionObserver):
         self.tests: dict[object, list[tuple[str, int, bool]]] = {"a": [], "b": []}
         self.couplings: list[tuple[str, CouplingOutcome]] = []
 
-    def coupling_finished(self, coupling: CouplingController, outcome: CouplingOutcome) -> None:
+    def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
         self.couplings.append((coupling.label, outcome))
 
     def init_steps(self, steps: list[InitStep]) -> None:
