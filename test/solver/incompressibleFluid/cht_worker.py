@@ -16,7 +16,7 @@ from framework.coupling.regions import Outcomes
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import coupling
-from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
 from neofoam.framework.execution_observer import observe
 from neofoam.solver.multiRun import run as run_multi
 
