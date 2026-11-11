@@ -145,7 +145,7 @@ class NeoNGeometry:
 
     Example::
 
-        ctx.models["coupling"] = Coupling(coupling, NeoNGeometry(rt), NeoNFields(rt, ctx.fields))
+        ctx.models["coupling"] = Participant(coupling, NeoNGeometry(rt), NeoNFields(rt, ctx.fields))
     """
 
     def __init__(self, runtime: Any) -> None:

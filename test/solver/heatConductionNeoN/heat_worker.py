@@ -12,11 +12,13 @@ import sys
 from typing import Any
 
 import numpy as np
+from framework.coupling.regions import Outcomes
 
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Cells, Patch, coupling
-from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.execution_observer import observe
 from neofoam.solver.heatConductionNeoN import heatConductionNeoN
 from neofoam.solver.heatConductionNeoN import run as run_single
 from neofoam.solver.multiRun import run as run_multi
@@ -50,11 +52,11 @@ def _region(ctx: Context) -> dict[str, Any]:
     }
 
 
-def _passes(ctx: Context) -> list[int]:
+def _passes(ctx: Context, outcomes: Outcomes) -> list[int]:
     operations = coupling(ctx).operations()
     op = operations[0].func if len(operations) else None
-    if isinstance(op, CouplingOp) and op.controller is not None:
-        return [outcome.passes for outcome in op.controller.outcomes]
+    if isinstance(op, CouplingLoopOp) and op.controller is not None:
+        return [outcome.passes for outcome in outcomes.of(op.controller.label)]
     return []
 
 
@@ -116,8 +118,10 @@ def main(mode: str) -> dict[str, Any]:
         return _fields()
     if mode == "single":
         return {"regions": {"case": _region(run_single(["heatConductionNeoN"]))}}
-    regions = run_multi()
-    passes = {name: _passes(ctx) for name, ctx in regions.items()}
+    outcomes = Outcomes()
+    with observe(outcomes):
+        regions = run_multi()
+    passes = {name: _passes(ctx, outcomes) for name, ctx in regions.items()}
     return {
         "regions": {name: _region(ctx) for name, ctx in regions.items()},
         "passes": {name: counts for name, counts in passes.items() if counts},

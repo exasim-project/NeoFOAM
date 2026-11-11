@@ -19,7 +19,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from neofoam.framework.coupling.kernels import nearest_neighbor
+from neofoam.framework.coupling.strategies.mapping import nearest_neighbor
 from solver.heatConductionNeoN._run_case import mesh_copy, result
 
 T_INTERFACE = 325.0
