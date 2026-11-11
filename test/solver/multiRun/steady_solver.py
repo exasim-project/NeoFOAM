@@ -4,7 +4,7 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""``steady``: the ``probe`` solver in outer iterations, without a time."""
+"""``steady``: the ``probe`` solver in an outer loop, without a time."""
 
 from pathlib import Path
 from typing import Any
@@ -23,7 +23,7 @@ class _SteadyConfig(ProbeConfig):
 
 
 class _Outer:
-    """The outer loop's test: ``count`` iterations."""
+    """The outer loop's test: ``count`` passes."""
 
     def __init__(self, count: int) -> None:
         self.count = count

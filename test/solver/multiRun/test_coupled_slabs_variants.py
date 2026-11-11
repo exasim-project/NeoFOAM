@@ -6,8 +6,8 @@
 ``cases/coupled_slabs_variants/<name>`` is laid over the case. Every scheme and
 acceleration reaches the steady profile of ``test_coupled_slabs`` within 1e-8 K
 (limit 1e-12) but the slowest, parallel with constant relaxation 0.7: its error
-contracts by ~0.81 per pass, so it stops at a relative change of 1e-10 (at ~400 K,
-4e-8 K) within its 100 passes and leaves at most 0.81 / 0.19 times that, ~1.7e-7 K
+contracts by ~0.81 per iteration, so it stops at a relative change of 1e-10 (at ~400 K,
+4e-8 K) within its 100 iterations and leaves at most 0.81 / 0.19 times that, ~1.7e-7 K
 (measured 7.3e-8 K); 2e-7 K bounds it.
 """
 

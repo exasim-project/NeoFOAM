@@ -141,7 +141,7 @@ def test_an_in_port_on_a_patch_writes_the_field_it_receives() -> None:
 
 
 def test_inout_ports_exchange_their_fields_both_ways() -> None:
-    """Parallel: each port receives what the other read before the pass."""
+    """Parallel: each port receives what the other read before the iteration."""
     exchange = Exchange("wall", (("a", "T_a"), ("b", "T_b")), IdentityMapping())
     fields = {
         "a": _Fields({("T", "right"): [1.0, 2.0]}),

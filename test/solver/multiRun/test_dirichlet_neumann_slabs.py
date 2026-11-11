@@ -56,14 +56,14 @@ def test_dirichlet_neumann_slabs_couple_a_heat_flux_with_a_temperature_side(
     assert isinstance(regions["right"].models["patches"][0], CoupledTemperature)
 
 
-def test_dirichlet_neumann_slabs_converge_in_a_few_aitken_passes(
+def test_dirichlet_neumann_slabs_converge_in_a_few_aitken_iterations(
     case: tuple[dict[str, Context], Outcomes],
 ) -> None:
     regions, outcomes = case
     leader = couple(regions["right"]).controller
     assert leader is not None
 
-    assert [(o.passes, o.converged) for o in outcomes.of(leader.label)] == [
+    assert [(o.iterations, o.converged) for o in outcomes.of(leader.label)] == [
         (5, True),
         (5, True),
     ]

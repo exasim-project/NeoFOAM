@@ -52,7 +52,7 @@ def test_pair_reaches_the_fixed_point(tmp_path: Path, monkeypatch: pytest.Monkey
     regions = run()
 
     _assert_final(regions, {"a": 2.0, "b": 1.0}, "pair")
-    # each port receives what the other sent the pass before: 39 passes, then the final one
+    # each port receives what the other sent the iteration before: 39 iterations, then the final one
     assert _solves(regions) == {"a": 40, "b": 40}
 
 

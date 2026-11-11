@@ -3,10 +3,10 @@
 
 """Two probe regions coupled to the fixed point of ``a = 1 + b``, ``b = 0.5 a``: (2, 1).
 
-Serial around each ``solve_x``: b receives a's value of the same pass, so the error
-halves every pass and drops below the relative limit 1e-6 after pass 20; pass 21 is the
-final one, the second time step starts converged. The values are dyadic fractions,
-exact in floating point, hence atol 1e-15.
+Serial around each ``solve_x``: b receives a's value of the same iteration, so the
+error halves every iteration and drops below the relative limit 1e-6 after
+iteration 20; iteration 21 is the final one, the second time step starts
+converged. The values are dyadic fractions, exact in floating point, hence atol 1e-15.
 """
 
 from pathlib import Path
@@ -26,7 +26,7 @@ from neofoam.solver.multiRun import run
 from solver.multiRun.case_files import CASES, copy_case
 
 EXPECTED = yaml.safe_load((CASES / "affine_pair" / "expected.yaml").read_text())
-PASSES = 21
+ITERATIONS = 21
 
 Regions = dict[str, Context]
 
@@ -81,7 +81,9 @@ def test_affine_pair_regions_couple_through_their_coupling_ops(regions: Regions)
 
 
 @pytest.mark.parametrize("region", ["a", "b"])
-def test_affine_pair_exchanges_the_partners_value_every_pass(regions: Regions, region: str) -> None:
+def test_affine_pair_exchanges_the_partners_value_every_iteration(
+    regions: Regions, region: str
+) -> None:
     np.testing.assert_allclose(
         _history(regions, region, 1), EXPECTED[region], rtol=0, atol=1e-15, err_msg=region
     )
@@ -100,18 +102,18 @@ def test_affine_pair_records_the_coupling_outcome_of_every_time_step(
 
     outcomes = recorded.of(leader.label)
 
-    assert [(o.passes, o.converged) for o in outcomes] == [(PASSES, True), (2, True)]
-    # a changed by 2**-20 of a_21 = 2 - 2**-20 in the final pass: 2**-21 within 1e-6
+    assert [(o.iterations, o.converged) for o in outcomes] == [(ITERATIONS, True), (2, True)]
+    # a changed by 2**-20 of a_21 = 2 - 2**-20 in the final iteration: 2**-21 within 1e-6
     assert outcomes[0].residuals == {"x": pytest.approx(2.0**-21, rel=1e-6)}
     assert outcomes[1].residuals["x"] < 1e-6
 
 
 @pytest.mark.parametrize(
-    ("variant", "passes"),
+    ("variant", "iterations"),
     [("serial-aitken", 5), ("parallel-constant", 40)],
 )
-def test_affine_pair_scheme_and_acceleration_change_only_the_passes(
-    variant: str, passes: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_affine_pair_scheme_and_acceleration_change_only_the_iterations(
+    variant: str, iterations: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The limit 1e-6 is relative: the fixed point holds to 1e-5."""
     _variant(variant, tmp_path, monkeypatch)
@@ -120,7 +122,7 @@ def test_affine_pair_scheme_and_acceleration_change_only_the_passes(
 
     final = [regions[region].fields["x"][0] for region in ("a", "b")]
     np.testing.assert_allclose(final, [2.0, 1.0], rtol=1e-5, err_msg=variant)
-    assert len(_history(regions, "a", 1)) == passes
+    assert len(_history(regions, "a", 1)) == iterations
 
 
 def test_affine_pair_stops_at_max_iterations(
@@ -128,7 +130,7 @@ def test_affine_pair_stops_at_max_iterations(
 ) -> None:
     _variant("max_iterations_5", tmp_path, monkeypatch)
 
-    with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 5 passes"):
+    with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 5 iterations"):
         regions = run()
 
     assert _history(regions, "a", 1) == EXPECTED["a"][:5]
@@ -235,7 +237,7 @@ def test_affine_pair_operations_run_on_their_region_s_context(
 
 
 @pytest.mark.parametrize("region", ["a", "b"])
-def test_affine_pair_coupling_op_runs_the_leader_s_passes(
+def test_affine_pair_coupling_op_runs_the_leader_s_iterations(
     recorder: tuple[_Recorder, Regions], region: str
 ) -> None:
     observed, _regions = recorder
@@ -244,8 +246,8 @@ def test_affine_pair_coupling_op_runs_the_leader_s_passes(
     tests = [test for test in observed.tests[region] if test[0] == label]
 
     assert tests == [
-        *[(label, k, True) for k in range(1, PASSES + 1)],
-        (label, PASSES + 1, False),
+        *[(label, k, True) for k in range(1, ITERATIONS + 1)],
+        (label, ITERATIONS + 1, False),
         (label, 1, True),
         (label, 2, True),
         (label, 3, False),
@@ -257,7 +259,7 @@ def test_affine_pair_leader_reports_each_time_step_s_outcome(
 ) -> None:
     observed, _regions = recorder
 
-    assert [(label, o.passes, o.converged) for label, o in observed.couplings] == [
-        ("b.coupling", PASSES, True),
+    assert [(label, o.iterations, o.converged) for label, o in observed.couplings] == [
+        ("b.coupling", ITERATIONS, True),
         ("b.coupling", 2, True),
     ]
