@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.coupled" href="neofoam.framework.coupling.coupled.html"><link rel="prev" title="neofoam.framework.coupling" href="neofoam.framework.coupling.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.coupled" href="neofoam.framework.coupling.coupled.html"><link rel="prev" title="neofoam.framework.coupling.comm_channel" href="neofoam.framework.coupling.comm_channel.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.framework.coupling.controller.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -297,6 +297,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 current has-children"><a class="reference internal" href="neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" checked="" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.comm_channel.html">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5 current current-page"><a class="current reference internal" href="#">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -304,7 +305,6 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.transport.html">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -680,21 +680,13 @@
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.controller.</span></span><span class="sig-name descname"><span class="pre">CouplingController</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sides</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.framework.coupling.controller.GroupSide" title="neofoam.framework.coupling.controller.GroupSide"><span class="pre">GroupSide</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.CouplingNode" title="neofoam.framework.coupling.region.CouplingNode"><span class="pre">CouplingNode</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/controller.html#CouplingController"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.controller.CouplingController" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The leader’s part of a coupling node: after each pass, whether another runs and which.</p>
-<p><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.decide" title="neofoam.framework.coupling.controller.CouplingController.decide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decide()</span></code></a> gets what every side sent; once every convergence measure of
-the node holds, exactly one more pass runs, the final one, then it stops;
-the last pass <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> allows is final in advance. It relaxes the
-carried data with each exchange’s acceleration. A side receives fresh data
-(sent in this pass) when the node is serial and its partner steps earlier,
-else what the controller carried; the sending regions follow this decision.
-A finished time step’s <a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingOutcome" title="neofoam.framework.coupling.controller.CouplingOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOutcome</span></code></a> goes to <a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.outcomes" title="neofoam.framework.coupling.controller.CouplingController.outcomes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">outcomes</span></code></a> and
-the execution observer, and warns when unconverged. Not thread safe.</p>
-<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> for a convergence on a field no side sends;
-<a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.decide" title="neofoam.framework.coupling.controller.CouplingController.decide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decide()</span></code></a> raises <code class="docutils literal notranslate"><span class="pre">FloatingPointError</span></code> for a non-finite change.</p>
+<p>Final pass as <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNode</span></code> describes; warns when <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> ends
+the loop unconverged. A side receives fresh data when the node is serial and
+its partner steps earlier, else the carried data, relaxed. Not thread safe.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.controller.CouplingController.decide">
 <span class="sig-name descname"><span class="pre">decide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/controller.html#CouplingController.decide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.controller.CouplingController.decide" title="Link to this definition">¶</a></dt>
-<dd><p>What each side carries into the next pass, by end, or <code class="docutils literal notranslate"><span class="pre">None</span></code> once it ended.</p>
-<p><code class="docutils literal notranslate"><span class="pre">current</span></code> is what every side sends now, <code class="docutils literal notranslate"><span class="pre">iteration</span></code> the passes run so far.</p>
+<dd><p>Each side’s carried data for the next pass, by end; <code class="docutils literal notranslate"><span class="pre">None</span></code> at the end.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -707,12 +699,6 @@ the execution observer, and warns when unconverged. Not thread safe.</p>
 <dt class="sig sig-object py" id="neofoam.framework.coupling.controller.CouplingController.fresh">
 <span class="sig-name descname"><span class="pre">fresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/controller.html#CouplingController.fresh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.controller.CouplingController.fresh" title="Link to this definition">¶</a></dt>
 <dd><p>Whether the side at <code class="docutils literal notranslate"><span class="pre">end</span></code> receives what its partner sent in this pass.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.controller.CouplingController.label">
-<span class="sig-name descname"><span class="pre">label</span></span><a class="headerlink" href="#neofoam.framework.coupling.controller.CouplingController.label" title="Link to this definition">¶</a></dt>
-<dd><p>the label of the leader’s coupling op</p>
 </dd></dl>
 
 <dl class="py property">
@@ -747,9 +733,8 @@ the execution observer, and warns when unconverged. Not thread safe.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.controller.</span></span><span class="sig-name descname"><span class="pre">CouplingOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">passes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residuals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/controller.html#CouplingOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.controller.CouplingOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>How the coupling loop of one time step ended.</p>
-<p><code class="docutils literal notranslate"><span class="pre">passes</span></code> includes the final one; <code class="docutils literal notranslate"><span class="pre">converged</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code> when
-<code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> stopped it; <code class="docutils literal notranslate"><span class="pre">residuals</span></code> is each field’s relative change
-in the last pass (<code class="docutils literal notranslate"><span class="pre">inf</span></code> where no pass measured it).</p>
+<p><code class="docutils literal notranslate"><span class="pre">passes</span></code> includes the final one; <code class="docutils literal notranslate"><span class="pre">residuals</span></code> is each field’s relative change
+in the last pass (<code class="docutils literal notranslate"><span class="pre">inf</span></code> where none measured it).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -760,7 +745,7 @@ in the last pass (<code class="docutils literal notranslate"><span class="pre">i
 <dl class="py property">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.controller.GroupSide.end">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.controller.GroupSide.end" title="Link to this definition">¶</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>: the side’s end of its exchange.</p>
+<dd><p>The side’s end of its exchange.</p>
 </dd></dl>
 
 </dd></dl>
@@ -794,14 +779,14 @@ in the last pass (<code class="docutils literal notranslate"><span class="pre">i
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="neofoam.framework.coupling.html">
+          <a class="prev-page" href="neofoam.framework.coupling.comm_channel.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">neofoam.framework.coupling</div>
+                <div class="title">neofoam.framework.coupling.comm_channel</div>
                 
               </div>
             </a>
@@ -840,7 +825,6 @@ in the last pass (<code class="docutils literal notranslate"><span class="pre">i
 <li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.decide"><code class="docutils literal notranslate"><span class="pre">CouplingController.decide()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.final"><code class="docutils literal notranslate"><span class="pre">CouplingController.final</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.fresh"><code class="docutils literal notranslate"><span class="pre">CouplingController.fresh()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.label"><code class="docutils literal notranslate"><span class="pre">CouplingController.label</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.outcomes"><code class="docutils literal notranslate"><span class="pre">CouplingController.outcomes</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.residuals"><code class="docutils literal notranslate"><span class="pre">CouplingController.residuals</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.sides"><code class="docutils literal notranslate"><span class="pre">CouplingController.sides</span></code></a></li>
