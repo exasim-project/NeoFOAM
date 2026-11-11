@@ -68,7 +68,22 @@ def test_aitken_relaxation_restarts_from_initial_each_time_step() -> None:
 
     first_pass = relaxation([{"x": np.full(1, 4.0)}], 1)[0]["x"]
 
-    np.testing.assert_allclose(first_pass, [3.0], rtol=1e-12, err_msg="2 + 0.5 * (4 - 2)")
+    np.testing.assert_allclose(first_pass, [4.0], rtol=0, atol=0, err_msg="unchanged, no 2 kept")
+
+
+@pytest.mark.parametrize(
+    "relaxation",
+    [ConstantRelaxation(relaxation=0.5), AitkenRelaxation(relaxation=0.5)],
+    ids=["constant", "aitken"],
+)
+def test_relaxation_passes_the_first_data_of_every_time_step_unchanged(
+    relaxation: ConstantRelaxation,
+) -> None:
+    _passes(relaxation, 3)
+
+    first_pass = relaxation([{"x": np.full(1, 7.0)}], 1)[0]["x"]
+
+    np.testing.assert_array_equal(first_pass, [7.0], err_msg=type(relaxation).__name__)
 
 
 def test_aitken_relaxation_restarts_after_a_round_off_residual() -> None:
