@@ -56,7 +56,7 @@ def test_coupled_slabs_reaches_the_steady_profile(
         )
 
 
-def test_coupled_slabs_convergence_on_data_no_side_sends_raises(
+def test_coupled_slabs_convergence_on_data_no_port_sends_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _case("convergence_on_U", tmp_path, monkeypatch)
@@ -70,7 +70,7 @@ def test_coupled_slabs_convergence_on_data_no_side_sends_raises(
 def test_coupled_slabs_of_a_region_without_a_coupled_patch_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _case("no_coupled_side", tmp_path, monkeypatch)
+    _case("no_coupled_port", tmp_path, monkeypatch)
 
     with pytest.raises(
         ValueError, match="exchange 'interface' connects right.left, which has no coupled instance"
