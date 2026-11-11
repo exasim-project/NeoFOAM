@@ -1,11 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Each selection of a pressure-velocity algorithm is a run of its own.
-
-Two regions or runs select the same spec; their settings live on the runtime each
-``create`` returns, so the module-level spec stays unchanged.
-"""
+"""A pressure-velocity selection is a runtime of its own; the spec stays unchanged."""
 
 from __future__ import annotations
 

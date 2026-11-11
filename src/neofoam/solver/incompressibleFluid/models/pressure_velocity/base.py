@@ -22,13 +22,8 @@ from .simpleAlgorithm import simple
 
 @dataclass
 class PressureVelocitySettings:
-    """One run's pressure-velocity settings: the ``config`` of its runtime.
+    """One run's settings, kept off the spec that regions and runs share."""
 
-    Kept off the module-level spec, so two regions or two runs selecting the
-    same spec never see each other's settings.
-    """
-
-    #: The ``system/fvSolution`` block the run reads: ``PIMPLE``, ``PISO`` or ``SIMPLE``.
     algorithm_type: str
     #: Set by the boussinesq model's resolve: dispatches the buoyant variants.
     use_boussinesq: bool = False
