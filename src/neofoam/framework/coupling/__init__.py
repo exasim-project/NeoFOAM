@@ -22,10 +22,11 @@ from .comm.channel import (
 from .comm.in_process import InProcessCommChannel
 from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
-from .exchanges import CouplingLoop, Exchange, ParticipantExchanges
+from .exchanges import CouplingLoop, Exchange, ParticipantExchanges, participant_exchanges
 from .iteration._leader import CouplingNotConvergedWarning
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .model import Participant, coupling
+from .run import run_participants
 from .strategies.acceleration import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
 from .strategies.convergence import CouplingConvergence, RelativeConvergence, SideChange
 from .strategies.mapping import (
@@ -83,4 +84,6 @@ __all__ = [
     "VolumeMeanMapping",
     "coupled",
     "coupling",
+    "participant_exchanges",
+    "run_participants",
 ]
