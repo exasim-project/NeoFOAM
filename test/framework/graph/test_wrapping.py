@@ -64,8 +64,8 @@ def _loop(name: str, wraps: Placement | None = None, count: int = 1) -> Operatio
     )
 
 
-def _around(*operations: str, downstream: bool = True) -> Placement:
-    return Placement(operations=operations, downstream=downstream)
+def _around(*operations: str) -> Placement:
+    return Placement(operations=operations)
 
 
 def _time_step(log: list[str]) -> StepBuilder:
@@ -125,17 +125,6 @@ def test_a_loop_around_an_operation_holds_it_and_what_is_downstream() -> None:
         (
             "time_loop",
             ["start_step", "solve_U", ("couple", ["solve_T", "update_rho"]), "write"],
-        )
-    ]
-
-
-def test_a_loop_around_an_operation_without_downstream_holds_it_alone() -> None:
-    ops = _resolve(_time_step([]), _loop("couple", _around("solve_T", downstream=False)))
-
-    assert _tree(ops) == [
-        (
-            "time_loop",
-            ["start_step", "solve_U", ("couple", ["solve_T"]), "update_rho", "write"],
         )
     ]
 
@@ -227,17 +216,6 @@ def test_a_loop_around_a_loop_holds_it_whole_and_what_is_downstream() -> None:
         (
             "time_loop",
             ["set_time_step", "increment_time", ("couple", [_INNER, "update_T"]), "write"],
-        )
-    ]
-
-
-def test_a_loop_around_a_loop_without_downstream_holds_it_alone() -> None:
-    ops = _resolve(_pimple_step([]), _loop("couple", _around("inner_loop", downstream=False)))
-
-    assert _tree(ops) == [
-        (
-            "time_loop",
-            ["set_time_step", "increment_time", ("couple", [_INNER]), "update_T", "write"],
         )
     ]
 
@@ -410,15 +388,6 @@ def test_a_nested_loop_repeats_each_pass_of_the_outer_one() -> None:
         *["solve_U", *["solve_T", "update_rho"] * 2] * 2,
         "write",
     ]
-
-
-def test_a_loop_without_downstream_leaving_a_dependent_before_it_raises() -> None:
-    """solve_T depends on solve_U but would run before the loop around solve_U and update_rho."""
-    with pytest.raises(ValueError, match=r"\['solve_T'\] depend on operations couple wraps"):
-        _resolve(
-            _coupled_step([], "depends_on"),
-            _loop("couple", _around("solve_U", "update_rho", downstream=False)),
-        )
 
 
 def test_an_operation_upstream_only_runs_before_the_loop() -> None:
