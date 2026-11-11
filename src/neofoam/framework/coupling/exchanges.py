@@ -136,6 +136,17 @@ def participant_exchanges(
     each region's field ports of the yaml.
     """
     check_exchanges(regions, exchanges, loops, field_ports)
+    return build_participant_exchanges(regions, exchanges, comm_channel, loops, field_ports)
+
+
+def build_participant_exchanges(
+    regions: Sequence[str],
+    exchanges: Sequence[Exchange],
+    comm_channel: CommChannel,
+    loops: Sequence[CouplingLoop],
+    field_ports: Optional[Mapping[str, Sequence[FieldPort]]] = None,
+) -> dict[str, ParticipantExchanges]:
+    """:func:`participant_exchanges` of a coupling :func:`check_exchanges` passed already."""
     couplings: dict[str, ParticipantExchanges] = {}
     for region in regions:
         group = _group(region, regions, exchanges)
@@ -168,7 +179,8 @@ def check_exchanges(
 
     The one check of a case's coupling, for the Python API and the case's config.
     """
-    _check_ends(regions, exchanges)
+    check_regions(regions, exchanges)
+    _check_ends(exchanges)
     check_field_ports(exchanges, field_ports or {})
     names = [exchange.name for exchange in exchanges]
     in_loop: dict[str, str] = {}
@@ -195,7 +207,8 @@ def check_exchanges(
     _check_serial_nesting(loops, exchanges)
 
 
-def _check_ends(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
+def check_regions(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
+    """Raise ``ValueError`` unless ``exchanges`` couple only regions of ``regions``."""
     named = sorted(
         {region for exchange in exchanges for region, _port in exchange.ends} - set(regions)
     )
@@ -203,6 +216,9 @@ def _check_ends(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
         raise ValueError(
             f"the exchanges couple the regions {named}, which are not in {list(regions)}"
         )
+
+
+def _check_ends(exchanges: Sequence[Exchange]) -> None:
     names = [exchange.name for exchange in exchanges]
     owner: dict[End, str] = {}
     for exchange in exchanges:

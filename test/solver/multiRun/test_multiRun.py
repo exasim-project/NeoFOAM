@@ -20,6 +20,8 @@ from neofoam.framework.coupling import (
     RegionCouplingConfig,
     RelativeConvergence,
 )
+from neofoam.framework.coupling import config as config_module
+from neofoam.framework.coupling import exchanges as exchanges_module
 from neofoam.framework.types import Placement
 
 MULTI_RUN = importlib.import_module("neofoam.solver.multiRun.multiRun")
@@ -64,6 +66,25 @@ def test_couplings_of_a_region_the_case_does_not_run_raises(
 
     with pytest.raises(ValueError, match=r"couple the regions \['c'\], which are not in"):
         MULTI_RUN.couplings(["a", "b"], InProcessCommChannel())
+
+
+def test_couplings_check_the_case_s_coupling_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checks: list[list[str]] = []
+    check = exchanges_module.check_exchanges
+
+    def counted(regions: list[str], *args: Any) -> None:
+        checks.append(list(regions))
+        check(regions, *args)
+
+    monkeypatch.setattr(exchanges_module, "check_exchanges", counted)
+    monkeypatch.setattr(config_module, "check_exchanges", counted)
+
+    _couplings(CHAIN, tmp_path, monkeypatch)
+
+    # once, as the file loads; its regions only are checked against the case's
+    assert checks == [["a", "b", "c"]]
 
 
 def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> Any:

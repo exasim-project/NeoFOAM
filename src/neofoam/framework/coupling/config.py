@@ -4,7 +4,7 @@
 """How a case couples its regions, ``system/regionCoupling.yaml``: :class:`RegionCouplingConfig`."""
 
 from functools import partial
-from typing import Annotated, Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional, Sequence
 
 from pydantic import (
     BaseModel,
@@ -20,8 +20,15 @@ from pydantic import (
 from neofoam.framework.types import Placement
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
-from .comm.channel import DEFAULT_TIMEOUT
-from .exchanges import CouplingLoop, Exchange, check_exchanges
+from .comm.channel import DEFAULT_TIMEOUT, CommChannel
+from .exchanges import (
+    CouplingLoop,
+    Exchange,
+    ParticipantExchanges,
+    build_participant_exchanges,
+    check_exchanges,
+    check_regions,
+)
 from .field_port import FieldPort
 from .strategies.acceleration import CouplingAcceleration
 from .strategies.convergence import CouplingConvergence
@@ -198,6 +205,20 @@ class RegionCouplingConfig(BaseConfig):
     def nodes(self) -> list[CouplingLoop]:
         """The coupling nodes, outer to inner."""
         return [node.coupling_loop() for node in self.couplings]
+
+    def participant_exchanges(
+        self, regions: Sequence[str], comm_channel: CommChannel
+    ) -> dict[str, ParticipantExchanges]:
+        """Each region's coupling, as :func:`participant_exchanges` builds it from the file.
+
+        The file was checked as it loaded; only that ``regions`` (the case's, in stepping
+        order) hold every region an exchange names is left to check.
+        """
+        exchanges = self.coupling_exchanges()
+        check_regions(regions, exchanges)
+        return build_participant_exchanges(
+            regions, exchanges, comm_channel, self.nodes(), self.field_ports()
+        )
 
     @model_validator(mode="after")
     def _check(self) -> "RegionCouplingConfig":

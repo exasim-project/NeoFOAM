@@ -20,7 +20,6 @@ from neofoam.framework.coupling import (
     RegionCouplingConfig,
 )
 from neofoam.framework.coupling.comm.channel import DEFAULT_TIMEOUT
-from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.solver import Solver
 from neofoam.framework.solver.registry import resolve_solver
@@ -42,14 +41,7 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Partic
     """Each region's coupling from ``system/regionCoupling.yaml``; none without it."""
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
-    config = RegionCouplingConfig.load()
-    return participant_exchanges(
-        regions,
-        config.coupling_exchanges(),
-        comm_channel,
-        config.nodes(),
-        config.field_ports(),
-    )
+    return RegionCouplingConfig.load().participant_exchanges(regions, comm_channel)
 
 
 def run() -> dict[str, Context]:
