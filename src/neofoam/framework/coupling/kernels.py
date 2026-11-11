@@ -28,28 +28,22 @@ from .transport import Data
 
 
 class SideChange(NamedTuple):
-    """The :data:`~neofoam.framework.coupling.Array` data one side sent in the previous and
-    in the current pass.
-
-    For a convergence check; plain fields are not compared.
-    """
+    """What one side sent in the previous and in the current pass, for a convergence check."""
 
     field: str
     previous: Data
     current: Data
 
 
-# The elements of the target-by-source distance block :func:`nearest_neighbor` computes at once.
+# elements of the target-by-source distance block computed at once
 _BLOCK_ELEMENTS = 1 << 20
 
 
 def nearest_neighbor(source: Any, target: Any) -> Any:
     """For every target point, the index of the nearest source point (the lowest on a tie).
 
-    Points are rows of ``(n_points, dim)`` arrays. Compares every pair of points,
-    a block of target points at a time, so that memory grows with the points of
-    one side, not with the pairs: O(n + m) for ``m`` source and ``n`` target
-    points, time O(n * m).
+    Points are rows of ``(n_points, dim)`` arrays; a block of target points at a
+    time, so memory is O(n + m), time O(n * m).
 
     Example::
 
@@ -66,22 +60,17 @@ def nearest_neighbor(source: Any, target: Any) -> Any:
     return indices
 
 
-#: A mapping bound to the points of both sides: the data on the source points -> on the target's.
+# a mapping bound to both sides' points: data on the source points -> on the target's
 BoundMapping = Callable[[Data], Data]
 
 
 @PluginSystem.register(discriminator_variable="mapping", discriminator="type")
 class CouplingMapping(BaseModel):
-    """Maps the :data:`~neofoam.framework.coupling.Array` data a side sends onto the other side.
+    """Maps the data a side sends onto the other side's points; a plugin family.
 
-    The mapping of an :class:`~neofoam.framework.coupling.data.Exchange`, a plugin
-    family (``system/regionCoupling.yaml``: ``mapping:``, its ``type`` and
-    options). The receiving side's coupling op binds it once, when it connects,
-    to the partner's points (``source``) and the side's own (``target``; each a
-    ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the
-    data of every pass with the bound mapping. A mapping of one's own subclasses
-    it with a ``type: Literal[...]``, its options as fields, overrides
-    :meth:`bind` and registers (``@CouplingMapping.register``).
+    Bound once, when the receiving op connects, to the partner's points
+    (``source``) and its own (``target``; ``None`` without coordinates). A
+    mapping of one's own overrides :meth:`bind` and registers.
 
     Example::
 
@@ -92,10 +81,7 @@ class CouplingMapping(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
-        """The mapping from the points ``source`` onto ``target``.
-
-        Raises ``ValueError`` when it cannot map between them.
-        """
+        """The mapping from ``source`` onto ``target``; ``ValueError`` when it cannot map."""
         raise NotImplementedError
 
 
@@ -121,11 +107,7 @@ def _unchanged(data: Data) -> Data:
 
 @CouplingMapping.register
 class NearestNeighborMapping(CouplingMapping):
-    """Maps every point of the receiving side to the nearest point of the sending side.
-
-    Both sides need coordinates. :meth:`bind` finds the nearest points
-    (:func:`nearest_neighbor`) once, so the points must not move.
-    """
+    """Maps every receiving point to the nearest sending point, found once: points must not move."""
 
     type: Literal["nearest-neighbor"] = "nearest-neighbor"
 
@@ -150,25 +132,15 @@ class NearestNeighborMapping(CouplingMapping):
 
 
 def default_mapping() -> CouplingMapping:
-    """The mapping of an exchange that names none: :class:`NearestNeighborMapping`.
-
-    The one default of both a :class:`~neofoam.framework.coupling.region.Link`
-    and an exchange of ``system/regionCoupling.yaml``.
-    """
+    """The mapping of an exchange that names none, the one default."""
     return NearestNeighborMapping()
 
 
 @PluginSystem.register(discriminator_variable="acceleration", discriminator="type")
 class CouplingAcceleration(BaseModel):
-    """Relaxes the Array data carried into a pass: (data of the carried sides, iteration) -> data.
+    """Relaxes the data carried into a pass, per exchange; a plugin family.
 
-    The acceleration of an exchange of a
-    :class:`~neofoam.framework.coupling.CouplingNode`, a plugin family
-    (``system/regionCoupling.yaml``: ``acceleration:``, its ``type`` and
-    options). It keeps the data of its last passes in private attributes: give
-    each exchange its own. An acceleration of one's own subclasses it with a
-    ``type: Literal[...]``, its options as fields, overrides :meth:`__call__`
-    and registers (``@CouplingAcceleration.register``).
+    It keeps state across passes: give each exchange its own.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -180,11 +152,7 @@ class CouplingAcceleration(BaseModel):
 
 @CouplingAcceleration.register
 class ConstantRelaxation(CouplingAcceleration):
-    """Under-relaxes the data carried into a pass by a fixed factor, ``relaxation``.
-
-    ``x = x_last + relaxation * (sent - x_last)`` for all carried :data:`Array`
-    data at once, with ``x_last`` what the last pass received. ``relaxation = 1``
-    changes nothing; the first data passes unchanged. Not thread safe.
+    """``x = x_last + relaxation * (sent - x_last)``; the first data passes unchanged.
 
     Example::
 
@@ -212,12 +180,9 @@ class ConstantRelaxation(CouplingAcceleration):
 
 @CouplingAcceleration.register
 class AitkenRelaxation(ConstantRelaxation):
-    """Under-relaxes the data carried into a pass by Aitken's dynamic factor.
+    """Under-relaxes by Aitken's dynamic factor; for when a fixed factor converges slowly.
 
-    Use it instead of :class:`ConstantRelaxation` when a fixed factor converges
-    slowly; on a linear fixed-point problem of one value it reaches the solution
-    in the second relaxed pass. The factor follows from the residuals of the last
-    two passes; the first pass of a time step uses ``relaxation``. Not thread safe.
+    The first pass of a time step uses ``relaxation``.
 
     Example::
 
@@ -233,9 +198,7 @@ class AitkenRelaxation(ConstantRelaxation):
     def _factor(self, residual: Any, iteration: int) -> float:
         previous = self._residual if iteration > 1 else None
         self._residual = residual
-        # A previous residual that is round-off against this one (e.g. a time step
-        # that starts converged) would drive the factor to zero and stall the
-        # loop: start over from the initial factor instead.
+        # a round-off previous residual would drive the factor to zero and stall the loop
         if previous is None or np.linalg.norm(previous) <= 1e-6 * np.linalg.norm(residual):
             self._omega = self.relaxation
             return self._omega
@@ -269,14 +232,9 @@ def _unflatten(values: Any, like: list[Data]) -> list[Data]:
 
 @PluginSystem.register(discriminator_variable="convergence", discriminator="type")
 class CouplingConvergence(BaseModel):
-    """Whether the coupling has converged, from the change of every side's data in the last pass.
+    """Whether a node converged, from every side's change in the last pass; a plugin family.
 
-    A convergence measure of a :class:`~neofoam.framework.coupling.CouplingNode`,
-    a plugin family (``system/regionCoupling.yaml``: ``convergence:``, a list of
-    ``type`` and options). A measure on the data of one field names it in its
-    ``data`` option. A measure of one's own subclasses it with a
-    ``type: Literal[...]``, its options as fields, overrides :meth:`__call__` and
-    registers (``@CouplingConvergence.register``).
+    A measure on one field's data names it in its ``data`` option.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -288,10 +246,7 @@ class CouplingConvergence(BaseModel):
 
 @CouplingConvergence.register
 class RelativeConvergence(CouplingConvergence):
-    """Converged once the data of field ``data`` changes by less than ``limit`` relative to it.
-
-    It checks every array sent by a side of the field ``data`` (2-norm of the
-    change over the 2-norm of the array) and ignores the sides of other fields.
+    """Converged once every array of field ``data`` changes by less than ``limit`` (2-norms).
 
     Example::
 

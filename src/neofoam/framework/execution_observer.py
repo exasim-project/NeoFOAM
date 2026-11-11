@@ -10,12 +10,8 @@ step-by-step debugger UI drives an unmodified solver. Without an observer the
 hooks cost one ``None`` check.
 
 The observer is per thread (a :class:`~contextvars.ContextVar`); threads started
-by an observed run do not inherit it, except the region threads of a coupled run.
-
-So one observer of a multi-region run is called from several threads at once:
-its hooks must be thread safe (e.g. guard what they record with a lock). A hook
-that blocks pauses its own region's thread; the regions coupled with it wait
-for it at their next exchange.
+by an observed run do not inherit it, except the region threads of a coupled
+run: there its hooks are called from several threads at once and must be thread safe.
 
 Example::
 
@@ -71,28 +67,13 @@ class ExecutionObserver:
         """The predicate of loop ``op`` is about to decide on ``iteration`` (1-based)."""
 
     def after_loop_test(self, op: Operation, ctx: Context, iteration: int, result: bool) -> None:
-        """The predicate of loop ``op`` returned ``result`` for ``iteration``.
-
-        ``ctx.loops[-1]`` is the loop's entry for the pass it decided on: its
-        ``final`` tells whether the pass is the loop's final one (a coupling node's
-        leader decides it).
-        """
+        """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
 
     def coupling_finished(self, coupling: CouplingController, outcome: CouplingOutcome) -> None:
-        """The coupling of a time step ended, as ``coupling`` (its group's controller) decided.
-
-        ``outcome`` holds its passes, whether it converged and the residuals;
-        reported from the leader's thread, in its coupling op's last loop test.
-        """
+        """A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread."""
 
     def coupling_exchanged(self, coupling: CouplingOp, side: ExchangeSide, data: BaseModel) -> None:
-        """The region's ``coupling`` op is about to hand ``side`` its mapped ``data``.
-
-        ``coupling.exchange_of(side)`` is its exchange, ``.partner(side)`` the label
-        ``<region>.<patch>`` of the sender.
-        Reported from the op's loop test, between ``before_loop_test`` and
-        ``after_loop_test``.
-        """
+        """The region's ``coupling`` op is about to hand ``side`` its mapped ``data``."""
 
 
 _observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(

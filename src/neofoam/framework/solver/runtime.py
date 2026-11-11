@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 class GraphContribution(Protocol):
     """A model of ``ctx.models`` that adds operations to its region's graph and checks it.
 
-    E.g. a region's coupling model: its coupling ops, and a check of where the
-    resolver placed them.
+    E.g. a region's coupling model: its coupling ops, and where the resolver put them.
     """
 
     def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:

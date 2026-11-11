@@ -1,23 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""What a coupled side exchanges: :data:`Array`, the side, and what it sends.
-
-- :data:`Array` marks a field of an exchange model with one value (or row) per
-  point of the patch; the mapping maps it onto the receiving side's points. The
-  other fields of an exchange model are plain data, one value for the interface;
-- an **exchange side** (:class:`ExchangeSide`) is what a boundary condition
-  declares on its patch, as its region's coupling model added it: its region,
-  patch and field, what it sends and receives (one pydantic model each) and its
-  points; an **end** (:data:`End`) is its ``(region, patch)``;
-- an **exchange** (:class:`Exchange`) joins a side with the side of another
-  region (its partner); the case configures it per patch pair; its **mapping**
-  (:class:`~neofoam.framework.coupling.kernels.CouplingMapping`) maps the :data:`Array`
-  data the partner sends onto the side's points;
-- :func:`_sent` takes what a side sends now as plain data and checks that its
-  :data:`Array` data is finite; :func:`_check_received` that a side receives
-  what its partner sends.
-"""
+"""What a coupled side exchanges: :data:`Array` fields, the side, and what it sends."""
 
 from __future__ import annotations
 
@@ -30,7 +14,7 @@ from pydantic import BaseModel, PlainValidator
 from .kernels import CouplingMapping
 from .transport import Data
 
-# The end of an exchange: (region, patch).
+# (region, patch)
 End = tuple[str, str]
 
 
@@ -43,8 +27,7 @@ def _as_array(value: Any) -> Any:
     return np.asarray(value, dtype=float)
 
 
-# A field of an exchange model with one value (or row) per point of the patch; the
-# mapping maps it onto the receiving side's points.
+# A field of an exchange model: one value (or row) per point of the patch.
 Array = Annotated[np.ndarray, _ArrayKind(), PlainValidator(_as_array)]
 
 
@@ -64,26 +47,12 @@ def _check_arrays(model: type[BaseModel]) -> None:
 
 @dataclass(frozen=True)
 class ExchangeSide:
-    """A coupled side of a region: where it is, what it exchanges and where its points are.
+    """A coupled side of a region: its patch, the field it couples, its models and points.
 
-    ``region`` and ``patch`` are its end of the exchange, ``field`` the field
-    it couples, whose solution its region's coupling op repeats. ``sends`` and
-    ``receives`` are pydantic models: :data:`Array` fields (one value per point
-    of the patch, mapped onto the partner's points) and plain fields (one value
-    for the interface, handed over as they are). The same model both ways is
-    the special case of a symmetric exchange. ``send()`` returns an instance of
-    ``sends``; ``receive(data)`` takes an instance of ``receives``, already
-    mapped onto this side's points. ``coordinates`` holds one row per point of
-    the patch, or ``None``; it is kept as a float numpy array.
-
-    What travels between regions is plain data (it pickles): the plain fields
-    are ``float``, ``int``, ``str``, ``bool`` or ``None`` (or a union of them),
-    or a pydantic model of such fields, sent as its ``model_dump()``. Raises
-    ``TypeError`` for another field type.
-
-    A boundary condition declares it with
-    :func:`~neofoam.framework.coupling.coupled`;
-    :meth:`~neofoam.framework.coupling.Coupling.add` builds it (read-only).
+    ``sends`` and ``receives`` are pydantic models of :data:`Array` fields
+    (``TypeError`` otherwise); ``receive`` gets data already mapped onto its
+    ``coordinates`` (one row per point, or ``None``). Built by
+    :meth:`~neofoam.framework.coupling.Coupling.add` for a ``@coupled`` instance.
 
     Example::
 
@@ -101,7 +70,6 @@ class ExchangeSide:
     coordinates: Any = None
 
     def __post_init__(self) -> None:
-        # that both are pydantic models @coupled checked on the class
         _check_arrays(self.sends)
         _check_arrays(self.receives)
         if self.coordinates is not None:
@@ -127,13 +95,7 @@ class ExchangeSide:
 
 @dataclass(frozen=True)
 class Exchange:
-    """The exchange of a side, as its region sees it: its name, the partner and the mapping.
-
-    The case configures it per patch pair (``system/regionCoupling.yaml``,
-    ``exchanges:``). The side receives what the partner side, on patch
-    ``partner[1]`` of region ``partner[0]``, sends, mapped onto its points by
-    ``mapping``.
-    """
+    """The exchange of a side as its region sees it: its name, partner end and mapping."""
 
     name: str
     partner: End
@@ -155,11 +117,7 @@ def _check_received(name: str, announced: dict[str, Any], side: ExchangeSide) ->
 
 
 def _sent(side: ExchangeSide, node: str, iteration: int, time: Any) -> Data:
-    """What ``side`` sends now, as float copies.
-
-    Raises ``FloatingPointError`` when an array of it is not finite (in coupling
-    node ``node``, after pass ``iteration``, at ``time``).
-    """
+    """What ``side`` sends now, as float copies; ``FloatingPointError`` when not finite."""
     sent = side.send()
     if not isinstance(sent, side.sends):
         raise TypeError(
