@@ -208,7 +208,7 @@ def check_written_patches(ports: Iterable[FieldPort], time_dir: Path) -> None:
 
     Example::
 
-        check_written_patches(region_coupling.field_ports, Path("0"))
+        check_written_patches(coupling.field_ports, Path("0"))
     """
     for port in ports:
         if not port.receives or port.patch is None:
