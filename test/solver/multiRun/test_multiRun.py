@@ -3,7 +3,7 @@
 
 """multiRun's coupling of a case and its comm channel timeout.
 
-``cases/couplings/chain`` couples the chain a - b - c in two nodes, outer to inner.
+``cases/couplings/chain`` couples the chain a - b - c in two loops, outer to inner.
 """
 
 import importlib
@@ -38,13 +38,13 @@ def _couplings(case: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> A
     return result
 
 
-def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_couplings_builds_a_loop_per_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     couplings = _couplings(CHAIN, tmp_path, monkeypatch)
 
-    assert [node.name for node in couplings["b"].nodes] == ["outer", "inner"]
-    assert [node.name for node in couplings["a"].nodes] == ["inner"]
-    assert [node.name for node in couplings["c"].nodes] == ["outer"]
-    outer, inner = couplings["b"].nodes
+    assert [loop.name for loop in couplings["b"].loops] == ["outer", "inner"]
+    assert [loop.name for loop in couplings["a"].loops] == ["inner"]
+    assert [loop.name for loop in couplings["c"].loops] == ["outer"]
+    outer, inner = couplings["b"].loops
     assert (outer.exchanges, outer.max_iterations, outer.scheme) == (("b-c",), 7, "parallel")
     assert (inner.exchanges, inner.max_iterations) == (("a-b",), 100)
     assert isinstance(outer.acceleration["b-c"], AitkenRelaxation)

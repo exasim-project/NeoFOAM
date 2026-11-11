@@ -134,7 +134,7 @@ def test_affine_pair_stops_at_max_iterations(
     assert _history(regions, "a", 1) == EXPECTED["a"][:5]
 
 
-def test_affine_pair_a_serial_node_around_the_time_step_raises(
+def test_affine_pair_a_serial_loop_around_the_time_step_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _variant("no_wraps", tmp_path, monkeypatch)

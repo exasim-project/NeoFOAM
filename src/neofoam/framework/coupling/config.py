@@ -93,8 +93,8 @@ class FieldPortConfig(BaseModel):
         return FieldPort(self.name, self.field, self.patch, self.direction)
 
 
-class NodeExchangeConfig(BaseModel):
-    """An exchange of a coupling node and the acceleration of its data; a plain name has none."""
+class LoopExchangeConfig(BaseModel):
+    """An exchange of a coupling loop and the acceleration of its data; a plain name has none."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -103,7 +103,7 @@ class NodeExchangeConfig(BaseModel):
 
 
 class PlacementConfig(BaseModel):
-    """Where a node's op sits in a region's graph, as a :class:`Placement`."""
+    """Where a loop's op sits in a region's graph, as a :class:`Placement`."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -111,14 +111,14 @@ class PlacementConfig(BaseModel):
 
 
 class CouplingLoopConfig(BaseModel):
-    """One coupling node of ``couplings``."""
+    """One coupling loop of ``couplings``."""
 
     model_config = ConfigDict(extra="forbid")
 
     name: str
     scheme: Literal["serial", "parallel"] = CouplingLoop.scheme
     maxIterations: int = Field(default=CouplingLoop.max_iterations, gt=0)
-    exchanges: list[NodeExchangeConfig] = Field(min_length=1)
+    exchanges: list[LoopExchangeConfig] = Field(min_length=1)
     convergence: list[ConvergenceConfig] = Field(min_length=1)
     wraps: dict[str, PlacementConfig] = Field(default_factory=dict)
 
@@ -130,7 +130,7 @@ class CouplingLoopConfig(BaseModel):
         return value
 
     def coupling_loop(self) -> CouplingLoop:
-        """The node, with an acceleration of its own per exchange (they keep state)."""
+        """The loop, with an acceleration of its own per exchange (they keep state)."""
         return CouplingLoop(
             self.name,
             tuple(exchange.name for exchange in self.exchanges),
@@ -151,10 +151,10 @@ class CouplingLoopConfig(BaseModel):
 
 @IOStrategy(YAML("system/regionCoupling.yaml"))
 class RegionCouplingConfig(BaseConfig):
-    """``system/regionCoupling.yaml``: field ports, the exchanges and the coupling nodes.
+    """``system/regionCoupling.yaml``: field ports, the exchanges and the coupling loops.
 
     ``ports`` lists each region's field ports, which an exchange names like the
-    ports of its coupled patches. ``couplings`` lists the nodes outer to inner,
+    ports of its coupled patches. ``couplings`` lists the loops outer to inner,
     each exchange in one; checked on load.
     ``commChannelTimeout`` is in seconds, ``0`` or ``null`` without end. Without the file
     no region is coupled.
@@ -202,9 +202,9 @@ class RegionCouplingConfig(BaseConfig):
             region: [port.field_port() for port in ports] for region, ports in self.ports.items()
         }
 
-    def nodes(self) -> list[CouplingLoop]:
-        """The coupling nodes, outer to inner."""
-        return [node.coupling_loop() for node in self.couplings]
+    def loops(self) -> list[CouplingLoop]:
+        """The coupling loops, outer to inner."""
+        return [loop.coupling_loop() for loop in self.couplings]
 
     def participant_exchanges(
         self, regions: Sequence[str], comm_channel: CommChannel
@@ -217,7 +217,7 @@ class RegionCouplingConfig(BaseConfig):
         exchanges = self.coupling_exchanges()
         check_regions(regions, exchanges)
         return build_participant_exchanges(
-            regions, exchanges, comm_channel, self.nodes(), self.field_ports()
+            regions, exchanges, comm_channel, self.loops(), self.field_ports()
         )
 
     @model_validator(mode="after")
@@ -226,7 +226,7 @@ class RegionCouplingConfig(BaseConfig):
         regions = list(
             dict.fromkeys(region for exchange in exchanges for region, _patch in exchange.ends)
         )
-        check_exchanges(regions, exchanges, self.nodes(), self.field_ports())
+        check_exchanges(regions, exchanges, self.loops(), self.field_ports())
         return self
 
 
