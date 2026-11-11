@@ -36,7 +36,7 @@ from neofoam.framework.coupling import (
     FaceData,
 )
 from neofoam.framework.coupling.exchanges import participant_exchanges
-from neofoam.framework.coupling.iteration._leader import CouplingOutcome
+from neofoam.framework.coupling.loop._leader import CouplingOutcome
 from neofoam.framework.execution_observer import observe
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata

@@ -34,8 +34,8 @@ if TYPE_CHECKING:
 
     from neofoam.framework.context import Context
     from neofoam.framework.coupling.coupled import CoupledPort
-    from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
-    from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+    from neofoam.framework.coupling.loop._leader import CouplingOutcome, Leader
+    from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
 

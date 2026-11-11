@@ -37,7 +37,7 @@ from neofoam.framework.coupling import (
     coupling,
 )
 from neofoam.framework.coupling.data import Stream
-from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
 from neofoam.framework.coupling.strategies.mapping import (
     AreaIntegralMapping,
     ProbeMapping,

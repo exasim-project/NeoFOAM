@@ -45,11 +45,11 @@ from neofoam.framework.coupling import (
     coupling,
 )
 from neofoam.framework.coupling.exchanges import participant_exchanges
-from neofoam.framework.coupling.iteration._leader import (
+from neofoam.framework.coupling.loop._leader import (
     CouplingOutcome,
     Leader,
 )
-from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
 

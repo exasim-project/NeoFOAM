@@ -12,14 +12,14 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .coupled import CoupledPort
 from .data import base_name
-from .iteration._loop_op import CouplingLoopOp
 from .location import Location, MeshGeometry
+from .loop._loop_op import CouplingLoopOp
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
     from .exchanges import ParticipantExchanges
-from .iteration._time_step import (
+from .loop._time_step import (
     INCREMENT_TIME,
     SET_TIME_STEP,
     TimeStep,
