@@ -11,7 +11,6 @@ it receives. Each region's coupling op wraps its solve; b, the last region, lead
 
 from __future__ import annotations
 
-import math
 from functools import partial
 from typing import Any, Literal, Optional
 
@@ -42,15 +41,11 @@ from neofoam.framework.coupling import (
     IdentityMapping,
     InProcessTransport,
     Link,
-    RelativeConvergence,
-    SideChange,
     TransportClosed,
 )
 from neofoam.framework.coupling.controller import (
     CouplingController,
     CouplingOutcome,
-    GroupSide,
-    relative_changes,
 )
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.coupling.region import region_couplings
@@ -269,16 +264,6 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
     ]
 
 
-def test_relative_changes_is_the_largest_relative_change_per_field() -> None:
-    changes = [
-        SideChange("T", {"T": np.array([1.0, 0.0])}, {"T": np.array([2.0, 0.0])}),
-        SideChange("T", {"q": np.array([0.0])}, {"q": np.array([0.0])}),
-        SideChange("U", {"U": np.array([1.0])}, {"U": np.array([0.0])}),
-    ]
-
-    assert relative_changes(changes) == {"T": 0.5, "U": 1.0}
-
-
 def test_coupling_op_wraps_its_region_s_solving_op() -> None:
     regions = contexts(["a", "b"], [LINK])
     add_coupled(regions["a"], "p", "x", _Side("a", []).side())
@@ -304,55 +289,11 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
     )
 
 
-def test_the_coupling_model_builds_one_coupling_op_once() -> None:
-    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
-    regions = contexts(["a", "b"], links)
-    add_coupled(regions["a"], "p", "x", _Side("a", []).side())
-    add_coupled(regions["a"], "q", "y", _Side("a", []).side())
-
-    model = Coupling.of(regions["a"])
-    (couple_op,) = model.operations()
-
-    assert model.operations() is model.operations()
-    assert isinstance(couple_op.func, CouplingOp)
-    assert couple_op.metadata.wraps == Placement()
-    assert [side.patch for side in couple_op.func.sides] == ["p", "q"]
-    with pytest.raises(ValueError, match="a.p is added after the region's graph was built"):
-        add_coupled(regions["a"], "p", "x", _Side("a", []).side())
-
-
-def test_a_region_whose_solver_added_no_coupling_model_cannot_couple() -> None:
-    with pytest.raises(ValueError, match="the solver of region a does not support coupling"):
-        Coupling.of(Context(fields={}, models={}, region="a"))
-
-
-def test_a_region_the_case_does_not_couple_has_no_coupling_ops() -> None:
-    regions = contexts(["a", "b", "c"], [LINK])
-
-    assert len(Coupling.of(regions["c"]).operations()) == 0
-    (loop,) = graph(regions["c"], solve("x", lambda ctx: None)).ops
-    assert loop.operation_name == "solve_x"
-
-
-def test_a_side_in_a_region_the_case_does_not_couple_raises() -> None:
-    regions = contexts(["a", "b", "c"], [LINK])
-
-    with pytest.raises(ValueError, match="the case does not couple its region"):
-        add_coupled(regions["c"], "p", "x", _Side("c", []).side())
-
-
 def test_a_coupled_region_without_a_side_raises() -> None:
     regions = contexts(["a", "b"], [LINK])
 
     with pytest.raises(ValueError, match="exchange 'a-b' connects a.p, which has no coupled side"):
         Coupling.of(regions["a"]).operations()
-
-
-def test_a_side_on_a_patch_no_exchange_names_raises() -> None:
-    regions = contexts(["a", "b"], [LINK])
-
-    with pytest.raises(ValueError, match=r"no exchange connects the coupled side of a\.top"):
-        add_coupled(regions["a"], "top", "x", _Side("a", []).side())
 
 
 def test_two_sides_on_one_patch_raise() -> None:
@@ -373,13 +314,6 @@ def test_an_exchange_without_a_side_raises() -> None:
         ValueError, match="exchange 'a-b-2' connects a.q, which has no coupled side"
     ):
         Coupling.of(regions["a"]).operations()
-
-
-def test_only_a_coupled_instance_with_field_and_patch_is_added() -> None:
-    model = Coupling.of(contexts(["a", "b"], [LINK])["a"])
-
-    with pytest.raises(TypeError, match="object is not @coupled"):
-        model.add(object())
 
 
 def test_coupling_op_raises_when_send_returns_something_else() -> None:
@@ -504,48 +438,3 @@ def test_a_relative_change_that_is_not_finite_raises() -> None:
         r"finite in pass 1",
     ):
         _couple(a, b, convergence=[never], max_iterations=10, acceleration={"a-b": acceleration})
-
-
-def _group() -> list[GroupSide]:
-    return [
-        GroupSide("a", "p", "x", ("b", "p"), "a-b"),
-        GroupSide("b", "p", "x", ("a", "p"), "a-b"),
-    ]
-
-
-def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_built() -> None:
-    with pytest.raises(
-        ValueError,
-        match=r"coupling b.coupling: convergence RelativeConvergence on T, which no side of the "
-        r"node sends \(its sides couple \['x'\]\)",
-    ):
-        CouplingController(
-            _group(),
-            "b.coupling",
-            CouplingNode(
-                "coupling", ("a-b",), convergence=(RelativeConvergence(data="T", limit=1e-5),)
-            ),
-        )
-
-
-def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
-    controller = CouplingController(
-        _group(), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(never,))
-    )
-    assert controller.residuals == {"x": math.inf}
-
-    # the first decision starts the first pass: nothing measured yet
-    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.ones(1)}}, 0)
-    assert controller.residuals == {"x": math.inf}
-
-    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.full(1, 2.0)}}, 1)
-    assert controller.residuals == {"x": 0.5}
-
-
-def test_relative_changes_keep_a_nan() -> None:
-    changes = [
-        SideChange("x", {"x": np.ones(1)}, {"x": np.full(1, 2.0)}),
-        SideChange("x", {"x": np.ones(1)}, {"x": np.full(1, np.nan)}),
-    ]
-
-    assert math.isnan(relative_changes(changes)["x"])

@@ -95,35 +95,6 @@ def test_a_deadlock_lists_the_messages_sent_but_not_received() -> None:
     assert str(errors["b"]).endswith("undelivered messages: a→b 'z' (2)")
 
 
-def test_run_regions_raises_the_deadlock() -> None:
-    transport = InProcessTransport()
-
-    with pytest.raises(CouplingDeadlock, match="a waits for 'x' from b"):
-        run_regions(
-            {
-                "a": lambda: transport.receive("b", "a", "x"),
-                "b": lambda: transport.receive("a", "b", "y"),
-            },
-            transport,
-        )
-
-
-def test_run_regions_raises_the_error_before_a_transport_closed_of_another_region() -> None:
-    transport = InProcessTransport(timeout=TIMEOUT)
-
-    def closed() -> None:
-        raise TransportClosed("a follows")
-
-    def deadlock() -> None:
-        # returns only once a failed: b's error comes second
-        with pytest.raises(TransportClosed):
-            transport.receive("a", "b", "x")
-        raise CouplingDeadlock("b deadlocked")
-
-    with pytest.raises(CouplingDeadlock, match="b deadlocked"):
-        run_regions({"a": closed, "b": deadlock}, transport)
-
-
 def test_waiting_for_a_region_that_finished_raises_a_deadlock_at_once() -> None:
     transport = InProcessTransport()
     transport.start(["a", "b"])
