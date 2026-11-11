@@ -242,4 +242,4 @@ def run(regions: dict[str, tuple[Context, list[Operation]]]) -> None:
 def comm_channel(ctx: Context) -> CommChannel:
     region = coupling(ctx).coupling
     assert region is not None
-    return region.comm_channel
+    return region.require_comm_channel()

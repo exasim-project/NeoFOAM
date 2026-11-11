@@ -216,15 +216,17 @@ def ports() -> None:
     points = np.full((rows, 3), float(WORLD.rank))
     part = _Port(comm, patch, Geometry.of(points, np.ones(rows)))
     if comm.is_root:
-        assert part.geometry.size == 6 and part.geometry.points[-1, 0] == 2.0, part.geometry
-    whole = part.gather_sent(Stream(_Flux, print), _Flux(q=np.full(rows, float(WORLD.rank))))
+        points = np.asarray(part.geometry.points)
+        assert part.geometry.size == 6 and points[-1, 0] == 2.0, part.geometry
+    whole: Any = part.gather_sent(Stream(_Flux, print), _Flux(q=np.full(rows, float(WORLD.rank))))
     if comm.is_root:
         assert whole.q.tolist() == [0.0, 1.0, 1.0, 2.0, 2.0, 2.0], whole.q
     part.hand_over({"q": _Flux(q=10.0 * whole.q)} if comm.is_root else {})
     assert received[-1].q.tolist() == [10.0 * WORLD.rank] * rows, received[-1].q
     value = CoupledPort("a", "Q", Global("Q"), (), (Stream(_Heat, received.append),))
     part = _Port(comm, value, Geometry(size=1))
-    assert part.gather_sent(Stream(_Heat, print), _Heat(q=WORLD.rank)).q == WORLD.rank
+    root_value: Any = part.gather_sent(Stream(_Heat, print), _Heat(q=WORLD.rank))
+    assert root_value.q == WORLD.rank
     part.hand_over({"q": _Heat(q=7.0)} if comm.is_root else {})
     assert received[-1].q == 7.0, received[-1]
 
