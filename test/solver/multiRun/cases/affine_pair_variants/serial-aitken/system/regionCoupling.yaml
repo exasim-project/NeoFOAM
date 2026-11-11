@@ -1,0 +1,14 @@
+# Laid over cases/affine_pair: serial with Aitken relaxation.
+exchanges:
+  - sides: {a: interface, b: interface}
+couplings:
+  - name: coupling
+    scheme: serial
+    maxIterations: 50
+    exchanges:
+      - {name: a-b, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
+    wraps:
+      a: {operations: [solve_x]}
+      b: {operations: [solve_x]}

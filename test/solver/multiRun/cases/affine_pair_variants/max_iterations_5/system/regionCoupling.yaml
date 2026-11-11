@@ -1,0 +1,14 @@
+# Laid over cases/affine_pair: at most 5 passes, fewer than the 21 it needs.
+exchanges:
+  - sides: {a: interface, b: interface}
+couplings:
+  - name: coupling
+    scheme: serial
+    maxIterations: 5
+    exchanges:
+      - {name: a-b, acceleration: {type: constant, relaxation: 1.0}}
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
+    wraps:
+      a: {operations: [solve_x]}
+      b: {operations: [solve_x]}

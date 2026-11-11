@@ -7,11 +7,10 @@ The plugin (``fake_plugin.py``) registers with the families as it is imported;
 the fixture imports it and unregisters it after the test, so no other test sees
 its types. ``cases/plugin/<name>`` is laid over ``cases/coupled_slabs``; the
 mapping is the identity (both patches lie at x = 1), so the run reaches the
-steady profile of ``test_multiRun_coupling`` within its 1e-8 K.
+steady profile of ``test_coupled_slabs`` within its 1e-8 K.
 """
 
 import importlib
-import shutil
 import sys
 from collections.abc import Iterator
 from pathlib import Path
@@ -23,13 +22,10 @@ import pytest
 from pydantic import ValidationError
 
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
-from solver.multiRun.slab_solver import slab
+from solver.multiRun.case_files import copy_case
 
-CASES = Path(__file__).parent / "cases"
-MULTI_RUN_MODULE = importlib.import_module("neofoam.solver.multiRun.multiRun")
 PLUGIN = "solver.multiRun.fake_plugin"
 EXPECTED = {
     "left": [390.625, 371.875, 353.125, 334.375],
@@ -47,20 +43,12 @@ def plugin() -> Iterator[ModuleType]:
 
 
 def _case(tmp_path: Path, overlay: str) -> Path:
-    case = tmp_path / "case"
-    shutil.copytree(CASES / "coupled_slabs", case)
-    shutil.copytree(CASES / "plugin" / overlay, case, dirs_exist_ok=True)
-    return case
+    return copy_case("coupled_slabs", tmp_path / "case", f"plugin/{overlay}")
 
 
 def test_multiRun_couples_through_the_strategies_of_a_plugin(
     plugin: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(
-        MULTI_RUN_MODULE,
-        "resolve_solver",
-        lambda name: slab if name == "slab" else resolve_solver(name),
-    )
     monkeypatch.chdir(_case(tmp_path, "strategies"))
 
     regions = run()
