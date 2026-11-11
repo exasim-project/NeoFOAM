@@ -32,10 +32,13 @@ the linked reference pages for the full API.
     - ``graph/`` — operation-graph sort, resolution, validation, and
       visualization, and the loops that wrap fields (``wrapping``). See
       :mod:`neofoam.framework.graph`.
-    - ``coupling/`` — ``@coupled`` instances on their locations, field ports,
-      the ``Exchange`` of two ports, a ``CouplingOp`` per region and node, the ``CommChannel`` between
-      regions and the mapping, acceleration and convergence families. See
-      :mod:`neofoam.framework.coupling`.
+    - ``coupling/`` — ``@coupled`` instances on their locations (``coupled``,
+      ``data``, ``location``), field ports, the case's ``system/regionCoupling.yaml``
+      (``config``), the ``Exchange`` of two ports and the ``CouplingLoop``\ s
+      (``exchanges``), a region's ``Participant`` (``model``), the loop op and
+      its leader (``iteration/``), the ``CommChannel`` between regions
+      (``comm/``) and the mapping, acceleration and convergence families
+      (``strategies/``). See :mod:`neofoam.framework.coupling`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 
@@ -51,7 +54,7 @@ the linked reference pages for the full API.
     Several solvers, one per region, in one case: ``system/controlDict.yaml``
     lists ``regionSolvers``, each region reads ``<region>/``, and every region
     runs on its own thread; ``system/regionCoupling.yaml`` lists the
-    ``exchanges`` and ``couplings``.
+    ``exchanges`` and ``couplings`` (its schema: ``framework/coupling/config.py``).
 
 ``solver/regions.py``
     What the solvers share to run as the regions of a ``multiRun`` case, such as
