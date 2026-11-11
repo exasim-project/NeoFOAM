@@ -157,26 +157,16 @@ class PluginSystem:
     def _reject_duplicate_discriminator(
         registry_obj: PluginRegistry, plugin_cls: Type[BaseModel]
     ) -> None:
-        """Refuse a plugin whose discriminator value another plugin of the family holds.
-
-        A module reload builds a new class at the same definition site; it replaces
-        the previous one instead.
-        """
+        """Refuse a plugin whose discriminator value another plugin of the family holds."""
         discriminator = registry_obj.discriminator
         values = PluginSystem._discriminator_values(plugin_cls, discriminator)
-        for registered in list(registry_obj.plugin_registry):
+        for registered in registry_obj.plugin_registry:
             shared = [
                 value
                 for value in PluginSystem._discriminator_values(registered, discriminator)
                 if value in values
             ]
             if not shared:
-                continue
-            if (
-                registered.__module__ == plugin_cls.__module__
-                and registered.__qualname__ == plugin_cls.__qualname__
-            ):
-                registry_obj.plugin_registry.remove(registered)
                 continue
             raise ValueError(
                 f"plugin family '{registry_obj.base_cls.__name__}': "
