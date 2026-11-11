@@ -27,8 +27,8 @@ The heat flux `ρ c_p (ν/Pr + αt) dT/dn` needs `rho` and `cp` in
 `fluid/constant/transportProperties`.
 
 The fluid as the Dirichlet side is the less stable direction (the plate's
-effusivity is about a seventh of the fluid's): plain passes diverge, Aitken
-converges every window in about 12 passes.
+effusivity is about a seventh of the fluid's): plain iterations diverge, Aitken
+converges every window in about 12 iterations.
 
 At t = 1 s the fluid's mean wall temperature is 303.751 K (preCICE's reference
 303.774 K). Nearest-neighbor mapping between the 161 fluid and 100 plate faces

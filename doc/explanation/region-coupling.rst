@@ -256,7 +256,7 @@ flow.
 ``tutorials/flowOverHeatedPlate`` (after preCICE's flow over a heated plate)
 couples the fluid over a ``heatConductionNeoN`` plate, serial with Aitken. The
 fluid as the Dirichlet side is the less stable direction: without relaxation
-the passes diverge. At ``t = 1 s`` the fluid's mean wall temperature is
+the iterations diverge. At ``t = 1 s`` the fluid's mean wall temperature is
 303.751 K (preCICE's reference 303.774 K). Nearest-neighbor mapping between the
 161 fluid and 100 plate faces does not conserve the heat: the sides differ by
 0.2 %.

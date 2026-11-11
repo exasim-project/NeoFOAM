@@ -19,8 +19,8 @@ CASE = CASES / "heatedPlate"
 RESULT_PREFIX = "#RESULT "
 TIMEOUT = 600
 
-#: the probe at 0.03 s (to 1e-6 K): passes per time step, the fluid's wall T (mean, min, max)
-PROBE_PASSES = [15, 15, 15]
+#: the probe at 0.03 s (to 1e-6 K): iterations per time step, the fluid's wall T (mean, min, max)
+PROBE_ITERATIONS = [15, 15, 15]
 PROBE_WALL_T = (301.315643, 300.962216, 301.347602)
 
 

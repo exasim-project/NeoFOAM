@@ -24,7 +24,7 @@ from neofoam.solver.regions import coupled_entries
 from solver.incompressibleFluid._heated_plate import (
     CASE,
     HERE,
-    PROBE_PASSES,
+    PROBE_ITERATIONS,
     PROBE_WALL_T,
     mesh_copy,
     result,
@@ -81,9 +81,9 @@ def test_heated_plate_fluid_is_the_dirichlet_side(plate: dict[str, Any]) -> None
     np.testing.assert_allclose(points[:, 1], 0.0, rtol=0, atol=1e-12, err_msg="interface y")
 
 
-def test_heated_plate_passes_are_the_probes(plate: dict[str, Any]) -> None:
+def test_heated_plate_iterations_are_the_probes(plate: dict[str, Any]) -> None:
     # the leader: the last region
-    assert plate["passes"] == {"solid": PROBE_PASSES}
+    assert plate["iterations"] == {"solid": PROBE_ITERATIONS}
 
 
 def test_heated_plate_wall_temperature_is_the_probes(plate: dict[str, Any]) -> None:
