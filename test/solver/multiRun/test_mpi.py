@@ -11,19 +11,15 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.framework.solver import Solver
-from neofoam.solver.heatConductionNeoN import heatConductionNeoN
 from neofoam.solver.multiRun.mpi import (
     MpiSetupError,
     RegionLayout,
     check_decomposed,
     check_size,
-    check_sub_communicator,
     import_mpi,
     launched_size,
     under_mpi,
 )
-from neofoam.solver.neon_runtime import neon_takes_a_communicator
 
 
 def test_region_layout_puts_the_regions_on_blocks_of_ranks_in_stepping_order() -> None:
@@ -98,31 +94,6 @@ def test_check_decomposed_wants_processor0_for_a_region_on_one_process(tmp_path:
 
     (tmp_path / "left" / "processor0").mkdir()
     check_decomposed(RegionLayout({"left": 1}), tmp_path)
-
-
-def test_check_sub_communicator_refuses_a_solver_that_needs_every_process() -> None:
-    bound = Solver("bound")
-    bound.sub_communicator_limitation = "it talks to every process"
-    specs = {"left": Solver("free"), "right": bound}
-
-    check_sub_communicator(RegionLayout({"left": 1}), {"left": specs["left"]})
-    with pytest.raises(MpiSetupError) as error:
-        check_sub_communicator(RegionLayout({"left": 1, "right": 1}), specs)
-
-    assert str(error.value) == (
-        "region right runs on 1 of the 2 MPI processes, but its solver bound cannot run "
-        "on part of them: it talks to every process"
-    )
-
-
-def test_heat_conduction_neon_runs_on_part_of_the_processes_if_neon_can() -> None:
-    limitation = heatConductionNeoN.sub_communicator_limitation
-
-    if neon_takes_a_communicator():
-        assert limitation is None
-    else:
-        assert limitation is not None
-        assert "this NeoN build communicates on MPI_COMM_WORLD" in limitation
 
 
 @pytest.mark.parametrize(

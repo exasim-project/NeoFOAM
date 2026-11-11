@@ -116,14 +116,6 @@ def _finalize_neon() -> None:
     nn.finalize()
 
 
-def neon_takes_a_communicator() -> bool:
-    """Whether this NeoN build can run on a communicator other than MPI_COMM_WORLD.
-
-    ``create_adapter_run_time`` then makes OpenFOAM's world NeoN's default communicator.
-    """
-    return hasattr(nn, "set_default_communicator")
-
-
 def ensure_neon_initialized(argv: list[str]) -> None:
     """Initialize NeoN/Kokkos once per process (idempotent)."""
     global _neon_initialized

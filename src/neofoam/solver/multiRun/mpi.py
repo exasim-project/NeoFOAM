@@ -20,8 +20,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from neofoam.framework.solver import SolverSpec
-
 # the environment variables in which MPI launchers pass the number of processes
 SIZE_VARIABLES = ("OMPI_COMM_WORLD_SIZE", "PMI_SIZE", "MV2_COMM_WORLD_SIZE")
 
@@ -139,19 +137,6 @@ def check_decomposed(layout: RegionLayout, case_dir: Path = Path(".")) -> None:
         raise MpiSetupError("; ".join(problems))
 
 
-def check_sub_communicator(layout: RegionLayout, specs: Mapping[str, SolverSpec]) -> None:
-    """Raise ``MpiSetupError`` for a region whose solver has a ``sub_communicator_limitation``."""
-    problems = [
-        f"region {region} runs on {count} of the {layout.total} MPI processes, but its solver "
-        f"{specs[region].name} cannot run on part of them: "
-        f"{specs[region].sub_communicator_limitation}"
-        for region, count in layout.processes.items()
-        if specs[region].sub_communicator_limitation is not None
-    ]
-    if problems:
-        raise MpiSetupError("; ".join(problems))
-
-
 def check_world(region: str, comm: Any) -> None:
     """Raise ``MpiSetupError`` unless OpenFOAM's and NeoN's world of ``region`` is ``comm``."""
     pybfoam = sys.modules.get("pybFoam")
@@ -163,7 +148,7 @@ def check_world(region: str, comm: Any) -> None:
                 f"split rank {comm.rank} of {comm.size}"
             )
     neon = sys.modules.get("neon._neon")
-    if neon is not None and hasattr(neon, "default_communicator"):
+    if neon is not None:
         default = type(comm).f2py(neon.default_communicator())
         if (default.rank, default.size) != (comm.rank, comm.size):
             raise MpiSetupError(

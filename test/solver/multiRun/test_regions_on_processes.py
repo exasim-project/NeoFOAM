@@ -110,15 +110,6 @@ def _failure(run: subprocess.CompletedProcess) -> str:
     return re.sub(r"\s+", " ", run.stdout + run.stderr)
 
 
-def _neon_takes_a_communicator() -> bool:
-    """Whether the NeoN of the tests' interpreter runs a region on part of the processes."""
-    probe = "from neofoam.solver.neon_runtime import neon_takes_a_communicator as f; print(f())"
-    found = subprocess.run(
-        [sys.executable, "-c", probe], capture_output=True, text=True, timeout=TIMEOUT
-    )
-    return found.stdout.strip().endswith("True")
-
-
 def _meshed(base: Path, *overlays: str) -> Path:
     """coupledBlocks' regions with ``overlays``, meshed and decomposed in ``<n>/`` (PARTS)."""
     for parts in PARTS:
@@ -213,8 +204,6 @@ def test_regions_on_processes_match_their_run_on_threads(
 def test_neon_regions_on_processes_match_their_run_on_threads(
     uncoupled: Path, tmp_path: Path, left: int, right: int
 ) -> None:
-    if not _neon_takes_a_communicator():
-        pytest.skip("this NeoN build communicates on MPI_COMM_WORLD only")
     case = _uncoupled_case(uncoupled, tmp_path, {"left": _neon(left), "right": _neon(right)})
 
     threads = _results(_threads(case))
@@ -229,8 +218,6 @@ def test_neon_regions_on_processes_match_their_run_on_threads(
 def test_coupled_regions_on_processes_match_their_run_on_threads(
     coupled: Path, tmp_path: Path, left: int, right: int
 ) -> None:
-    if not _neon_takes_a_communicator():
-        pytest.skip("this NeoN build communicates on MPI_COMM_WORLD only")
     case = _coupled_case(coupled, tmp_path, left, right)
 
     threads = _results(_threads(case))
@@ -281,26 +268,9 @@ def test_run_refuses_a_region_on_one_process_without_processor0(
     assert "region left runs on 1 process, but left/ lacks processor0" in message
 
 
-def test_run_refuses_a_neon_region_if_neon_communicates_on_the_world(
-    uncoupled: Path, tmp_path: Path
-) -> None:
-    if _neon_takes_a_communicator():
-        pytest.skip("this NeoN build runs on the region's communicator")
-    case = _uncoupled_case(uncoupled, tmp_path, {"left": _neon(2), "right": _foam(2)})
-
-    message = _failure(_processes(case, 4))
-
-    assert (
-        "region left runs on 2 of the 4 MPI processes, but its solver heatConductionNeoN "
-        "cannot run on part of them: this NeoN build communicates on MPI_COMM_WORLD"
-    ) in message
-
-
 def test_run_aborts_every_process_when_a_coupled_follower_fails(
     coupled: Path, tmp_path: Path
 ) -> None:
-    if not _neon_takes_a_communicator():
-        pytest.skip("this NeoN build communicates on MPI_COMM_WORLD only")
     case = _coupled_case(coupled, tmp_path, 2, 2)
 
     # rank 3 is right's second process; left's root waits for right's

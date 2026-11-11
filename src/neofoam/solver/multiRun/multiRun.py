@@ -35,7 +35,6 @@ from .mpi import (
     abort_all,
     check_decomposed,
     check_size,
-    check_sub_communicator,
     check_world,
     failure,
     import_mpi,
@@ -103,7 +102,6 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
         check_size(layout, world.size)
         check_decomposed(layout)
         specs = {region: resolve_solver(name) for region, name in config.solvers().items()}
-        check_sub_communicator(layout, specs)
         region = layout.region_of(world.rank)
         planned = couplings(list(config.participants), None).get(region)
         timeout = comm_channel_timeout()
