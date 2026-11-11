@@ -33,7 +33,7 @@ the linked reference pages for the full API.
       visualization, and the loops that wrap fields (``wrapping``). See
       :mod:`neofoam.framework.graph`.
     - ``coupling/`` — ``@coupled`` instances on their locations (``coupled``,
-      ``data``, ``location``), field ports, the case's ``system/regionCoupling.yaml``
+      ``data``, ``location``), field ports, the case's ``system/coupling.yaml``
       (``config``), the ``Exchange`` of two ports and the ``CouplingLoop``\ s
       (``exchanges``), a region's ``Participant`` (``model``), the loop op and
       its leader (``iteration/``), the ``CommChannel`` between regions
@@ -52,8 +52,8 @@ the linked reference pages for the full API.
 
 ``solver/multiRun/``
     Several solvers, one per region, in one case: ``system/controlDict.yaml``
-    lists ``regionSolvers``, each region reads ``<region>/``, and every region
-    runs on its own thread; ``system/regionCoupling.yaml`` lists the
+    lists ``participants``, each region reads ``<region>/``, and every region
+    runs on its own thread; ``system/coupling.yaml`` lists the
     ``exchanges`` and ``couplings`` (its schema: ``framework/coupling/config.py``).
 
 ``solver/regions.py``
