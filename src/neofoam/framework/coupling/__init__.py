@@ -20,7 +20,7 @@ from .comm.channel import (
     CouplingTimeout,
 )
 from .comm.in_process import InProcessCommChannel
-from .config import RegionCouplingConfig
+from .config import RegionCouplingConfig, comm_channel_timeout
 from .coupled import CoupledPort, coupled
 from .data import Array, CellData, FaceData, ProbeData, Scalar, ValueData
 from .exchanges import CouplingLoop, Exchange, ParticipantExchanges, participant_exchanges
@@ -87,6 +87,7 @@ __all__ = [
     "ValueData",
     "VolumeIntegralMapping",
     "VolumeMeanMapping",
+    "comm_channel_timeout",
     "coupled",
     "coupling",
     "participant_exchanges",

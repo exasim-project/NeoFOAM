@@ -87,32 +87,6 @@ def test_couplings_check_the_case_s_coupling_once(
     assert checks == [["a", "b", "c"]]
 
 
-def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> Any:
-    """multiRun's comm channel timeout, the chain's ``commChannelTimeout`` set to ``seconds``.
-
-    ``"none"``: no case file; ``"default"``: the file as it is.
-    """
-    (tmp_path / "system").mkdir()
-    if seconds != "none":
-        config = RegionCouplingConfig.load(case_dir=CHAIN)
-        if seconds != "default":
-            config.commChannelTimeout = seconds
-        config.save(case_dir=tmp_path)
-    monkeypatch.chdir(tmp_path)
-    return MULTI_RUN.comm_channel_timeout()
-
-
-@pytest.mark.parametrize(
-    ("seconds", "timeout"),
-    [("none", 600.0), ("default", 600.0), (5, 5.0), (0, None), (None, None)],
-    ids=["no-file", "default", "seconds", "zero", "null"],
-)
-def test_the_comm_channel_timeout_is_the_file_s(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any, timeout: Any
-) -> None:
-    assert _timeout(tmp_path, monkeypatch, seconds) == timeout
-
-
 def test_run_hands_the_comm_channel_timeout_to_the_comm_channel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
