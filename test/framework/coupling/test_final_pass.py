@@ -9,6 +9,7 @@ Regions ``a``, ``b``, ``c`` in a row, one node, c leads; ``write`` is marked
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, Literal
 
 import numpy as np
@@ -119,8 +120,10 @@ def test_the_last_pass_max_iterations_allows_is_final_and_warns(scheme: Any) -> 
 
 
 @SCHEMES
-def test_a_single_pass_is_first_and_final(scheme: Any) -> None:
-    with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 1 passes"):
+def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
+    """``max_iterations: 1`` is explicit coupling: no not-converged warning."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", CouplingNotConvergedWarning)
         tests, controller = _couple(scheme, max_iterations=1)
 
     for region in tests.values():

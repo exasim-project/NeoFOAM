@@ -101,8 +101,8 @@ class GroupStream:
 class CouplingController:
     """The leader's part of a coupling node: after each pass, whether another runs and which.
 
-    Final pass as :class:`CouplingNode` describes; warns when ``max_iterations``
-    ends the loop unconverged. A port
+    Final pass as :class:`CouplingNode` describes; warns when more than one of
+    ``max_iterations`` ends the loop unconverged (one is explicit coupling). A port
     receives a stream fresh when the node is serial and its sender steps earlier,
     else the carried data, relaxed. Not thread safe.
     """
@@ -224,7 +224,7 @@ class CouplingController:
         observer = execution_observer.current()
         if observer is not None:
             observer.coupling_finished(self, outcome)
-        if not converged:
+        if not converged and self._max_iterations > 1:
             residuals = ", ".join(
                 f"{name} {value:.3g}" for name, value in outcome.residuals.items()
             )
