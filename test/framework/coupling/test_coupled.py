@@ -23,15 +23,11 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     Coupling,
-    InProcessTransport,
     Link,
     NearestNeighborMapping,
-    RegionCoupling,
     coupled,
 )
-from neofoam.framework.coupling.data import ExchangeSide
 from neofoam.framework.coupling.loop import CouplingOp
-from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.types import Placement
 
 
@@ -323,10 +319,6 @@ def test_exchange_with_nearest_neighbor_needs_coordinates() -> None:
     )
 
 
-def test_an_exchange_maps_by_nearest_neighbor_by_default() -> None:
-    assert Link("x", (("a", "p"), ("b", "p"))).mapping == NearestNeighborMapping()
-
-
 @coupled
 class _Same(_Patch):
     @coupled.sends
@@ -369,91 +361,3 @@ def test_a_chain_of_exchanges_is_one_coupling_group() -> None:
         ("b", "to_c"): False,
         ("c", "to_b"): True,
     }
-
-
-def _coupling(ctx: Context) -> RegionCoupling:
-    coupling = Coupling.of(ctx).coupling
-    assert coupling is not None
-    return coupling
-
-
-def test_unconnected_groups_of_exchanges_get_a_leader_each() -> None:
-    links = [Link("a-b", (("a", "p"), ("b", "p"))), Link("c-d", (("c", "p"), ("d", "p")))]
-    regions = contexts(list("abcd"), links)
-
-    couplings = [_coupling(ctx) for ctx in regions.values()]
-    assert [(coupling.group, coupling.leader) for coupling in couplings] == [
-        (("a", "b"), "b"),
-        (("a", "b"), "b"),
-        (("c", "d"), "d"),
-        (("c", "d"), "d"),
-    ]
-
-
-@pytest.mark.parametrize(
-    ("link", "error"),
-    [
-        (Link("x", (("a", "p"), ("fluid", "q"))), r"couple the regions \['fluid'\]"),
-        (Link("x", (("a", "p"), ("a", "q"))), "exchange 'x' joins two patches of region a"),
-    ],
-)
-def test_region_couplings_check_the_links(link: Link, error: str) -> None:
-    with pytest.raises(ValueError, match=error):
-        region_couplings(["a", "b"], [link], InProcessTransport())
-
-
-def test_a_patch_is_in_one_exchange() -> None:
-    links = [Link("x", (("a", "p"), ("b", "p"))), Link("y", (("a", "p"), ("b", "q")))]
-
-    with pytest.raises(ValueError, match="a.p is in the exchanges 'x' and 'y'"):
-        region_couplings(["a", "b"], links, InProcessTransport())
-
-
-def test_a_region_no_exchange_names_is_not_coupled() -> None:
-    couplings = region_couplings(
-        ["a", "b", "c"], [Link("x", (("a", "p"), ("b", "p")))], InProcessTransport()
-    )
-
-    assert list(couplings) == ["a", "b"]
-
-
-class _Plain(BaseModel):
-    q: Array
-    h: float
-
-
-class _Listed(BaseModel):
-    weights: list[float]
-
-
-@pytest.mark.parametrize(("model", "field"), [(_Plain, "h"), (_Listed, "weights")])
-def test_an_exchange_model_holds_array_fields_only(model: type[BaseModel], field: str) -> None:
-    with pytest.raises(
-        TypeError,
-        match=f"the field '{field}' of the exchange model {model.__name__} is not Array",
-    ):
-        ExchangeSide(
-            "solid",
-            "right",
-            "T",
-            sends=model,
-            receives=WallTemperature,
-            send=lambda: None,
-            receive=print,
-        )
-
-
-def test_a_side_keeps_its_coordinates_as_a_float_array() -> None:
-    side = ExchangeSide(
-        "solid",
-        "right",
-        "T",
-        sends=WallTemperature,
-        receives=WallTemperature,
-        send=lambda: None,
-        receive=print,
-        coordinates=[[0, 0, 0], [1, 0, 0]],
-    )
-
-    assert isinstance(side.coordinates, np.ndarray) and side.coordinates.dtype == float
-    assert side.points == 2

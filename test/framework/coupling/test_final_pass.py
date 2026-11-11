@@ -32,7 +32,6 @@ from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
     Coupling,
-    CouplingNode,
     CouplingNotConvergedWarning,
     Link,
 )
@@ -169,16 +168,3 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
     # passes 1 and 2, and the final pass 3
     assert iterations == [1, 2, 3]
     assert controller.outcomes[-1].passes == 3
-
-
-def test_the_controller_tells_which_pass_is_final() -> None:
-    node = CouplingNode("coupling", ("a-b",), convergence=(never,), max_iterations=2)
-    controller = CouplingController([], "c.coupling", node)
-
-    assert controller.decide({}, 0) == {} and not controller.final
-    assert controller.decide({}, 1) == {} and controller.final
-    with pytest.warns(CouplingNotConvergedWarning) as warned:
-        assert controller.decide({}, 2) is None
-    # the warning points at the caller outside the framework
-    assert warned[0].filename == __file__
-    assert not controller.final

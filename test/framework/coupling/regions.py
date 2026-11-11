@@ -9,10 +9,12 @@ from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Optional, Sequence
 
+import numpy as np
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
+    Array,
     Coupling,
     CouplingNode,
     InProcessTransport,
@@ -88,6 +90,22 @@ class Side:
     send: Callable[[], BaseModel]
     receive: Callable[[Any], None]
     coordinates: Any = None
+
+
+class Value(BaseModel):
+    v: Array
+
+
+def fixed(value: float = 0.0, log: Optional[list[float]] = None) -> Side:
+    """A side of one point that sends ``value`` and appends what it receives to ``log``."""
+    received = [] if log is None else log
+    return Side(
+        Value,
+        Value,
+        lambda: Value(v=[value]),
+        lambda d: received.append(float(d.v[0])),
+        np.zeros((1, 1)),
+    )
 
 
 def add_coupled(ctx: Context, patch: str, field: str, side: Side) -> None:
