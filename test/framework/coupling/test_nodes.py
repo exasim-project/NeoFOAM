@@ -295,10 +295,10 @@ def test_a_node_is_serial_by_default() -> None:
 def _sides() -> list[GroupSide]:
     """Two exchanges x and y between a and b."""
     return [
-        GroupSide("a", "p", "x", ("v",), ("b", "p"), "x"),
-        GroupSide("b", "p", "x", ("v",), ("a", "p"), "x"),
-        GroupSide("a", "q", "y", ("v",), ("b", "q"), "y"),
-        GroupSide("b", "q", "y", ("v",), ("a", "q"), "y"),
+        GroupSide("a", "p", "x", ("b", "p"), "x"),
+        GroupSide("b", "p", "x", ("a", "p"), "x"),
+        GroupSide("a", "q", "y", ("b", "q"), "y"),
+        GroupSide("b", "q", "y", ("a", "q"), "y"),
     ]
 
 

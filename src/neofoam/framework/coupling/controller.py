@@ -26,7 +26,7 @@ import numpy as np
 
 from neofoam.framework import execution_observer
 
-from .data import End, _arrays
+from .data import End
 from .kernels import SideChange
 from .region import CouplingNode
 from .transport import Data
@@ -108,7 +108,6 @@ class GroupSide:
     region: str
     patch: str
     field: str
-    arrays: tuple[str, ...]
     partner: End
     exchange: str = ""
 
@@ -174,7 +173,7 @@ class CouplingController:
         self._outcomes: list[CouplingOutcome] = []
         # inf for every field with Array data until a pass measured its change:
         # nothing counts as converged before it was measured
-        self._unmeasured = {side.field: math.inf for side in self._sides.values() if side.arrays}
+        self._unmeasured = {side.field: math.inf for side in self._sides.values()}
         self._residuals = dict(self._unmeasured)
         # whether the pass started last is the final one, and whether it is final
         # because the data converged
@@ -201,12 +200,6 @@ class CouplingController:
                     f"coupling {self.label}: convergence {type(measure).__name__} on {data}, "
                     f"which no side of the node sends (its sides couple "
                     f"{sorted({side.field for side in sides})})"
-                )
-            if not any(side.arrays for side in of_field):
-                raise ValueError(
-                    f"coupling {self.label}: convergence {type(measure).__name__} on {data} "
-                    f"has no Array data to compare: the sides of {data} send plain fields "
-                    "only, which no convergence compares"
                 )
 
     @property
@@ -250,11 +243,7 @@ class CouplingController:
             self._carried = current
             return self._start_pass(iteration + 1, final=self._max_iterations <= 1)
         changes = {
-            end: SideChange(
-                side.field,
-                _arrays(side.arrays, self._carried[end]),
-                _arrays(side.arrays, current[end]),
-            )
+            end: SideChange(side.field, self._carried[end], current[end])
             for end, side in self._sides.items()
         }
         self._residuals = {**self._unmeasured, **self._relative_changes(changes, iteration)}
@@ -324,8 +313,6 @@ class CouplingController:
             ]
             if not carried:
                 continue
-            arrays = [_arrays(self._sides[end].arrays, self._carried[end]) for end in carried]
-            relaxed = acceleration(arrays, number)
-            for end, data in zip(carried, relaxed):
-                self._carried[end] = {**self._carried[end], **data}
+            relaxed = acceleration([self._carried[end] for end in carried], number)
+            self._carried.update(zip(carried, relaxed))
         return dict(self._carried)

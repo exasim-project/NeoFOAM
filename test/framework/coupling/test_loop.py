@@ -423,11 +423,6 @@ def test_a_region_waiting_for_one_that_left_raises() -> None:
         transport.receive("b", "a", "x")
 
 
-class _Mixed(BaseModel):
-    T: Array
-    q: float
-
-
 class _Reversed(CouplingMapping):
     type: Literal["reversed"] = "reversed"
     mapped: list[dict[str, Any]] = Field(default_factory=list)
@@ -440,21 +435,18 @@ class _Reversed(CouplingMapping):
         return mapper
 
 
-@pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
-def test_coupling_op_maps_the_arrays_and_hands_plain_values_over_as_they_are() -> None:
-    received: list[_Mixed] = []
+def test_coupling_op_maps_what_the_partner_sent_onto_the_side_s_points() -> None:
+    received: list[_Data] = []
     mapping = _Reversed()
     regions = contexts(["a", "b"], [Link("a-b", (("a", "p"), ("b", "p")), mapping)])
     for ctx in regions.values():
-        side = Side(_Mixed, _Mixed, lambda: _Mixed(T=[1.0, 2.0], q=3.0), received.append)
-        add_coupled(ctx, "p", "x", side)
+        add_coupled(ctx, "p", "x", Side(_Data, _Data, lambda: _Data(x=[1.0, 2.0]), received.append))
 
     run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
 
     # converged after the first pass, then the final pass
-    assert [list(data) for data in mapping.mapped] == [["T"]] * 4
-    assert all(isinstance(data, _Mixed) for data in received)
-    assert [(data.T.tolist(), data.q) for data in received] == [([2.0, 1.0], 3.0)] * 4
+    assert len(mapping.mapped) == 4
+    assert [data.x.tolist() for data in received] == [[2.0, 1.0]] * 4
 
 
 def _live(ctx: Context) -> _Data:
@@ -478,39 +470,6 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     # then the final pass
     assert _controller(ops).outcomes == (
         CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
-    )
-
-
-class _Tagged(BaseModel):
-    x: Array
-    tag: str
-
-
-def test_coupling_op_passes_plain_fields_through_unrelaxed_and_uncompared() -> None:
-    """A plain field (here a string) is handed over as sent; relaxation and convergence
-    see the Array fields only."""
-    received: list[_Tagged] = []
-    relaxed: list[list[str]] = []
-
-    def acceleration(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
-        relaxed.append(sorted(name for data in sent for name in data))
-        return sent
-
-    regions = contexts(["a", "b"], [LINK], max_iterations=10, acceleration={"a-b": acceleration})
-    for name, ctx in regions.items():
-        side = Side(
-            _Tagged, _Tagged, partial(_Tagged, x=[1.0], tag=f"from {name}"), received.append
-        )
-        add_coupled(ctx, "p", "x", side)
-
-    run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
-    ops = {name: couple(ctx) for name, ctx in regions.items()}
-
-    # what the sides send never changes: converged after one pass, then the final pass
-    assert [data.tag for data in received] == ["from b", "from a"] * 2
-    assert relaxed == [["x"], ["x"]]
-    assert _controller(ops).outcomes == (
-        CouplingOutcome(passes=2, converged=True, residuals={"x": 0.0}),
     )
 
 
@@ -551,47 +510,31 @@ def test_a_relative_change_that_is_not_finite_raises() -> None:
         _couple(a, b, convergence=[_never], max_iterations=10, acceleration={"a-b": acceleration})
 
 
-def _group(arrays: tuple[str, ...]) -> list[GroupSide]:
+def _group() -> list[GroupSide]:
     return [
-        GroupSide("a", "p", "x", arrays, ("b", "p"), "a-b"),
-        GroupSide("b", "p", "x", arrays, ("a", "p"), "a-b"),
+        GroupSide("a", "p", "x", ("b", "p"), "a-b"),
+        GroupSide("b", "p", "x", ("a", "p"), "a-b"),
     ]
 
 
-@pytest.mark.parametrize(
-    ("data", "arrays", "error"),
-    [
-        (
-            "x",
-            (),
-            "coupling b.coupling: convergence RelativeConvergence on x has no Array data to "
-            "compare: the sides of x send plain fields only",
-        ),
-        (
-            "T",
-            ("x",),
-            r"coupling b.coupling: convergence RelativeConvergence on T, which no side of the "
-            r"node sends \(its sides couple \['x'\]\)",
-        ),
-    ],
-    ids=["plain fields only", "no side"],
-)
-def test_a_convergence_over_no_data_raises_as_the_controller_is_built(
-    data: str, arrays: tuple[str, ...], error: str
-) -> None:
-    with pytest.raises(ValueError, match=error):
+def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_built() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"coupling b.coupling: convergence RelativeConvergence on T, which no side of the "
+        r"node sends \(its sides couple \['x'\]\)",
+    ):
         CouplingController(
-            _group(arrays),
+            _group(),
             "b.coupling",
             CouplingNode(
-                "coupling", ("a-b",), convergence=(RelativeConvergence(data=data, limit=1e-5),)
+                "coupling", ("a-b",), convergence=(RelativeConvergence(data="T", limit=1e-5),)
             ),
         )
 
 
 def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
     controller = CouplingController(
-        _group(("x",)), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(_never,))
+        _group(), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(_never,))
     )
     assert controller.residuals == {"x": math.inf}
 
