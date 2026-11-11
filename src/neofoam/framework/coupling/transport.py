@@ -22,40 +22,31 @@ import time
 from collections import defaultdict, deque
 from typing import Any, Iterable, Literal, Optional, Protocol
 
-# What a side sends, by name: arrays with one entry per point of its patch, or one
-# value for the whole interface.
+# What a side sends, by field name: one value (or row) per point of its patch.
 Data = dict[str, Any]
 
-# How long a receive of an InProcessTransport waits by default, in seconds: 10 minutes.
+# Seconds a receive of an InProcessTransport waits by default.
 DEFAULT_TIMEOUT = 600.0
 
 
 class Tag:
-    """The tags of the coupling's messages, the one place that builds them.
-
-    ``Tag.data(exchange)`` (``data:<exchange>``): what a side sends, each pass;
-    ``Tag.side(exchange)`` (``side:<exchange>``): a side tells its partner its
-    models and points, once; ``Tag.node(node, what)`` (``<node>/<what>``): a
-    region and the leader of coupling node ``node`` exchange its ``sides``
-    (once), each ``pass`` and the leader's ``decision``; ``Tag.TIME_DT``
-    (``time/dt``): the group agrees on its time step.
-    """
+    """The tags of the coupling's messages, the one place that builds them."""
 
     TIME_DT = "time/dt"
 
     @staticmethod
     def data(exchange: str) -> str:
-        """``data:<exchange>``."""
+        """What a side sends, each pass."""
         return f"data:{exchange}"
 
     @staticmethod
     def side(exchange: str) -> str:
-        """``side:<exchange>``."""
+        """A side's models and points, sent to its partner once."""
         return f"side:{exchange}"
 
     @staticmethod
     def node(node: str, what: Literal["sides", "pass", "decision"]) -> str:
-        """``<node>/<what>``."""
+        """A region's sides, its pass and the leader's decision, within coupling node ``node``."""
         return f"{node}/{what}"
 
 

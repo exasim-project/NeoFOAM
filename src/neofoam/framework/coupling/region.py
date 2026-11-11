@@ -3,30 +3,11 @@
 
 """What one region knows of the coupling of a case: :class:`RegionCoupling`.
 
-A coupled case lists its exchanges (:class:`Link`, from
-``system/regionCoupling.yaml``), its coupling nodes (:class:`CouplingNode`) and
-its regions in stepping order (``regionSolvers``). A node is a named coupling
-loop: the exchanges it repeats, how it decides they converged, how it relaxes
-them and where it sits in each region's graph; every exchange is in one node,
-the nodes are listed outer to inner. :func:`region_couplings` turns them into
-one :class:`RegionCoupling` per coupled region, plain data plus the region's
-transport, handed to the region's runtime (``instantiate(region=...,
-coupling=...)``); a solver that supports coupling keeps it in the region's
-coupling model (``ctx.models["coupling"]``, a
-:class:`~neofoam.framework.coupling.Coupling`), which builds one coupling op
-per node of the region.
-
-Regions that exchanges connect, directly or over other regions, form a group;
-they agree on the time step (``Coupling.time_step``) and its last region in
-stepping order leads that. The regions a node's exchanges connect form the node's group; its
-last region in stepping order leads the node (decides when it converged).
-
-Each node has its scheme (``CouplingNode.scheme``): ``serial`` (the default)
-or ``parallel``. A serial pass of a region waits for the whole pass of the regions
-that step before it, so a serial node may neither enclose a node coupling two of
-its regions as well (:func:`region_couplings` raises) nor hold the time step of
-its regions (``Coupling.check`` raises): both need the partner to come back
-inside the pass.
+Regions that exchanges connect form a group; its last region in stepping order
+leads it (agrees the time step). A node's last region leads the node (decides
+when it converged). A serial pass waits for the whole pass of the regions that
+step before it, so a serial node may neither enclose a node coupling two of its
+regions nor hold their time step: both need the partner back inside the pass.
 
 Example::
 
@@ -55,12 +36,10 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class Link:
-    """One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping.
+    """One exchange of a case: its unique name, its two ends ``(region, patch)``, its mapping.
 
-    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping`, by default
-    :func:`~neofoam.framework.coupling.kernels.default_mapping` (nearest-neighbor: both
-    patches need coordinates; :class:`~neofoam.framework.coupling.IdentityMapping` for
-    patches that share their points).
+    Nearest-neighbor by default, which needs the coordinates of both patches;
+    :class:`~neofoam.framework.coupling.IdentityMapping` for patches sharing their points.
     """
 
     name: str
@@ -75,24 +54,16 @@ class Link:
 
 @dataclass(frozen=True)
 class CouplingNode:
-    """A named coupling loop: its exchanges, its convergence and acceleration, its placement.
+    """A named coupling loop over some exchanges; one op ``<region>.<name>`` per region.
 
-    Each region the node's ``exchanges`` (names of :class:`Link` s) touch gets
-    one coupling op ``<region>.<name>`` for it. Once every measure of
-    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.controller.unchanged`)
-    the node's leader runs one more pass, the final one, and stops after it; the
-    last of ``max_iterations`` passes is final regardless (an operation marked
-    ``final`` runs in the final pass only). ``acceleration`` relaxes the data
-    carried into a pass, the final one too, at most one per exchange (by its
-    name; an exchange without one is not relaxed).
-    ``placement`` places the node's op in a region's graph (by region;
-    :class:`~neofoam.framework.types.Placement` ``()`` for a region it does not
-    name: around the whole body of the top scope, or of the node before).
-    ``scheme`` ``parallel``: a side receives what its partner sent in the pass
-    before; ``serial``: from a region that steps earlier, what it sent in the
-    same pass.
+    Once every measure of ``convergence`` holds (none: the data is unchanged) one
+    more pass runs, the final one; the last of ``max_iterations`` is final
+    regardless. ``acceleration`` relaxes the carried data, by exchange name;
+    ``placement`` places the op per region (default: around the whole top scope).
+    ``serial`` (the default): a side receives what an earlier-stepping partner sent
+    in the same pass; ``parallel``: what it sent in the pass before.
 
-    An acceleration keeps the data of its last passes: give each node its own.
+    An acceleration keeps state across passes: give each node its own.
     """
 
     name: str
@@ -115,11 +86,10 @@ class CouplingNode:
 
 @dataclass(frozen=True)
 class RegionCoupling:
-    """What region ``region`` knows of the coupling of its case.
+    """What region ``region`` knows of its case's coupling, built by :func:`region_couplings`.
 
-    ``group`` holds the regions coupled with it, itself included, in stepping
-    order; ``links`` the exchanges of the group; ``nodes`` the nodes with an
-    exchange of this region, outer to inner.
+    ``group``: the regions coupled with it in stepping order; ``links``: the
+    group's exchanges; ``nodes``: those with an exchange of this region, outer to inner.
     """
 
     region: str
@@ -130,12 +100,12 @@ class RegionCoupling:
 
     @property
     def leader(self) -> str:
-        """The region of the group that agrees the time step: the last in stepping order."""
+        """The group's last region in stepping order; it agrees the time step."""
         return self.group[-1]
 
     @property
     def is_leader(self) -> bool:
-        """Whether this region leads its group (in ``Coupling.time_step``)."""
+        """Whether this region leads its group."""
         return self.region == self.leader
 
     @property
@@ -308,15 +278,11 @@ def _group(region: str, regions: Sequence[str], links: Sequence[Link]) -> tuple[
 
 
 def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> dict[str, T]:
-    """Run every region's task on its own thread; return each task's result, by region.
+    """Run every region's task on its own thread; each task's result, by region.
 
-    The threads report to the execution observer of the calling thread. The
-    transport learns the running regions (``Transport.start``), so it can tell a
-    deadlock. A region whose task fails closes the transport for every region
-    (``Transport.abort``), so none waits for it forever; a region that ends
-    closes it for itself. Once every thread ended the first error is raised that
-    is not a :class:`~neofoam.framework.coupling.TransportClosed` (that follows
-    another region's error), else the first error.
+    The threads report to the calling thread's execution observer. A failing
+    region aborts the transport for all, so none waits forever; then the first
+    error that is not a :class:`TransportClosed` (a consequence) is raised.
     """
     results: dict[str, T] = {}
     errors: list[BaseException] = []

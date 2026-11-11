@@ -1,37 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The coupling of a region: its coupling op.
+"""A region's coupling op: the loop of one coupling node in the region's graph.
 
-Vocabulary:
-
-- a **coupled side** (:class:`~neofoam.framework.coupling.data.ExchangeSide`) is
-  what a boundary condition declares on its patch: what it sends and receives
-  (one pydantic model each), and its points; an **exchange**
-  (:class:`~neofoam.framework.coupling.data.Exchange`) joins it with the side of
-  another region (its partner), its mapping maps the partner's data onto the
-  side's points (:mod:`~neofoam.framework.coupling.data`);
-- a **coupling node** (:class:`~neofoam.framework.coupling.CouplingNode`) is a
-  named coupling loop over some exchanges; a region's **coupling op**
-  (:class:`CouplingOp`, ``<region>.<node>``) is the node's loop in the region:
-  it wraps where the node's placement says (by default the whole body of the
-  top scope, or of the node before), and the resolver nests the operations that
-  solve them inside it. At the start of each pass its loop test hands every side
-  of the region in the node what its partner sent, mapped onto the side's points;
-- the **leader** of a node, the last region in stepping order of the regions
-  the node's exchanges connect, owns the node's **controller**
-  (:class:`~neofoam.framework.coupling.controller.CouplingController`), which
-  decides after each pass whether the node's data converged and which pass is
-  the node's **final** one. Every region runs the same passes, the final one
-  marked final on its loop entry (``LoopEntry.final``), and leaves the node's
-  loop after it;
-- all data between regions goes through the region's
-  :class:`~neofoam.framework.coupling.transport.Transport`: no region reads
-  another region's objects.
-
-A boundary condition declares its side with :func:`~neofoam.framework.coupling.coupled`,
-which adds itself to its region's coupling model
-(:class:`~neofoam.framework.coupling.Coupling`); the model builds the coupling op.
+Each region runs the same passes of a node: at the start of each pass its op's
+loop test hands every side what its partner sent, mapped onto the side's
+points, as the node's leader decided (fresh from this pass or carried). All
+data between regions goes through the transport; no region reads another's
+objects.
 """
 
 from __future__ import annotations
@@ -52,76 +28,46 @@ if TYPE_CHECKING:
     from .region import CouplingNode, RegionCoupling
 
 
-# The loops enclosing a region's coupling op, outermost first, as (name, iteration):
-# a coupling op by its node's name, other loops by their names; iteration from 0.
+# the loops enclosing a coupling op, outermost first: (name, iteration from 0)
 _Loops = tuple[tuple[Optional[str], int], ...]
 
 
 def _path(names: Sequence[Optional[str]]) -> str:
-    """``time_loop > ab``: the names of enclosing loops, ``top`` for none."""
+    """``time_loop > ab``, or ``top``."""
     return " > ".join(str(name) for name in names) or "top"
 
 
 def _state(loops: _Loops) -> str:
-    """``time_loop#3 > ab#1``: ``loops`` with their passes (from 1), ``top`` for none."""
+    """``time_loop#3 > ab#1`` (passes from 1), or ``top``."""
     return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
 
 
-# The leader's decision for one region: another pass?, is it the final one?, what
-# each of its sides receives, by patch: the carried data, or None: what its partner
-# sends in this pass; and the patches whose partner receives that (the region sends
-# their data at its next loop test, after the pass).
+# the leader's decision for a region: another pass?, final?, by patch the carried
+# data or None (receive it fresh), and the patches whose data to send fresh
 _Decision = tuple[bool, bool, dict[str, Optional[Data]], frozenset[str]]
 
 
 class CouplingOp(IterativeOp):
-    """A region's coupling node: a loop whose test exchanges the node's sides' data, per pass.
+    """A region's coupling node: a loop whose test exchanges the node's sides' data.
 
-    Built from what the region knows of the case's coupling (``coupling``: its
-    exchanges, the group's regions, its transport), the ``node`` (its exchanges)
-    and the region's coupled ``sides`` of the node (the region's
-    :class:`~neofoam.framework.coupling.Coupling` builds it, each side on an
-    exchange of the node); raises ``ValueError`` when a patch has two sides, or
-    an exchange of the node in the region none. The resolver places it
-    as the node's placement for the region says (``metadata.wraps``). Its label
-    is ``<region>.<node>``; its messages to other regions are tagged by node
-    (``<node>/sides``, ``<node>/pass``, ``<node>/decision``) or by exchange
-    (``side:<exchange>``, ``data:<exchange>``).
-
-    A node runs equally often in all its regions, so it sits in the same loops
-    in each: the first test tells the leader the names of the loops enclosing
-    the op (``Context.loops``, a coupling op by its node's name), and every
-    test their passes; the leader raises ``ValueError`` when they differ.
-
-    Its loop test runs before each pass. The first test ever exchanges the
-    sides' models and points with the partner regions and checks each exchange.
-    Each test then sends what every side sends now to the node's leader, and to
-    the partner of every side the leader's decision before named (the partner
-    receives it fresh, in the pass of that decision); the leader decides for the
-    node and tells every region to go on or stop, and whether the pass is the
-    node's final one, which the test marks on the loop's entry
-    (``Context.mark_final``: an operation marked ``final`` runs in it). On
-    another pass every side gets what the leader decided: what its partner sends
-    at its next test (fresh), or what the leader carried, mapped onto its points
-    with the exchange's mapping, validated as its ``receives`` model, reported to
-    the execution observer (``coupling_exchanged``) and handed to its
-    ``receive``. Not thread safe.
+    Labelled ``<region>.<node>``; placed by the node's placement for the region.
+    The first test exchanges the sides' models and points with the partners and
+    checks them; every test sends the leader what the sides send, gets its
+    decision, marks the final pass and hands each side its mapped data.
+    Raises ``ValueError`` when a patch has two sides, an exchange none, or the
+    regions' ops sit in different loops or times. Not thread safe.
     """
 
     def __init__(
         self, coupling: RegionCoupling, node: CouplingNode, sides: Sequence[ExchangeSide]
     ) -> None:
         super().__init__(self._test)
-        #: The region of the op.
         self.region = coupling.region
-        #: The coupling node of the op.
         self.node = node
-        #: The name of the operation: ``<region>.<node>``.
         self.label = f"{coupling.region}.{node.name}"
         self._coupling = coupling
         self._transport = coupling.transport
         self._links = coupling.node_links(node)
-        # the regions of the node, in stepping order; the last one leads it
         self._group = coupling.node_group(node)
         self._leader = self._group[-1]
         self._exchanges = {
@@ -133,21 +79,15 @@ class CouplingOp(IterativeOp):
         }
         self._sides = tuple(sides)
         self._check()
-        # set at the first test: the bound mapping per patch, and the leader's controller
+        # set at the first test
         self._connected = False
         self._mappers: dict[str, BoundMapping] = {}
         self._controller: Optional[CouplingController] = None
-        # the patches whose data the partner receives fresh: the leader's last decision
+        # the patches whose data the partner receives fresh, as the leader last decided
         self._fresh: frozenset[str] = frozenset()
 
     def _check(self) -> None:
-        """Raise ``ValueError`` unless every exchange of the node has exactly one side.
-
-        That every side has an exchange of the node :meth:`Coupling.add
-        <neofoam.framework.coupling.Coupling.add>` checked, and
-        :meth:`Coupling.operations <neofoam.framework.coupling.Coupling.operations>`
-        hands each node the sides on its exchanges' patches.
-        """
+        """Raise ``ValueError`` unless every exchange of the node has exactly one side."""
         patches = [side.patch for side in self._sides]
         for side in self._sides:
             if patches.count(side.patch) > 1:
@@ -169,7 +109,7 @@ class CouplingOp(IterativeOp):
 
     @property
     def is_leader(self) -> bool:
-        """Whether this coupling op decides for its node (its region steps last of the node's)."""
+        """Whether this op decides for its node: its region steps last of the node's."""
         return self.region == self._leader
 
     @property
@@ -179,7 +119,7 @@ class CouplingOp(IterativeOp):
 
     @property
     def controller(self) -> Optional[CouplingController]:
-        """The leader's controller, built at its first loop test; ``None`` elsewhere."""
+        """The leader's controller, built at its first loop test; ``None`` in other regions."""
         return self._controller
 
     def exchange_of(self, side: ExchangeSide) -> Exchange:
@@ -191,11 +131,8 @@ class CouplingOp(IterativeOp):
         region, patch = self.exchange_of(side).partner
         return f"{region}.{patch}"
 
-    # --- the loop test ------------------------------------------------------------------------
-
     def _test(self, ctx: Context) -> bool:
         loops = self._enclosing(ctx)
-        # the passes the op ran in this time step: its own entry on ctx.loops counts them
         iteration = ctx.loops[-1].iteration
         if not self._connected:
             self._connect(loops)
@@ -217,12 +154,7 @@ class CouplingOp(IterativeOp):
         return True
 
     def _enclosing(self, ctx: Context) -> _Loops:
-        """The loops enclosing the op, outermost first: ``ctx.loops`` without its own entry.
-
-        The op runs its test with its own entry last on ``ctx.loops``. A
-        coupling op of the region (``<region>.<node>``) is named by its node, so
-        that the regions' loops compare.
-        """
+        """``ctx.loops`` without the op's own entry; coupling ops by node name, to compare."""
         nodes = {f"{self.region}.{node.name}": node.name for node in self._coupling.nodes}
         return tuple(
             (nodes.get(entry.name or "", entry.name), entry.iteration) for entry in ctx.loops[:-1]
@@ -235,13 +167,7 @@ class CouplingOp(IterativeOp):
         return self._transport.receive(source, self.region, tag)
 
     def _connect(self, loops: _Loops) -> None:
-        """Tell each partner its side (models, points), the leader the region's sides; check.
-
-        The leader also gets the names of the ``loops`` enclosing the op. Raises
-        ``ValueError`` when a side does not receive what its partner sends or its
-        mapping cannot map between their points; in the leader, when the regions'
-        ops sit in different loops or the controller cannot be built.
-        """
+        """Tell each partner its side and the leader the region's sides and loops; check them."""
         path = tuple(name for name, _iteration in loops)
         for side in self._sides:
             exchange = self.exchange_of(side)
@@ -273,17 +199,13 @@ class CouplingOp(IterativeOp):
         self._connected = True
 
     def _tag(self, what: Literal["sides", "pass", "decision"]) -> str:
-        """The transport tag ``<node>/<what>`` of the node's messages (:meth:`Tag.node`)."""
+        """The tag of the node's message ``what``."""
         return Tag.node(self.node.name, what)
 
     def _node_sides(
         self, path: tuple[Optional[str], ...], own: list[tuple[str, str]]
     ) -> list[GroupSide]:
-        """The leader: the sides of every region of the node, as the regions told it.
-
-        Raises ``ValueError`` when the regions' ops sit in different loops (``path``:
-        the names of the loops enclosing the leader's).
-        """
+        """The leader: every region's sides; ``ValueError`` when their loops differ."""
         received = {
             region: (path, own)
             if region == self.region
@@ -311,13 +233,7 @@ class CouplingOp(IterativeOp):
     def _decide(
         self, current: dict[str, Data], time: Any, loops: _Loops, iteration: int
     ) -> _Decision:
-        """The node leader's decision for this region, from what its sides send now (by patch).
-
-        ``time`` is the region's time as a time step's coupling starts, else
-        ``None``; ``loops`` the loops enclosing the op, with their passes;
-        ``iteration`` the passes the op ran in this time step. The leader raises
-        ``ValueError`` when the regions' times or loops' passes differ.
-        """
+        """The leader's decision for this region; the leader checks the regions' times and loops."""
         leader = self._leader
         if not self.is_leader:
             self._send(leader, self._tag("pass"), (time, loops, current))
@@ -353,7 +269,6 @@ class CouplingOp(IterativeOp):
             iteration,
         )
         received: dict[str, dict[str, Optional[Data]]] = {region: {} for region in self._group}
-        # the patches of each region whose partner receives their data fresh
         fresh: dict[str, set[str]] = {region: set() for region in self._group}
         if carried is not None:
             for end, side in controller.sides.items():
@@ -372,11 +287,7 @@ class CouplingOp(IterativeOp):
         return decisions[self.region]
 
     def _hand_over(self, side: ExchangeSide, decided: dict[str, Optional[Data]]) -> None:
-        """Map what the partner of ``side`` sent onto its points and hand it over.
-
-        ``decided`` is the leader's decision: the carried data by patch, or
-        ``None`` where the partner's data of this pass is to be received.
-        """
+        """Map what the partner of ``side`` sent (or the carried data) onto it and hand it over."""
         exchange = self.exchange_of(side)
         data = decided[side.patch]
         if data is None:

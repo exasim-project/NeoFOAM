@@ -3,34 +3,12 @@
 
 """The coupling of one region as a model: ``ctx.models["coupling"]``, a :class:`Coupling`.
 
-A solver that supports coupling adds it in its init, before it builds its
-boundary conditions, with its runtime's
-:class:`~neofoam.framework.coupling.RegionCoupling` (``None`` when the case does
-not couple the region)::
+A solver that supports coupling adds it in its init, before its boundary
+conditions, and each ``@coupled`` boundary condition adds itself::
 
     ctx.models["coupling"] = Coupling(self.coupling)
-
-A ``@coupled`` boundary condition, or any other ``@coupled`` model, adds itself::
-
-    @coupled
-    class CoupledConduction(SlabPatch):
-        def __init__(self, field, patch, ctx, value):
-            super().__init__(field, patch, ctx)
-            Coupling.of(ctx).add(self)
-
-The region's execution graph then gets the model's operations: one
-:class:`~neofoam.framework.coupling.loop.CouplingOp` per coupling node of the region
-(``<region>.<node>``, outer to inner), built once from the sides of the node's
-exchanges; none in a region the case does not couple.
-
-In a transient case (the region's ``ctx.time`` is set) the graph also gets the
-region's time-step op ``<region>.time_step`` (:meth:`Coupling.time_step`): the
-regions of the group step the smallest time step any of them asks for. It runs
-after the solutionLoop's ``set_time_step`` and before its ``increment_time``,
-once per time step (``first``), and reads and writes the time step in the
-region's context (``ctx.time.delta_t``). It must not end up inside a serial
-coupling op: :meth:`Coupling.check` raises for the resolved graph (the
-runtime's ``resolve_operations`` calls it).
+    ...
+    Coupling.of(ctx).add(self)
 """
 
 from __future__ import annotations
@@ -51,23 +29,21 @@ if TYPE_CHECKING:
 
 
 class Coupling:
-    """The coupling of one region: its :class:`RegionCoupling` and its coupled sides.
+    """The coupling of one region: its coupled sides and the operations they need.
 
-    ``coupling`` is ``None`` when the case does not couple the region.
+    ``coupling`` is ``None`` when the case does not couple the region. Its graph
+    operations (see :class:`~neofoam.framework.solver.runtime.GraphContribution`)
+    are one coupling op per node and, in a transient case, the time-step op.
     """
 
     def __init__(self, coupling: Optional[RegionCoupling]) -> None:
-        #: What the region knows of the case's coupling; None: not coupled.
         self.coupling = coupling
         self._sides: list[ExchangeSide] = []
         self._operations: Optional[Operations] = None
 
     @staticmethod
     def of(ctx: Context) -> Coupling:
-        """The coupling model of the region ``ctx``.
-
-        Raises ``ValueError`` when its solver added none (``ctx.models["coupling"]``).
-        """
+        """The coupling model of the region ``ctx``; ``ValueError`` when its solver added none."""
         coupling = ctx.models.get("coupling")
         if not isinstance(coupling, Coupling):
             raise ValueError(f"the solver of region {ctx.region} does not support coupling")
@@ -79,12 +55,10 @@ class Coupling:
         return tuple(self._sides)
 
     def add(self, instance: Any) -> None:
-        """Add the side of the ``@coupled`` ``instance`` (a boundary condition or other model).
+        """Add the side of the ``@coupled`` ``instance``, which sets ``field`` and ``patch``.
 
-        The instance needs ``field`` (the field it couples) and ``patch``. Raises
-        ``TypeError`` when it is not ``@coupled`` or lacks one of them,
-        ``ValueError`` when no exchange connects its patch (also when the case
-        does not couple the region) or the graph is built.
+        Raises ``TypeError`` for another instance, ``ValueError`` when no exchange
+        connects its patch or the graph is built already.
         """
         declaration = getattr(type(instance), "__coupled__", None)
         if declaration is None:
@@ -110,13 +84,10 @@ class Coupling:
         self._sides.append(side)
 
     def operations(self) -> Operations:
-        """The region's coupling ops, one per coupling node, outer to inner; built once.
+        """The region's coupling ops, one per node, outer to inner; built once.
 
-        Each from the sides on the patches of its node's exchanges, placed as the
-        node's placement for the region says. None when the case does not couple
-        the region. Raises ``ValueError`` when an exchange of the region has no
-        side (also when the region has none at all), a patch two, or the sides of
-        one field are in two nodes.
+        Raises ``ValueError`` when an exchange has no side, a patch two, or a
+        field is in two nodes.
         """
         if self._operations is None:
             coupling = self.coupling
@@ -150,18 +121,11 @@ class Coupling:
         return Operations([*self.operations(), *([time_step] if time_step else [])])
 
     def time_step(self, ctx: Context, graph: Iterable[Operation]) -> Optional[Operation]:
-        """The region's time-step op ``<region>.time_step``, or ``None``.
+        """The op ``<region>.time_step``: the group steps the smallest time step any asks for.
 
-        ``None`` when the case does not couple the region or the region does not
-        step in time (``ctx.time`` is ``None``, e.g. a steady region). The op
-        sends the time step the region asks for (``ctx.time.delta_t``) to the
-        group's leader, which takes the smallest of the group and sends it back
-        (tag ``time/dt``); each region writes it into ``ctx.time.delta_t``, where
-        ``increment_time`` takes it from. It runs after ``set_time_step`` and
-        before ``increment_time``, once per time step (``first``).
-
-        Raises ``ValueError`` when ``graph`` (the region's operations, loops with
-        what they hold) has no ``set_time_step`` or ``increment_time``.
+        Runs once per time step between ``set_time_step`` and ``increment_time``;
+        ``None`` for an uncoupled or steady region. Raises ``ValueError`` when
+        ``graph`` lacks either of them.
         """
         coupling = self.coupling
         if coupling is None or len(coupling.group) < 2 or ctx.time is None:
@@ -180,23 +144,17 @@ class Coupling:
                 op_name=f"{coupling.region}.time_step",
                 depends_on=[SET_TIME_STEP],
                 before=[INCREMENT_TIME],
-                # numbered: the resolver runs it right after set_time_step, before
-                # the operations stepped after increment_time
+                # numbered: right after set_time_step, before the ops after increment_time
                 operation_number=OperationNumber(0),
                 first=True,
             ),
         )
 
     def check_graph(self, graph: Iterable[Operation]) -> None:
-        """Raise ``ValueError`` when the resolved ``graph`` holds the time step in a serial node.
-
-        A serial pass of a region waits for its partner's whole pass; when that
-        holds the time-step op, which waits for the region, neither comes back.
-        """
+        """Raise ``ValueError`` when a serial node holds the time step in the resolved ``graph``."""
         coupling = self.coupling
         if coupling is None:
             return
-        # the labels of the region's serial coupling ops, and their nodes' names
         serial = {
             f"{coupling.region}.{node.name}": node.name
             for node in coupling.nodes
@@ -211,7 +169,6 @@ class Coupling:
             )
 
 
-# The solutionLoop operations the time-step op runs between.
 SET_TIME_STEP = "set_time_step"
 INCREMENT_TIME = "increment_time"
 
@@ -240,7 +197,7 @@ def _holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -> Opti
 
 
 class _TimeStep:
-    """The time-step op of a region: its group steps the smallest time step any region asks for."""
+    """The time-step op of a region."""
 
     def __init__(self, coupling: RegionCoupling) -> None:
         self._coupling = coupling

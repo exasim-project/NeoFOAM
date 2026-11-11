@@ -1,15 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``@coupled``: a boundary condition declares its side of an exchange.
+"""``@coupled``: a boundary condition declares its side of an exchange by annotations.
 
-The boundary condition owns its side; the solver is not involved::
-
-    class WallTemperature(BaseModel):
-        T: Array
-
-    class WallHeatFlux(BaseModel):
-        q: Array
+Example::
 
     @coupled
     class CoupledHeatFlux(Patch):     # sets self.field and self.patch
@@ -25,16 +19,6 @@ The boundary condition owns its side; the solver is not involved::
 
         @coupled.receives
         def receive(self, data: WallHeatFlux) -> None: ...
-
-The annotations are the declaration: ``send``'s return model is what the side
-sends, ``receive``'s parameter model what it receives (already mapped onto its
-points). The decorator only declares: it keeps the declaration on the class
-(``__coupled__``) and leaves ``__init__`` alone. An instance adds itself to its
-region's coupling model, ``Coupling.of(ctx).add(self)``
-(:class:`~neofoam.framework.coupling.Coupling`), whose coupling op repeats the
-operations that solve its field ``self.field``, so one class serves every field
-it is used for. Which side it exchanges with and how
-the data is mapped, the case decides (``system/regionCoupling.yaml``).
 """
 
 from __future__ import annotations
@@ -54,10 +38,7 @@ _ROLE = "__coupled_role__"
 
 @dataclass(frozen=True)
 class _Declaration:
-    """What ``@coupled`` read off a class: the models and the methods' names.
-
-    Kept on the class as ``__coupled__``.
-    """
+    """What ``@coupled`` read off a class, kept on it as ``__coupled__``."""
 
     sends: type[Any]
     receives: type[Any]
@@ -66,10 +47,7 @@ class _Declaration:
     coordinates: Optional[str]
 
     def side(self, instance: Any, region: str) -> ExchangeSide:
-        """The coupled side of ``instance`` in ``region``, its methods bound.
-
-        On the instance's ``patch``, coupling its ``field``.
-        """
+        """The coupled side of ``instance`` in ``region``, its methods bound."""
         points = getattr(instance, self.coordinates)() if self.coordinates else None
         return ExchangeSide(
             region=region,
@@ -143,13 +121,13 @@ class _Coupled:
 
     @staticmethod
     def sends(func: F) -> F:
-        """Mark the method returning what the side sends (its return annotation: the model)."""
+        """Mark the method returning what the side sends; its return annotation is the model."""
         setattr(func, _ROLE, "sends")
         return func
 
     @staticmethod
     def receives(func: F) -> F:
-        """Mark the method taking what the side receives (its parameter's annotation: the model)."""
+        """Mark the method taking what the side receives; its parameter annotation is the model."""
         setattr(func, _ROLE, "receives")
         return func
 
@@ -160,5 +138,4 @@ class _Coupled:
         return func
 
 
-#: Declares a boundary condition's side of an exchange; see the module.
 coupled = _Coupled()
