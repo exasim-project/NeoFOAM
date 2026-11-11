@@ -1,0 +1,13 @@
+# coupledBlocks with one node around each region's whole time step: no wraps.
+exchanges:
+  - name: interface
+    sides: {left: interface, right: interface}
+    mapping: nearest-neighbor
+couplings:
+  - name: coupling
+    scheme: parallel
+    maxIterations: 1
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-10}
