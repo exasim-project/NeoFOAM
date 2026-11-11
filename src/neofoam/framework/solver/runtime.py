@@ -11,16 +11,38 @@ runtime so multiple solver runs never share mutable state.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Protocol, Sequence, runtime_checkable
 
-from neofoam.framework.coupling import Coupling
 from neofoam.framework.dependency_resolver import DependencyResolver
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
-    from neofoam.framework.operations import OperationCollection, Operations, StepBuilder
+    from neofoam.framework.coupling.region import RegionCoupling
+    from neofoam.framework.operations import (
+        Operation,
+        OperationCollection,
+        Operations,
+        StepBuilder,
+    )
 
     from .spec import SolverSpec
+
+
+@runtime_checkable
+class GraphContribution(Protocol):
+    """A model of ``ctx.models`` that adds operations to its region's graph and checks it.
+
+    E.g. a region's coupling model: its coupling ops, and a check of where the
+    resolver placed them.
+    """
+
+    def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
+        """The operations to add to ``graph``, the solver's operations."""
+        ...
+
+    def check_graph(self, graph: Operations) -> None:
+        """Raise ``ValueError`` when the resolved ``graph`` is wrong for the model."""
+        ...
 
 
 @dataclass
@@ -60,9 +82,8 @@ class SolverRuntime:
     argv: list[Any] = field(default_factory=list)
     # None for a single-region case
     region: Optional[str] = None
-    # what the region knows of the case's coupling (a RegionCoupling); a solver that
-    # supports coupling makes its coupling model from it. None: not coupled
-    coupling: Any = None
+    # None: the case does not couple the region
+    coupling: Optional[RegionCoupling] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
@@ -124,10 +145,7 @@ class SolverRuntime:
     def resolve_operations(self, ctx: "Context") -> "Operations":
         """The runnable execution graph: ``execution_graph`` resolved with its model operations.
 
-        Raises ``ValueError`` when the region's coupling model rejects the graph
-        (``Coupling.check``: the time step inside a serial coupling node), and
-        ``RuntimeError`` when the region is coupled but its solver added no
-        coupling model (:meth:`coupling_model`).
+        Each :class:`GraphContribution` of ``ctx.models`` checks the result.
         Reported to the installed execution observer before it is returned.
         """
         from neofoam.framework import execution_observer  # noqa: PLC0415
@@ -135,30 +153,27 @@ class SolverRuntime:
 
         builder, model_ops = self.execution_graph(ctx=ctx)
         operations = DAGResolver().resolve(builder, model_ops).operations
-        coupling = self.coupling_model(ctx)
-        if coupling is not None:
-            coupling.check(operations)
+        for contribution in self.graph_contributions(ctx):
+            contribution.check_graph(operations)
         observer = execution_observer.current()
         if observer is not None:
             observer.operations(operations, ctx)
         return operations
 
-    def coupling_model(self, ctx: Optional["Context"]) -> Optional[Coupling]:
-        """The coupling model the solver added to ``ctx`` (``ctx.models["coupling"]``).
+    def graph_contributions(self, ctx: "Context") -> list[GraphContribution]:
+        """The models of ``ctx`` that contribute to the region's graph.
 
-        ``None`` when the region is not coupled (or without ``ctx``). Raises
-        ``RuntimeError`` when the region is coupled but the solver added none.
+        Raises ``RuntimeError`` when the case couples the region but none does:
+        its solver added no coupling model.
         """
-        if self.coupling is None or ctx is None:
-            return None
-        coupling = ctx.models.get("coupling")
-        if not isinstance(coupling, Coupling):
+        contributions = [m for m in ctx.models.values() if isinstance(m, GraphContribution)]
+        if self.coupling is not None and not contributions:
             raise RuntimeError(
                 f"region {self.region} is coupled in regionCoupling.yaml, but solver "
                 f"{self.name} added no coupling model; add "
                 "ctx.models['coupling'] = Coupling(self.coupling) in initialize"
             )
-        return coupling
+        return contributions
 
     def run(self) -> "Context":
         """Solve the runtime's region: initialize, resolve and run; return the context."""

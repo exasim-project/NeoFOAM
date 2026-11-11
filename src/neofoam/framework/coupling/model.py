@@ -35,7 +35,7 @@ runtime's ``resolve_operations`` calls it).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
 
 from neofoam.framework.operations import IterativeOp, Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
@@ -144,6 +144,11 @@ class Coupling:
                 self._operations = Operations(ops)
         return self._operations
 
+    def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
+        """The region's coupling ops and, in a transient case, its time-step op."""
+        time_step = self.time_step(ctx, graph)
+        return Operations([*self.operations(), *([time_step] if time_step else [])])
+
     def time_step(self, ctx: Context, graph: Iterable[Operation]) -> Optional[Operation]:
         """The region's time-step op ``<region>.time_step``, or ``None``.
 
@@ -182,7 +187,7 @@ class Coupling:
             ),
         )
 
-    def check(self, graph: Iterable[Operation]) -> None:
+    def check_graph(self, graph: Iterable[Operation]) -> None:
         """Raise ``ValueError`` when the resolved ``graph`` holds the time step in a serial node.
 
         A serial pass of a region waits for its partner's whole pass; when that

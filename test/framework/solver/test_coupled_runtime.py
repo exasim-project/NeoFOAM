@@ -11,15 +11,16 @@ resolves its graph; as a region the case couples it raises, instead of running
 the region uncoupled.
 """
 
-from typing import Any
+from typing import Any, Sequence
 
 import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import InProcessTransport, Link
 from neofoam.framework.coupling.region import region_couplings
-from neofoam.framework.operations import Operations, StepBuilder
+from neofoam.framework.operations import Operation, Operations, SequentialOp, StepBuilder
 from neofoam.framework.solver import Solver
+from neofoam.framework.types import OperationMetadata
 
 uncoupling = Solver("uncoupling")
 
@@ -60,3 +61,34 @@ def test_a_coupled_region_whose_solver_added_no_coupling_model_raises() -> None:
         r"coupling model; add ctx.models\['coupling'\] = Coupling\(self.coupling\) in initialize",
     ):
         runtime.resolve_operations(ctx)
+
+
+class _Contribution:
+    """A model that adds ``extra`` to its region's graph and records the resolved graph."""
+
+    def __init__(self) -> None:
+        self.checked: list[str] = []
+
+    def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
+        return Operations(
+            [
+                Operation(
+                    func=SequentialOp(lambda ctx: None), metadata=OperationMetadata(op_name="extra")
+                )
+            ]
+        )
+
+    def check_graph(self, graph: Operations) -> None:
+        self.checked = [op.operation_name for op in graph]
+
+
+def test_a_model_contributing_to_the_graph_adds_its_operations_and_checks_the_result() -> None:
+    contribution = _Contribution()
+    runtime = uncoupling.instantiate()
+    ctx = runtime.initialize()
+    ctx.models["anything"] = contribution
+
+    names = [op.operation_name for op in runtime.resolve_operations(ctx)]
+
+    assert names == ["step", "extra"]
+    assert contribution.checked == names
