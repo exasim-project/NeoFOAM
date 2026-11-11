@@ -3,14 +3,9 @@
 
 """The strategies of a coupling: mapping, acceleration and convergence of the exchanged data.
 
-Each is a family of NeoFOAM's :class:`~neofoam.core.plugin_system.PluginSystem`:
-a pydantic model per strategy, selected by its ``type``, its options its
-fields (an unknown option is an error). The mapping is per exchange and
-receiving side (:class:`CouplingMapping`); relaxation and convergence belong to a
-coupling node (its leader's
-:class:`~neofoam.framework.coupling.controller.CouplingController`): a list of convergence
-measures (:class:`CouplingConvergence`), all of which must hold, and at most one
-acceleration (:class:`CouplingAcceleration`) per exchange::
+Each is a :class:`~neofoam.core.plugin_system.PluginSystem` family, a strategy
+selected by its ``type``. A strategy of one's own subclasses its family with a
+``type: Literal[...]`` and registers (``@CouplingMapping.register``)::
 
     CouplingNode(
         "thermal",
@@ -18,32 +13,14 @@ acceleration (:class:`CouplingAcceleration`) per exchange::
         convergence=(RelativeConvergence(data="T", limit=1e-5),),
         acceleration={"interface": AitkenRelaxation(relaxation=0.5)},
     )
-
-The case names them by ``type`` (``system/regionCoupling.yaml``;
-:func:`strategy` builds one from its options). A strategy of one's own
-subclasses its family with a ``type: Literal[...]`` and registers with it
-(``@CouplingMapping.register``). A package adds its strategies through the entry-point
-group ``neofoam.coupling`` (:data:`ENTRY_POINT_GROUP`): each entry point names
-a module that registers them as it is imported; :func:`load_plugins` imports
-them, once, before the regions start::
-
-    # pyproject.toml of neofoam-precice:
-    #   [project.entry-points."neofoam.coupling"]
-    #   precice = "neofoam_precice.coupling"
-    @CouplingMapping.register
-    class RadialBasisMapping(CouplingMapping):
-        type: Literal["rbf"] = "rbf"
-        support_radius: float
 """
 
 from __future__ import annotations
 
-import importlib.metadata
-import threading
-from typing import Any, Callable, Literal, NamedTuple, Optional, TypeVar, cast
+from typing import Any, Callable, Literal, NamedTuple, Optional
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from neofoam.core.plugin_system import PluginSystem
 
@@ -60,103 +37,6 @@ class SideChange(NamedTuple):
     field: str
     previous: Data
     current: Data
-
-
-#: The entry-point group of the packages that add strategies to the families.
-ENTRY_POINT_GROUP = "neofoam.coupling"
-
-S = TypeVar("S", bound=BaseModel)
-
-
-def strategy(family: type[S], options: Any) -> S:
-    """The strategy of ``family`` (:class:`CouplingMapping`, :class:`CouplingAcceleration`,
-    :class:`CouplingConvergence`) that ``options`` describe: ``{type: ..., <option>: ...}``, or
-    the ``type`` alone.
-
-    Raises ``ValueError`` listing the registered types when ``type`` is missing
-    or none of them, and naming the strategy's options when one is unknown,
-    missing or invalid. A strategy is passed through.
-
-    Example::
-
-        strategy(CouplingAcceleration, {"type": "aitken", "relaxation": 0.5})
-        strategy(CouplingMapping, "nearest-neighbor")
-    """
-    if isinstance(options, family):
-        return options
-    what = family.__name__.removeprefix("Coupling").lower()
-    if isinstance(options, str):
-        options = {"type": options}
-    members = _members(family)
-    kind = options.get("type") if isinstance(options, dict) else None
-    if kind not in members:
-        problem = f"unknown {what} type {kind!r}" if kind else f"{what} {options!r} has no type"
-        raise ValueError(f"{problem}; registered {what} types: {sorted(members)}")
-    variable = _family(family).discriminator_variable
-    try:
-        built = cast(Any, family).create(**{variable: options})
-    except ValidationError as error:
-        problems = "; ".join(_problem(problem) for problem in error.errors())
-        names = [name for name in members[kind].model_fields if name != "type"]
-        raise ValueError(f"{what} {kind!r}: {problems}; its options: {names}") from None
-    return cast(S, getattr(built, variable))
-
-
-def _family(family: type[BaseModel]) -> Any:
-    registry = PluginSystem.get_registered(family.__name__)
-    if registry is None:
-        raise TypeError(f"{family.__name__} is no plugin family")
-    return registry
-
-
-def _members(family: type[BaseModel]) -> dict[str, type[BaseModel]]:
-    """The registered strategies of ``family``, by type."""
-    return {
-        str(member.model_fields["type"].default): member
-        for member in _family(family).plugin_registry
-        if "type" in member.model_fields
-    }
-
-
-def _problem(error: Any) -> str:
-    """One pydantic error of a strategy's options, named by its option."""
-    option = ".".join(str(part) for part in error["loc"][2:])
-    if error["type"] == "extra_forbidden":
-        return f"unknown option '{option}'"
-    if error["type"] == "missing":
-        return f"missing option '{option}'"
-    return f"{option}: {error['msg']}"
-
-
-_load_lock = threading.Lock()
-_loaded = False
-
-
-def load_plugins() -> None:
-    """Import the module of every plugin of :data:`ENTRY_POINT_GROUP`, once; it registers its
-    strategies with their families as it is imported.
-
-    Call it before the regions start (``multiRun`` does): a case's config names
-    a plugin's strategies by their type only once they are registered. Safe to
-    call from several threads; the first call imports, the others wait for it.
-
-    Raises ``ImportError`` naming the plugin when it fails to import (e.g. it
-    registers a type that is registered already); the next call tries again.
-    """
-    global _loaded
-    with _load_lock:
-        if _loaded:
-            return
-        entry_points = importlib.metadata.entry_points(group=ENTRY_POINT_GROUP)
-        for entry_point in sorted(entry_points, key=lambda e: e.name):
-            try:
-                entry_point.load()
-            except Exception as error:
-                raise ImportError(
-                    f"coupling plugin '{entry_point.name}' ({entry_point.value}) of "
-                    f"entry-point group '{ENTRY_POINT_GROUP}' failed to load: {error}"
-                ) from error
-        _loaded = True
 
 
 # The elements of the target-by-source distance block :func:`nearest_neighbor` computes at once.

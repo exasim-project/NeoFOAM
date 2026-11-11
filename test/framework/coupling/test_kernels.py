@@ -10,7 +10,7 @@ its second relaxed pass lands on the fixed point (to round-off, hence 1e-12).
 """
 
 import tracemalloc
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -24,7 +24,6 @@ from neofoam.framework.coupling import (
     RelativeConvergence,
     SideChange,
     kernels,
-    strategy,
 )
 from neofoam.framework.coupling.kernels import nearest_neighbor
 
@@ -177,18 +176,17 @@ def test_nearest_neighbor_mapping_needs_the_points_of_both_sides() -> None:
         NearestNeighborMapping().bind(_points(None), _points(None))
 
 
-def test_a_mapping_of_a_type_is_a_new_instance_of_it() -> None:
-    assert type(strategy(CouplingMapping, "identity")) is IdentityMapping
-    assert strategy(CouplingMapping, {"type": "nearest-neighbor"}).type == "nearest-neighbor"
-    assert strategy(CouplingMapping, "nearest-neighbor") is not strategy(
-        CouplingMapping, "nearest-neighbor"
-    )
-    with pytest.raises(
-        ValueError,
-        match=r"unknown mapping type 'rbf'; registered mapping types: "
-        r"\['identity', 'nearest-neighbor'\]",
-    ):
-        strategy(CouplingMapping, "rbf")
+@pytest.mark.parametrize(
+    ("options", "mapping"),
+    [
+        ({"type": "identity"}, IdentityMapping),
+        ({"type": "nearest-neighbor"}, NearestNeighborMapping),
+    ],
+)
+def test_a_mapping_is_selected_by_its_type(options: dict[str, str], mapping: type) -> None:
+    selected = cast(Any, CouplingMapping).create(mapping=options).mapping
+
+    assert type(selected) is mapping
 
 
 def test_identity_mapping_hands_the_data_over_unchanged() -> None:
