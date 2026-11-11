@@ -3,24 +3,9 @@
 
 """How data travels between coupled regions: the :class:`Transport`, the only thing they share.
 
-Point to point, as MPI: a region sends a message to another region under a tag
-and the other receives it. A send never blocks; a receive blocks until the
-message is there. Messages of one ``(source, target, tag)`` arrive in the order
-they were sent; that is the whole order contract (a transport may keep more).
-Messages are plain data (builtins, tuples, lists and dicts of them, numpy
-arrays), so a transport between processes can pickle them; an
-``InProcessTransport(pickle=True)`` pickles each message to prove it. The tags
-are strings, built by :class:`Tag` alone.
-
-:class:`InProcessTransport` connects regions that run in threads of one process.
-A transport between processes (e.g. MPI, one rank group per region) implements
-the same three methods; boundary conditions and solvers do not see it.
-
-:class:`InProcessTransport` raises :class:`CouplingDeadlock` at once when every
-region still running waits in :meth:`~Transport.receive` for a message none of
-them sent, or when a region waits for one that finished; as a fallback it raises
-:class:`CouplingTimeout` when a receive waits longer than ``timeout`` seconds.
-Both carry a report: who waits for what, and the messages sent but not received.
+Point to point, as MPI: a send never blocks, a receive blocks until the message
+is there; messages of one ``(source, target, tag)`` arrive in order. Messages are
+plain data (they pickle), their tags built by :class:`Tag` alone.
 
 Example::
 
@@ -31,8 +16,7 @@ Example::
 
 from __future__ import annotations
 
-import copy
-import pickle as pickling
+import pickle
 import threading
 import time
 from collections import defaultdict, deque
@@ -120,34 +104,19 @@ class Transport(Protocol):
 class InProcessTransport:
     """A transport between regions running in threads of one process: a mailbox per tag.
 
-    Sends a copy, as a message would: a receiver that changes its data in place
-    changes no one else's. With ``pickle`` the copy is a pickle round trip, as
-    between processes: a send of a message that does not pickle raises
-    ``TypeError`` (off by default; the tests turn it on). ``pickle`` ``None``
-    takes the class default :attr:`PICKLE`.
-
-    Once :meth:`start` named the running regions (as
-    :func:`~neofoam.framework.coupling.region.run_regions` does), a receive raises
-    :class:`CouplingDeadlock` as soon as every running region waits in a
-    receive and none of the messages they wait for is there: only these
-    regions send. A receive from a region that finished (left by :meth:`close`,
-    not by :meth:`abort`) raises :class:`CouplingDeadlock` too; one from a
-    region that left by :meth:`abort` raises :class:`TransportClosed`. A
-    receive that waits longer than ``timeout`` seconds raises
-    :class:`CouplingTimeout`; ``timeout`` ``None`` or ``0`` waits without end.
-    Raises ``ValueError`` for a negative ``timeout``.
+    Each message is pickled and unpickled, as between processes: the receiver
+    gets its own copy, and a message that is not plain data raises ``TypeError``.
+    Once :meth:`start` named the running regions, a receive raises
+    :class:`CouplingDeadlock` as soon as every running region waits for a message
+    that is not there, or waits for a region that finished; it raises
+    :class:`TransportClosed` for a region that left by :meth:`abort`, and
+    :class:`CouplingTimeout` after ``timeout`` seconds (``None`` or ``0``: no end).
     """
 
-    # whether a transport built with ``pickle=None`` pickles its messages
-    PICKLE = False
-
-    def __init__(
-        self, timeout: Optional[float] = DEFAULT_TIMEOUT, pickle: Optional[bool] = None
-    ) -> None:
+    def __init__(self, timeout: Optional[float] = DEFAULT_TIMEOUT) -> None:
         if timeout is not None and timeout < 0:
             raise ValueError(f"a transport timeout is at least 0 seconds, not {timeout}")
         self.timeout = timeout or None
-        self.pickle = self.PICKLE if pickle is None else pickle
         self._messages: dict[tuple[str, str, str], deque[Any]] = defaultdict(deque)
         self._closed: set[str] = set()
         self._aborted: set[str] = set()
@@ -168,11 +137,9 @@ class InProcessTransport:
             self._changed.notify_all()
 
     def _copy(self, source: str, target: str, tag: str, message: Any) -> Any:
-        """The copy of ``message`` that arrives; with :attr:`pickle`, a pickle round trip."""
-        if not self.pickle:
-            return copy.deepcopy(message)
+        """The copy of ``message`` that arrives: a pickle round trip."""
         try:
-            return pickling.loads(pickling.dumps(message))
+            return pickle.loads(pickle.dumps(message))
         except Exception as error:
             raise TypeError(
                 f"the message '{tag}' from region {source} to region {target} is not plain "
