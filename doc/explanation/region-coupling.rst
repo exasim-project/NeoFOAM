@@ -22,10 +22,10 @@ graph and time loop on its own thread. Regions share nothing but a
        ``coupling(ctx).add(Patch("top"), bc)``: a **port**.
    * - case (``system/regionCoupling.yaml``)
      - the **field ports** (``ports``), the **exchanges** (pairs of ports and
-       their mapping) and the **coupling nodes** (``couplings``).
+       their mapping) and the **coupling loops** (``couplings``).
    * - framework
-     - one coupling op ``<region>.<node>`` per node of a region, placed in the
-       region's graph; the node's last region (its **leader**) decides
+     - one coupling op ``<region>.<loop>`` per loop of a region, placed in the
+       region's graph; the loop's last region (its **leader**) decides
        convergence.
    * - ``multiRun``
      - reads ``regionSolvers`` and the case file, creates the comm channel, runs
@@ -109,8 +109,8 @@ The case file
           pipe: {operations: [inner_loop]}   # a loop, held whole
     commChannelTimeout: 600          # seconds; 0 or null: no timeout
 
-``wraps`` places the node's op around the named operations and everything
-downstream of them; without it the op wraps the body of the node before it, or
+``wraps`` places the loop's op around the named operations and everything
+downstream of them; without it the op wraps the body of the loop before it, or
 the whole time step. ``mapping``, ``acceleration`` and ``convergence`` name a
 strategy of the families ``CouplingMapping``, ``CouplingAcceleration`` and
 ``CouplingConvergence`` by ``type``, with its options.
@@ -136,20 +136,20 @@ mapping moves a model between the locations' entities:
      - the cells nearest each point to a row each (``ProbeData``)
 
 The value mappings take scalar fields only. A region's data field (``T``,
-``q``) is in at most one coupling node.
+``q``) is in at most one coupling loop.
 
 **Serial or parallel.** Parallel: a port receives what its partner sent in the
 pass before. Serial: from a region that steps before its own, what it sent in
 the same pass, so a serial pass waits for the partner's whole pass. Hence a
-serial node may neither enclose a node coupling two of its regions nor hold
-their time step: place it around named operations or make it parallel. A
-steady region has no time step, so a serial node may wrap it whole.
+serial coupling loop may neither enclose a loop coupling two of its regions
+nor hold their time step: place it around named operations or make it
+parallel. A steady region has no time step, so a serial loop may wrap it whole.
 
 The file is checked as it loads, by the same ``check_exchanges`` as
-``participant_exchanges``: unknown keys, types or options, an exchange in no node
-or in two, two exchanges or nodes of one name, a port in two exchanges, a
-``wraps`` region the node does not couple, and a serial node enclosing a node
-of two of its regions. A serial node holding the time step is found as the
+``participant_exchanges``: unknown keys, types or options, an exchange in no loop
+or in two, two exchanges or loops of one name, a port in two exchanges, a
+``wraps`` region the loop does not couple, and a serial loop enclosing a loop
+of two of its regions. A serial loop holding the time step is found as the
 region's graph is resolved.
 
 How it runs

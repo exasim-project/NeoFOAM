@@ -145,6 +145,6 @@ def test_convergence_on_unknown_data_raises(
     _case("convergence_typo", tmp_path, monkeypatch)
 
     with pytest.raises(
-        ValueError, match=r"convergence RelativeConvergence on T, which no port of the node sends"
+        ValueError, match=r"convergence RelativeConvergence on T, which no port of the loop sends"
     ):
         run()

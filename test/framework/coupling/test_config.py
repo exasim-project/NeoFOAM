@@ -144,37 +144,37 @@ def test_region_coupling_config_rejects_an_invalid_file(case: str, error: str) -
         RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / case)
 
 
-def test_region_coupling_config_gives_every_node_an_acceleration_of_its_own() -> None:
+def test_region_coupling_config_gives_every_loop_an_acceleration_of_its_own() -> None:
     config = RegionCouplingConfig.load(case_dir=CHAIN)
 
-    first, second = config.nodes()[0], config.nodes()[0]
+    first, second = config.loops()[0], config.loops()[0]
 
     assert first.acceleration["b-c"] is not second.acceleration["b-c"]
 
 
-def test_a_node_without_a_scheme_is_serial() -> None:
+def test_a_loop_without_a_scheme_is_serial() -> None:
     data = _chain()
     del data["couplings"][1]["scheme"]
 
-    nodes = RegionCouplingConfig.model_validate(data).nodes()
+    loops = RegionCouplingConfig.model_validate(data).loops()
 
-    assert [(node.name, node.scheme) for node in nodes] == [
+    assert [(loop.name, loop.scheme) for loop in loops] == [
         ("outer", "parallel"),
         ("inner", "serial"),
     ]
 
 
-def test_a_serial_node_may_enclose_a_chained_node() -> None:
+def test_a_serial_loop_may_enclose_a_chained_loop() -> None:
     """outer couples b and c, inner a and b: they share b only."""
     data = _chain()
     data["couplings"][0]["scheme"] = "serial"
 
-    nodes = RegionCouplingConfig.model_validate(data).nodes()
+    loops = RegionCouplingConfig.model_validate(data).loops()
 
-    assert [node.scheme for node in nodes] == ["serial", "parallel"]
+    assert [loop.scheme for loop in loops] == ["serial", "parallel"]
 
 
-def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises_as_the_file_loads() -> None:
+def test_a_serial_loop_enclosing_a_loop_of_two_of_its_regions_raises_as_the_file_loads() -> None:
     with pytest.raises(
         ValidationError,
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
@@ -200,15 +200,15 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
 @pytest.mark.parametrize(
     ("data", "message"),
     [
-        (_broken("couplings.1.name", "outer"), "two coupling nodes are named 'outer'"),
+        (_broken("couplings.1.name", "outer"), "two coupling loops are named 'outer'"),
         (
             _broken("couplings.1.exchanges", ["a-b", "b-c"]),
-            "exchange 'b-c' is in the coupling nodes 'outer' and 'inner'",
+            "exchange 'b-c' is in the coupling loops 'outer' and 'inner'",
         ),
         (_broken("couplings.1.exchanges", ["b-c-2"]), "names the exchange 'b-c-2', which does not"),
         (
             _broken("couplings", _chain()["couplings"][:1]),
-            r"the exchanges \['a-b'\] are in no coupling node",
+            r"the exchanges \['a-b'\] are in no coupling loop",
         ),
         (
             _broken("exchanges.1", {"name": "a-b", "ports": {"b": "to_c", "c": "to_b"}}),
@@ -234,23 +234,23 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         ),
         (
             _broken("couplings.1.wraps", {"c": {"operations": ["solve_x"]}}),
-            r"node 'inner' places its op in the regions \['c'\], which it does not couple",
+            r"loop 'inner' places its op in the regions \['c'\], which it does not couple",
         ),
         (_broken("maxIterations", 5), r"maxIterations\n.*Extra inputs"),
         (_broken("coupling", []), r"coupling\n.*Extra inputs"),
     ],
     ids=[
-        "duplicate-node-name",
-        "exchange-in-two-nodes",
+        "duplicate-loop-name",
+        "exchange-in-two-loops",
         "unknown-exchange",
-        "exchange-in-no-node",
+        "exchange-in-no-loop",
         "duplicate-exchange-name",
         "patch-in-two-exchanges",
-        "typo-in-a-node",
+        "typo-in-a-loop",
         "unknown-acceleration",
         "typo-in-wraps",
         "downstream-in-wraps",
-        "wraps-a-region-of-another-node",
+        "wraps-a-region-of-another-loop",
         "top-level-maxIterations",
         "typo-at-the-top",
     ],
@@ -284,7 +284,7 @@ def test_region_coupling_config_checks_the_directions_of_its_field_ports() -> No
 def test_the_config_gives_each_region_its_coupling_as_participant_exchanges_does() -> None:
     config = RegionCouplingConfig.load(case_dir=CHAIN)
     comm_channel = InProcessCommChannel()
-    args = (config.coupling_exchanges(), comm_channel, config.nodes(), config.field_ports())
+    args = (config.coupling_exchanges(), comm_channel, config.loops(), config.field_ports())
 
     assert config.participant_exchanges(["a", "b", "c"], comm_channel) == participant_exchanges(
         ["a", "b", "c"], *args

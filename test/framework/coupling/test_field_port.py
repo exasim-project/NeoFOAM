@@ -57,9 +57,9 @@ def _regions(
     scheme: Literal["serial", "parallel"] = "serial",
 ) -> dict[str, Context]:
     regions = [region for region, _port in exchange.ends]
-    nodes = [CouplingLoop("coupling", (exchange.name,), max_iterations=1, scheme=scheme)]
+    loops = [CouplingLoop("coupling", (exchange.name,), max_iterations=1, scheme=scheme)]
     couplings = participant_exchanges(
-        regions, [exchange], InProcessCommChannel(), nodes, field_ports
+        regions, [exchange], InProcessCommChannel(), loops, field_ports
     )
     return {
         region: Context(
