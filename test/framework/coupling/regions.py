@@ -30,7 +30,7 @@ from neofoam.framework.coupling import (
 )
 from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.coupling.iteration._loop_op import CouplingOp
-from neofoam.framework.coupling.run import run_regions
+from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
     IterativeOp,
@@ -207,7 +207,7 @@ def graph(ctx: Context, *ops: Operation) -> Operations:
 def run(regions: dict[str, tuple[Context, list[Operation]]]) -> None:
     """Run the graph of every region, each on its own thread."""
     (ctx, _ops), *_rest = regions.values()
-    run_regions(
+    run_participants(
         {name: partial(graph(ctx, *ops).run, ctx) for name, (ctx, ops) in regions.items()},
         comm_channel(ctx),
     )
