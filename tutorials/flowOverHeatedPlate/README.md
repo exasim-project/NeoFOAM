@@ -13,7 +13,7 @@ source <OpenFOAM v2406>/etc/bashrc
 ```
 
 `system/controlDict.yaml` holds the times every region steps on and
-`regionSolvers`; `system/regionCoupling.yaml` the numerics of the coupling. The
+`participants`; `system/coupling.yaml` the numerics of the coupling. The
 `coupled` entries of `0.orig/T` (copied to `0/` by `Allrun`) define the coupled patches:
 
 ```c++
