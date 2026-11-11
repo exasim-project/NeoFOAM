@@ -59,9 +59,6 @@ def run_dambreak_comparison(
     """Run ``tutorials/<tutorial_name>`` with incompressibleVoF and with the
     native ``native_solver`` binary, then assert the written fields match to
     machine precision (rtol=atol=1e-10).
-
-    The two scratch cases are ``work_dir/incompressibleVoF`` and
-    ``work_dir/<native_solver>``.
     """
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / tutorial_name
