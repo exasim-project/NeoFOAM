@@ -17,10 +17,10 @@ import numpy as np
 
 from neofoam.framework import execution_observer
 
-from .comm.channel import Data
-from .data import End
-from .region import CouplingNode
-from .strategies.convergence import SideChange
+from ..comm.channel import Data
+from ..data import End
+from ..region import CouplingNode
+from ..strategies.convergence import SideChange
 
 
 def unchanged(changes: list[SideChange]) -> bool:
@@ -49,7 +49,7 @@ class CouplingNotConvergedWarning(RuntimeWarning):
     """A coupling loop reached ``max_iterations`` before it converged."""
 
 
-_FRAMEWORK = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + os.sep
+_FRAMEWORK = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) + os.sep
 
 
 def _stacklevel() -> int:

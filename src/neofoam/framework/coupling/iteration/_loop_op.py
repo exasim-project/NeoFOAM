@@ -10,16 +10,16 @@ from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional, Sequence
 from neofoam.framework import execution_observer
 from neofoam.framework.operations import IterativeOp
 
-from .comm.channel import Data, Tag
-from .controller import CouplingController, GroupStream, StreamId
-from .data import CoupledPort, End, Stream, check_received, check_rows, sent
-from .location import Geometry
-from .strategies.mapping import BoundMapping
+from ..comm.channel import Data, Tag
+from ..data import CoupledPort, End, Stream, check_received, check_rows, sent
+from ..location import Geometry
+from ..strategies.mapping import BoundMapping
+from ._leader import CouplingController, GroupStream, StreamId
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .region import CouplingNode, Exchange, RegionCoupling
+    from ..region import CouplingNode, Exchange, RegionCoupling
 
 
 # the loops enclosing a coupling op, outermost first: (name, iteration from 0)

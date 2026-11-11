@@ -7,18 +7,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
 
-from neofoam.framework.operations import IterativeOp, Operation, Operations, SequentialOp
+from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from .comm.channel import Tag
 from .data import CoupledPort, base_name
+from .iteration._loop_op import CouplingOp
 from .location import Location, MeshGeometry
-from .loop import CouplingOp
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
     from .region import RegionCoupling
+from .iteration._time_step import (
+    INCREMENT_TIME,
+    SET_TIME_STEP,
+    TimeStep,
+    operation_names,
+    serial_holder,
+)
 
 
 class Coupling:
@@ -126,7 +132,7 @@ class Coupling:
         coupling = self.coupling
         if coupling is None or len(coupling.group) < 2 or ctx.time is None:
             return None
-        names = _names(graph)
+        names = operation_names(graph)
         missing = [name for name in (SET_TIME_STEP, INCREMENT_TIME) if name not in names]
         if missing:
             raise ValueError(
@@ -135,7 +141,7 @@ class Coupling:
                 f"between the solutionLoop's {SET_TIME_STEP} and {INCREMENT_TIME}"
             )
         return Operation(
-            func=SequentialOp(_TimeStep(coupling)),
+            func=SequentialOp(TimeStep(coupling)),
             metadata=OperationMetadata(
                 op_name=f"{coupling.region}.time_step",
                 depends_on=[SET_TIME_STEP],
@@ -156,7 +162,7 @@ class Coupling:
             for node in coupling.nodes
             if not node.parallel
         }
-        holder = _holder(graph, f"{coupling.region}.time_step", serial)
+        holder = serial_holder(graph, f"{coupling.region}.time_step", serial)
         if holder is not None:
             raise ValueError(
                 f"coupling '{holder}' is serial but holds the time step of its regions; make it "
@@ -186,52 +192,3 @@ def _check_entities(port: CoupledPort) -> None:
                 f"{stream.model.__qualname__} is {base_name(stream.model)}, which "
                 f"does not live on {port.location} ({port.label})"
             )
-
-
-SET_TIME_STEP = "set_time_step"
-INCREMENT_TIME = "increment_time"
-
-
-def _names(ops: Iterable[Operation]) -> set[str]:
-    """The names of ``ops`` and of every operation inside their loops."""
-    names: set[str] = set()
-    for op in ops:
-        if op.operation_name:
-            names.add(op.operation_name)
-        if isinstance(op.func, IterativeOp):
-            names |= _names(op.sub_operations)
-    return names
-
-
-def _holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -> Optional[str]:
-    """The node of the outermost loop of ``serial`` (by label) holding operation ``name``."""
-    for op in ops:
-        if isinstance(op.func, IterativeOp):
-            if op.operation_name in serial and name in _names(op.sub_operations):
-                return serial[op.operation_name]
-            inside = _holder(op.sub_operations, name, serial)
-            if inside is not None:
-                return inside
-    return None
-
-
-class _TimeStep:
-    def __init__(self, coupling: RegionCoupling) -> None:
-        self._coupling = coupling
-
-    def __call__(self, ctx: Context) -> None:
-        coupling = self._coupling
-        region, leader, comm_channel = coupling.region, coupling.leader, coupling.comm_channel
-        asked = ctx.time.delta_t
-        if region != leader:
-            comm_channel.send(region, leader, Tag.TIME_DT, asked)
-            agreed = comm_channel.receive(leader, region, Tag.TIME_DT)
-        else:
-            agreed = min(
-                asked if other == region else comm_channel.receive(other, region, Tag.TIME_DT)
-                for other in coupling.group
-            )
-            for other in coupling.group:
-                if other != region:
-                    comm_channel.send(region, other, Tag.TIME_DT, agreed)
-        ctx.time.delta_t = agreed

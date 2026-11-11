@@ -43,11 +43,11 @@ from neofoam.framework.coupling import (
     InProcessCommChannel,
     coupling,
 )
-from neofoam.framework.coupling.controller import (
+from neofoam.framework.coupling.iteration._leader import (
     CouplingController,
     CouplingOutcome,
 )
-from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingOp
 from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement

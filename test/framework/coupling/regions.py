@@ -28,7 +28,7 @@ from neofoam.framework.coupling import (
     coupled,
     coupling,
 )
-from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingOp
 from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
