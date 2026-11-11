@@ -151,10 +151,8 @@ class GravityConfig(BaseConfig):
 class BoussinesqConfig(BaseConfig):
     """The Boussinesq entries of ``constant/transportProperties``.
 
-    ``rho`` and ``cp`` (the fluid's density and heat capacity, SI units) are needed
-    only by a coupled patch of ``T``: the heat flux it exchanges is
-    ``rho cp (nu/Pr + alphat) dT/dn``, in W/m^2 (the solver itself is kinematic).
-    Without a coupled patch they may be absent.
+    ``rho`` and ``cp`` (SI) are needed only by a coupled patch of ``T``: the solver
+    is kinematic, the exchanged heat flux is not.
     """
 
     beta: float

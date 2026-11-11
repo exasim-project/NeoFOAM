@@ -131,7 +131,6 @@ def build(self: Any) -> list[Any]:
     declarations; ``@build`` carries ``phi``, the SimpleControl object,
     the running continuity-error accumulator, and the pressure-reference
     cell logic (reading the ``SIMPLE`` subdict of ``system/fvSolution``).
-    ``self`` is the run's runtime; its ``config`` holds the case directory.
     """
     case_dir = self.config.case_dir
 

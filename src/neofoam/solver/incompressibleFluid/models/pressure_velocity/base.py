@@ -28,8 +28,7 @@ class PressureVelocitySettings:
     algorithm_type: str
     #: Set by the boussinesq model's resolve: dispatches the buoyant variants.
     use_boussinesq: bool = False
-    #: The case directory the run reads ``system/fvSolution`` from (a region's, in a
-    #: multi-region case).
+    #: The case directory the run reads ``system/fvSolution`` from.
     case_dir: Path = field(default_factory=lambda: Path("."))
 
 
@@ -53,8 +52,7 @@ class PressureVelocityAlgorithm:
 
     @classmethod
     def detect_and_create(cls, case_dir: Optional[Path] = None) -> ModelRuntime:
-        """Detect the algorithm from ``case_dir``'s fvSolution (default: the working
-        directory's): a fresh runtime of its spec, reading its case from there."""
+        """Detect the algorithm from ``case_dir``'s fvSolution: a fresh runtime of its spec."""
         fv_solution = pyf.dictionary.read(str(Path(case_dir or ".") / "system" / "fvSolution"))
 
         if fv_solution.found("PIMPLE"):

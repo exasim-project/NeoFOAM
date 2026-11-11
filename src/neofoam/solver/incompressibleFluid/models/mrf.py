@@ -43,7 +43,7 @@ from .pressure_velocity.extension import (
 
 __all__ = ["MRFPropertiesConfig", "mrf"]
 
-# Relative to the case directory (a region's, in a multi-region case).
+# Relative to the case directory.
 _MRF_PROPERTIES = "constant/MRFProperties"
 
 

@@ -48,9 +48,8 @@ def detect_model(case_dir: Path) -> bool:
     """Active iff ``system/controlDict`` enables adaptive stepping with a ``maxDeltaT``.
 
     OpenFOAM only honours ``maxDeltaT`` when ``adjustTimeStep`` is on; mirror that so a
-    fixed-step case (``adjustTimeStep no``) keeps a fixed step. Read from the case
-    directory (a region's, in a multi-region case); inactive when the file or the
-    entries are absent.
+    fixed-step case (``adjustTimeStep no``) keeps a fixed step. Read from ``case_dir``;
+    inactive when the file or the entries are absent.
     """
     control_dict = case_dir / "system" / "controlDict"
     if not control_dict.is_file():

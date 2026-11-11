@@ -36,14 +36,12 @@ from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["FvOptionsConfig", "fvOptions"]
 
-# OpenFOAM's own search order (``fv::options::createIOobject``), relative to the
-# case directory (a region's, in a multi-region case).
+# OpenFOAM's own search order (``fv::options::createIOobject``), case-relative.
 _FV_OPTIONS_PATHS = ("constant/fvOptions", "system/fvOptions")
 
 
 def _dictionary_path(case_dir: Path) -> Optional[Path]:
-    """First of the two locations that exists in ``case_dir``, in OpenFOAM's search
-    order, relative to ``case_dir``."""
+    """First of the two locations that exists in ``case_dir``, relative to it."""
     for candidate in _FV_OPTIONS_PATHS:
         if (case_dir / candidate).is_file():
             return Path(candidate)

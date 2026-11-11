@@ -226,20 +226,12 @@ class ModelSpec:
         return func
 
     def detect(self, func: Callable[..., bool]) -> Callable[..., bool]:
-        """Register the DETECT predicate.
-
-        Signature: ``def detect() -> bool``, or ``def detect(case_dir: Path) -> bool``
-        for a predicate that reads the case (handed the case directory).
-        """
+        """Register the DETECT predicate: ``() -> bool``, or ``(case_dir: Path) -> bool``."""
         self._detect_func = func
         return func
 
     def run_detect(self, case_dir: Optional[Path] = None) -> bool:
-        """Return True if the detect predicate passes (default: True).
-
-        A predicate with a parameter is handed ``case_dir`` (default ``.``, the
-        working directory).
-        """
+        """True if the detect predicate passes on ``case_dir`` (default ``.``), or there is none."""
         if self._detect_func is None:
             return True
         if inspect.signature(self._detect_func).parameters:
