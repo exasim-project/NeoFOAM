@@ -67,7 +67,7 @@ def test_couplings_of_a_region_the_case_does_not_run_raises(
 
 
 def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> Any:
-    """multiRun's comm channel timeout, the chain's ``transportTimeout`` set to ``seconds``.
+    """multiRun's comm channel timeout, the chain's ``commChannelTimeout`` set to ``seconds``.
 
     ``"none"``: no case file; ``"default"``: the file as it is.
     """
@@ -75,10 +75,10 @@ def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> A
     if seconds != "none":
         config = RegionCouplingConfig.load(case_dir=CHAIN)
         if seconds != "default":
-            config.transportTimeout = seconds
+            config.commChannelTimeout = seconds
         config.save(case_dir=tmp_path)
     monkeypatch.chdir(tmp_path)
-    return MULTI_RUN.transport_timeout()
+    return MULTI_RUN.comm_channel_timeout()
 
 
 @pytest.mark.parametrize(
@@ -86,13 +86,13 @@ def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> A
     [("none", 600.0), ("default", 600.0), (5, 5.0), (0, None), (None, None)],
     ids=["no-file", "default", "seconds", "zero", "null"],
 )
-def test_the_transport_timeout_is_the_file_s(
+def test_the_comm_channel_timeout_is_the_file_s(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any, timeout: Any
 ) -> None:
     assert _timeout(tmp_path, monkeypatch, seconds) == timeout
 
 
-def test_run_hands_the_transport_timeout_to_the_transport(
+def test_run_hands_the_comm_channel_timeout_to_the_comm_channel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     timeouts: list[Any] = []
@@ -106,7 +106,7 @@ def test_run_hands_the_transport_timeout_to_the_transport(
 
     shutil.copytree(CASES.parent / "limitations" / "cases" / "pair", tmp_path / "case")
     config = RegionCouplingConfig.load(case_dir=tmp_path / "case")
-    config.transportTimeout = 3
+    config.commChannelTimeout = 3
     config.save(case_dir=tmp_path / "case")
     monkeypatch.chdir(tmp_path / "case")
     monkeypatch.setattr(MULTI_RUN, "InProcessCommChannel", comm_channel)

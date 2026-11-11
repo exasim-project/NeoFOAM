@@ -133,7 +133,7 @@ class RegionCouplingConfig(BaseConfig):
     """``system/regionCoupling.yaml``: the exchanges between regions and the coupling nodes.
 
     ``couplings`` lists the nodes outer to inner, each exchange in one; checked on load.
-    ``transportTimeout`` is in seconds, ``0`` or ``null`` without end. Without the file
+    ``commChannelTimeout`` is in seconds, ``0`` or ``null`` without end. Without the file
     no region is coupled.
 
     Example::
@@ -156,7 +156,7 @@ class RegionCouplingConfig(BaseConfig):
 
     exchanges: list[ExchangeConfig] = Field(min_length=1)
     couplings: list[CouplingNodeConfig] = Field(min_length=1)
-    transportTimeout: Optional[float] = Field(default=DEFAULT_TIMEOUT, ge=0, allow_inf_nan=False)
+    commChannelTimeout: Optional[float] = Field(default=DEFAULT_TIMEOUT, ge=0, allow_inf_nan=False)
 
     def links(self) -> list[Link]:
         """One link per exchange; a default name another exchange has is numbered (``a-b-2``)."""

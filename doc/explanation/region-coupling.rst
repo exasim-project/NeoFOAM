@@ -85,7 +85,7 @@ The case file
         wraps:                       # per region; default: the whole time step
           fluid: {operations: [solve_T]}
           pipe: {operations: [inner_loop]}   # a loop, held whole
-    transportTimeout: 600            # seconds; 0 or null: no timeout
+    commChannelTimeout: 600          # seconds; 0 or null: no timeout
 
 ``wraps`` places the node's op around the named operations and everything
 downstream of them; without it the op wraps the body of the node before it, or
@@ -143,7 +143,7 @@ warns, ``CouplingNotConvergedWarning``). Ops marked ``final`` (such as
 
 **Failures.** A region that fails closes the comm channel, so none waits for it
 forever. A deadlock raises ``CouplingDeadlock`` at once; as a fallback a receive
-raises ``CouplingTimeout`` after ``transportTimeout`` seconds.
+raises ``CouplingTimeout`` after ``commChannelTimeout`` seconds.
 
 **Observers.** Every region reports to the execution observer from its own
 thread (``coupling_exchanged``, ``coupling_finished``, its graph), so hooks
