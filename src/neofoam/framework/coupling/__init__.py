@@ -28,14 +28,12 @@
   no region sent, and :class:`CouplingTimeout` after its ``timeout`` (both
   :class:`CouplingTransportError`, as :class:`TransportClosed`).
 - strategies, each a :class:`~neofoam.core.plugin_system.PluginSystem` family
-  selected by ``type`` (:func:`strategy`): :class:`CouplingMapping`
+  selected by ``type``: :class:`CouplingMapping`
   (:class:`NearestNeighborMapping`, the default, :class:`IdentityMapping`; bound once to the
   points of both sides: :data:`BoundMapping`), :class:`CouplingAcceleration`
   (:class:`ConstantRelaxation`, :class:`AitkenRelaxation`) and
   :class:`CouplingConvergence` (:class:`RelativeConvergence`, from the
-  :class:`SideChange` of every side); a package adds its own through the
-  entry-point group ``neofoam.coupling``, imported once before the regions
-  start (:func:`load_plugins`).
+  :class:`SideChange` of every side).
 
 Everything else (the coupling op, the controller, the sides of a group, the
 tags of the messages, ...) is internal: import it from its submodule.
@@ -55,8 +53,6 @@ from .kernels import (
     NearestNeighborMapping,
     RelativeConvergence,
     SideChange,
-    load_plugins,
-    strategy,
 )
 from .model import Coupling
 from .region import CouplingNode, Link, RegionCoupling
@@ -93,6 +89,4 @@ __all__ = [
     "Transport",
     "TransportClosed",
     "coupled",
-    "load_plugins",
-    "strategy",
 ]
