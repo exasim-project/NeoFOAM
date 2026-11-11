@@ -3,12 +3,23 @@
 
 """What the solvers share to run as the coupled regions of a ``multiRun`` case."""
 
-from pydantic import Field
+from pathlib import Path
+from typing import Mapping, Optional
+
+import pybFoam as pyf
+from pydantic import BaseModel, Field
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
+from neofoam.framework.coupling import Array
 from neofoam.io import YAML, IOStrategy
 
-__all__ = ["ControlDictConfig"]
+__all__ = [
+    "ControlDictConfig",
+    "WallHeatFlux",
+    "WallTemperature",
+    "coupled_entries",
+    "region_case_dir",
+]
 
 
 @IOStrategy(YAML("system/controlDict.yaml"))
@@ -29,3 +40,56 @@ class ControlDictConfig(TimeControlConfig):
 
     # The i18n prefix labels the wizard's "add a region" row (neofoam.ui.form_schema).
     participants: dict[str, str] = Field(min_length=1, json_schema_extra={"i18n": "nf.region"})
+
+
+def region_case_dir(region: Optional[str]) -> Path:
+    """The case directory of ``region``: ``<region>/``, or ``.`` without a region.
+
+    NeoFOAM reads only the default mesh region, so each region of a multiRun
+    case is an OpenFOAM case of its own.
+    """
+    return Path(region) if region is not None else Path(".")
+
+
+class WallTemperature(BaseModel):
+    """What a Neumann side sends: its wall temperature per face."""
+
+    T: Array
+
+
+class WallHeatFlux(BaseModel):
+    """What a Dirichlet side sends: the heat flux per face area into its region."""
+
+    q: Array
+
+
+def coupled_entries(path: Path, patch_types: Mapping[str, str]) -> dict[str, str]:
+    """The coupled patches of the field file ``path``: patch -> its ``coupled`` condition.
+
+    A patch is coupled when its ``coupled`` entry names a condition of
+    ``patch_types``, which maps each condition to the ``type`` its patch must
+    have. Raises ``ValueError`` for another condition or type.
+
+    Example::
+
+        coupled_entries(Path("0/T"), {"coupledTemperature": "calculated"})
+    """
+    boundary = pyf.dictionary.read(str(path)).subDict("boundaryField")
+    entries: dict[str, str] = {}
+    for patch in map(str, boundary.toc()):
+        entry = boundary.subDict(patch)
+        if not entry.found("coupled"):
+            continue
+        condition = str(entry.get_word("coupled"))
+        if condition not in patch_types:
+            raise ValueError(
+                f"{path}: patch {patch} is coupled as {condition!r}; known: {sorted(patch_types)}"
+            )
+        patch_type = str(entry.get_word("type"))
+        if patch_type != patch_types[condition]:
+            raise ValueError(
+                f"{path}: the coupled patch {patch} has type {patch_type}; "
+                f"a {condition} patch is {patch_types[condition]!r}"
+            )
+        entries[patch] = condition
+    return entries

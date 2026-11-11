@@ -4,11 +4,9 @@
 # NB: no ``from __future__ import annotations`` — ``@coupled`` reads the
 # ``sends`` / ``receives`` annotations as live classes.
 
-"""The coupled patches of ``T``: a Dirichlet-Neumann pair on NeoN patches.
+"""The coupled patches of ``T``, a Dirichlet-Neumann pair on ``calculated`` NeoN patches.
 
-A patch of ``0/T`` is coupled when it names its condition in a ``coupled``
-entry; its ``type`` is ``calculated``, so NeoN leaves its values to the
-coupling (``correct_boundary_conditions`` keeps them)::
+A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
 
     interface
     {
@@ -17,17 +15,8 @@ coupling (``correct_boundary_conditions`` keeps them)::
         value       uniform 300;
     }
 
-- ``coupledTemperature`` (:class:`CoupledTemperature`), the Dirichlet side: its
-  faces take the partner's wall temperature (``set_patch_fixed_values``), it
-  sends the heat flux through them into its own region.
-- ``coupledHeatFlux`` (:class:`CoupledHeatFlux`), the Neumann side: the heat
-  flux into the partner leaves its own region, as an explicit source in the
-  cells next to its faces (NeoN sets no per-face gradient from Python); it sends
-  its wall temperature and, after each solve, stores it as the patch's values
-  (what is written).
-
-The heat flux is per face area, ``k dT/dn``. The points are the face centres:
-the partner's faces need not match.
+NeoN sets no per-face gradient from Python, so the Neumann side applies its heat
+flux as an explicit source in the cells next to its faces.
 """
 
 from pathlib import Path
@@ -35,29 +24,16 @@ from typing import Any
 
 import neon._neon as nn  # NeoN Python bindings
 import numpy as np
-import pybFoam as pyf
-from pydantic import BaseModel
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Array, Coupling, coupled
+from neofoam.framework.coupling import Coupling, coupled
+from neofoam.solver.regions import WallHeatFlux, WallTemperature, coupled_entries
 
 
 def _host(vector: Any) -> Any:
     """A NeoN vector as a numpy array on the host."""
     return np.asarray(vector.copy_to_host())
-
-
-class WallTemperature(BaseModel):
-    """What the Neumann side sends: its wall temperature, per face."""
-
-    T: Array
-
-
-class WallHeatFlux(BaseModel):
-    """What the Dirichlet side sends: the heat flux through its faces into its region."""
-
-    q: Array
 
 
 class NeoNPatch:
@@ -75,7 +51,7 @@ class NeoNPatch:
         self.owners = _host(boundary.face_owners())[self.faces]
         self.areas = _host(boundary.face_areas())[self.faces]
         self.centres = _host(boundary.face_centers())[self.faces]
-        # the conductance between a face and its cell, per face area
+        # per face area
         self.h = ctx.models["conduction"].properties.k * _host(boundary.delta_coeffs())[self.faces]
 
     def cell_T(self) -> Any:
@@ -90,20 +66,20 @@ class NeoNPatch:
         )
 
     def terms(self) -> list[Any]:
-        """What the patch adds to the right-hand side of the equation of its field."""
+        """The terms the patch adds to the right-hand side."""
         return []
 
     def solved(self) -> None:
-        """After its field is solved (and its boundary corrected)."""
+        """Called after the field is solved and its boundary corrected."""
 
 
 @coupled
 class CoupledTemperature(NeoNPatch):
-    """The Dirichlet side: its faces take the partner's wall temperature, it sends its heat flux."""
+    """The Dirichlet side: takes the partner's wall temperature, sends its heat flux."""
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)
-        self.set_wall_T(self.wall_T())  # fixed at its value in 0/T until the partner sends
+        self.set_wall_T(self.wall_T())
         Coupling.of(ctx).add(self)
 
     @coupled.coordinates
@@ -121,18 +97,14 @@ class CoupledTemperature(NeoNPatch):
 
 @coupled
 class CoupledHeatFlux(NeoNPatch):
-    """The Neumann side: the heat flux into the partner's region leaves its own; it sends its wall
-    temperature."""
+    """The Neumann side: takes the partner's heat flux, sends its wall temperature."""
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)
         rt = ctx.models["neon_runtime"]
-        # dT/dt gains q A / (rho cp V) in a cell from the heat flux q through its face
         self.capacities = ctx.models["conduction"].rho_cp * _host(rt.nf_mesh.cell_volumes)
-        # the heat flux through each face into the region; its source in the cells.
-        # It starts as the flux its value in 0/T gives: the wall temperature it sends
-        # until the partner's heat flux arrives is that value.
         self.source = nfb.create_uniform_volume_field(rt, f"heatIn({patch})", 0.0)
+        # until the partner sends, the heat flux its value in 0/T gives
         self._set_heat_in(self.h * (super().wall_T() - self.cell_T()))
         Coupling.of(ctx).add(self)
 
@@ -149,11 +121,9 @@ class CoupledHeatFlux(NeoNPatch):
         return [nn.exp.source(self.source)]
 
     def solved(self) -> None:
-        """Store the wall temperature it sends as the face values of the field, so the
-        written field holds it. Only the face values: the equation reads the patch from
-        the boundary's refValue / valueFraction / refGrad, which stay (the heat flux is
-        the source). Face by face: the only write into a part of the boundary values
-        NeoN binds, on any executor."""
+        """Store the sent wall temperature as the face values, so the written ``T`` holds it."""
+        # face by face: the only write into part of the boundary values NeoN binds on any
+        # executor; refValue / refGrad stay, the equation reads the flux from the source
         values = self.ctx.fields[self.field].boundary_data_value()
         for face, value in zip(range(self.faces.start, self.faces.stop), self.wall_T()):
             nn.fill_range(values, float(value), face, face + 1)
@@ -176,30 +146,13 @@ COUPLED_PATCHES: dict[str, type[NeoNPatch]] = {
     "coupledHeatFlux": CoupledHeatFlux,
 }
 
+_PATCH_TYPES = {condition: "calculated" for condition in COUPLED_PATCHES}
+
 
 def coupled_patches(field: str, ctx: Context, case_dir: Path) -> list[NeoNPatch]:
-    """The coupled patches of ``field``: the ``coupled`` entries of its start-time file.
-
-    Raises ``ValueError`` for a condition it does not know, or a coupled patch not
-    ``calculated``. A coupled patch in a region the case does not couple raises
-    from ``Coupling.add``.
-    """
+    """The coupled patches of ``field``, from the ``coupled`` entries of its start-time file."""
     path = case_dir / ctx.models["solution_loop"].timeName() / field
-    boundary = pyf.dictionary.read(str(path)).subDict("boundaryField")
-    patches: list[NeoNPatch] = []
-    for patch in map(str, boundary.toc()):
-        entry = boundary.subDict(patch)
-        if not entry.found("coupled"):
-            continue
-        name = str(entry.get_word("coupled"))
-        if name not in COUPLED_PATCHES:
-            raise ValueError(
-                f"{path}: patch {patch} is coupled as {name!r}; known: {sorted(COUPLED_PATCHES)}"
-            )
-        if str(entry.get_word("type")) != "calculated":
-            raise ValueError(
-                f"{path}: the coupled patch {patch} has type {entry.get_word('type')}; a coupled "
-                "patch is 'calculated' (its values come from the coupling)"
-            )
-        patches.append(COUPLED_PATCHES[name](field, patch, ctx))
-    return patches
+    return [
+        COUPLED_PATCHES[condition](field, patch, ctx)
+        for patch, condition in coupled_entries(path, _PATCH_TYPES).items()
+    ]
