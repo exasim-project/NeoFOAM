@@ -22,7 +22,7 @@ class Tag:
 
     @staticmethod
     def data(exchange: str, key: str) -> str:
-        """What a port sends of one data model (by its ``key``), each pass."""
+        """What a port sends of one data model (by its ``key``), each iteration."""
         return f"data:{exchange}/{key}"
 
     @staticmethod
@@ -31,8 +31,8 @@ class Tag:
         return f"port:{exchange}"
 
     @staticmethod
-    def loop(loop: str, what: Literal["streams", "pass", "decision"]) -> str:
-        """A region's streams, its pass and the leader's decision, within coupling loop ``loop``."""
+    def loop(loop: str, what: Literal["streams", "iteration", "decision"]) -> str:
+        """A region's streams, its iteration, the leader's decision, in coupling loop ``loop``."""
         return f"{loop}/{what}"
 
 

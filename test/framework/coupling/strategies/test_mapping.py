@@ -53,10 +53,10 @@ def test_nearest_neighbor_mapping_finds_the_neighbors_once_at_bind(
     monkeypatch.setattr(mapping_module, "nearest_neighbor", counted)
     mapper = NearestNeighborMapping().bind(_points([[0.0], [1.0]]), _points([[0.9], [0.2], [1.1]]))
 
-    passes = [mapper({"T": np.array([1.0, 2.0]) * k})["T"].tolist() for k in (1.0, 2.0, 3.0)]
+    iterations = [mapper({"T": np.array([1.0, 2.0]) * k})["T"].tolist() for k in (1.0, 2.0, 3.0)]
 
     assert searched == [3]
-    assert passes == [[2.0, 1.0, 2.0], [4.0, 2.0, 4.0], [6.0, 3.0, 6.0]]
+    assert iterations == [[2.0, 1.0, 2.0], [4.0, 2.0, 4.0], [6.0, 3.0, 6.0]]
 
 
 def _pairwise_nearest(source: Any, target: Any) -> Any:

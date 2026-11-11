@@ -9,7 +9,7 @@ A ``@coupled`` class declares what it sends and receives (``FaceData``,
 :class:`Exchange` pairs what one port sends with what the other receives, its
 mapping moves the data between their locations. The region's :class:`Participant`
 model builds one coupling op per :class:`CouplingLoop`; a loop's leader (its last
-region in stepping order) decides convergence and the final pass.
+region in stepping order) decides convergence and the final iteration.
 """
 
 from .comm.channel import (

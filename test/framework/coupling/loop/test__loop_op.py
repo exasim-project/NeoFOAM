@@ -106,7 +106,7 @@ def _leader(ops: dict[str, CouplingLoopOp]) -> Leader:
 
 
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
-def test_coupling_op_serial_port_receives_what_the_other_sent_in_the_same_pass() -> None:
+def test_coupling_op_serial_port_receives_what_the_other_sent_in_the_same_iteration() -> None:
     log: list[str] = []
     a, b = _CoupledInstance("a", log), _CoupledInstance("b", log)
 
@@ -125,7 +125,7 @@ def test_coupling_op_serial_port_receives_what_the_other_sent_in_the_same_pass()
 
 
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
-def test_coupling_op_parallel_ports_receive_what_the_other_sent_in_the_pass_before() -> None:
+def test_coupling_op_parallel_ports_receive_what_the_other_sent_in_the_iteration_before() -> None:
     a, b = _CoupledInstance("a", []), _CoupledInstance("b", [])
 
     _couple(a, b, convergence=[never], max_iterations=2, scheme="parallel")
@@ -152,7 +152,7 @@ def test_coupling_op_default_leader_takes_the_scheme_of_the_loop(parallel: bool)
     )
 
     leader = _leader({name: couple(ctx) for name, ctx in regions.items()})
-    # serial: b receives what a, stepping first, sent in this pass; parallel: neither fresh
+    # serial: b receives what a, stepping first, sent in this iteration; parallel: neither fresh
     assert [leader.fresh(stream) for stream in leader.streams] == [not parallel, False]
     assert not hasattr(leader, "parallel")
     assert leader.outcome is not None and leader.outcome.converged
@@ -190,7 +190,7 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
     ids=["serial: b only", "parallel: a and b"],
 )
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
-def test_coupling_op_accelerates_the_data_carried_into_a_pass(
+def test_coupling_op_accelerates_the_data_carried_into_an_iteration(
     parallel: bool, carried: list[list[float]]
 ) -> None:
     relaxed: list[list[float]] = []
@@ -217,7 +217,7 @@ def test_coupling_op_stops_once_the_sent_data_is_unchanged() -> None:
 
     _couple(a, b, max_iterations=10)
 
-    # unchanged after the second pass: one more, the final pass
+    # unchanged after the second iteration: one more, the final iteration
     assert (a.solves, b.solves) == (3, 3)
 
 
@@ -241,7 +241,7 @@ def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
 
     leader = _leader(ops)
     assert outcomes.of("b.coupling") == (
-        CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),
+        CouplingOutcome(iterations=3, converged=True, residuals={"x": 0.0}),
     )
     assert leader.label == "b.coupling"
     assert ops["a"].controller is None
@@ -250,7 +250,7 @@ def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
 def test_the_leader_warns_and_records_when_max_iterations_ends_the_loop() -> None:
     outcomes = Outcomes()
     with observe(outcomes):
-        with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
+        with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 iterations"):
             ops = _couple(
                 _CoupledInstance("a", []),
                 _CoupledInstance("b", []),
@@ -258,9 +258,9 @@ def test_the_leader_warns_and_records_when_max_iterations_ends_the_loop() -> Non
                 max_iterations=3,
             )
 
-    # the last pass took both ports from 2 to 3
+    # the last iteration took both ports from 2 to 3
     assert outcomes.of(_leader(ops).label) == (
-        CouplingOutcome(passes=3, converged=False, residuals={"x": 1 / 3}),
+        CouplingOutcome(iterations=3, converged=False, residuals={"x": 1 / 3}),
     )
 
 
@@ -400,7 +400,7 @@ def test_coupling_op_maps_what_the_partner_sent_onto_the_port_s_points() -> None
 
     run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
 
-    # converged after the first pass, then the final pass
+    # converged after the first iteration, then the final iteration
     assert len(mapping.mapped) == 4
     assert [data.x.tolist() for data in received] == [[2.0, 1.0]] * 4
 
@@ -424,9 +424,9 @@ def test_coupling_op_keeps_a_copy_of_the_data_an_instance_sends() -> None:
         run({name: (ctx, [solve("x", step)]) for name, ctx in regions.items()})
     ops = {name: couple(ctx) for name, ctx in regions.items()}
 
-    # x: 1, 2, 3, 3: unchanged after the fourth pass, then the final pass
+    # x: 1, 2, 3, 3: unchanged after the fourth iteration, then the final iteration
     assert outcomes.of(_leader(ops).label) == (
-        CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
+        CouplingOutcome(iterations=5, converged=True, residuals={"x": 0.0}),
     )
 
 
@@ -443,13 +443,13 @@ def test_a_port_sending_data_that_is_not_finite_raises() -> None:
 
     with pytest.raises(
         FloatingPointError,
-        match=r"coupling 'coupling': the x of a.p is not finite after pass 2$",
+        match=r"coupling 'coupling': the x of a.p is not finite after iteration 2$",
     ):
         _couple(a, b, convergence=[never], max_iterations=10)
 
 
 def test_a_relative_change_that_is_not_finite_raises() -> None:
-    """The acceleration relaxes b's data to inf: its change in the next pass is not finite."""
+    """The acceleration relaxes b's data to inf: its change in the next iteration is not finite."""
 
     def acceleration(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
         return [{"x": np.full(1, np.inf)} for _data in sent]
@@ -458,6 +458,7 @@ def test_a_relative_change_that_is_not_finite_raises() -> None:
 
     with pytest.raises(
         FloatingPointError,
-        match=r"coupling b.coupling: the relative change of the x of b.p is not finite in pass 1",
+        match=r"coupling b.coupling: the relative change of the x of b.p is not finite in "
+        r"iteration 1",
     ):
         _couple(a, b, convergence=[never], max_iterations=10, acceleration={"a-b": acceleration})

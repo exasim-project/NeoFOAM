@@ -198,7 +198,7 @@ class CouplingLoopOp(IterativeOp):
                 f"exchange '{exchange.name}' ({announced['label']} -> {port.label}): {error}"
             ) from None
 
-    def _tag(self, what: Literal["streams", "pass", "decision"]) -> str:
+    def _tag(self, what: Literal["streams", "iteration", "decision"]) -> str:
         return Tag.loop(self.loop.name, what)
 
     def _loop_streams(self, path: tuple[Optional[str], ...], own: list[Any]) -> list[GroupStream]:
@@ -243,13 +243,13 @@ class CouplingLoopOp(IterativeOp):
     ) -> Decision:
         """The leader's decision for this region; the leader checks the regions' times and loops."""
         if not self.is_leader:
-            self._send(self._leader, self._tag("pass"), (time, loops, current))
+            self._send(self._leader, self._tag("iteration"), (time, loops, current))
             decision: Decision = self._receive(self._leader, self._tag("decision"))
             return decision
         sent_by = {
             region: (time, loops, current)
             if region == self.region
-            else self._receive(region, self._tag("pass"))
+            else self._receive(region, self._tag("iteration"))
             for region in self._group
         }
         leader = self._controller

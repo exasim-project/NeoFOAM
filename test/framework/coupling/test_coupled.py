@@ -314,7 +314,7 @@ def test_coupling_op_public_read_api() -> None:
 
     leader = fluid_op.controller
     assert solid_op.controller is None and leader is not None
-    # serial: the fluid receives what the solid, stepping first, sent in this pass
+    # serial: the fluid receives what the solid, stepping first, sent in this iteration
     assert (leader.label, [leader.fresh(s) for s in leader.streams]) == (
         "fluid.coupling",
         [True, False],
@@ -323,7 +323,7 @@ def test_coupling_op_public_read_api() -> None:
         (("solid", "right", "T"), ("fluid", "wall")),
         (("fluid", "wall", "q"), ("solid", "right")),
     ]
-    assert [(o.passes, o.converged) for o in outcomes.of("fluid.coupling")] == [(1, True)]
+    assert [(o.iterations, o.converged) for o in outcomes.of("fluid.coupling")] == [(1, True)]
 
 
 class _Other(FaceData):

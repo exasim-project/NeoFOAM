@@ -3,9 +3,9 @@
 
 """What one region knows of the coupling of a case: :class:`ParticipantExchanges`.
 
-A serial pass waits for the whole pass of the regions that step before it, so a
+A serial iteration waits for the whole iteration of the regions that step before it, so a
 serial coupling loop may neither enclose a loop coupling two of its regions nor hold their
-time step: both need the partner back inside the pass.
+time step: both need the partner back inside the iteration.
 """
 
 from __future__ import annotations
@@ -46,12 +46,12 @@ class CouplingLoop:
     """A named coupling loop over some exchanges; one op ``<region>.<name>`` per region.
 
     Once every measure of ``convergence`` holds (none: the data is unchanged) one
-    more pass runs, the final one; the last of ``max_iterations`` is final
+    more iteration runs, the final one; the last of ``max_iterations`` is final
     regardless. ``acceleration`` relaxes the carried data, by exchange name, and
-    keeps state across passes: give each loop its own. ``placement`` places the op
+    keeps state across iterations: give each loop its own. ``placement`` places the op
     per region (default: around the whole top scope). ``serial``: a port receives
-    what an earlier-stepping partner sent in the same pass; ``parallel``: what it
-    sent in the pass before.
+    what an earlier-stepping partner sent in the same iteration; ``parallel``: what it
+    sent in the iteration before.
     """
 
     name: str
@@ -252,8 +252,8 @@ def _check_serial_nesting(loops: Sequence[CouplingLoop], exchanges: Sequence[Exc
             if len(shared) >= 2:
                 raise ValueError(
                     f"coupling '{outer.name}' is serial but encloses '{inner.name}', which "
-                    f"couples {shared} as well; a serial outer pass waits for its partner's "
-                    "whole pass, which needs the inner coupling of both - make "
+                    f"couples {shared} as well; a serial outer iteration waits for its partner's "
+                    "whole iteration, which needs the inner coupling of both - make "
                     f"'{outer.name}' parallel"
                 )
 

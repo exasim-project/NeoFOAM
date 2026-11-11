@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Accelerations of the data carried into a coupling pass: :class:`CouplingAcceleration`."""
+"""Accelerations of the data carried into a coupling iteration: :class:`CouplingAcceleration`."""
 
 from __future__ import annotations
 
@@ -17,15 +17,15 @@ from ..comm.channel import Data
 
 @PluginSystem.register(discriminator_variable="acceleration", discriminator="type")
 class CouplingAcceleration(BaseModel):
-    """Relaxes the data carried into a pass, per exchange; a plugin family.
+    """Relaxes the data carried into an iteration, per exchange; a plugin family.
 
-    It keeps state across passes: give each exchange its own.
+    It keeps state across iterations: give each exchange its own.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
-        """The relaxed ``sent`` for pass ``iteration``."""
+        """The relaxed ``sent`` for iteration ``iteration``."""
         raise NotImplementedError
 
 
@@ -33,7 +33,7 @@ class CouplingAcceleration(BaseModel):
 class ConstantRelaxation(CouplingAcceleration):
     """``x = x_last + relaxation * (sent - x_last)``.
 
-    The first data of every time step (pass 1) passes unchanged.
+    The first data of every time step (iteration 1) passes unchanged.
     """
 
     type: Literal["constant"] = "constant"
@@ -58,7 +58,7 @@ class ConstantRelaxation(CouplingAcceleration):
 class AitkenRelaxation(ConstantRelaxation):
     """Under-relaxes by Aitken's dynamic factor; for when a fixed factor converges slowly.
 
-    The first pass of a time step uses ``relaxation``.
+    The first iteration of a time step uses ``relaxation``.
 
     Example::
 

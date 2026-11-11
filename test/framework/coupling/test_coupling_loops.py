@@ -3,7 +3,7 @@
 
 """Several coupling loops: one op per loop of a region, each with its own leader.
 
-Every port sends a fixed value, so every loop converges after its second pass.
+Every port sends a fixed value, so every loop converges after its second iteration.
 """
 
 from __future__ import annotations
@@ -92,9 +92,9 @@ def test_the_messages_of_each_loop_are_tagged_by_loop() -> None:
     )
 
     tags = set(comm_channel.tags)
-    assert {"outer/streams", "outer/pass", "outer/decision", "port:x"} <= tags
-    assert {"inner/streams", "inner/pass", "inner/decision", "port:y"} <= tags
-    assert not tags & {"streams", "pass", "decision"}
+    assert {"outer/streams", "outer/iteration", "outer/decision", "port:x"} <= tags
+    assert {"inner/streams", "inner/iteration", "inner/decision", "port:y"} <= tags
+    assert not tags & {"streams", "iteration", "decision"}
     for name in ("outer", "inner"):
         leader = couple(regions["b"], ["outer", "inner"].index(name)).controller
         assert leader is not None and leader.outcome is not None
@@ -159,8 +159,8 @@ def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
     }
 
 
-def test_a_loop_nested_in_one_region_only_raises_at_its_first_pass() -> None:
-    # b's second ab pass would run bc again, which c, done with bc, never answers
+def test_a_loop_nested_in_one_region_only_raises_at_its_first_iteration() -> None:
+    # b's second ab iteration would run bc again, which c, done with bc, never answers
     regions, ops = _chain()
 
     with pytest.raises(
@@ -211,7 +211,7 @@ def test_a_loop_entered_in_different_loop_states_raises() -> None:
     # a loop runs four times in both, but a in outer 1 inner 2 where b in outer 2 inner 1
     with pytest.raises(
         ValueError,
-        match=r"coupling 'n': its regions entered pass 1 in different loop states: "
+        match=r"coupling 'n': its regions entered iteration 1 in different loop states: "
         r"a: outer#1 > inner#2, b: outer#2 > inner#1",
     ):
         _nested({"a": (1, 2), "b": (2, 1)})
