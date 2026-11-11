@@ -14,7 +14,92 @@ from typing import Any, Iterable, Optional
 from .channel import DEFAULT_TIMEOUT, CommChannelClosed, CouplingDeadlock, CouplingTimeout
 
 
-class InProcessCommChannel:
+class _Mailbox:
+    """The receive loop, its failure rules and its report, shared by the comm channels."""
+
+    def __init__(self, timeout: Optional[float]) -> None:
+        if timeout is not None and timeout < 0:
+            raise ValueError(f"a comm channel timeout is at least 0 seconds, not {timeout}")
+        self.timeout = timeout or None
+        self._messages: dict[tuple[str, str, str], deque[Any]] = defaultdict(deque)
+        self._closed: set[str] = set()
+        self._aborted: set[str] = set()
+        self._live: set[str] = set()
+        # target -> (source, tag, since): the receive each region waits in
+        self._waiting: dict[str, tuple[str, str, float]] = {}
+
+    def _take(self, source: str, target: str, tag: str) -> Any:
+        """The next message of ``(source, target, tag)``, waiting in :meth:`_wait`."""
+        key = (source, target, tag)
+        since = time.monotonic()
+        self._waiting[target] = (source, tag, since)
+        try:
+            while not self._messages[key]:
+                self._check_deadlock()
+                if source in self._aborted:
+                    raise CommChannelClosed(
+                        f"region {target} waits for '{tag}' from region {source}, "
+                        "which left the coupling"
+                    )
+                if source in self._closed:
+                    raise CouplingDeadlock(
+                        self._report(
+                            f"a coupling deadlock: region {target} waits for '{tag}' from "
+                            f"region {source}, which finished"
+                        )
+                    )
+                left = None if self.timeout is None else since + self.timeout - time.monotonic()
+                if left is not None and left <= 0:
+                    raise CouplingTimeout(
+                        self._report(
+                            f"a coupling timeout: region {target} waited {self.timeout:g} s "
+                            f"for '{tag}' from region {source} (commChannelTimeout)"
+                        )
+                    )
+                self._wait(left)
+            return self._messages[key].popleft()
+        finally:
+            self._waiting.pop(target, None)
+
+    def _check_deadlock(self) -> None:
+        """Raise :class:`CouplingDeadlock` once one was told; only threads can tell."""
+
+    def _wait(self, left: Optional[float]) -> None:
+        """Wait at most ``left`` seconds (``None``: no end) for a message or a region leaving."""
+        raise NotImplementedError
+
+    def _report(self, headline: str) -> str:
+        """``headline``, who waits for what since when, who left, the messages not received."""
+        now = time.monotonic()
+        lines = [headline + ":"]
+        for target, (source, tag, since) in sorted(self._waiting.items()):
+            lines.append(f"  {target} waits for '{tag}' from {source} (for {now - since:.1f} s)")
+        for region in sorted(self._live - set(self._waiting)):
+            lines.append(f"  {region} is busy (in no receive)")
+        left = sorted(self._closed | self._aborted)
+        if left:
+            lines.append(f"left the coupling: {', '.join(left)}")
+        undelivered = [
+            f"{source}→{target} '{tag}'" + (f" ({len(queue)})" if len(queue) > 1 else "")
+            for (source, target, tag), queue in sorted(self._messages.items())
+            if queue
+        ]
+        lines.append(f"undelivered messages: {', '.join(undelivered) or 'none'}")
+        return "\n".join(lines)
+
+
+def _pickled(source: str, target: str, tag: str, message: Any) -> bytes:
+    """``message`` pickled; ``TypeError`` when it is not plain data."""
+    try:
+        return pickle.dumps(message, protocol=5)
+    except Exception as error:
+        raise TypeError(
+            f"the message '{tag}' from region {source} to region {target} is not plain "
+            f"data, it does not pickle: {error}"
+        ) from error
+
+
+class InProcessCommChannel(_Mailbox):
     """A comm channel between regions running in threads of one process: a mailbox per tag.
 
     Messages are pickled, as between processes: the receiver gets its own copy.
@@ -30,15 +115,7 @@ class InProcessCommChannel:
     """
 
     def __init__(self, timeout: Optional[float] = DEFAULT_TIMEOUT) -> None:
-        if timeout is not None and timeout < 0:
-            raise ValueError(f"a comm channel timeout is at least 0 seconds, not {timeout}")
-        self.timeout = timeout or None
-        self._messages: dict[tuple[str, str, str], deque[Any]] = defaultdict(deque)
-        self._closed: set[str] = set()
-        self._aborted: set[str] = set()
-        self._live: set[str] = set()
-        # target -> (source, tag, since): the receive each region waits in
-        self._waiting: dict[str, tuple[str, str, float]] = {}
+        super().__init__(timeout)
         self._deadlock: Optional[str] = None
         self._changed = threading.Condition()
 
@@ -47,64 +124,27 @@ class InProcessCommChannel:
             self._live |= set(regions) - self._closed
 
     def send(self, source: str, target: str, tag: str, message: Any) -> None:
-        sent = self._copy(source, target, tag, message)
+        sent = pickle.loads(_pickled(source, target, tag, message))
         with self._changed:
             self._messages[(source, target, tag)].append(sent)
             self._changed.notify_all()
 
-    def _copy(self, source: str, target: str, tag: str, message: Any) -> Any:
-        """The copy of ``message`` that arrives: a pickle round trip."""
-        try:
-            return pickle.loads(pickle.dumps(message))
-        except Exception as error:
-            raise TypeError(
-                f"the message '{tag}' from region {source} to region {target} is not plain "
-                f"data, it does not pickle: {error}"
-            ) from error
-
     def receive(self, source: str, target: str, tag: str) -> Any:
-        key = (source, target, tag)
         with self._changed:
-            since = time.monotonic()
-            self._waiting[target] = (source, tag, since)
-            try:
-                while not self._messages[key]:
-                    if self._deadlock is not None:
-                        raise CouplingDeadlock(self._deadlock)
-                    if source in self._aborted:
-                        raise CommChannelClosed(
-                            f"region {target} waits for '{tag}' from region {source}, "
-                            "which left the coupling"
-                        )
-                    if source in self._closed:
-                        raise CouplingDeadlock(
-                            self._report(
-                                f"a coupling deadlock: region {target} waits for '{tag}' from "
-                                f"region {source}, which finished"
-                            )
-                        )
-                    if self._deadlocked():
-                        self._deadlock = self._report(
-                            "a coupling deadlock: every running region waits for a message "
-                            "no region sent"
-                        )
-                        self._changed.notify_all()
-                        raise CouplingDeadlock(self._deadlock)
-                    if self.timeout is None:
-                        self._changed.wait()
-                        continue
-                    left = since + self.timeout - time.monotonic()
-                    if left <= 0:
-                        raise CouplingTimeout(
-                            self._report(
-                                f"a coupling timeout: region {target} waited {self.timeout:g} s "
-                                f"for '{tag}' from region {source} (commChannelTimeout)"
-                            )
-                        )
-                    self._changed.wait(left)
-                return self._messages[key].popleft()
-            finally:
-                self._waiting.pop(target, None)
+            return self._take(source, target, tag)
+
+    def _check_deadlock(self) -> None:
+        if self._deadlock is not None:
+            raise CouplingDeadlock(self._deadlock)
+
+    def _wait(self, left: Optional[float]) -> None:
+        if self._deadlocked():
+            self._deadlock = self._report(
+                "a coupling deadlock: every running region waits for a message no region sent"
+            )
+            self._changed.notify_all()
+            raise CouplingDeadlock(self._deadlock)
+        self._changed.wait(left)
 
     def close(self, region: str) -> None:
         with self._changed:
@@ -130,19 +170,3 @@ class InProcessCommChannel:
             and not self._messages[(self._waiting[region][0], region, self._waiting[region][1])]
             for region in self._live
         )
-
-    def _report(self, headline: str) -> str:
-        """``headline``, then who waits for what since when and the messages not received."""
-        now = time.monotonic()
-        lines = [headline + ":"]
-        for target, (source, tag, since) in sorted(self._waiting.items()):
-            lines.append(f"  {target} waits for '{tag}' from {source} (for {now - since:.1f} s)")
-        for region in sorted(self._live - set(self._waiting)):
-            lines.append(f"  {region} is busy (in no receive)")
-        undelivered = [
-            f"{source}→{target} '{tag}'" + (f" ({len(queue)})" if len(queue) > 1 else "")
-            for (source, target, tag), queue in sorted(self._messages.items())
-            if queue
-        ]
-        lines.append(f"undelivered messages: {', '.join(undelivered) or 'none'}")
-        return "\n".join(lines)

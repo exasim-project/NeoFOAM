@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import pickle
 import time
-from collections import defaultdict, deque
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Optional, Sequence
 
@@ -30,7 +29,7 @@ from pydantic import BaseModel
 
 from neofoam.framework.operations import IterativeOp
 
-from .comm_channel import DEFAULT_TIMEOUT, CommChannelClosed, CouplingDeadlock, CouplingTimeout
+from .comm_channel import DEFAULT_TIMEOUT, _Mailbox, _pickled
 from .data import ExchangeSide, _sent
 from .loop import CouplingOp
 
@@ -46,29 +45,14 @@ _MESSAGE, _CLOSED, _ABORTED = "message", "closed", "aborted"
 _FIRST_PAUSE, _LONGEST_PAUSE = 1e-5, 1e-3
 
 
-class MpiTransport:
+class MpiTransport(_Mailbox):
     """A comm channel between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.
 
-    ``channel`` is a communicator of every process of the run (a ``Dup`` of
-    MPI_COMM_WORLD, so no other message meets the coupling's), ``roots`` the
-    rank in it of each region's root, and ``region`` the region of this
-    process, which must be its root. Every message goes as one pickle under the
-    one MPI tag :attr:`TAG`, the string tag inside it; a receive takes every
-    message that arrived into a mailbox per ``(source, tag)`` and returns the
-    first of its own. MPI does not overtake messages between two processes on
-    one communicator and tag, so the messages of one ``(source, target)``
-    arrive in the order they were sent, of every tag (more than the contract
-    of :class:`~neofoam.framework.coupling.CommChannel`). A send never blocks
-    (``isend``); a message that does not pickle raises ``TypeError`` at once.
-
-    A receive raises :class:`CouplingDeadlock` once ``source`` finished
-    (:meth:`close`) and :class:`CommChannelClosed` once it failed (:meth:`abort`)
-    with no such message waiting, and :class:`CouplingTimeout` when it waits
-    longer than ``timeout`` seconds (``None`` or ``0``: without end), naming
-    what it waits for and the messages that arrived but were not received.
-    A deadlock between processes is told by that timeout only. Raises
-    ``ValueError`` for a negative ``timeout``, and on a send or receive of
-    another region than ``region``. Not thread safe.
+    ``channel`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD),
+    ``roots`` maps each region of the group to its root's rank in it, and
+    ``region`` is this root's. A receive fails as one of
+    :class:`~neofoam.framework.coupling.InProcessCommChannel`, but a deadlock
+    between processes is told by the timeout only. Not thread safe.
     """
 
     #: The one MPI tag of the coupling's messages.
@@ -81,8 +65,7 @@ class MpiTransport:
         region: str,
         timeout: Optional[float] = DEFAULT_TIMEOUT,
     ) -> None:
-        if timeout is not None and timeout < 0:
-            raise ValueError(f"a comm channel timeout is at least 0 seconds, not {timeout}")
+        super().__init__(timeout)
         if region not in roots:
             raise ValueError(f"region {region} has no root among {dict(roots)}")
         if roots[region] != channel.rank:
@@ -93,12 +76,10 @@ class MpiTransport:
         self.channel = channel
         self.roots = dict(roots)
         self.region = region
-        self.timeout = timeout or None
-        self._mail: dict[tuple[str, str], deque[Any]] = defaultdict(deque)
-        self._closed: set[str] = set()
-        self._aborted: set[str] = set()
-        self._requests: list[Any] = []
+        # (target, tag, request) of every send not known to be complete
+        self._sends: list[tuple[str, str, Any]] = []
         self._left = False
+        self._pause = _FIRST_PAUSE
 
     def start(self, regions: Iterable[str]) -> None:
         pass
@@ -107,89 +88,43 @@ class MpiTransport:
         self._own(source, "sends as")
         if target not in self.roots:
             raise ValueError(f"region {source} sends '{tag}' to {target}, which is no region")
-        try:
-            payload = pickle.dumps((source, _MESSAGE, tag, message), protocol=5)
-        except Exception as error:
-            raise TypeError(
-                f"the message '{tag}' from region {source} to region {target} is not plain "
-                f"data, it does not pickle: {error}"
-            ) from error
-        self._post(target, payload)
+        self._post(target, tag, _pickled(source, target, tag, (source, _MESSAGE, tag, message)))
 
     def receive(self, source: str, target: str, tag: str) -> Any:
         self._own(target, "receives as")
-        key = (source, tag)
-        since = time.monotonic()
-        pause = _FIRST_PAUSE
-        while True:
-            if self._drain():
-                pause = _FIRST_PAUSE
-            if self._mail[key]:
-                return self._mail[key].popleft()
-            if source in self._aborted:
-                raise CommChannelClosed(
-                    f"region {target} waits for '{tag}' from region {source}, "
-                    "which left the coupling"
-                )
-            if source in self._closed:
-                raise CouplingDeadlock(
-                    self._report(
-                        f"a coupling deadlock: region {target} waits for '{tag}' from region "
-                        f"{source}, which finished",
-                        source,
-                        tag,
-                        since,
-                    )
-                )
-            if self.timeout is not None and time.monotonic() - since > self.timeout:
-                raise CouplingTimeout(
-                    self._report(
-                        f"a coupling timeout: region {target} waited {self.timeout:g} s for "
-                        f"'{tag}' from region {source} (commChannelTimeout)",
-                        source,
-                        tag,
-                        since,
-                    )
-                )
-            time.sleep(pause)
-            pause = min(2 * pause, _LONGEST_PAUSE)
+        self._drain()
+        return self._take(source, target, tag)
 
     def close(self, region: str) -> None:
-        """Region ``region`` (this root's) leaves; waits until every other root left too.
+        """This root's region leaves; wait until every other root left and every send completed.
 
-        Tells every other root first, so a partner waiting for this region fails
-        at once (:class:`CouplingDeadlock`). Then it takes the messages still
-        coming until each other root closed (or aborted): every message
-        between the roots is received, every send complete, before MPI is
-        finalized. Closing again does nothing.
+        Closing again does nothing.
         """
         self._own(region, "closes")
         if self._left:
             return
         self._left = True
         self._tell(_CLOSED)
-        pause = _FIRST_PAUSE
-        others = set(self.roots) - {self.region}
-        while not others <= self._closed | self._aborted:
-            if not self._drain():
-                time.sleep(pause)
-                pause = min(2 * pause, _LONGEST_PAUSE)
-        for request in self._requests:
+        while self._missing():
+            self._wait(None)
+        for _target, _tag, request in self._sends:
             request.Wait()
-        self._requests.clear()
+        self._sends.clear()
 
     def abort(self, regions: Iterable[str]) -> None:
-        """Every region of ``regions`` leaves; this root tells the others if its own is one.
-
-        A root speaks for its region only: the others learn of a failed region
-        from it (its receives raise :class:`CommChannelClosed`). Under multiRun the
-        process aborts every process right after (``MPI_Abort``).
-        """
+        """``regions`` leave; this root tells the others when its own region is one of them."""
         regions = set(regions)
         self._aborted |= regions - {self.region}
         if self.region in regions and not self._left:
             self._left = True
             self._tell(_ABORTED)
+
+    def _wait(self, left: Optional[float]) -> None:
+        if self._drain():
+            self._pause = _FIRST_PAUSE
+            return
+        time.sleep(self._pause if left is None else min(self._pause, left))
+        self._pause = min(2 * self._pause, _LONGEST_PAUSE)
 
     def _own(self, region: str, what: str) -> None:
         if region != self.region:
@@ -203,11 +138,22 @@ class MpiTransport:
         payload = pickle.dumps((self.region, kind, None, None))
         for other in self.roots:
             if other != self.region:
-                self._post(other, payload)
+                self._post(other, kind, payload)
 
-    def _post(self, target: str, payload: bytes) -> None:
-        self._requests.append(self.channel.isend(payload, dest=self.roots[target], tag=self.TAG))
-        self._requests = [request for request in self._requests if not request.Test()]
+    def _post(self, target: str, tag: str, payload: bytes) -> None:
+        request = self.channel.isend(payload, dest=self.roots[target], tag=self.TAG)
+        self._sends.append((target, tag, request))
+        self._pending()
+
+    def _pending(self) -> list[tuple[str, str, Any]]:
+        """The sends not complete yet, tested without blocking."""
+        self._sends = [send for send in self._sends if not send[2].Test()]
+        return self._sends
+
+    def _missing(self) -> list[str]:
+        """The other roots that have not left yet."""
+        left = self._closed | self._aborted | {self.region}
+        return sorted(set(self.roots) - left)
 
     def _drain(self) -> bool:
         """Take every message that arrived into the mailboxes; whether one arrived."""
@@ -215,31 +161,13 @@ class MpiTransport:
         while self.channel.iprobe(tag=self.TAG):
             source, kind, tag, message = pickle.loads(self.channel.recv(tag=self.TAG))
             if kind == _MESSAGE:
-                self._mail[(source, tag)].append(message)
+                self._messages[(source, self.region, tag)].append(message)
             elif kind == _CLOSED:
                 self._closed.add(source)
             else:
                 self._aborted.add(source)
             arrived = True
         return arrived
-
-    def _report(self, headline: str, source: str, tag: str, since: float) -> str:
-        """``headline``, what this root waits for since when, the messages it did not receive."""
-        lines = [
-            headline + ":",
-            f"  {self.region} waits for '{tag}' from {source} "
-            f"(for {time.monotonic() - since:.1f} s)",
-        ]
-        left = sorted(self._closed | self._aborted)
-        if left:
-            lines.append(f"  left the coupling: {', '.join(left)}")
-        undelivered = [
-            f"{origin}→{self.region} '{name}'" + (f" ({len(queue)})" if len(queue) > 1 else "")
-            for (origin, name), queue in sorted(self._mail.items())
-            if queue
-        ]
-        lines.append(f"undelivered messages: {', '.join(undelivered) or 'none'}")
-        return "\n".join(lines)
 
 
 class RegionComm:
