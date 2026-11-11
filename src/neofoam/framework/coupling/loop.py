@@ -18,7 +18,7 @@ from .kernels import BoundMapping
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .region import CouplingNode, Link, RegionCoupling
+    from .region import CouplingNode, Exchange, RegionCoupling
 
 
 # the loops enclosing a coupling op, outermost first: (name, iteration from 0)
@@ -57,13 +57,13 @@ class CouplingOp(IterativeOp):
         self.label = f"{coupling.region}.{node.name}"
         self._coupling = coupling
         self._comm_channel = coupling.comm_channel
-        self._links = coupling.node_links(node)
+        self._exchanges = coupling.node_exchanges(node)
         self._group = coupling.node_group(node)
         self._leader = self._group[-1]
         self._by_patch = {
-            dict(link.ends)[self.region]: link
-            for link in self._links
-            if self.region in dict(link.ends)
+            dict(exchange.ends)[self.region]: exchange
+            for exchange in self._exchanges
+            if self.region in dict(exchange.ends)
         }
         self._sides = tuple(sides)
         self._check()
@@ -82,10 +82,10 @@ class CouplingOp(IterativeOp):
                     f"two coupled sides on patch {side.label}; an exchange joins patches "
                     "with one coupled side each"
                 )
-        for patch, link in self._by_patch.items():
+        for patch, exchange in self._by_patch.items():
             if patch not in patches:
                 raise ValueError(
-                    f"exchange '{link.name}' connects {self.region}.{patch}, which has no "
+                    f"exchange '{exchange.name}' connects {self.region}.{patch}, which has no "
                     "coupled side (no coupled boundary condition on that patch)"
                 )
 
@@ -109,13 +109,13 @@ class CouplingOp(IterativeOp):
         """The leader's controller, built at its first loop test; ``None`` in other regions."""
         return self._controller
 
-    def link_of(self, side: ExchangeSide) -> Link:
+    def exchange_of(self, side: ExchangeSide) -> Exchange:
         """The exchange ``side`` belongs to."""
         return self._by_patch[side.patch]
 
     def partner(self, side: ExchangeSide) -> str:
         """``<region>.<patch>`` of the side ``side`` receives from."""
-        region, patch = self.link_of(side).partner(self.region)
+        region, patch = self.exchange_of(side).partner(self.region)
         return f"{region}.{patch}"
 
     def _test(self, ctx: Context) -> bool:
@@ -127,8 +127,10 @@ class CouplingOp(IterativeOp):
         current = {side.patch: _sent(side, self.node.name, iteration, time) for side in self._sides}
         for side in self._sides:
             if side.patch in self._fresh:
-                link = self.link_of(side)
-                self._send(link.partner(self.region)[0], Tag.data(link.name), current[side.patch])
+                exchange = self.exchange_of(side)
+                self._send(
+                    exchange.partner(self.region)[0], Tag.data(exchange.name), current[side.patch]
+                )
         go_on, final, decided, self._fresh = self._decide(
             current, time if iteration == 0 else None, loops, iteration
         )
@@ -157,26 +159,26 @@ class CouplingOp(IterativeOp):
         """Tell each partner its side and the leader the region's sides and loops; check them."""
         path = tuple(name for name, _iteration in loops)
         for side in self._sides:
-            link = self.link_of(side)
+            exchange = self.exchange_of(side)
             announced = {
                 "label": side.label,
                 "model": side.sends.__qualname__,
                 "fields": tuple(side.sends.model_fields),
                 "points": side.coordinates,
             }
-            self._send(link.partner(self.region)[0], Tag.side(link.name), announced)
+            self._send(exchange.partner(self.region)[0], Tag.side(exchange.name), announced)
         sides = [(side.patch, side.field) for side in self._sides]
         if not self.is_leader:
             self._send(self._leader, self._tag("sides"), (path, sides))
         for side in self._sides:
-            link = self.link_of(side)
-            announced = self._receive(link.partner(self.region)[0], Tag.side(link.name))
-            _check_received(link.name, announced, side)
+            exchange = self.exchange_of(side)
+            announced = self._receive(exchange.partner(self.region)[0], Tag.side(exchange.name))
+            _check_received(exchange.name, announced, side)
             try:
-                mapper = link.mapping.bind(announced["points"], side.coordinates)
+                mapper = exchange.mapping.bind(announced["points"], side.coordinates)
             except ValueError as error:
                 raise ValueError(
-                    f"exchange '{link.name}' ({announced['label']} -> {side.label}): {error}"
+                    f"exchange '{exchange.name}' ({announced['label']} -> {side.label}): {error}"
                 ) from None
             self._mappers[side.patch] = mapper
         if self.is_leader:
@@ -207,11 +209,15 @@ class CouplingOp(IterativeOp):
                 "one node or place it alike"
             )
         other: dict[End, End] = {
-            end: link.ends[1 - k] for link in self._links for k, end in enumerate(link.ends)
+            end: exchange.ends[1 - k]
+            for exchange in self._exchanges
+            for k, end in enumerate(exchange.ends)
         }
-        exchange = {end: link.name for link in self._links for end in link.ends}
+        exchange_name = {
+            end: exchange.name for exchange in self._exchanges for end in exchange.ends
+        }
         return [
-            GroupSide(region, patch, field, other[(region, patch)], exchange[(region, patch)])
+            GroupSide(region, patch, field, other[(region, patch)], exchange_name[(region, patch)])
             for region, (_path, sides) in received.items()
             for patch, field in sides
         ]
@@ -274,10 +280,10 @@ class CouplingOp(IterativeOp):
 
     def _hand_over(self, side: ExchangeSide, decided: dict[str, Optional[Data]]) -> None:
         """Map what the partner of ``side`` sent (or the carried data) onto it and hand it over."""
-        link = self.link_of(side)
+        exchange = self.exchange_of(side)
         data = decided[side.patch]
         if data is None:
-            data = self._receive(link.partner(self.region)[0], Tag.data(link.name))
+            data = self._receive(exchange.partner(self.region)[0], Tag.data(exchange.name))
         received = side.receives.model_validate(self._mappers[side.patch](data))
         observer = execution_observer.current()
         if observer is not None:

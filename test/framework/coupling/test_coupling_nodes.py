@@ -29,16 +29,16 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Coupling,
     CouplingNode,
+    Exchange,
     InProcessCommChannel,
-    Link,
 )
 from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import IterativeOp, Operation, StepBuilder
 from neofoam.framework.types import OperationMetadata, Placement
 
-X = Link("x", (("a", "p"), ("b", "p")))
-Y = Link("y", (("a", "q"), ("b", "q")))
+X = Exchange("x", (("a", "p"), ("b", "p")))
+Y = Exchange("y", (("a", "q"), ("b", "q")))
 
 
 def _two_nodes(comm_channel: Optional[InProcessCommChannel] = None) -> dict[str, Context]:
@@ -99,13 +99,13 @@ def test_the_messages_of_each_node_are_tagged_by_node() -> None:
 
 
 def test_each_node_has_its_own_leader() -> None:
-    links = [X, Link("z", (("b", "q"), ("c", "q")))]
+    exchanges = [X, Exchange("z", (("b", "q"), ("c", "q")))]
     # in b, ab around solve_x and bc around solve_z: neither nests in the other
     nodes = [
         CouplingNode("ab", ("x",), placement={"b": Placement(("solve_x",))}),
         CouplingNode("bc", ("z",), placement={"b": Placement(("solve_z",))}),
     ]
-    regions = contexts(["a", "b", "c"], links, nodes)
+    regions = contexts(["a", "b", "c"], exchanges, nodes)
     add_coupled(regions["a"], "p", "x", fixed(1.0, []))
     add_coupled(regions["b"], "p", "x", fixed(2.0, []))
     add_coupled(regions["b"], "q", "z", fixed(3.0, []))
@@ -138,12 +138,12 @@ def test_each_node_has_its_own_leader() -> None:
 
 def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
     """a-b-c, ab over x and bc over z: by default bc nests inside ab in b, not in c."""
-    links = [X, Link("z", (("b", "q"), ("c", "q")))]
+    exchanges = [X, Exchange("z", (("b", "q"), ("c", "q")))]
     nodes = [
         CouplingNode("ab", ("x",), max_iterations=2),
         CouplingNode("bc", ("z",)),
     ]
-    regions = contexts(["a", "b", "c"], links, nodes)
+    regions = contexts(["a", "b", "c"], exchanges, nodes)
     add_coupled(regions["a"], "p", "x", fixed(1.0, []))
     add_coupled(regions["b"], "p", "x", fixed(2.0, []))
     add_coupled(regions["b"], "q", "z", fixed(3.0, []))
