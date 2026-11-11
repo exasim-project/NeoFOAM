@@ -65,19 +65,19 @@ def _by_point(points: np.ndarray, values: np.ndarray) -> tuple[np.ndarray, np.nd
     return points[order], values[order]
 
 
-def _side(parts: list[dict[str, Any]], label: str) -> dict[str, np.ndarray]:
-    """A coupled side's data from every process, ordered by point."""
+def _port(parts: list[dict[str, Any]], label: str) -> dict[str, np.ndarray]:
+    """A coupled port's data from every process, ordered by point."""
     points = np.concatenate([np.reshape(part[label]["points"], (-1, 3)) for part in parts])
-    side = {}
+    port = {}
     for name in parts[0][label]:
         if name != "points":
             data = np.concatenate([np.asarray(part[label][name]) for part in parts])
-            side["points"], side[name] = _by_point(points, data)
-    return side
+            port["points"], port[name] = _by_point(points, data)
+    return port
 
 
 def _results(run: subprocess.CompletedProcess) -> dict[str, dict[str, Any]]:
-    """Each region's ``T`` by cell centre, time index per process and coupled sides."""
+    """Each region's ``T`` by cell centre, time index per process and coupled ports."""
     assert run.returncode == 0, f"stdout:\n{run.stdout[-6000:]}\nstderr:\n{run.stderr[-4000:]}"
     found: dict[str, list[Any]] = {}
     for line in run.stdout.splitlines():
@@ -90,12 +90,12 @@ def _results(run: subprocess.CompletedProcess) -> dict[str, dict[str, Any]]:
             np.concatenate([np.asarray(part["centres"]) for part in parts]),
             np.concatenate([np.asarray(part["T"]) for part in parts]),
         )
-        sides = [part["sides"] for part in parts]
+        ports = [part["ports"] for part in parts]
         regions[region] = {
             "centres": centres,
             "T": values,
             "index": [part["index"] for part in parts],
-            "sides": {label: _side(sides, label) for label in sides[0]},
+            "ports": {label: _port(ports, label) for label in ports[0]},
         }
     return regions
 
@@ -224,7 +224,7 @@ def test_coupled_regions_on_processes_match_their_run_on_threads(
         ("left", "left.interface", "T", 3),
         ("right", "right.interface", "q", 5),
     ):
-        there, here = mpi[region]["sides"][label], threads[region]["sides"][label]
+        there, here = mpi[region]["ports"][label], threads[region]["ports"][label]
         case_name = f"{label} {name}, {left}+{right} processes"
         assert len(there[name]) == faces, case_name
         np.testing.assert_allclose(there["points"], here["points"], atol=1e-12, err_msg=case_name)

@@ -44,7 +44,7 @@ def _cells(ctx: Any) -> dict[str, Any]:
         "centres": np.asarray(mesh.C().internalField()).tolist(),
         "T": np.asarray(temperature).tolist(),
         "index": ctx.time.index,
-        "sides": _ports(ctx),
+        "ports": _ports(ctx),
     }
 
 
