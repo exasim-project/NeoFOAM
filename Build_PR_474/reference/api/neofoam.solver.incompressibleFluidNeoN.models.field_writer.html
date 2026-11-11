@@ -297,6 +297,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.comm_channel.html">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -304,7 +305,6 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.transport.html">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -734,8 +734,6 @@ legacy port’s per-step print).</p></li>
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleFluidNeoN.models.field_writer.write_output">
 <span class="sig-prename descclassname"><span class="pre">neofoam.solver.incompressibleFluidNeoN.models.field_writer.</span></span><span class="sig-name descname"><span class="pre">write_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/algorithms/field_writer/field_writer.html#write_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.field_writer.write_output" title="Link to this definition">¶</a></dt>
 <dd><p>Write the flagged fields on write steps; optionally report step timing.</p>
-<p>Marked <code class="docutils literal notranslate"><span class="pre">final</span></code>: inside a coupling loop it runs in its final pass only, once
-per time step.</p>
 <p>The decision reads the loop state (<code class="docutils literal notranslate"><span class="pre">ctx.time</span></code>, with the Python-computed
 <code class="docutils literal notranslate"><span class="pre">write_time</span></code> flag); the action writes through the injected backend hook.
 Only the <code class="docutils literal notranslate"><span class="pre">write=True</span></code>-flagged fields are handed over (a registry backend
