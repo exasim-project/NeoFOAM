@@ -3,12 +3,10 @@
 
 """The coupled blocks with one parallel node around each region's whole time step.
 
-``cases/coupledBlocks`` with an overlay ``regionCoupling.yaml`` without
-``wraps``: the time-step ops and ``start_step`` are marked ``first`` and
-``write_output`` ``final``, so however many passes a time step takes, the time
-advances and the fields are written once. ``convergedStart`` starts from the
-steady profile, where more passes change nothing beyond the linear solver's
-round-off (1e-9 K). A serial node may not hold the time step.
+The ``wholeStep`` overlay has no ``wraps``: the time-step ops and ``start_step`` are
+``first``, ``write_output`` ``final``, so the time advances and the fields are written
+once per step however many passes it takes. ``convergedStart`` starts from the steady
+profile, where more passes change nothing beyond the linear solver's round-off (1e-9 K).
 """
 
 from pathlib import Path

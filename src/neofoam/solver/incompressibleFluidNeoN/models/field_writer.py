@@ -51,7 +51,7 @@ class NeoNWriteHook(FieldHook):
 
     field_hook_type: Literal["neon"] = "neon"
     runtime: Any = None  # the NeoN RunTime adapter
-    turbulence: Any = None  # the turbulence handle (NeoNHandle); None: no turbulence model
+    turbulence: Any = None  # the turbulence handle (NeoNHandle)
     scalar_names: tuple[str, ...] = ("p",)
     vector_names: tuple[str, ...] = ("U",)
 

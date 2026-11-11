@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run a heatConductionNeoN case in the working directory; print what it computed as JSON.
+"""Run a heatConductionNeoN case (``single|multi``), print the ``#RESULT`` JSON line.
 
-``python heat_worker.py single|multi``: the single-region or the ``multiRun``
-case. The answer is the stdout line prefixed ``#RESULT``. A subprocess, since
-Kokkos and ``Foam::Time`` are per process and NeoN must be finalized after its
-objects are gone, so no context outlives :func:`main`.
+A subprocess: Kokkos and ``Foam::Time`` are per process, and NeoN must be finalized
+after its objects are gone.
 """
 
 import json
@@ -15,7 +13,7 @@ from typing import Any
 
 import numpy as np
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Coupling
 from neofoam.framework.coupling.loop import CouplingOp

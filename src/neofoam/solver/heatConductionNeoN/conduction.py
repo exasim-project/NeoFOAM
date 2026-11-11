@@ -5,9 +5,9 @@
 
 from typing import Any
 
-import neon._neon as nn  # NeoN Python bindings
+import neon._neon as nn
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam import neofoam_bindings as nfb
 
 from .configs import ThermalPropertiesConfig
 
@@ -15,9 +15,8 @@ from .configs import ThermalPropertiesConfig
 class ConductionProblem:
     """Transient heat conduction ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``.
 
-    Each of ``patches`` adds its terms to the right-hand side. :meth:`solve`
-    always starts from the old time :meth:`start_step` set, so a coupling pass
-    can re-solve the step. One instance per run.
+    :meth:`solve` always starts from the old time :meth:`start_step` set, so a coupling
+    pass can re-solve the step; each of ``patches`` adds its terms. One per run.
 
     Example::
 

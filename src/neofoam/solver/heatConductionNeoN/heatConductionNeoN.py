@@ -6,10 +6,14 @@
 
 """heatConductionNeoN: transient heat conduction on NeoN, coupled regions included.
 
-The same SolverSpec / StagedInit composition as ``incompressibleFluidNeoN``:
-the framework ``solutionLoop`` and ``fieldWriter`` around one ``solve_T`` per
-time step. ``multiRun`` couples its regions through the coupled patches of ``T``
-(:mod:`.coupled_patches`).
+A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
+
+    interface
+    {
+        type        calculated;
+        coupled     coupledTemperature;   // or coupledHeatFlux
+        value       uniform 300;
+    }
 """
 
 from typing import Any, Optional
@@ -38,7 +42,6 @@ heatConductionNeoN.config(ThermalPropertiesConfig)
 
 @heatConductionNeoN.initializer
 def initialize(self: Any) -> Context:
-    """The context on the region's case, then the coupling model, then the coupled patches."""
     init = create_init(self.region, list(self.argv))
     ctx = init.run()
     self.core_models = init.core_models
@@ -51,7 +54,6 @@ def initialize(self: Any) -> Context:
 def execution_graph(
     self: Any, ctx: Context, domain_name: Optional[str] = None
 ) -> tuple[StepBuilder, Operations]:
-    """One time step: set_time_step, increment_time, start_step, solve_T, write_output."""
     _ = domain_name
     loop_ops = Operations(core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(core_model(self.state, "fieldWriter").operations)
