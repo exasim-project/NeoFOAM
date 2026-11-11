@@ -25,8 +25,7 @@ from ..coupled import CoupledPort
 from ..data import Stream, sent
 from ..iteration._loop_op import CouplingLoopOp
 from ..location import Geometry
-from .channel import DEFAULT_TIMEOUT, CouplingTimeout
-from .in_process import _Mailbox, _pickled
+from .channel import DEFAULT_TIMEOUT, CouplingTimeout, Mailbox, pickled
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -40,7 +39,7 @@ _MESSAGE, _CLOSED, _ABORTED = "message", "closed", "aborted"
 _FIRST_PAUSE, _LONGEST_PAUSE = 1e-5, 1e-3
 
 
-class MpiCommChannel(_Mailbox):
+class MpiCommChannel(Mailbox):
     """A comm channel between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.
 
     ``comm`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD); ``roots``
@@ -79,7 +78,7 @@ class MpiCommChannel(_Mailbox):
         self._own(source, "sends as")
         if target not in self.roots:
             raise ValueError(f"region {source} sends '{tag}' to {target}, which is no region")
-        self._post(target, tag, _pickled(source, target, tag, (source, _MESSAGE, tag, message)))
+        self._post(target, tag, pickled(source, target, tag, (source, _MESSAGE, tag, message)))
 
     def receive(self, source: str, target: str, tag: str) -> Any:
         self._own(target, "receives as")
