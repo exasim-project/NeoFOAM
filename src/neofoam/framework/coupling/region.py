@@ -18,7 +18,7 @@ from typing import Callable, Literal, Mapping, Sequence, TypeVar
 from neofoam.framework.types import Placement
 
 from . import kernels
-from .comm_channel import CommChannel, CommChannelClosed
+from .comm.channel import CommChannel, CommChannelClosed
 from .data import End
 from .kernels import CouplingAcceleration, CouplingConvergence
 

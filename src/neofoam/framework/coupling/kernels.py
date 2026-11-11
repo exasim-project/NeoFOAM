@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from neofoam.core.plugin_system import PluginSystem
 
-from .comm_channel import Data
+from .comm.channel import Data
 from .location import Geometry
 
 

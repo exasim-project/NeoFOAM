@@ -12,14 +12,14 @@ model builds one coupling op per :class:`CouplingNode`; a node's leader (its las
 region in stepping order) decides convergence and the final pass.
 """
 
-from .comm_channel import (
+from .comm.channel import (
     CommChannel,
     CommChannelClosed,
     CommChannelError,
     CouplingDeadlock,
     CouplingTimeout,
-    InProcessCommChannel,
 )
+from .comm.in_process import InProcessCommChannel
 from .controller import CouplingNotConvergedWarning
 from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData

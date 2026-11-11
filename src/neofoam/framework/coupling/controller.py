@@ -17,7 +17,7 @@ import numpy as np
 
 from neofoam.framework import execution_observer
 
-from .comm_channel import Data
+from .comm.channel import Data
 from .data import End
 from .kernels import SideChange
 from .region import CouplingNode

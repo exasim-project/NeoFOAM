@@ -11,7 +11,7 @@ from typing import Annotated, Any, Callable, ClassVar, Optional
 import numpy as np
 from pydantic import BaseModel, PlainValidator
 
-from .comm_channel import Data
+from .comm.channel import Data
 
 # (region, port)
 End = tuple[str, str]
