@@ -164,6 +164,5 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
 
     _tests, controller = _couple("parallel", max_iterations=10, acceleration={"a-b": acceleration})
 
-    # passes 1 and 2, and the final pass 3
     assert iterations == [1, 2, 3]
     assert controller.outcomes[-1].passes == 3

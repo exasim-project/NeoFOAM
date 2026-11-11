@@ -252,7 +252,6 @@ class SolverSpec:
         """Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.
 
         An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.
-        ``coupling`` is the region's part of the case's coupling, ``None`` when uncoupled.
         """
         return SolverRuntime(
             spec=self,
@@ -314,9 +313,6 @@ class SolverSpec:
         type-injected from ``runtime.config``; a ``Context``-annotated parameter
         is injected with the live ``ctx`` (so the step can reach the built models
         without the runtime holding a long-lived reference to the context).
-
-        With ``ctx``, the model operations also hold those of each
-        :class:`~neofoam.framework.solver.runtime.GraphContribution` of ``ctx.models``.
         """
         if self._execution_graph_func is None:
             raise RuntimeError(f"No execution_graph function registered for solver {self.name}")

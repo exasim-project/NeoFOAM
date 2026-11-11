@@ -1,19 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The strategies of a coupling: mapping, acceleration and convergence of the exchanged data.
-
-Each is a :class:`~neofoam.core.plugin_system.PluginSystem` family, a strategy
-selected by its ``type``. A strategy of one's own subclasses its family with a
-``type: Literal[...]`` and registers (``@CouplingMapping.register``)::
-
-    CouplingNode(
-        "thermal",
-        ("interface",),
-        convergence=(RelativeConvergence(data="T", limit=1e-5),),
-        acceleration={"interface": AitkenRelaxation(relaxation=0.5)},
-    )
-"""
+"""Coupling strategies: mapping, acceleration and convergence of the exchanged data."""
 
 from __future__ import annotations
 
@@ -68,14 +56,10 @@ BoundMapping = Callable[[Data], Data]
 class CouplingMapping(BaseModel):
     """Maps the data a side sends onto the other side's points; a plugin family.
 
-    Bound once, when the receiving op connects, to the partner's points
-    (``source``) and its own (``target``; ``None`` without coordinates). A
-    mapping of one's own overrides :meth:`bind` and registers.
-
-    Example::
-
-        mapper = link.mapping.bind(partner_points, points)
-        mapped = mapper({"T": values})
+    Bound once, when the receiving op connects, to the partner's points (``source``)
+    and its own (``target``; ``None`` without coordinates). A mapping of one's own
+    subclasses it with a ``type: Literal[...]``, overrides :meth:`bind` and
+    registers (``@CouplingMapping.register``); so do accelerations and convergences.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -92,7 +76,6 @@ class IdentityMapping(CouplingMapping):
     type: Literal["identity"] = "identity"
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
-        """Raises ``ValueError`` when both sides have points and their numbers differ."""
         if source is not None and target is not None and len(source) != len(target):
             raise ValueError(
                 f"mapping '{self.type}' needs as many points on both sides: "
@@ -112,7 +95,6 @@ class NearestNeighborMapping(CouplingMapping):
     type: Literal["nearest-neighbor"] = "nearest-neighbor"
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
-        """Raises ``ValueError`` naming the side without coordinates."""
         if source is None or target is None:
             if source is None and target is None:
                 missing = "neither side has any: give both patches"
@@ -132,7 +114,7 @@ class NearestNeighborMapping(CouplingMapping):
 
 
 def default_mapping() -> CouplingMapping:
-    """The mapping of an exchange that names none, the one default."""
+    """The mapping of an exchange that names none."""
     return NearestNeighborMapping()
 
 
@@ -152,21 +134,13 @@ class CouplingAcceleration(BaseModel):
 
 @CouplingAcceleration.register
 class ConstantRelaxation(CouplingAcceleration):
-    """``x = x_last + relaxation * (sent - x_last)``; the first data passes unchanged.
-
-    Example::
-
-        CouplingNode(
-            "n", ("interface",), acceleration={"interface": ConstantRelaxation(relaxation=0.5)}
-        )
-    """
+    """``x = x_last + relaxation * (sent - x_last)``; first data passes unchanged."""
 
     type: Literal["constant"] = "constant"
     relaxation: float = Field(gt=0, le=1)
     _last: Optional[Any] = PrivateAttr(default=None)
 
     def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
-        """The relaxed ``sent`` for pass ``iteration``."""
         values = _flatten(sent)
         if self._last is not None:
             residual = values - self._last
@@ -186,9 +160,7 @@ class AitkenRelaxation(ConstantRelaxation):
 
     Example::
 
-        CouplingNode(
-            "n", ("interface",), acceleration={"interface": AitkenRelaxation(relaxation=0.5)}
-        )
+        CouplingNode("n", ("i",), acceleration={"i": AitkenRelaxation(relaxation=0.5)})
     """
 
     type: Literal["aitken"] = "aitken"  # type: ignore[assignment]
@@ -210,13 +182,11 @@ class AitkenRelaxation(ConstantRelaxation):
 
 
 def _flatten(sent: list[Data]) -> Any:
-    """All arrays of ``sent`` as one vector, in order."""
     arrays = [np.ravel(data[name]) for data in sent for name in sorted(data)]
     return np.concatenate(arrays) if arrays else np.zeros(0)
 
 
 def _unflatten(values: Any, like: list[Data]) -> list[Data]:
-    """``values`` cut into the arrays of ``like``."""
     result: list[Data] = []
     start = 0
     for data in like:
@@ -259,7 +229,6 @@ class RelativeConvergence(CouplingConvergence):
     limit: float = Field(gt=0)
 
     def __call__(self, changes: list[SideChange]) -> bool:
-        """Whether every array of field ``data`` changed by less than ``limit`` in the last pass."""
         return all(
             np.linalg.norm(np.asarray(change.current[name]) - np.asarray(change.previous[name]))
             <= self.limit * np.linalg.norm(change.current[name])

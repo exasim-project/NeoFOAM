@@ -1,15 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The coupling of one region as a model: ``ctx.models["coupling"]``, a :class:`Coupling`.
-
-A solver that supports coupling adds it in its init, before its boundary
-conditions, and each ``@coupled`` boundary condition adds itself::
-
-    ctx.models["coupling"] = Coupling(self.coupling)
-    ...
-    Coupling.of(ctx).add(self)
-"""
+"""A region's coupling model, ``ctx.models["coupling"]``: a :class:`Coupling`."""
 
 from __future__ import annotations
 
@@ -31,9 +23,12 @@ if TYPE_CHECKING:
 class Coupling:
     """The coupling of one region: its coupled sides and the operations they need.
 
-    ``coupling`` is ``None`` when the case does not couple the region. Its graph
-    operations (see :class:`~neofoam.framework.solver.runtime.GraphContribution`)
-    are one coupling op per node and, in a transient case, the time-step op.
+    A solver that supports coupling adds it in its init, before its boundary
+    conditions, and each ``@coupled`` boundary condition adds itself::
+
+        ctx.models["coupling"] = Coupling(self.coupling)
+        ...
+        Coupling.of(ctx).add(self)
     """
 
     def __init__(self, coupling: Optional[RegionCoupling]) -> None:
@@ -55,11 +50,7 @@ class Coupling:
         return tuple(self._sides)
 
     def add(self, instance: Any) -> None:
-        """Add the side of the ``@coupled`` ``instance``, which sets ``field`` and ``patch``.
-
-        Raises ``TypeError`` for another instance, ``ValueError`` when no exchange
-        connects its patch or the graph is built already.
-        """
+        """Add the side of the ``@coupled`` ``instance``, before the graph is built."""
         declaration = getattr(type(instance), "__coupled__", None)
         if declaration is None:
             raise TypeError(f"{type(instance).__qualname__} is not @coupled")
@@ -84,11 +75,7 @@ class Coupling:
         self._sides.append(side)
 
     def operations(self) -> Operations:
-        """The region's coupling ops, one per node, outer to inner; built once.
-
-        Raises ``ValueError`` when an exchange has no side, a patch two, or a
-        field is in two nodes.
-        """
+        """The region's coupling ops, one per node, outer to inner; built once."""
         if self._operations is None:
             coupling = self.coupling
             if coupling is None:
@@ -123,9 +110,8 @@ class Coupling:
     def time_step(self, ctx: Context, graph: Iterable[Operation]) -> Optional[Operation]:
         """The op ``<region>.time_step``: the group steps the smallest time step any asks for.
 
-        Runs once per time step between ``set_time_step`` and ``increment_time``;
-        ``None`` for an uncoupled or steady region. Raises ``ValueError`` when
-        ``graph`` lacks either of them.
+        It runs between ``set_time_step`` and ``increment_time``; ``None`` for an
+        uncoupled or steady region.
         """
         coupling = self.coupling
         if coupling is None or len(coupling.group) < 2 or ctx.time is None:
@@ -197,8 +183,6 @@ def _holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -> Opti
 
 
 class _TimeStep:
-    """The time-step op of a region."""
-
     def __init__(self, coupling: RegionCoupling) -> None:
         self._coupling = coupling
 

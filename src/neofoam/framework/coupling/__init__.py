@@ -3,11 +3,10 @@
 
 """Coupling of regions: each region runs its own solver, regions share only a transport.
 
-A ``@coupled`` boundary condition declares its side; the region's
-:class:`Coupling` model builds one coupling op per :class:`CouplingNode`, a loop
-in the region's own graph whose test exchanges the sides' data with the partner
-regions. The leader of a node (its last region in stepping order) decides
-convergence and the final pass. Internals come from their submodules.
+A ``@coupled`` boundary condition declares its side; the region's :class:`Coupling`
+model builds one coupling op per :class:`CouplingNode`, a loop whose test exchanges
+the sides' data. A node's leader (its last region in stepping order) decides
+convergence and the final pass.
 """
 
 from .controller import CouplingNotConvergedWarning

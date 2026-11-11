@@ -1,18 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""How data travels between coupled regions: the :class:`Transport`, the only thing they share.
-
-Point to point, as MPI: a send never blocks, a receive blocks until the message
-is there; messages of one ``(source, target, tag)`` arrive in order. Messages are
-plain data (they pickle), their tags built by :class:`Tag` alone.
-
-Example::
-
-    transport = InProcessTransport()
-    transport.send("left", "right", "interface", {"T": np.ones(3)})
-    transport.receive("left", "right", "interface")    # in right's thread
-"""
+"""The :class:`Transport` between coupled regions, the only thing they share."""
 
 from __future__ import annotations
 
@@ -67,7 +56,11 @@ class CouplingTimeout(CouplingTransportError):
 
 
 class Transport(Protocol):
-    """Messages between the regions of a coupled case, by ``(source, target, tag)``."""
+    """Messages between the regions of a coupled case, by ``(source, target, tag)``.
+
+    Point to point, as MPI: messages of one ``(source, target, tag)`` arrive in
+    order; they are plain data (they pickle), their tags built by :class:`Tag`.
+    """
 
     def send(self, source: str, target: str, tag: str, message: Any) -> None:
         """Send ``message`` from region ``source`` to region ``target``; never blocks."""
@@ -92,13 +85,16 @@ class Transport(Protocol):
 class InProcessTransport:
     """A transport between regions running in threads of one process: a mailbox per tag.
 
-    Each message is pickled and unpickled, as between processes: the receiver
-    gets its own copy, and a message that is not plain data raises ``TypeError``.
+    Messages are pickled, as between processes: the receiver gets its own copy.
     Once :meth:`start` named the running regions, a receive raises
-    :class:`CouplingDeadlock` as soon as every running region waits for a message
-    that is not there, or waits for a region that finished; it raises
-    :class:`TransportClosed` for a region that left by :meth:`abort`, and
-    :class:`CouplingTimeout` after ``timeout`` seconds (``None`` or ``0``: no end).
+    :class:`CouplingDeadlock` as soon as every running region waits in vain, and
+    :class:`CouplingTimeout` after ``timeout`` seconds (``None`` or ``0``: never).
+
+    Example::
+
+        transport = InProcessTransport()
+        transport.send("left", "right", "interface", {"T": np.ones(3)})
+        transport.receive("left", "right", "interface")    # in right's thread
     """
 
     def __init__(self, timeout: Optional[float] = DEFAULT_TIMEOUT) -> None:

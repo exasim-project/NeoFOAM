@@ -304,7 +304,7 @@ def test_exchange_with_nearest_neighbor_needs_coordinates() -> None:
     with pytest.raises(ValueError) as error:
         _run(regions)
 
-    # the region that checked first raises: fluid receives, solid sends to the side without
+    # the region that checked first raises: either direction lacks the coordinates
     hint = "give its patch coordinates (@coupled.coordinates) or choose mapping 'identity'"
     assert str(error.value) in (
         "exchange 'cht' (solid.right -> fluid.wall): mapping 'nearest-neighbor' needs the "

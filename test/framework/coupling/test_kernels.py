@@ -119,7 +119,7 @@ def test_nearest_neighbor_mapping_finds_the_neighbors_once_at_bind(
 
 
 def _pairwise_nearest(source: Any, target: Any) -> Any:
-    """The nearest neighbours as before the blocks: one distance tensor of all pairs."""
+    """The nearest neighbours from one distance tensor of all pairs."""
     distances = np.linalg.norm(target[:, None, :] - source[None, :, :], axis=-1)
     return np.argmin(distances, axis=1)
 
