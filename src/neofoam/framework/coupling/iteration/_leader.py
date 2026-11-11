@@ -11,7 +11,7 @@ import sys
 import warnings
 from dataclasses import dataclass, field
 from types import FrameType
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import numpy as np
 
@@ -80,6 +80,22 @@ def relative_changes(changes: list[SideChange]) -> dict[str, float]:
 # (region, port, data key) of what a port sends
 StreamId = tuple[str, str, str]
 
+# the loops enclosing a coupling op, outermost first: (name, iteration from 0)
+Loops = tuple[tuple[Optional[str], int], ...]
+
+# a stream of this region: (port, data key)
+LocalStream = tuple[str, str]
+
+
+# the leader's decision for a region: another pass?, final?, by received stream the
+# carried data or None (receive it fresh), and the sent streams to send fresh
+Decision = tuple[bool, bool, dict[LocalStream, Optional[Data]], frozenset[LocalStream]]
+
+
+def _state(loops: Loops) -> str:
+    """``time_loop#3 > ab#1`` (passes from 1), or ``top``."""
+    return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
+
 
 @dataclass(frozen=True)
 class GroupStream:
@@ -115,6 +131,8 @@ class Leader:
         group: Sequence[str],
     ) -> None:
         self.label = label
+        self._name = node.name
+        self._group = tuple(group)
         self.parallel = parallel = node.parallel
         self._streams = {stream.id: stream for stream in streams}
         self._convergence = tuple(node.convergence)
@@ -170,6 +188,49 @@ class Leader:
     def fresh(self, stream: StreamId) -> bool:
         """Whether the receiver of ``stream`` takes what it sent in this pass."""
         return self._fresh[stream]
+
+    def decisions(self, sent_by: dict[str, Any], iteration: int) -> dict[str, Decision]:
+        """Each region's decision on the pass the regions sent: what it receives, sends fresh."""
+        self._check_pass(sent_by, iteration)
+        current: dict[StreamId, Data] = {
+            (region, port, key): data
+            for region, (_when, _loops, streams) in sent_by.items()
+            for (port, key), data in streams.items()
+        }
+        carried = self.decide(current, iteration)
+        received: dict[str, dict[LocalStream, Optional[Data]]] = {
+            region: {} for region in self._group
+        }
+        fresh: dict[str, set[LocalStream]] = {region: set() for region in self._group}
+        if carried is not None:
+            for stream_id, stream in self.streams.items():
+                partner_region, partner_port = stream.partner
+                into = received[partner_region]
+                if self.fresh(stream_id):
+                    into[(partner_port, stream.key)] = None
+                    fresh[stream.region].add((stream.port, stream.key))
+                else:
+                    into[(partner_port, stream.key)] = carried[stream_id]
+        return {
+            region: (carried is not None, self.final, by_stream, frozenset(fresh[region]))
+            for region, by_stream in received.items()
+        }
+
+    def _check_pass(self, sent_by: dict[str, Any], iteration: int) -> None:
+        """Raise ``ValueError`` unless the regions entered the pass at one time and loop state."""
+        times = {region: when for region, (when, _loops, _data) in sent_by.items()}
+        if len(set(times.values())) > 1:
+            raise ValueError(
+                f"the coupled regions {list(times)} start a time step at different times "
+                f"{times}; they must step the same times (deltaT, endTime)"
+            )
+        states = {region: there for region, (_when, there, _data) in sent_by.items()}
+        if len(set(states.values())) > 1:
+            where = ", ".join(f"{region}: {_state(there)}" for region, there in states.items())
+            raise ValueError(
+                f"coupling '{self._name}': its regions entered pass {iteration + 1} "
+                f"in different loop states: {where}"
+            )
 
     def decide(
         self, current: dict[StreamId, Data], iteration: int

@@ -14,7 +14,7 @@ from ..comm.channel import Data, Tag
 from ..data import CoupledPort, End, Stream, check_received, check_rows, sent
 from ..location import Geometry
 from ..strategies.mapping import BoundMapping
-from ._leader import GroupStream, Leader, StreamId
+from ._leader import Decision, GroupStream, Leader, LocalStream, Loops
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -22,26 +22,9 @@ if TYPE_CHECKING:
     from ..exchanges import CouplingLoop, Exchange, ParticipantExchanges
 
 
-# the loops enclosing a coupling op, outermost first: (name, iteration from 0)
-_Loops = tuple[tuple[Optional[str], int], ...]
-
-# a stream of this region: (port, data key)
-_Local = tuple[str, str]
-
-
 def _path(names: Sequence[Optional[str]]) -> str:
     """``time_loop > ab``, or ``top``."""
     return " > ".join(str(name) for name in names) or "top"
-
-
-def _state(loops: _Loops) -> str:
-    """``time_loop#3 > ab#1`` (passes from 1), or ``top``."""
-    return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
-
-
-# the leader's decision for a region: another pass?, final?, by received stream the
-# carried data or None (receive it fresh), and the sent streams to send fresh
-_Decision = tuple[bool, bool, dict[_Local, Optional[Data]], frozenset[_Local]]
 
 
 class CouplingLoopOp(IterativeOp):
@@ -83,7 +66,7 @@ class CouplingLoopOp(IterativeOp):
         self._mappers: dict[str, BoundMapping] = {}
         self._controller: Optional[Leader] = None
         # the streams whose data the partner receives fresh, as the leader last decided
-        self._fresh: frozenset[_Local] = frozenset()
+        self._fresh: frozenset[LocalStream] = frozenset()
 
     def _check(self) -> None:
         names = [port.name for port in self._ports]
@@ -147,9 +130,9 @@ class CouplingLoopOp(IterativeOp):
             self._hand_over(port, decided)
         return True
 
-    def _current(self, when: tuple[int, Any]) -> dict[_Local, Data]:
+    def _current(self, when: tuple[int, Any]) -> dict[LocalStream, Data]:
         """What every port sends now, by stream; ``ValueError`` for a wrong row count."""
-        current: dict[_Local, Data] = {}
+        current: dict[LocalStream, Data] = {}
         for port in self._ports:
             size = self._geometries[port.name].size
             for stream in port.sends:
@@ -161,7 +144,7 @@ class CouplingLoopOp(IterativeOp):
     def _partner_region(self, port: CoupledPort) -> str:
         return self.exchange_of(port).partner(self.region)[0]
 
-    def _enclosing(self, ctx: Context) -> _Loops:
+    def _enclosing(self, ctx: Context) -> Loops:
         """``ctx.loops`` without the op's own entry; coupling ops by node name, to compare."""
         nodes = {f"{self.region}.{node.name}": node.name for node in self._coupling.nodes}
         return tuple(
@@ -174,7 +157,7 @@ class CouplingLoopOp(IterativeOp):
     def _receive(self, source: str, tag: str) -> Any:
         return self._comm_channel.receive(source, self.region, tag)
 
-    def _connect(self, loops: _Loops) -> None:
+    def _connect(self, loops: Loops) -> None:
         """Tell each partner what a port sends and the leader the region's streams; check them."""
         path = tuple(name for name, _iteration in loops)
         for port in self._ports:
@@ -254,12 +237,12 @@ class CouplingLoopOp(IterativeOp):
         ]
 
     def _decide(
-        self, current: dict[_Local, Data], time: Any, loops: _Loops, iteration: int
-    ) -> _Decision:
+        self, current: dict[LocalStream, Data], time: Any, loops: Loops, iteration: int
+    ) -> Decision:
         """The leader's decision for this region; the leader checks the regions' times and loops."""
         if not self.is_leader:
             self._send(self._leader, self._tag("pass"), (time, loops, current))
-            decision: _Decision = self._receive(self._leader, self._tag("decision"))
+            decision: Decision = self._receive(self._leader, self._tag("decision"))
             return decision
         sent_by = {
             region: (time, loops, current)
@@ -267,56 +250,15 @@ class CouplingLoopOp(IterativeOp):
             else self._receive(region, self._tag("pass"))
             for region in self._group
         }
-        self._check_pass(sent_by, iteration)
-        decisions = self._decisions(sent_by, iteration)
+        controller = self._controller
+        assert controller is not None
+        decisions = controller.decisions(sent_by, iteration)
         for region, decision in decisions.items():
             if region != self.region:
                 self._send(region, self._tag("decision"), decision)
         return decisions[self.region]
 
-    def _check_pass(self, sent_by: dict[str, Any], iteration: int) -> None:
-        """Raise ``ValueError`` unless the regions entered the pass at one time and loop state."""
-        times = {region: when for region, (when, _loops, _data) in sent_by.items()}
-        if len(set(times.values())) > 1:
-            raise ValueError(
-                f"the coupled regions {list(times)} start a time step at different times "
-                f"{times}; they must step the same times (deltaT, endTime)"
-            )
-        states = {region: there for region, (_when, there, _data) in sent_by.items()}
-        if len(set(states.values())) > 1:
-            where = ", ".join(f"{region}: {_state(there)}" for region, there in states.items())
-            raise ValueError(
-                f"coupling '{self.node.name}': its regions entered pass {iteration + 1} "
-                f"in different loop states: {where}"
-            )
-
-    def _decisions(self, sent_by: dict[str, Any], iteration: int) -> dict[str, _Decision]:
-        """The controller's decision, for each region: what it receives and sends fresh."""
-        controller = self._controller
-        assert controller is not None
-        current: dict[StreamId, Data] = {
-            (region, port, key): data
-            for region, (_when, _loops, streams) in sent_by.items()
-            for (port, key), data in streams.items()
-        }
-        carried = controller.decide(current, iteration)
-        received: dict[str, dict[_Local, Optional[Data]]] = {region: {} for region in self._group}
-        fresh: dict[str, set[_Local]] = {region: set() for region in self._group}
-        if carried is not None:
-            for stream_id, stream in controller.streams.items():
-                partner_region, partner_port = stream.partner
-                into = received[partner_region]
-                if controller.fresh(stream_id):
-                    into[(partner_port, stream.key)] = None
-                    fresh[stream.region].add((stream.port, stream.key))
-                else:
-                    into[(partner_port, stream.key)] = carried[stream_id]
-        return {
-            region: (carried is not None, controller.final, by_stream, frozenset(fresh[region]))
-            for region, by_stream in received.items()
-        }
-
-    def _hand_over(self, port: CoupledPort, decided: dict[_Local, Optional[Data]]) -> None:
+    def _hand_over(self, port: CoupledPort, decided: dict[LocalStream, Optional[Data]]) -> None:
         """Map what the partner sent (or the carried data) onto ``port``; hand each stream over."""
         for stream in port.receives:
             received = self._mapped(port, stream, decided[(port.name, stream.key)])
