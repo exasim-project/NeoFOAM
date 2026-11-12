@@ -12,13 +12,14 @@ Nothing runs unless the case declares something: with neither
 ``postProcess`` model is a no-op and no ``postProcessing/`` directory is created.
 
 The ``postProcess`` model is wired into ``incompressibleFluid``,
-``incompressibleVoF`` and ``incompressibleFluidNeoN`` today —
+``incompressibleVoF``, ``incompressibleFluidNeoN`` and ``heatConductionNeoN``
+today (a multiRun region reads its own ``<region>/system/postProcess.yaml``) —
 another solver picks it up by adding the same seam to its ``create_fields.py``
 (instantiate the model) and its execution-graph step (step ``post_process`` after
 ``write_output``); until it does, a declaration in one of its cases is ignored
 silently.
 
-On ``incompressibleFluidNeoN`` only the ``internal`` source works. Its fields
+On the NeoN solvers only the ``internal`` source works. Its fields
 live on the NeoN executor and stay there: the nodes reduce them with the NeoN
 kernels, so nothing is copied to the host on the way to a CSV row. The cell
 geometry comes off the run-time adapter's mesh, which *is* an fvMesh, and is

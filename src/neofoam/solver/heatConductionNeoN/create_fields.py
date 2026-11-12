@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Staged initialization of heatConductionNeoN: the time loop, the NeoN runtime, ``T``."""
+"""Staged initialization of heatConductionNeoN: time loop, NeoN runtime, ``T``, postProcess."""
 
 from pathlib import Path
 from typing import Any, Optional
@@ -20,6 +20,7 @@ from neofoam.framework.initialization import (
 )
 from neofoam.framework.initialization import model as init_model
 from neofoam.framework.model import ModelRuntime
+from neofoam.postprocess import postProcess
 from neofoam.solver.incompressibleFluidNeoN.models.field_writer import NeoNWriteHook, fieldWriter
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import (
     neon_loop_backend_steps,
@@ -65,7 +66,7 @@ def _runtime_steps(argv: list[str], case_dir: Path) -> list[InitStep]:
 
 
 def _build_steps(core_models: list[Any], argv: list[str], case_dir: Path) -> list[InitStep]:
-    solution_loop_model, field_writer_model, _control, properties = core_models
+    solution_loop_model, field_writer_model, post_process_model, _control, properties = core_models
 
     def inject_writer_hook(ctx: dict[str, Any]) -> NeoNWriteHook:
         hook = NeoNWriteHook(runtime=ctx["_neon_runtime"], scalar_names=("T",), vector_names=())
@@ -75,7 +76,11 @@ def _build_steps(core_models: list[Any], argv: list[str], case_dir: Path) -> lis
     builder = InitializerBuilder()
     builder.extend(_runtime_steps(argv, case_dir))
     builder.add_core_models(
-        [("solution_loop_model", solution_loop_model), ("field_writer_model", field_writer_model)]
+        [
+            ("solution_loop_model", solution_loop_model),
+            ("field_writer_model", field_writer_model),
+            ("post_process_model", post_process_model),
+        ]
     )
     builder.extend(neon_loop_backend_steps())
     builder.add(
@@ -128,6 +133,8 @@ def create_init(region: Optional[str], argv: list[str]) -> StagedInitRunner:
     def load_config() -> LoadResult:
         core_models: list[Any] = [
             *_time_models(region, case_dir),
+            # the region's tables and in-situ entries (system/postProcess.yaml)
+            postProcess.instantiate(case_dir, "main"),
             ControlDictConfig.load(case_dir=case_dir, validate=False),
             ThermalPropertiesConfig.load(case_dir=case_dir),
         ]
