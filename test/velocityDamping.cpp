@@ -63,7 +63,7 @@ TEST_CASE("VelocityDamping")
     // Random U has |U| <= sqrt(3); push a few scattered cells well above UMax so the damped set
     // is known exactly.
     const NeoN::scalar UMax = 5.0;
-    const NeoN::scalar C = 2.0;
+    const NeoN::scalar dampingC = 2.0;
     std::vector<NeoN::localIdx> fast {0, 3, 7};
     auto ofU = randomVectorField(runTime, mesh, "U");
     for (std::size_t i = 0; i < fast.size(); ++i)
@@ -78,7 +78,11 @@ TEST_CASE("VelocityDamping")
 
     Foam::surfaceScalarField ofNu(
         Foam::IOobject(
-            "nu", runTime.timeName(), mesh, Foam::IOobject::NO_READ, Foam::IOobject::NO_WRITE
+            "nu",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
         ),
         mesh,
         Foam::dimensionedScalar("nu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
@@ -98,7 +102,8 @@ TEST_CASE("VelocityDamping")
         if (magU > UMax)
         {
             const auto cbrtV = std::cbrt(mesh.V()[celli]);
-            expectedBoost[static_cast<std::size_t>(celli)] = C * cbrtV * cbrtV * (magU - UMax);
+            expectedBoost[static_cast<std::size_t>(celli)] =
+                dampingC * cbrtV * cbrtV * (magU - UMax);
             ++expectedDamped;
         }
     }
@@ -116,7 +121,8 @@ TEST_CASE("VelocityDamping")
 
         NeoN::label nDamped = -1;
         UEqn.setPostRelaxConstraint([&](auto& ls)
-                                    { nDamped = nf::applyVelocityDamping(ls, nfU, UMax, C); });
+                                    { nDamped = nf::applyVelocityDamping(ls, nfU, UMax, dampingC); }
+        );
         auto& ls = UEqn.assembleAndRelax();
 
         REQUIRE(nDamped == expectedDamped);
@@ -148,7 +154,8 @@ TEST_CASE("VelocityDamping")
 
         NeoN::label nDamped = -1;
         UEqn.setPostRelaxConstraint([&](auto& ls)
-                                    { nDamped = nf::applyVelocityDamping(ls, nfU, UMax, C); });
+                                    { nDamped = nf::applyVelocityDamping(ls, nfU, UMax, dampingC); }
+        );
         auto ofp = randomScalarField(runTime, mesh, "p");
         ofp.correctBoundaryConditions();
         auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp, false);
