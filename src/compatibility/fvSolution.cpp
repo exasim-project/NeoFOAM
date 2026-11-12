@@ -10,14 +10,21 @@
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <fstream>
+#include <iterator>
 #include <map>
 #include <regex>
 #include <set>
+#include <sstream>
 
+#include <NeoN/core/demangle.hpp>
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
+#include <NeoN/core/primitives/vec3.hpp>
+#include <NeoN/core/tokenList.hpp>
 
 
 namespace NeoFOAM
@@ -548,6 +555,225 @@ std::string stripNamespace(const std::string& s)
     return pos == std::string::npos ? s : s.substr(pos + 2);
 }
 
+// Minimal brace-aware JSON scanning, used only to name a configFile solver in the report
+// (e.g. "config(Cg+Multigrid)"). NeoFOAM has no JSON parser on its include path and only a few
+// top-level "type" strings are needed. Runs once per field in mapFvSolution, never per solve.
+
+// Index just past the closing quote of the JSON string literal at t[i] == '"'.
+std::size_t skipJsonString(const std::string& t, std::size_t i)
+{
+    for (++i; i < t.size(); ++i)
+    {
+        if (t[i] == '\\')
+        {
+            ++i;
+            continue;
+        }
+        if (t[i] == '"') return i + 1;
+    }
+    return i;
+}
+
+// Index of the brace/bracket matching the one at t[open]; t.size() if unbalanced.
+std::size_t matchJsonBrace(const std::string& t, std::size_t open)
+{
+    int depth = 0;
+    for (std::size_t i = open; i < t.size(); ++i)
+    {
+        const char c = t[i];
+        if (c == '"')
+        {
+            i = skipJsonString(t, i) - 1;
+            continue;
+        }
+        if (c == '{' || c == '[')
+        {
+            ++depth;
+        }
+        else if ((c == '}' || c == ']') && --depth == 0)
+        {
+            return i;
+        }
+    }
+    return t.size();
+}
+
+// Index of the first non-space char of the value of the immediate-child member @p key of the
+// object spanning [open, close]; npos if absent. Members of nested objects do not match.
+std::size_t
+findJsonMember(const std::string& t, std::size_t open, std::size_t close, const std::string& key)
+{
+    const std::string pat = "\"" + key + "\"";
+    int depth = 0;
+    for (std::size_t i = open; i < close; ++i)
+    {
+        const char c = t[i];
+        if (c == '"')
+        {
+            if (depth == 1 && t.compare(i, pat.size(), pat) == 0)
+            {
+                std::size_t j = i + pat.size();
+                while (j < close && std::isspace(static_cast<unsigned char>(t[j])))
+                    ++j;
+                if (j < close && t[j] == ':')
+                {
+                    for (++j; j < close && std::isspace(static_cast<unsigned char>(t[j])); ++j)
+                        ;
+                    return j;
+                }
+            }
+            i = skipJsonString(t, i) - 1;
+            continue;
+        }
+        if (c == '{' || c == '[') ++depth;
+        else if (c == '}' || c == ']')
+            --depth;
+    }
+    return std::string::npos;
+}
+
+// Value of the string literal at t[p] (p must point at '"'); empty otherwise.
+std::string readJsonString(const std::string& t, std::size_t p)
+{
+    if (p >= t.size() || t[p] != '"') return "";
+    const std::size_t end = skipJsonString(t, p);
+    return t.substr(p + 1, end - p - 2);
+}
+
+// stripNamespace'd "type" of the object spanning [open, close].
+std::string jsonTypeName(const std::string& t, std::size_t open, std::size_t close)
+{
+    const std::size_t p = findJsonMember(t, open, close, "type");
+    return p == std::string::npos ? "" : stripNamespace(readJsonString(t, p));
+}
+
+// Label of one solver block: its "type", with an additive-Schwarz block unwrapped to its
+// local_solver type (e.g. "Schwarz(Multigrid)") so the per-rank operator is visible.
+std::string jsonBlockLabel(const std::string& t, std::size_t open, std::size_t close)
+{
+    std::string type = jsonTypeName(t, open, close);
+    if (type == "Schwarz")
+    {
+        const std::size_t lp = findJsonMember(t, open, close, "local_solver");
+        if (lp != std::string::npos && t[lp] == '{')
+        {
+            const std::string inner = jsonTypeName(t, lp, matchJsonBrace(t, lp));
+            if (!inner.empty()) type += "(" + inner + ")";
+        }
+    }
+    return type;
+}
+
+// The configFile path of a solver dict. A path with '/' separators arrives as a TokenList of its
+// components, as in NeoN's Ginkgo backend (src/linearAlgebra/ginkgo/ginkgo.cpp).
+std::string configFilePath(const NeoN::Dictionary& dict)
+{
+    const std::any& fn = dict["configFile"];
+    if (const auto* path = std::any_cast<std::string>(&fn)) return *path;
+    auto tokens = std::any_cast<NeoN::TokenList>(fn);
+    std::string path;
+    for (std::size_t i = 0; i < tokens.size(); ++i)
+    {
+        if (i != 0) path += "/";
+        path += tokens.next<std::string>();
+    }
+    return path;
+}
+
+// Report label of a Ginkgo configFile, e.g. "config(Cg+Multigrid)",
+// "config(Cg+Schwarz(Multigrid))" or "config(Ir+Jacobi)": the outer solver "type" plus its
+// preconditioner (or, for Ir, its inner "solver"). "configFile" if the file cannot be read.
+std::string configFileLabel(const std::string& path)
+{
+    std::ifstream in(path);
+    if (!in) return "configFile";
+    const std::string t((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
+    const std::size_t open = t.find('{');
+    if (open == std::string::npos) return "configFile";
+    const std::size_t close = matchJsonBrace(t, open);
+
+    const std::string solver = jsonBlockLabel(t, open, close);
+    if (solver.empty()) return "configFile";
+
+    std::string secondary;
+    for (const char* key : {"preconditioner", "solver"})
+    {
+        const std::size_t p = findJsonMember(t, open, close, key);
+        if (p != std::string::npos && t[p] == '{')
+        {
+            secondary = jsonBlockLabel(t, p, matchJsonBrace(t, p));
+            break;
+        }
+    }
+    return "config(" + (secondary.empty() ? solver : solver + "+" + secondary) + ")";
+}
+
+// A dictionary value as text. Unknown types print their type name instead of throwing, so
+// logging the config never aborts a run.
+std::string anyToString(const std::any& value)
+{
+    if (const auto* p = std::any_cast<std::string>(&value)) return *p;
+    if (const auto* p = std::any_cast<NeoN::scalar>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<NeoN::label>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<int>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<bool>(&value)) return *p ? "true" : "false";
+    if (const auto* p = std::any_cast<NeoN::Vec3>(&value))
+    {
+        std::ostringstream os;
+        os << *p;
+        return os.str();
+    }
+    return "<" + NeoN::demangle(value.type().name()) + ">";
+}
+
+// The dictionary as an indented block, keys sorted so the output is stable across runs.
+std::string dictToString(const NeoN::Dictionary& dict, int indent = 0)
+{
+    const std::string pad(static_cast<std::size_t>(indent) * 4, ' ');
+    std::string out = "{\n";
+    for (const auto& key : sortedKeys(dict))
+    {
+        out += pad + "    " + key + ": ";
+        out += dict.isDict(key) ? dictToString(dict.subDict(key), indent + 1)
+                                : anyToString(dict.getMap().at(key));
+        out += "\n";
+    }
+    return out + pad + "}";
+}
+
+// The `optimize` flag as the PDE reads it (pde.hpp): absent means "false".
+std::string effectiveOptimize(const NeoN::Dictionary& dict)
+{
+    return dict.isType<std::string>("optimize") ? dict.get<std::string>("optimize") : "false";
+}
+
+// `checkFrequency` as NeoN's L1 criterion reads it (readInt in ginkgo.hpp): absent means 1.
+long effectiveCheckFrequency(const NeoN::Dictionary& dict)
+{
+    if (dict.isType<int>("checkFrequency")) return dict.get<int>("checkFrequency");
+    if (dict.isType<NeoN::label>("checkFrequency"))
+        return static_cast<long>(dict.get<NeoN::label>("checkFrequency"));
+    if (dict.isType<NeoN::scalar>("checkFrequency"))
+        return static_cast<long>(dict.get<NeoN::scalar>("checkFrequency"));
+    return 1;
+}
+
+// Log the solver settings NeoN/Ginkgo will run for one field, with the effective values of the
+// easy-to-miss keys `optimize` and `checkFrequency` even when they are defaulted.
+void logSolverConfig(const NeoN::Dictionary& mapped, const std::string& origin)
+{
+    NeoN::Logging::info(
+        "NeoFOAM solver config ({}) for '{}':\n{}\n    effective optimize: {}\n    effective "
+        "checkFrequency: {}",
+        origin,
+        mapped.get<std::string>("reportName"),
+        dictToString(mapped),
+        effectiveOptimize(mapped),
+        effectiveCheckFrequency(mapped)
+    );
+}
+
 // Build a label from the Ginkgo solver/preconditioner ACTUALLY selected after
 // mapping (e.g. "Ic+Cg", or "Schwarz(Ic)+Cg" for a distributed run). Reads the
 // post-mapping dictionary, so it reflects exactly what NeoN/Ginkgo will run.
@@ -604,7 +830,8 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
 
     if (solverDict.contains("configFile"))
     {
-        modSolverDict.insert("reportName", std::string("configFile"));
+        modSolverDict.insert("reportName", configFileLabel(configFilePath(solverDict)));
+        logSolverConfig(modSolverDict, "from fvSolution configFile");
         return modSolverDict;
     }
 
@@ -620,6 +847,7 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     // dict so it reflects what Ginkgo runs; the Ginkgo backend's parse() ignores
     // this meta key. Computed once here -> no per-solve / hot-path cost.
     modSolverDict.insert("reportName", ginkgoSolverLabel(modSolverDict));
+    logSolverConfig(modSolverDict, "mapped from fvSolution");
 
     return modSolverDict;
 }

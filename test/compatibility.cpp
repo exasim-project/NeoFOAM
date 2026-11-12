@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
 #include <cstddef>
+#include <filesystem>
+#include <fstream>
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
@@ -127,11 +129,44 @@ TEST_CASE("fvSolution")
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "Jacobi+Cg");
         }
-        SECTION("configFile -> configFile")
+        SECTION("unreadable configFile -> configFile")
         {
             solver1.insert("configFile", std::string("mySolver.json"));
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "configFile");
+        }
+        // A configFile is named after its outer solver and its preconditioner (or the inner
+        // solver of Ir), with a Schwarz block unwrapped to its local solver.
+        SECTION("configFile -> config(<solver>+<preconditioner>)")
+        {
+            auto [json, label] = GENERATE(
+                std::pair<std::string, std::string> {
+                    R"({"type": "solver::Cg", "preconditioner": {"type": "solver::Multigrid",
+                        "mg_level": [{"type": "multigrid::Pgm"}]}})",
+                    "config(Cg+Multigrid)"
+                },
+                std::pair<std::string, std::string> {
+                    R"({"type": "solver::Cg", "preconditioner": {"type": "preconditioner::Schwarz",
+                        "local_solver": {"type": "solver::Multigrid"}}})",
+                    "config(Cg+Schwarz(Multigrid))"
+                },
+                std::pair<std::string, std::string> {
+                    R"({"criteria": [{"type": "Iteration"}], "type": "solver::Ir",
+                        "solver": {"type": "preconditioner::Jacobi"}})",
+                    "config(Ir+Jacobi)"
+                },
+                std::pair<std::string, std::string> {
+                    R"({"type": "solver::Gmres"})",
+                    "config(Gmres)"
+                }
+            );
+            const auto path =
+                std::filesystem::temp_directory_path() / "neofoam_reportName_config.json";
+            std::ofstream(path) << json;
+            solver1.insert("configFile", path.string());
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == label);
+            std::filesystem::remove(path);
         }
     }
 }
