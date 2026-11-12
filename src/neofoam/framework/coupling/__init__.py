@@ -20,6 +20,7 @@ from .comm.channel import (
     CouplingTimeout,
 )
 from .comm.in_process import InProcessCommChannel
+from .comm.mpi import MpiCommChannel, RegionComm
 from .config import CouplingConfig, comm_channel_timeout
 from .coupled import CoupledPort, coupled
 from .data import Array, CellData, FaceData, ProbeData, Scalar, ValueData
@@ -74,11 +75,13 @@ __all__ = [
     "IdentityMapping",
     "InProcessCommChannel",
     "MeshGeometry",
+    "MpiCommChannel",
     "NearestNeighborMapping",
     "Patch",
     "ProbeData",
     "ProbeMapping",
     "ParticipantExchanges",
+    "RegionComm",
     "CouplingConfig",
     "RelativeConvergence",
     "Scalar",

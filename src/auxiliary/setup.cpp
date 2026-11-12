@@ -7,9 +7,32 @@
 #include "NeoFOAM/auxiliary/readers.hpp"
 
 #include "fvc.H"
+#include "UPstream.H"
+
+#include <cstdint>
+#include <type_traits>
 
 namespace NeoFOAM
 {
+
+#ifdef NF_MPI_DEFAULT_COMMUNICATOR
+namespace
+{
+// OpenFOAM keeps a communicator as an intptr_t: a pointer in OpenMPI, an int in MPICH
+template<class Comm>
+Comm toMpiComm(std::intptr_t handle)
+{
+    if constexpr (std::is_pointer_v<Comm>)
+    {
+        return reinterpret_cast<Comm>(handle);
+    }
+    else
+    {
+        return static_cast<Comm>(handle);
+    }
+}
+}
+#endif
 
 void setDeltaT(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum)
 {
@@ -161,6 +184,17 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
             in.objectRegistry::checkOut(Foam::polyMesh::defaultRegion);
         }
     }
+
+    // NeoN's ranks must be the processor patches' neighbProcNo: OpenFOAM's world
+    // (the region's processes under -world); one set from Python is kept.
+#ifdef NF_MPI_DEFAULT_COMMUNICATOR
+    if (Foam::UPstream::parRun() && !NeoN::mpi::hasDefaultCommunicator())
+    {
+        NeoN::mpi::setDefaultCommunicator(toMpiComm<MPI_Comm>(
+            Foam::UPstream::Communicator::lookup(Foam::UPstream::worldComm).value()
+        ));
+    }
+#endif
 
     std::unique_ptr<MeshAdapter> meshPtr = createMesh(exec, in);
     MeshAdapter& mesh = *meshPtr;

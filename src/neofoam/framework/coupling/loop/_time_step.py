@@ -52,7 +52,11 @@ class TimeStep:
 
     def __call__(self, ctx: Context) -> None:
         coupling = self._coupling
-        region, leader, comm_channel = coupling.region, coupling.leader, coupling.comm_channel
+        region, leader, comm_channel = (
+            coupling.region,
+            coupling.leader,
+            coupling.require_comm_channel(),
+        )
         asked = ctx.time.delta_t
         if region != leader:
             comm_channel.send(region, leader, Tag.TIME_DT, asked)

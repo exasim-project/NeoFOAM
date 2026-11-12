@@ -29,7 +29,7 @@ graph and time loop on its own thread. Regions share nothing but a
        convergence.
    * - ``multiRun``
      - reads ``participants`` and the case file, creates the comm channel, runs
-       every region on its own thread.
+       every region on its own thread (under ``mpirun``: on its own processes).
 
 Regions that exchanges connect form a **group**; its last region in
 ``participants`` order agrees the time step. Each region reads its own files
@@ -225,6 +225,36 @@ OpenFOAM case of its own under ``<region>/``, beside the case's
 ``system/controlDict.yaml`` and ``system/coupling.yaml``.
 ``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3
 against 5 faces, serial with Aitken around ``solve_T``.
+
+Regions on MPI processes
+------------------------
+
+Under ``mpirun`` each region runs on processes of its own instead of a thread
+(``neofoam.solver.multiRun._launch``; mpi4py, the extra ``neofoam[mpi]``). A region
+entry gives its number of processes, a plain name is one::
+
+    participants:
+      left: {solver: mySolver, processes: 2}
+      right: mySolver
+
+    mpirun -np 3 python -m neofoam.solver.multiRun
+
+The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in ``participants``
+order. Every region runs OpenFOAM with ``-parallel -world <region>`` on
+``<region>/processor0`` .. ``processor<n-1>`` (``decomposePar -case <region>``),
+and a NeoN region communicates on that world. Rank 0 refuses a case that does
+not fit the run before it starts; an error on any process aborts every process.
+
+Only a region's root (its rank 0) talks to other regions, over an
+``MpiCommChannel`` (``neofoam.framework.coupling.comm.mpi``). Its coupling ops run on
+the whole ports: the root gathers each port's geometry once and what every
+process sends of a patch or the cells, and scatters what they receive; a
+``Global`` port sends the root's value and every process receives it. The other
+processes run a follower op that takes the root's decision, and have no comm
+channel. ``close`` waits at most
+``commChannelTimeout`` for the partners, naming those that did not finish. The
+whole interface on the root is an intermediate step, before a distributed
+exchange (``test/solver/multiRun/test_regions_on_processes.py``).
 
 Extension points
 ----------------
