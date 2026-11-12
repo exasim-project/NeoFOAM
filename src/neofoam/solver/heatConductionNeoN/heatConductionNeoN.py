@@ -23,6 +23,7 @@ from neofoam.framework.coupling import Participant, Patch, coupling
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
 from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.types import OperationMetadata
+from neofoam.postprocess import PostProcessConfig
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import SolutionLoopPredicate
 from neofoam.solver.neon_runtime import (
     NeoNControlConfig,
@@ -44,6 +45,7 @@ heatConductionNeoN.on_instantiate = ensure_neon_initialized
 heatConductionNeoN.config(ControlDictConfig)
 heatConductionNeoN.config(NeoNControlConfig)
 heatConductionNeoN.config(ThermalPropertiesConfig)
+heatConductionNeoN.config(PostProcessConfig)  # tables and in-situ entries (system/postProcess.yaml)
 
 
 @heatConductionNeoN.initializer
@@ -75,6 +77,7 @@ def execution_graph(
     _ = domain_name
     loop_ops = Operations(core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(core_model(self.state, "fieldWriter").operations)
+    post_ops = Operations(core_model(self.state, "postProcess").operations)
     builder = StepBuilder()
     time_loop_op = Operation(
         func=IterativeOp(SolutionLoopPredicate()),
@@ -86,6 +89,9 @@ def execution_graph(
         time_builder.step(self.operations["start_step"])
         time_builder.step(self.operations["solve_T"])
         time_builder.step(writer_ops["write_output"])
+        # Last: pure readers of the step just written (post_process, then insitu if declared)
+        for op in post_ops:
+            time_builder.step(op)
     return builder, Operations()
 
 

@@ -105,6 +105,7 @@ def execution_graph(
         turbulence_correct   # once per step, after the PIMPLE loop
         write_output         # NeoN write hook on write steps + step reporter
         post_process         # in-situ tables (empty on this backend today)
+        insitu               # in-situ entries (only when declared)
     """
     _ = domain_name
 
@@ -133,9 +134,10 @@ def execution_graph(
 
         time_builder.step(algo_ops["turbulence_correct"])
         time_builder.step(writer_ops["write_output"])
-        # Last in the loop: a pure reader, so a CSV row and the time directory
-        # just written describe the same state.
-        time_builder.step(post_ops["post_process"])
+        # Last in the loop: pure readers, so a CSV row and the time directory
+        # just written describe the same state (post_process, then insitu if declared).
+        for op in post_ops:
+            time_builder.step(op)
 
     # Optional-model operations are merged by the resolver (placed by their own
     # depends_on / operation_number).

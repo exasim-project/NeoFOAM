@@ -41,6 +41,15 @@ class GraphContribution(Protocol):
         ...
 
 
+@runtime_checkable
+class Finalizer(Protocol):
+    """A model of ``ctx.models`` that releases what it holds once the time loop has ended."""
+
+    def finalize(self) -> None:
+        """Release it (collective under MPI: every rank calls it)."""
+        ...
+
+
 @dataclass
 class SolverState:
     """Mutable state container for a single solver run."""
@@ -165,10 +174,23 @@ class SolverRuntime:
         return contributions
 
     def run(self) -> "Context":
-        """Solve the runtime's region: initialize, resolve and run; return the context."""
+        """Solve the runtime's region: initialize, resolve, run and finalize; return the context."""
         ctx = self.initialize()
         self.resolve_operations(ctx).run(ctx)
+        self.finalize(ctx)
         return ctx
+
+    def finalize(self, ctx: "Context") -> None:
+        """Call ``finalize()`` on every :class:`Finalizer` of ``ctx.models``, after the time loop.
+
+        A solver that runs its operations itself calls it next::
+
+            solver.resolve_operations(ctx).run(ctx)
+            solver.finalize(ctx)
+        """
+        for model in ctx.models.values():
+            if isinstance(model, Finalizer):
+                model.finalize()
 
     @property
     def operations(self) -> "OperationCollection":

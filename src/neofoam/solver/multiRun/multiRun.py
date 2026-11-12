@@ -8,9 +8,11 @@ solver instantiated with ``region=``. Regions share nothing but a
 :class:`~neofoam.framework.coupling.CommChannel`, over which the coupled patches
 listed in ``system/coupling.yaml`` exchange their data. Under ``mpirun``
 each region runs on processes of its own (``neofoam.solver.multiRun._launch``).
+The case's in-situ entries draw every region together (:mod:`.insitu`).
 """
 
 import dataclasses
+import functools
 from pathlib import Path
 from typing import Any, Optional
 
@@ -25,7 +27,7 @@ from neofoam.framework.coupling import (
     comm_channel_timeout,
     run_participants,
 )
-from neofoam.framework.solver import Solver, SolverSpec
+from neofoam.framework.solver import Solver, SolverRuntime, SolverSpec
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig
 
@@ -41,6 +43,7 @@ from ._launch import (
     keep_alive,
     under_mpi,
 )
+from .insitu import MpiMeeting, MultiRunInSitu, ThreadMeeting, declared_insitu
 
 multiRun = Solver("multiRun")
 
@@ -74,14 +77,35 @@ def run() -> dict[str, Context]:
 def run_threads(config: ControlDictConfig) -> dict[str, Context]:
     """Run every region of the case on a thread of its own, coupled in-process."""
     regions = list(config.participants)
-    comm_channel = InProcessCommChannel(timeout=comm_channel_timeout())
+    timeout = comm_channel_timeout()
+    comm_channel = InProcessCommChannel(timeout=timeout)
     coupling = couplings(regions, comm_channel)
+    entries = declared_insitu(regions)
+    insitu = MultiRunInSitu(entries, ThreadMeeting(regions, timeout)) if entries else None
     runtimes = {
         region: resolve_solver(name).instantiate(region=region, coupling=coupling.get(region))
         for region, name in config.solvers().items()
     }
-    tasks = {region: runtime.run for region, runtime in runtimes.items()}
+    tasks = {
+        region: functools.partial(_run_region, runtime, insitu)
+        for region, runtime in runtimes.items()
+    }
     return run_participants(tasks, comm_channel)
+
+
+def _run_region(runtime: SolverRuntime, insitu: Optional[MultiRunInSitu]) -> Context:
+    """``runtime.run()``, with the case's in-situ op in the region's graph."""
+    if insitu is None:
+        return runtime.run()
+    try:
+        ctx = runtime.initialize()
+        ctx.models["multirun_insitu"] = insitu.region(str(runtime.region))
+        runtime.resolve_operations(ctx).run(ctx)
+        runtime.finalize(ctx)
+    except BaseException:
+        insitu.meeting.abort()  # no region waits for this one at the in-situ step
+        raise
+    return ctx
 
 
 def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
@@ -98,6 +122,7 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
     specs: dict[str, SolverSpec] = {}
     planned: Optional[ParticipantExchanges] = None
     timeout: Optional[float] = None
+    entries: list[Any] = []
     try:
         check_size(layout, world.size)
         check_decomposed(layout)
@@ -105,6 +130,7 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
         region = layout.region_of(world.rank)
         planned = couplings(list(config.participants), None).get(region)
         timeout = comm_channel_timeout()
+        entries = declared_insitu(list(config.participants))
     except Exception as error:
         problem = failure(error)
     problems = [found for found in world.allgather(problem) if found is not None]
@@ -120,9 +146,13 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
             argv=layout.argv(region), region=region, coupling=coupling
         )
         ctx = runtime.initialize()
+        if entries:
+            meeting = MpiMeeting(world, list(config.participants))
+            ctx.models["multirun_insitu"] = MultiRunInSitu(entries, meeting).region(region)
         keep_alive(mpi, ctx)
         check_world(region, comm, uses_neon="neon_runtime" in ctx.models)
         runtime.resolve_operations(ctx).run(ctx)
+        runtime.finalize(ctx)
         if coupling is not None and coupling.comm_channel is not None:
             coupling.comm_channel.close(region)
     except BaseException as error:

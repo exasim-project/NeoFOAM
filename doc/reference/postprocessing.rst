@@ -12,13 +12,14 @@ Nothing runs unless the case declares something: with neither
 ``postProcess`` model is a no-op and no ``postProcessing/`` directory is created.
 
 The ``postProcess`` model is wired into ``incompressibleFluid``,
-``incompressibleVoF`` and ``incompressibleFluidNeoN`` today —
+``incompressibleVoF``, ``incompressibleFluidNeoN`` and ``heatConductionNeoN``
+today (a multiRun region reads its own ``<region>/system/postProcess.yaml``) —
 another solver picks it up by adding the same seam to its ``create_fields.py``
 (instantiate the model) and its execution-graph step (step ``post_process`` after
 ``write_output``); until it does, a declaration in one of its cases is ignored
 silently.
 
-On ``incompressibleFluidNeoN`` only the ``internal`` source works. Its fields
+On the NeoN solvers only the ``internal`` source works. Its fields
 live on the NeoN executor and stay there: the nodes reduce them with the NeoN
 kernels, so nothing is copied to the host on the way to a CSV row. The cell
 geometry comes off the run-time adapter's mesh, which *is* an fvMesh, and is
@@ -632,6 +633,48 @@ scratch truncates it.
    decomposed run of a row table would silently drop every non-master rank's
    points. It raises a ``NotImplementedError`` naming the table instead — use an
    aggregator, or run that case serially.
+
+In-situ entries
+---------------
+
+Besides tables, the spec file can hand the live solver state to an in-situ tool
+(a renderer such as Catalyst, a steering client) through ``insitu`` entries:
+
+.. code-block:: yaml
+
+    insitu:
+      - name: view
+        type: catalyst          # registered by the tool's own package
+        write_control: {write_control_type: timeStep, interval: 5}
+        field: U                # every other key belongs to the type
+
+A case that declares an entry gets an ``insitu`` operation, stepped right after
+``post_process``, which calls each entry on its own write steps (the same
+``write_control`` policies as a table, default every step); without entries the
+operation does not exist. NeoFOAM ships no entry type: a type is an
+``@InSitu.register`` subclass with a ``type: Literal[...]`` discriminator and an
+``execute(ctx)`` taking the live :class:`~neofoam.framework.context.Context`
+(optionally a ``finalize()``, called once after the time loop), registered by
+importing its module — from the tool that drives the run, or from the case's
+``system/postProcess.py``:
+
+.. code-block:: python
+
+    from typing import Literal
+
+    from neofoam.framework.context import Context
+    from neofoam.postprocess import InSitu
+
+    @InSitu.register
+    class PrintTime(InSitu):
+        type: Literal["printTime"] = "printTime"
+
+        def execute(self, ctx: Context) -> None:
+            print(self.name, ctx.time.value)
+
+Decomposed, every rank calls every entry at the same steps, so ``execute`` may be
+collective. The entry the operation runs is a private copy of the declaration, so
+state it keeps between calls belongs to the run.
 
 Try it
 ------

@@ -92,6 +92,52 @@ def test_runtime_run_initializes_and_runs_its_region() -> None:
     assert ctx.fields["total"] == 3.0
 
 
+class Releasing:
+    """A model that logs its finalize after the steps of the time loop."""
+
+    def __init__(self, log: list[str]) -> None:
+        self.log = log
+
+    def finalize(self) -> None:
+        self.log.append("finalize")
+
+
+finalizing = Solver("finalizing")
+
+
+@finalizing.initializer
+def _initialize_finalizing(self: Any) -> Context:
+    log: list[str] = []
+    return Context(fields={}, models={"log": log, "releasing": Releasing(log)})
+
+
+@finalizing.execution_graph_step
+def _execution_graph_finalizing(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
+    builder = StepBuilder()
+    builder.step(self.operations["log_step"])
+    return builder, Operations()
+
+
+@finalizing.operation()
+def log_step(self: Any, ctx: Context) -> None:
+    ctx.models["log"].append("step")
+
+
+def test_runtime_run_finalizes_the_models_after_the_time_loop() -> None:
+    ctx = finalizing.instantiate().run()
+
+    assert ctx.models["log"] == ["step", "finalize"]
+
+
+def test_runtime_finalize_skips_the_models_without_finalize() -> None:
+    runtime = finalizing.instantiate()
+    ctx = runtime.initialize()
+
+    runtime.finalize(ctx)
+
+    assert ctx.models["log"] == ["finalize"]
+
+
 uncoupling = Solver("uncoupling")
 
 
