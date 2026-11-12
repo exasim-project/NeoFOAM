@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import re
 from types import SimpleNamespace
-from typing import Any, Callable, Optional, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, cast
 
 from neofoam.framework.config_injection import (
     _create_runtime_config_wrapper,
@@ -24,10 +24,18 @@ from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.operations import Operation, OperationCollection, SequentialOp
+from neofoam.framework.operations import (
+    Operation,
+    OperationCollection,
+    Operations,
+    SequentialOp,
+)
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import SolverRuntime
+
+if TYPE_CHECKING:
+    from neofoam.framework.coupling.exchanges import ParticipantExchanges
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 
@@ -239,6 +247,7 @@ class SolverSpec:
         self,
         argv: Optional[list[Any]] = None,
         region: Optional[str] = None,
+        coupling: Optional[ParticipantExchanges] = None,
     ) -> SolverRuntime:
         """Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.
 
@@ -249,6 +258,7 @@ class SolverSpec:
             name=self.name,
             argv=argv or ["neofoam"],
             region=region,
+            coupling=coupling,
         )
 
     # ------------------------------------------------------------------
@@ -324,7 +334,15 @@ class SolverSpec:
                 runtime.config, cfg_meta["config_type"]
             )
 
-        return self._execution_graph_func(**kwargs)
+        builder, model_ops = self._execution_graph_func(**kwargs)
+        contributions = [] if ctx is None else runtime.graph_contributions(ctx)
+        if not contributions:
+            return builder, model_ops
+        graph = [*builder.operations, *model_ops]
+        ops = [*model_ops]
+        for contribution in contributions:
+            ops += contribution.graph_operations(cast(Context, ctx), graph)
+        return builder, Operations(ops)
 
     # ------------------------------------------------------------------
     # Operation building (called by SolverRuntime.operations)

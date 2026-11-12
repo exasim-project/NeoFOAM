@@ -19,14 +19,13 @@ from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import Depends, StagedInitRunner
-from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     Operations,
     StepBuilder,
 )
-from neofoam.framework.solver import Solver
+from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
@@ -43,14 +42,6 @@ from .create_fields import create_init
 from .models.incompressibleFluidNeoNModel import incompressibleFluidNeoNModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.solution_loop import SolutionLoopPredicate
-
-
-def _core_model(state: Any, spec_name: str) -> Any:
-    """Find an instantiated core model by its spec name."""
-    return next(
-        m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
-    )
-
 
 incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 
@@ -120,9 +111,9 @@ def execution_graph(
     # The pressure-velocity algorithm (pimpleNeoN) is the first core model.
     algo_ops = Operations(self.state.core_models[0].operations)
 
-    loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
-    writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
-    post_ops = Operations(_core_model(self.state, "postProcess").operations)
+    loop_ops = Operations(core_model(self.state, "solutionLoop").operations)
+    writer_ops = Operations(core_model(self.state, "fieldWriter").operations)
+    post_ops = Operations(core_model(self.state, "postProcess").operations)
 
     time_loop_op = Operation(
         func=IterativeOp(SolutionLoopPredicate()),
@@ -179,10 +170,7 @@ def run(
         os.close(log_fd)
 
     try:
-        solver = incompressibleFluidNeoN.instantiate(argv=argv or [])
-        ctx = solver.initialize()
-
-        solver.resolve_operations(ctx).run(ctx)
+        ctx = incompressibleFluidNeoN.instantiate(argv=argv or []).run()
 
         print("End")
         return ctx

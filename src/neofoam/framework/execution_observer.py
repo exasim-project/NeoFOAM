@@ -10,7 +10,8 @@ step-by-step debugger UI drives an unmodified solver. Without an observer the
 hooks cost one ``None`` check.
 
 The observer is per thread (a :class:`~contextvars.ContextVar`); threads started
-by an observed run do not inherit it.
+by an observed run do not inherit it, except the region threads of a coupled
+run: there its hooks are called from several threads at once and must be thread safe.
 
 Example::
 
@@ -29,7 +30,12 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Iterator, Optional
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel
+
     from neofoam.framework.context import Context
+    from neofoam.framework.coupling.coupled import CoupledPort
+    from neofoam.framework.coupling.loop._leader import CouplingOutcome, Leader
+    from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
 
@@ -62,6 +68,14 @@ class ExecutionObserver:
 
     def after_loop_test(self, op: Operation, ctx: Context, iteration: int, result: bool) -> None:
         """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
+
+    def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
+        """A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread."""
+
+    def coupling_exchanged(
+        self, coupling: CouplingLoopOp, port: CoupledPort, data: BaseModel
+    ) -> None:
+        """The region's ``coupling`` op is about to hand ``port`` its mapped ``data``."""
 
 
 _observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(

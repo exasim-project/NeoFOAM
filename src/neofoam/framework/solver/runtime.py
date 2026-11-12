@@ -11,15 +11,34 @@ runtime so multiple solver runs never share mutable state.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Protocol, Sequence, runtime_checkable
 
 from neofoam.framework.dependency_resolver import DependencyResolver
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
-    from neofoam.framework.operations import OperationCollection, Operations, StepBuilder
+    from neofoam.framework.coupling.exchanges import ParticipantExchanges
+    from neofoam.framework.operations import (
+        Operation,
+        OperationCollection,
+        Operations,
+        StepBuilder,
+    )
 
     from .spec import SolverSpec
+
+
+@runtime_checkable
+class GraphContribution(Protocol):
+    """A model of ``ctx.models`` that adds operations to its region's graph."""
+
+    def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
+        """The operations to add to ``graph``, the solver's operations."""
+        ...
+
+    def check_graph(self, graph: Operations) -> None:
+        """Raise ``ValueError`` when the resolved ``graph`` is wrong for the model."""
+        ...
 
 
 @dataclass
@@ -29,6 +48,16 @@ class SolverState:
     core_models: list[Any] = field(default_factory=list)
     optional_models: list[Any] = field(default_factory=list)
     configs: dict[str, Any] = field(default_factory=dict)
+
+
+def core_model(state: Any, spec_name: str) -> Any:
+    """The core model of ``state`` (a :class:`SolverState`) whose spec is named ``spec_name``.
+
+    A solver's execution graph step takes its core models' operations from it.
+    """
+    return next(
+        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
+    )
 
 
 @dataclass
@@ -46,6 +75,8 @@ class SolverRuntime:
     argv: list[Any] = field(default_factory=list)
     # None for a single-region case
     region: Optional[str] = None
+    # None: the case does not couple the region
+    coupling: Optional[ParticipantExchanges] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
@@ -107,6 +138,7 @@ class SolverRuntime:
     def resolve_operations(self, ctx: "Context") -> "Operations":
         """The runnable execution graph: ``execution_graph`` resolved with its model operations.
 
+        Each :class:`GraphContribution` of ``ctx.models`` checks the result.
         Reported to the installed execution observer before it is returned.
         """
         from neofoam.framework import execution_observer  # noqa: PLC0415
@@ -114,10 +146,29 @@ class SolverRuntime:
 
         builder, model_ops = self.execution_graph(ctx=ctx)
         operations = DAGResolver().resolve(builder, model_ops).operations
+        for contribution in self.graph_contributions(ctx):
+            contribution.check_graph(operations)
         observer = execution_observer.current()
         if observer is not None:
             observer.operations(operations, ctx)
         return operations
+
+    def graph_contributions(self, ctx: "Context") -> list[GraphContribution]:
+        """The models of ``ctx`` that contribute to the region's graph."""
+        contributions = [m for m in ctx.models.values() if isinstance(m, GraphContribution)]
+        if self.coupling is not None and not contributions:
+            raise RuntimeError(
+                f"region {self.region} is coupled in coupling.yaml, but solver "
+                f"{self.name} added no coupling model; add "
+                "ctx.models['coupling'] = Participant(self.coupling, geometry) in initialize"
+            )
+        return contributions
+
+    def run(self) -> "Context":
+        """Solve the runtime's region: initialize, resolve and run; return the context."""
+        ctx = self.initialize()
+        self.resolve_operations(ctx).run(ctx)
+        return ctx
 
     @property
     def operations(self) -> "OperationCollection":
