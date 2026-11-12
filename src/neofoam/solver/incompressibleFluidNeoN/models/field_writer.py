@@ -62,7 +62,8 @@ class NeoNWriteHook(FieldHook):
                 nfb.write_scalar_field(fld, self.runtime)
             elif name in self.vector_names:
                 nfb.write_vector_field(fld, self.runtime)
-        self.turbulence.write(self.runtime.mesh)
+        if self.turbulence is not None:  # heatConductionNeoN has none
+            self.turbulence.write(self.runtime.mesh)
 
 
 def neon_writer_backend_steps() -> list[InitStep]:

@@ -1,0 +1,56 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 1 0 0 0];
+
+// 400 - 100 x + 50 sin(pi x) at the cell centres
+internalField   nonuniform List<scalar>
+8
+(
+403.504516101
+409.028511651
+410.323480615
+405.28926402
+392.78926402
+372.823480615
+346.528511651
+316.004516101
+);
+
+boundaryField
+{
+    left
+    {
+        type            fixedValue;
+        value           uniform 400;
+    }
+    right
+    {
+        type            fixedValue;
+        value           uniform 300;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

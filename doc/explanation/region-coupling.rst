@@ -197,6 +197,35 @@ thread (``coupling_exchanged``, ``coupling_finished``, its graph), so hooks
 must be thread safe; a hook that blocks pauses its region and those coupled
 with it.
 
+A NeoN solver: heatConductionNeoN
+---------------------------------
+
+``heatConductionNeoN`` solves ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``
+on NeoN (``constant/thermalProperties``). A patch of ``0/T`` is coupled when its
+``coupled`` entry names the condition; its ``type`` is ``calculated``, so NeoN
+leaves its values to the coupling:
+
+.. code-block:: c++
+
+    interface
+    {
+        type        calculated;
+        coupled     coupledTemperature;   // Dirichlet side; or coupledHeatFlux
+        value       uniform 350;
+    }
+
+``coupledTemperature`` takes the wall temperature and sends the heat flux
+``q = k dT/dn`` into its region (``WallHeatFlux``); ``coupledHeatFlux`` takes
+that flux as an explicit source in the cells of its faces and sends its wall
+temperature (``WallTemperature``, both in ``neofoam.solver.regions``). The
+solver binds each to ``Patch(name)``; ``NeoNGeometry``
+(``neofoam.solver.neon_runtime``) gives the face centres, so the faces need not
+match, and ``NeoNFields`` the field ports' access. Each region is an
+OpenFOAM case of its own under ``<region>/``, beside the case's
+``system/controlDict.yaml`` and ``system/coupling.yaml``.
+``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3
+against 5 faces, serial with Aitken around ``solve_T``.
+
 Extension points
 ----------------
 
