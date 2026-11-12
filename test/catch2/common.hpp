@@ -177,6 +177,26 @@ auto Equals(Expected expected, Predicate pred)
     return EqualsMatcher<Expected, Predicate> {std::move(expected), pred};
 }
 
+/**
+ * @brief Catch2 matcher for comparing a range of a NeoN::Vector against an expected range.
+ *
+ * The matcher compares the elements in a specified range of a NeoN::Vector
+ * against the elements of an expected container. The comparison is performed
+ * element-wise using the provided predicate.
+ *
+ * The specified range follows the half-open interval convention [first, last),
+ * where @p first is inclusive and @p last is exclusive.
+ *
+ * The Vector is copied to host memory before comparison, allowing the matcher
+ * to work with Vectors residing in different memory spaces.
+ *
+ * @tparam Expected Type of the expected container.
+ * @tparam Predicate Type of the binary predicate used for element-wise comparison.
+ *
+ * @note The expected container and predicate are stored by value.
+ * @note The expected range and the selected Vector range must have the same size
+ *       for the comparison to succeed.
+ */
 template<typename Expected, typename Predicate>
 struct EqualsRangeMatcher : Catch::Matchers::MatcherGenericBase
 {
@@ -215,6 +235,24 @@ private:
     Predicate pred_;
 };
 
+/**
+ * @brief Creates a matcher for comparing a specified range of a NeoN::Vector
+ *        against expected values.
+ *
+ * The returned matcher compares the elements in the half-open range [first, last)
+ * of a NeoN::Vector against the elements of the expected container using the
+ * provided predicate.
+ *
+ * @tparam Expected Type of the container holding the expected values.
+ * @tparam Predicate Type of the binary predicate used for element-wise comparison.
+ *
+ * @param expected Container holding the expected values.
+ * @param range Half-open range [first, last) of Vector indices to compare.
+ * @param pred Binary predicate used to compare corresponding elements.
+ *
+ * @return An EqualsRangeMatcher configured with the expected values, range,
+ *         and comparison predicate.
+ */
 template<typename Expected, typename Predicate>
 auto EqualsRange(
     Expected expected,
