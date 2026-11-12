@@ -26,7 +26,10 @@ from typing import Any, NamedTuple, Protocol, runtime_checkable
 
 from neofoam.algorithms.field_writer.write_control import WriteControl
 from neofoam.framework.context import Context
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
 from neofoam.framework.initialization import InitStep, model
 from neofoam.framework.model import Model
 from neofoam.framework.operations import Operation, Operations, SequentialOp
@@ -162,12 +165,11 @@ def operations(self: Any) -> Operations:
     funcs = [post_process]
     if getattr(getattr(self, "config", None), "insitu", None):
         funcs.append(insitu)
+    resolver = DependencyResolver()
     return Operations(
         [
             Operation(
-                func=SequentialOp(
-                    wrap_with_dependency_resolution(func, self, postProcess._dependency_resolver)
-                ),
+                func=SequentialOp(wrap_with_dependency_resolution(func, self, resolver)),
                 metadata=OperationMetadata(op_name=func.__name__),
             )
             for func in funcs
