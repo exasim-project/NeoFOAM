@@ -19,10 +19,12 @@ type: a renderer (Catalyst, say) registers one from its own package::
         def execute(self, ctx: Context) -> None: ...
 
 Decomposed, every rank evaluates every entry at the same steps, so an
-``execute`` may be collective.
+``execute`` may be collective. In a multiRun the entries are the case's
+(``system/postProcess.yaml`` at the case root) and draw every region together
+(:meth:`InSitu.execute_regions`, see :mod:`neofoam.solver.multiRun.insitu`).
 """
 
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from pydantic import ConfigDict
 
@@ -49,6 +51,16 @@ class InSitu(BaseConfig):
 
     def execute(self, ctx: Context) -> None:
         raise NotImplementedError
+
+    def execute_regions(self, regions: dict[str, Optional[Context]]) -> None:
+        """Draw a multiRun's regions together, at one time: each region's Context.
+
+        Under MPI a region on other processes is ``None`` here; every process
+        calls it at the same step (collective), with its own region's Context.
+        """
+        raise NotImplementedError(
+            f"insitu type {type(self).__name__} cannot draw the regions of a multiRun"
+        )
 
     def finalize(self) -> None:
         """Release what :meth:`execute` opened; called once, after the time loop."""
