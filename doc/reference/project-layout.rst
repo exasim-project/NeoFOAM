@@ -25,11 +25,20 @@ the linked reference pages for the full API.
     - ``model/`` — ``ModelSpec``/``Model``, the decorator-driven model definition
       and its runtime. See :mod:`neofoam.framework.model`.
     - ``solver/`` — ``SolverSpec``/``Solver``, core/optional model selection and
-      the case-free config schema. See :mod:`neofoam.framework.solver`.
+      the case-free config schema; a runtime of a region solves that region
+      (``instantiate(region=..., coupling=...)``). See :mod:`neofoam.framework.solver`.
     - ``initialization/`` — staged init (load → resolve → build) via ``InitStep``
       and ``InitializerBuilder``. See :mod:`neofoam.framework.initialization`.
     - ``graph/`` — operation-graph sort, resolution, validation, and
-      visualization. See :mod:`neofoam.framework.graph`.
+      visualization, and the loops that wrap fields (``wrapping``). See
+      :mod:`neofoam.framework.graph`.
+    - ``coupling/`` — ``@coupled`` instances on their locations (``coupled``,
+      ``data``, ``location``), field ports, the case's ``system/coupling.yaml``
+      (``config``), the ``Exchange`` of two ports and the ``CouplingLoop``\ s
+      (``exchanges``), a region's ``Participant`` (``model``), the loop op and
+      its leader (``iteration/``), the ``CommChannel`` between regions
+      (``comm/``) and the mapping, acceleration and convergence families
+      (``strategies/``). See :mod:`neofoam.framework.coupling`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 
@@ -40,6 +49,17 @@ the linked reference pages for the full API.
 ``solver/incompressibleFluid/``
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
+
+``solver/multiRun/``
+    Several solvers, one per region, in one case: ``system/controlDict.yaml``
+    lists ``participants``, each region reads ``<region>/``, and every region
+    runs on its own thread; ``system/coupling.yaml`` lists the
+    ``exchanges`` and ``couplings`` (its schema: ``framework/coupling/config.py``).
+
+``solver/regions.py``
+    What the solvers share to run as the regions of a ``multiRun`` case, such as
+    the case's ``system/controlDict.yaml`` (``ControlDictConfig``), so a
+    single-region solver does not import ``multiRun``.
 
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and

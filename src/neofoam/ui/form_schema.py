@@ -218,6 +218,7 @@ _ADDER_LABELS = {
     "nf.zone": ("Zone name, e.g. MRF1", "Add zone"),
     "nf.source": ("Source name, e.g. momentumSource", "Add source"),
     "nf.keyword": ("Keyword, e.g. cellZone", "Add keyword"),
+    "nf.region": ("Region, e.g. left", "Add region"),
 }
 
 ADDER_TRANSLATIONS: dict[str, str] = {

@@ -581,7 +581,8 @@ class _Q(ValueData):
 
 
 def _port(location: object, *sends: type) -> CoupledPort:
-    return CoupledPort("a", location, tuple(Stream(model, print) for model in sends))
+    name = getattr(location, "name")
+    return CoupledPort("a", name, location, tuple(Stream(model, print) for model in sends))
 
 
 def test_a_port_merges_the_streams_of_another_instance() -> None:
