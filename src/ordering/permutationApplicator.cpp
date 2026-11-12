@@ -50,8 +50,6 @@ void PermutationApplicator::reorderCellData(
     const PreparedPermutation& permutation
 ) const
 {
-    const NeoN::sizeType permutationSize = permutation.size();
-
     // Create a copy of the data with the name old data
     auto oldData = data.makeCopy();
 
@@ -67,7 +65,7 @@ void PermutationApplicator::reorderCellData(
     // data[j] = old data[i]
     NeoN::parallelFor(
         exec_,
-        {0, NeoN::toLocalIdx(permutationSize)},
+        {0, NeoN::toLocalIdx(permutation.size())},
         NEON_LAMBDA(NeoN::localIdx i) {
             auto j = oldToNew[i];
             dataView[j] = oldDataView[i];
@@ -84,6 +82,45 @@ template void PermutationApplicator::reorderCellData<
     NeoN::Vec3>(NeoN::Vector<NeoN::Vec3>&, const PreparedPermutation&) const;
 
 
+void PermutationApplicator::remapConnectivity(
+    NeoN::UnstructuredMesh& mesh,
+    const PreparedPermutation& permutation
+) const
+{
+    // Prepare a view of face owners for parallel construct
+    auto faceOwnersView = mesh.faceOwners().view();
+
+    // Prepare a view of oldToNew permutation for parallel construct
+    const auto oldToNew = permutation.oldToNew();
+
+    // Remap face owners of interior faces
+    NeoN::parallelFor(
+        exec_,
+        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto oldOwnerIdx = faceOwnersView[i];
+            faceOwnersView[i] = oldToNew[oldOwnerIdx];
+        },
+        "remap face owners of internal faces"
+    );
+
+    // Remap face neighbors of interior faces
+    // Prepare a view of face neighbors for parallel construct
+    auto faceNeighborsView = mesh.faceNeighbors().view();
+    NeoN::parallelFor(
+        exec_,
+        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto oldNeighborIdx = faceNeighborsView[i];
+            faceNeighborsView[i] = oldToNew[oldNeighborIdx];
+        },
+        "remap face neighbors of internal faces"
+    );
+
+    // Remap face owners of boundary faces
+    // Correct the face owner and neighbor indices according to OpenFOAM convention
+}
+
 void PermutationApplicator::validate(
     const NeoN::UnstructuredMesh& mesh,
     const PreparedPermutation& permutation
@@ -94,6 +131,4 @@ void PermutationApplicator::validate(
         throw std::invalid_argument("Permutation size does not match number of cells in mesh.");
     }
 }
-
-
 } // namespace NeoFOAM
