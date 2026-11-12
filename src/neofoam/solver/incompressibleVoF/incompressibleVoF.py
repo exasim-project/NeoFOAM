@@ -223,6 +223,7 @@ def run(
         Info("Starting time loop")
 
         solver.resolve_operations(ctx).run(ctx)
+        solver.finalize(ctx)
 
         Info("End")
         return ctx

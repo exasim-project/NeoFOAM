@@ -123,6 +123,7 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
         keep_alive(mpi, ctx)
         check_world(region, comm, uses_neon="neon_runtime" in ctx.models)
         runtime.resolve_operations(ctx).run(ctx)
+        runtime.finalize(ctx)
         if coupling is not None and coupling.comm_channel is not None:
             coupling.comm_channel.close(region)
     except BaseException as error:

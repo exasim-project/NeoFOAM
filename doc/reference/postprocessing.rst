@@ -653,8 +653,9 @@ A case that declares an entry gets an ``insitu`` operation, stepped right after
 operation does not exist. NeoFOAM ships no entry type: a type is an
 ``@InSitu.register`` subclass with a ``type: Literal[...]`` discriminator and an
 ``execute(ctx)`` taking the live :class:`~neofoam.framework.context.Context`
-(optionally a ``finalize()``), registered by importing its module — from the
-tool that drives the run, or from the case's ``system/postProcess.py``:
+(optionally a ``finalize()``, called once after the time loop), registered by
+importing its module — from the tool that drives the run, or from the case's
+``system/postProcess.py``:
 
 .. code-block:: python
 

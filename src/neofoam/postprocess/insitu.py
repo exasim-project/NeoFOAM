@@ -51,7 +51,7 @@ class InSitu(BaseConfig):
         raise NotImplementedError
 
     def finalize(self) -> None:
-        """Release what :meth:`execute` opened (no end-of-run hook: a driver calls it)."""
+        """Release what :meth:`execute` opened; called once, after the time loop."""
 
 
 class InSituEntry(NamedTuple):
@@ -77,6 +77,10 @@ class InSituRunner:
                 plugin.execute(ctx)
 
     def finalize(self) -> None:
-        """Finalize every entry (collective, like :meth:`execute`)."""
+        """Finalize every entry (collective, like :meth:`execute`).
+
+        A :class:`~neofoam.framework.solver.runtime.Finalizer`: the solver calls it
+        after the time loop (``SolverRuntime.finalize``).
+        """
         for plugin, _ in self.entries:
             plugin.finalize()
