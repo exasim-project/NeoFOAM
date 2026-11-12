@@ -9,7 +9,14 @@ non-editable install, which is how the parallel drivers run. Dereferencing it at
 import time would make ``import neofoam`` itself fail there (``neofoam.io``
 reaches this package), so the kernels are looked up per attribute, the way every
 other ``nfb`` caller in the package does it, and a missing stack is reported as a
-named :class:`ImportError` instead of an ``AttributeError`` on ``None``::
+named :class:`ImportError` instead of an ``AttributeError`` on ``None``.
+
+The kernels need NeoN (Kokkos) initialized even for host numpy input: the
+numpy front doors copy into a ``NeoN::Vector`` on the ``SerialExecutor``, and
+Kokkos runs that copy as a ``parallel_for`` once it reaches 80 KiB (10240
+scalars), which aborts the process before ``Kokkos::initialize``. A NeoN solver
+has initialized it already, an OpenFOAM one (``incompressibleFluid``) has not,
+so the lookup initializes it on first use::
 
     from neofoam.postprocess import _kernels as pp
 
@@ -32,4 +39,10 @@ def __getattr__(name: str) -> Any:
             "neofoam.neofoam_bindings is not built in this interpreter — install "
             "the package (pip install .) instead of importing it from src/"
         )
-    return getattr(bindings.postprocess, name)
+    kernel = getattr(bindings.postprocess, name)  # an unknown name raises before the init
+    from neofoam.solver.neon_runtime import (  # noqa: PLC0415  # NeoN only once a kernel runs
+        ensure_neon_initialized,
+    )
+
+    ensure_neon_initialized(["neofoam-postprocess"])
+    return kernel
