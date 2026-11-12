@@ -203,24 +203,19 @@ TEST_CASE("Applying permutation remaps connectivity") {
         const PreparedPermutation prepared {exec, permutation};
 
         // Original owner cell indices of internal faces: {0, 0, 1, 2}
-        const std::vector<NeoN::label> expectedOwners {0, 0, 1, 2};
-        // const std::vector<NeoN::scalar> data {1.0, 2.0, 3.0, 4.0};
-        // NeoN::scalarVector cellData(exec, data);
+        // Original neighbor cell indices of internal faces: {1, 2, 3, 3}
+        const std::vector<NeoN::label> expectedOwners {2, 2, 0, 3};
+        const std::vector<NeoN::label> expectedNeighbors {0, 3, 1, 1};
 
-        // const std::vector<NeoN::scalar> expectedData {2.0, 4.0, 1.0, 3.0};
-        // const NeoN::scalarVector expectedCellData(exec, expectedData);
-
-        // const PermutationApplicator applicator(exec);
-
-        // NeoN::labelVector faceOwnersHost = nfMesh.faceOwners().copyToHost();
-        // auto internalFaceOwners = faceOwnersHost.view({0, 4});
+        const PermutationApplicator applicator(exec);
 
         // --- Act ---
-        // applicator.remapConnectivity(nfMesh, prepared);
+        applicator.remapConnectivity(nfMesh, prepared);
 
         // --- Assert ---
         // REQUIRE(applicator.exec() == exec);
         REQUIRE_THAT(nfMesh.faceOwners(), EqualsRange(expectedOwners, {0, 4}, EqualInt {}));
+        REQUIRE_THAT(nfMesh.faceNeighbors(), EqualsRange(expectedNeighbors, {0, 4}, EqualInt {}));
         // REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt {}));
     }
 }
