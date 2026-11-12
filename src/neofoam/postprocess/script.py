@@ -27,11 +27,11 @@ from neofoam.postprocess.table import TableSet
 SCRIPT_FILE = "system/postProcess.py"
 
 #: The only families a re-load may take registrations back from: a script's own
-#: nodes, sources and writers. Anything it registers elsewhere (a write policy, a
+#: nodes, sources, writers and in-situ types. Anything it registers elsewhere (a write policy, a
 #: turbulence model) is the process's, not the script's.
 _LOADER = CaseModuleLoader(
     module_name="neofoam_case_post",
-    families=("Source", "Node", "TableWriter"),
+    families=("Source", "Node", "TableWriter", "InSitu"),
     kind="postProcess",
 )
 

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from neofoam.algorithms.field_writer.write_control import IntervalWriteControl, WriteControl
+from neofoam.postprocess.insitu import InSituEntry
 from neofoam.postprocess.node import Pipeline
 from neofoam.postprocess.writers import CsvWriter, TableWriter
 
@@ -55,7 +56,8 @@ class TableSet:
     ``write_control`` sets the cadence every table without its own inherits
     (default: every step) and ``writer`` the output format (default: CSV);
     ``case_dir`` is filled by :func:`tables_for_case` so the model knows where to
-    write.
+    write. ``insitu`` holds the case's in-situ entries
+    (:mod:`~neofoam.postprocess.insitu`), stepped after the tables.
     """
 
     def __init__(
@@ -69,6 +71,7 @@ class TableSet:
         self._default_writer = writer or CsvWriter()
         self.case_dir = case_dir
         self.tables: list[Table] = []
+        self.insitu: list[InSituEntry] = []
 
     def table(
         self,
@@ -100,7 +103,7 @@ class TableSet:
 def tables_for_case(case_dir: Path) -> TableSet:
     """Every table a case declares: the script's first, then the spec file's.
 
-    The script runs first so the nodes it registers with ``@Node.register`` are
+    The script runs first so the nodes (and in-situ types) it registers are
     selectable by ``type`` from the spec file. A name declared by both front
     doors raises, naming both origins. Neither file present ⇒ an empty set (the
     ``postProcess`` model then does nothing)::
@@ -109,6 +112,7 @@ def tables_for_case(case_dir: Path) -> TableSet:
     """
     from neofoam.postprocess.config import (  # noqa: PLC0415  # cycle: config->table
         load_config,
+        resolve_insitu,
         resolve_table,
         spec_file,
     )
@@ -127,8 +131,14 @@ def tables_for_case(case_dir: Path) -> TableSet:
 
     spec_path = spec_file(case_dir)
     if spec_path is not None:
-        declared = [resolve_table(spec) for spec in load_config(case_dir).tables]
+        config = load_config(case_dir)
+        declared = [resolve_table(spec) for spec in config.tables]
         _extend(tables, origins, declared, str(spec_path.relative_to(case_dir)))
+        names = [spec.name for spec in config.insitu]
+        duplicates = sorted({name for name in names if names.count(name) > 1})
+        if duplicates:
+            raise ValueError(f"postProcess: duplicate insitu entries {duplicates}")
+        tables.insitu = [resolve_insitu(spec) for spec in config.insitu]
 
     return tables
 

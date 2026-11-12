@@ -633,6 +633,47 @@ scratch truncates it.
    points. It raises a ``NotImplementedError`` naming the table instead — use an
    aggregator, or run that case serially.
 
+In-situ entries
+---------------
+
+Besides tables, the spec file can hand the live solver state to an in-situ tool
+(a renderer such as Catalyst, a steering client) through ``insitu`` entries:
+
+.. code-block:: yaml
+
+    insitu:
+      - name: view
+        type: catalyst          # registered by the tool's own package
+        write_control: {write_control_type: timeStep, interval: 5}
+        field: U                # every other key belongs to the type
+
+A case that declares an entry gets an ``insitu`` operation, stepped right after
+``post_process``, which calls each entry on its own write steps (the same
+``write_control`` policies as a table, default every step); without entries the
+operation does not exist. NeoFOAM ships no entry type: a type is an
+``@InSitu.register`` subclass with a ``type: Literal[...]`` discriminator and an
+``execute(ctx)`` taking the live :class:`~neofoam.framework.context.Context`
+(optionally a ``finalize()``), registered by importing its module — from the
+tool that drives the run, or from the case's ``system/postProcess.py``:
+
+.. code-block:: python
+
+    from typing import Literal
+
+    from neofoam.framework.context import Context
+    from neofoam.postprocess import InSitu
+
+    @InSitu.register
+    class PrintTime(InSitu):
+        type: Literal["printTime"] = "printTime"
+
+        def execute(self, ctx: Context) -> None:
+            print(self.name, ctx.time.value)
+
+Decomposed, every rank calls every entry at the same steps, so ``execute`` may be
+collective. The entry the operation runs is a private copy of the declaration, so
+state it keeps between calls belongs to the run.
+
 Try it
 ------
 

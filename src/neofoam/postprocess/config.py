@@ -23,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from neofoam.algorithms.field_writer.write_control import WriteControl
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.io import YAML, BaseConfig, IOStrategy
+from neofoam.postprocess.insitu import InSitu, InSituEntry
 from neofoam.postprocess.node import Node, Pipeline, Source
 from neofoam.postprocess.table import Table
 from neofoam.postprocess.writers.writer import TableWriter
@@ -82,17 +83,33 @@ class TableSpec(BaseModel):
         return name
 
 
+class InSituSpec(BaseModel):
+    """One declared in-situ entry: its ``type``, its cadence and the type's own keys.
+
+    Everything but ``write_control`` is the plugin's and validated against the
+    ``InSitu`` family at resolve time::
+
+        InSituSpec(name="view", type="catalyst", field="U")
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str
+    type: str
+    write_control: dict[str, Any] = DEFAULT_WRITE_CONTROL
+
+
 @IOStrategy(YAML("system/postProcess.yaml"))
 class PostProcessConfig(BaseConfig):
-    """The case's declared post-processing tables; no file ⇒ no tables.
+    """The case's declared tables and in-situ entries; no file ⇒ neither.
 
-    ``tables`` is the file's only key, so an unknown one is refused rather than
-    read as an empty declaration.
+    An unknown top-level key is refused rather than read as an empty declaration.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     tables: list[TableSpec] = []
+    insitu: list[InSituSpec] = []
 
 
 def spec_file(case_dir: Path) -> Optional[Path]:
@@ -126,6 +143,27 @@ def resolve_table(spec: TableSpec) -> Table:
         write_control=_resolve_write_control(spec),
         writer=_resolve_writer(spec),
     )
+
+
+def resolve_insitu(spec: InSituSpec) -> InSituEntry:
+    """Turn one declared in-situ entry into its plugin and its cadence."""
+    entry = spec.model_dump(exclude={"write_control"})
+    try:
+        plugin = cast(InSitu, cast(Any, InSitu).create(insitu=entry).insitu)
+    except ValidationError as exc:
+        raise ValueError(
+            f"postProcess insitu {spec.name!r}: cannot resolve {entry!r}; "
+            f"registered insitu types: {_registered_types('InSitu')}"
+        ) from exc
+    try:
+        policy = cast(Any, WriteControl).create(policy=spec.write_control).policy
+    except ValidationError as exc:
+        raise ValueError(
+            f"postProcess insitu {spec.name!r}: cannot resolve write_control "
+            f"{spec.write_control!r}; registered write control types: "
+            f"{_registered_types('WriteControl')}"
+        ) from exc
+    return InSituEntry(plugin, cast(WriteControl, policy))
 
 
 def _resolve_source(spec: TableSpec) -> Source:
