@@ -25,7 +25,7 @@ TEST_CASE("Reorder cell-associated data")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Set up a mesh
+    // Set up a mesh: 2x2x1 non-uniform mesh with 4 cells
     Foam::Time& runTime = *timePtr;
     auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
     Foam::scalar startTime = 0.0;
@@ -180,7 +180,50 @@ TEST_CASE("Reorder cell-associated data")
 }
 
 
-TEST_CASE("Applying permutation remaps owner indices") {}
+TEST_CASE("Applying permutation remaps connectivity") {
+
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    // Set up a mesh
+    Foam::Time& runTime = *timePtr;
+    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
+    Foam::scalar startTime = 0.0;
+    Foam::label startTimeIndex = 0;
+    runTime.setTime(startTime, startTimeIndex);
+
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
+    SECTION("Applying permutation remaps owner cell indices of internal faces " + execName)
+    {
+        // --- Arrange ---
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+
+        // Original owner cell indices of internal faces: {0, 0, 1, 2}
+        const std::vector<NeoN::label> expectedOwners {0, 0, 1, 2};
+        // const std::vector<NeoN::scalar> data {1.0, 2.0, 3.0, 4.0};
+        // NeoN::scalarVector cellData(exec, data);
+
+        // const std::vector<NeoN::scalar> expectedData {2.0, 4.0, 1.0, 3.0};
+        // const NeoN::scalarVector expectedCellData(exec, expectedData);
+
+        // const PermutationApplicator applicator(exec);
+
+        // NeoN::labelVector faceOwnersHost = nfMesh.faceOwners().copyToHost();
+        // auto internalFaceOwners = faceOwnersHost.view({0, 4});
+
+        // --- Act ---
+        // applicator.remapConnectivity(nfMesh, prepared);
+
+        // --- Assert ---
+        // REQUIRE(applicator.exec() == exec);
+        REQUIRE_THAT(nfMesh.faceOwners(), EqualsRange(expectedOwners, {0, 4}, EqualInt {}));
+        // REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt {}));
+    }
+}
 
 TEST_CASE("Applying permutation remaps neighbour indices") {}
 

@@ -177,6 +177,56 @@ auto Equals(Expected expected, Predicate pred)
     return EqualsMatcher<Expected, Predicate> {std::move(expected), pred};
 }
 
+template<typename Expected, typename Predicate>
+struct EqualsRangeMatcher : Catch::Matchers::MatcherGenericBase
+{
+    using Range = std::pair<NeoN::localIdx, NeoN::localIdx>;
+
+    EqualsRangeMatcher(Expected expected, Range range, Predicate pred)
+        : expected_(std::move(expected))
+        , range_(range)
+        , pred_(std::move(pred))
+    {}
+
+    template<typename T>
+    bool match(const NeoN::Vector<T>& actual) const
+    {
+        auto host = actual.copyToHost();
+        auto sub = host.view(range_);
+
+        return std::equal(
+            sub.begin(),
+            sub.end(),
+            expected_.begin(),
+            expected_.end(),
+            pred_
+        );
+    }
+
+    std::string describe() const override
+    {
+        return "range equals " + Catch::rangeToString(expected_);
+    }
+
+private:
+
+    Expected expected_;
+    Range range_;
+    Predicate pred_;
+};
+
+template<typename Expected, typename Predicate>
+auto EqualsRange(
+    Expected expected,
+    std::pair<NeoN::localIdx, NeoN::localIdx> range,
+    Predicate pred
+)
+{
+    return EqualsRangeMatcher<Expected, Predicate>{
+        std::move(expected), range, std::move(pred)
+    };
+}
+
 /** @brief Approximate scalar comparison predicate for use with EqualsInternal/EqualsBoundary. */
 struct ApproxScalar
 {
