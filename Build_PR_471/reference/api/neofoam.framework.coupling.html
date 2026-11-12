@@ -305,8 +305,8 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.exchanges.html">neofoam.framework.coupling.exchanges</a></li>
-<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.iteration.html">neofoam.framework.coupling.iteration</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.run.html">neofoam.framework.coupling.run</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="neofoam.framework.coupling.strategies.html">neofoam.framework.coupling.strategies</a><input aria-label="Toggle navigation of neofoam.framework.coupling.strategies" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -690,8 +690,8 @@
 (<code class="docutils literal notranslate"><span class="pre">coupling(ctx).add(Patch(&quot;top&quot;),</span> <span class="pre">bc)</span></code>), which is its port. An
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code> pairs what one port sends with what the other receives, its
 mapping moves the data between their locations. The region’s <code class="xref py py-class docutils literal notranslate"><span class="pre">Participant</span></code>
-model builds one coupling op per <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingLoop</span></code>; a node’s leader (its last
-region in stepping order) decides convergence and the final pass.</p>
+model builds one coupling op per <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingLoop</span></code>; a loop’s leader (its last
+region in stepping order) decides convergence and the final iteration.</p>
 <p class="rubric">Modules</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -703,16 +703,16 @@ region in stepping order) decides convergence and the final pass.</p>
 <td><p><code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> on a class, and its method markers <code class="docutils literal notranslate"><span class="pre">&#64;coupled.sends</span></code> / <code class="docutils literal notranslate"><span class="pre">&#64;coupled.receives</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.data.html#module-neofoam.framework.coupling.data" title="neofoam.framework.coupling.data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data</span></code></a></p></td>
-<td><p>What a port exchanges: data models of <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> or <code class="xref py py-data docutils literal notranslate"><span class="pre">Scalar</span></code> fields, the port.</p></td>
+<td><p>What a port exchanges: data models of <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> or <code class="xref py py-data docutils literal notranslate"><span class="pre">Scalar</span></code> fields, their streams.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.exchanges.html#module-neofoam.framework.coupling.exchanges" title="neofoam.framework.coupling.exchanges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exchanges</span></code></a></p></td>
 <td><p>What one region knows of the coupling of a case: <code class="xref py py-class docutils literal notranslate"><span class="pre">ParticipantExchanges</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.iteration.html#module-neofoam.framework.coupling.iteration" title="neofoam.framework.coupling.iteration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iteration</span></code></a></p></td>
-<td><p>The coupling loop of a region: its op, the leader's decision, the agreed time step.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.location.html#module-neofoam.framework.coupling.location" title="neofoam.framework.coupling.location"><code class="xref py py-obj docutils literal notranslate"><span class="pre">location</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.location.html#module-neofoam.framework.coupling.location" title="neofoam.framework.coupling.location"><code class="xref py py-obj docutils literal notranslate"><span class="pre">location</span></code></a></p></td>
 <td><p>Where a port sits in its region's mesh: <code class="xref py py-class docutils literal notranslate"><span class="pre">Patch</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Cells</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Global</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.loop.html#module-neofoam.framework.coupling.loop" title="neofoam.framework.coupling.loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loop</span></code></a></p></td>
+<td><p>The coupling loop of a region: its op, the leader's decision, the agreed time step.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.model.html#module-neofoam.framework.coupling.model" title="neofoam.framework.coupling.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a></p></td>
 <td><p>The coupling model of a region, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>: <code class="xref py py-class docutils literal notranslate"><span class="pre">Participant</span></code>.</p></td>

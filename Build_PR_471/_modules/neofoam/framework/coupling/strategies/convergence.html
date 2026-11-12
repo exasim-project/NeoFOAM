@@ -304,8 +304,8 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.exchanges.html">neofoam.framework.coupling.exchanges</a></li>
-<li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.iteration.html">neofoam.framework.coupling.iteration</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.run.html">neofoam.framework.coupling.run</a></li>
 <li class="toctree-l5 has-children"><a class="reference internal" href="../../../../../reference/api/neofoam.framework.coupling.strategies.html">neofoam.framework.coupling.strategies</a><input aria-label="Toggle navigation of neofoam.framework.coupling.strategies" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -693,10 +693,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..comm.channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
 
 
-<div class="viewcode-block" id="SideChange">
-<a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.coupling.strategies.convergence.html#neofoam.framework.coupling.strategies.convergence.SideChange">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SideChange</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""What one stream sent in the previous and in the current pass, for a convergence check."""</span>
+<div class="viewcode-block" id="StreamChange">
+<a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.coupling.strategies.convergence.html#neofoam.framework.coupling.strategies.convergence.StreamChange">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamChange</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What one stream sent in the previous and the current iteration, for a convergence check."""</span>
 
     <span class="n">previous</span><span class="p">:</span> <span class="n">Data</span>
     <span class="n">current</span><span class="p">:</span> <span class="n">Data</span></div>
@@ -707,7 +707,7 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.coupling.strategies.convergence.html#neofoam.framework.coupling.strategies.convergence.CouplingConvergence">[docs]</a>
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"convergence"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingConvergence</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Whether a node converged, from every stream's change in the last pass; a plugin family.</span>
+<span class="w">    </span><span class="sd">"""Whether a coupling loop converged, by each stream's last change; a plugin family.</span>
 
 <span class="sd">    ``data`` names the data field a measure compares (``T``), ``None`` for all of them.</span>
 <span class="sd">    """</span>
@@ -715,7 +715,7 @@
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StreamChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Whether the data converged, from ``changes``."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
@@ -736,7 +736,7 @@
     <span class="n">data</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StreamChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">previous</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
             <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>

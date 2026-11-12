@@ -305,8 +305,8 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.exchanges.html">neofoam.framework.coupling.exchanges</a></li>
-<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.iteration.html">neofoam.framework.coupling.iteration</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.run.html">neofoam.framework.coupling.run</a></li>
 <li class="toctree-l5 current has-children"><a class="reference internal" href="neofoam.framework.coupling.strategies.html">neofoam.framework.coupling.strategies</a><input aria-label="Toggle navigation of neofoam.framework.coupling.strategies" checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
@@ -689,7 +689,7 @@
 <dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.CouplingConvergence">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.strategies.convergence.</span></span><span class="sig-name descname"><span class="pre">CouplingConvergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/strategies/convergence.html#CouplingConvergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.CouplingConvergence" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
-<p>Whether a node converged, from every stream’s change in the last pass; a plugin family.</p>
+<p>Whether a coupling loop converged, by each stream’s last change; a plugin family.</p>
 <p><code class="docutils literal notranslate"><span class="pre">data</span></code> names the data field a measure compares (<code class="docutils literal notranslate"><span class="pre">T</span></code>), <code class="docutils literal notranslate"><span class="pre">None</span></code> for all of them.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.CouplingConvergence.model_config">
@@ -723,19 +723,19 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.SideChange">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.strategies.convergence.</span></span><span class="sig-name descname"><span class="pre">SideChange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/strategies/convergence.html#SideChange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.SideChange" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.StreamChange">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.strategies.convergence.</span></span><span class="sig-name descname"><span class="pre">StreamChange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/strategies/convergence.html#StreamChange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.StreamChange" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
-<p>What one stream sent in the previous and in the current pass, for a convergence check.</p>
+<p>What one stream sent in the previous and the current iteration, for a convergence check.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.SideChange.current">
-<span class="sig-name descname"><span class="pre">current</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.SideChange.current" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.StreamChange.current">
+<span class="sig-name descname"><span class="pre">current</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.StreamChange.current" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.SideChange.previous">
-<span class="sig-name descname"><span class="pre">previous</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.SideChange.previous" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.strategies.convergence.StreamChange.previous">
+<span class="sig-name descname"><span class="pre">previous</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.strategies.convergence.StreamChange.previous" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
@@ -808,9 +808,9 @@
 <li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.RelativeConvergence.model_config"><code class="docutils literal notranslate"><span class="pre">RelativeConvergence.model_config</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.SideChange"><code class="docutils literal notranslate"><span class="pre">SideChange</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.SideChange.current"><code class="docutils literal notranslate"><span class="pre">SideChange.current</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.SideChange.previous"><code class="docutils literal notranslate"><span class="pre">SideChange.previous</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.StreamChange"><code class="docutils literal notranslate"><span class="pre">StreamChange</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.StreamChange.current"><code class="docutils literal notranslate"><span class="pre">StreamChange.current</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.strategies.convergence.StreamChange.previous"><code class="docutils literal notranslate"><span class="pre">StreamChange.previous</span></code></a></li>
 </ul>
 </li>
 </ul>
