@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
   <compounddef id="solver_8hpp" kind="file" language="C++">
     <compoundname>solver.hpp</compoundname>
     <includes local="yes">NeoN/NeoN.hpp</includes>
@@ -165,10 +165,10 @@
 <codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,</highlight></codeline>
 <codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>MatrixValueType<sp/>=<sp/>NeoN::scalar,</highlight></codeline>
 <codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
-<codeline lineno="33" refid="classNeoFOAM_1_1Solver" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver</ref></highlight></codeline>
+<codeline lineno="33" refid="classNeoFOAM_1_1Solver" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Solver_1af4ade45d4be71a39d82d8717b5a439c9" kindref="member">Solver</ref></highlight></codeline>
 <codeline lineno="34"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">VolumeField<sp/>=<sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;;</highlight></codeline>
-<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">PDEType<sp/>=<sp/>PDE&lt;ValueType,<sp/>MatrixValueType,<sp/>IndexType&gt;;</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">PDEType<sp/>=<sp/><ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE&lt;ValueType, MatrixValueType, IndexType&gt;</ref>;</highlight></codeline>
 <codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">LinearSystemType<sp/>=<sp/>NeoN::la::LinearSystem&lt;MatrixValueType,<sp/>ValueType&gt;;</highlight></codeline>
 <codeline lineno="38"><highlight class="normal"></highlight></codeline>
 <codeline lineno="39"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
@@ -179,20 +179,20 @@
 <codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>,<sp/>cachedSolver_(createCachedSolver(field,<sp/>rt))</highlight></codeline>
 <codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/>{}</highlight></codeline>
 <codeline lineno="47"><highlight class="normal"></highlight></codeline>
-<codeline lineno="49" refid="classNeoFOAM_1_1Solver_1ac9fb3f3e3beac5ea3e1f4f2259681c60" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::SolverStats<sp/><ref refid="classNeoFOAM_1_1Solver_1ac9fb3f3e3beac5ea3e1f4f2259681c60" kindref="member">solve</ref>(PDEType&amp;<sp/>pde)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.solveWith(cachedSolver_,<sp/>field_,<sp/>rt_);<sp/>}</highlight></codeline>
+<codeline lineno="49" refid="classNeoFOAM_1_1Solver_1ac9fb3f3e3beac5ea3e1f4f2259681c60" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::SolverStats<sp/><ref refid="classNeoFOAM_1_1Solver_1ac9fb3f3e3beac5ea3e1f4f2259681c60" kindref="member">solve</ref>(PDEType&amp;<sp/>pde)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.<ref refid="classNeoFOAM_1_1PDE_1a3c38e63ceabdeecad3f7eea2d76fb4e0" kindref="member">solveWith</ref>(cachedSolver_,<sp/>field_,<sp/>rt_);<sp/>}</highlight></codeline>
 <codeline lineno="50"><highlight class="normal"></highlight></codeline>
 <codeline lineno="52" refid="classNeoFOAM_1_1Solver_1a87eb53fbec90b0a7353071be63386f2d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::SolverStats<sp/><ref refid="classNeoFOAM_1_1Solver_1a87eb53fbec90b0a7353071be63386f2d" kindref="member">solve</ref>(PDEType&amp;<sp/>pde,<sp/>dsl::SpatialOperator&lt;ValueType&gt;&amp;&amp;<sp/>rhs)</highlight></codeline>
 <codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.solveWith(cachedSolver_,<sp/>field_,<sp/>rt_,<sp/>std::move(rhs));</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.<ref refid="classNeoFOAM_1_1PDE_1a3c38e63ceabdeecad3f7eea2d76fb4e0" kindref="member">solveWith</ref>(cachedSolver_,<sp/>field_,<sp/>rt_,<sp/>std::move(rhs));</highlight></codeline>
 <codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="56"><highlight class="normal"></highlight></codeline>
-<codeline lineno="58" refid="classNeoFOAM_1_1Solver_1a7a7ea1bc3bdbe2616189eaaca665b22f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>LinearSystemType&amp;<sp/><ref refid="classNeoFOAM_1_1Solver_1a7a7ea1bc3bdbe2616189eaaca665b22f" kindref="member">assemble</ref>(PDEType&amp;<sp/>pde)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.assemble(field_,<sp/>rt_);<sp/>}</highlight></codeline>
+<codeline lineno="58" refid="classNeoFOAM_1_1Solver_1a7a7ea1bc3bdbe2616189eaaca665b22f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>LinearSystemType&amp;<sp/><ref refid="classNeoFOAM_1_1Solver_1a7a7ea1bc3bdbe2616189eaaca665b22f" kindref="member">assemble</ref>(PDEType&amp;<sp/>pde)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.<ref refid="classNeoFOAM_1_1PDE_1a56dc3d06d1616cf7726cee7c009fa756" kindref="member">assemble</ref>(field_,<sp/>rt_);<sp/>}</highlight></codeline>
 <codeline lineno="59"><highlight class="normal"></highlight></codeline>
 <codeline lineno="61" refid="classNeoFOAM_1_1Solver_1ac1b779d09de38cf1d2beff2f4ea2436b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>LinearSystemType&amp;<sp/><ref refid="classNeoFOAM_1_1Solver_1ac1b779d09de38cf1d2beff2f4ea2436b" kindref="member">assembleAndRelax</ref>(PDEType&amp;<sp/>pde)</highlight></codeline>
 <codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pde.assemble(field_,<sp/>rt_);</highlight></codeline>
-<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pde.relaxOwnedLs();</highlight></codeline>
-<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.linearSystem();</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pde.<ref refid="classNeoFOAM_1_1PDE_1a56dc3d06d1616cf7726cee7c009fa756" kindref="member">assemble</ref>(field_,<sp/>rt_);</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pde.<ref refid="classNeoFOAM_1_1PDE_1adb2db6a18334f46d42794e5b5aef0fdb" kindref="member">relaxOwnedLs</ref>();</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.<ref refid="classNeoFOAM_1_1PDE_1ad7837cb66df5a2d02a51079865fd9b69" kindref="member">linearSystem</ref>();</highlight></codeline>
 <codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="67"><highlight class="normal"></highlight></codeline>
 <codeline lineno="68"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
@@ -211,7 +211,7 @@
 <codeline lineno="81"><highlight class="normal"></highlight></codeline>
 <codeline lineno="82"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Deduction<sp/>guide:<sp/>Solver(field,<sp/>rt)<sp/>deduces<sp/>ValueType<sp/>from<sp/>the<sp/>VolumeField<sp/>argument.</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="83"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType&gt;</highlight></codeline>
-<codeline lineno="84" refid="namespaceNeoFOAM_1aecef654291f22551aa7a3b014e46cb67" refkind="member"><highlight class="normal"><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver</ref>(NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;)<sp/>-&gt;<sp/><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver&lt;ValueType&gt;</ref>;</highlight></codeline>
+<codeline lineno="84" refid="namespaceNeoFOAM_1aecef654291f22551aa7a3b014e46cb67" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1aecef654291f22551aa7a3b014e46cb67" kindref="member">Solver</ref>(NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;)<sp/>-&gt;<sp/><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver&lt;ValueType&gt;</ref>;</highlight></codeline>
 <codeline lineno="85"><highlight class="normal"></highlight></codeline>
 <codeline lineno="86"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
