@@ -35,7 +35,7 @@ def _as_array(value: Any) -> Any:
 
 
 # A field of a data model: one value (or row) per entity of the location, in mesh order.
-Array = Annotated[np.ndarray, _ArrayKind(), PlainValidator(_as_array)]
+Array = Annotated[np.ndarray[Any, np.dtype[np.float64]], _ArrayKind(), PlainValidator(_as_array)]
 
 # A field of a ValueData model: one number.
 Scalar = Annotated[float, _ScalarKind(), PlainValidator(float)]
