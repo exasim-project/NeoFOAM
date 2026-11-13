@@ -211,8 +211,8 @@ TEST_CASE("Applying permutation remaps connectivity")
         // Original owner cell indices of internal faces: {0, 0, 1, 2}
         // Original neighbor cell indices of internal faces: {1, 2, 3, 3}
         const sizeType expectedInternalFaces = 4;
-        const std::vector<NeoN::label> expectedOwners {2, 2, 0, 3};
-        // const std::vector<NeoN::label> expectedNeighbors {0, 3, 1, 1};
+        const std::vector<NeoN::label> expectedOwners {0, 2, 0, 1};
+        const std::vector<NeoN::label> expectedNeighbors {2, 3, 1, 3};
 
         const PermutationApplicator applicator(exec);
 
@@ -226,8 +226,14 @@ TEST_CASE("Applying permutation remaps connectivity")
             nfMesh.faceOwners(),
             EqualsRange(expectedOwners, {0, NeoN::toLocalIdx(expectedInternalFaces)}, EqualInt {})
         );
-        // REQUIRE_THAT(nfMesh.faceNeighbors(), EqualsRange(expectedNeighbors, {0, 4}, EqualInt
-        // {})); REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt {}));
+        REQUIRE_THAT(
+            nfMesh.faceNeighbors(),
+            EqualsRange(
+                expectedNeighbors,
+                {0, NeoN::toLocalIdx(expectedInternalFaces)},
+                EqualInt {}
+            )
+        );
     }
 
     SECTION("Applying permutation remaps owner cell indices of boundary faces " + execName)

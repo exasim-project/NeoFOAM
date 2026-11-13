@@ -132,19 +132,20 @@ void PermutationApplicator::remapConnectivity(
     );
 
     // Correct the face owner and neighbor indices according to OpenFOAM convention
-    // NeoN::parallelFor(
-    //     exec_,
-    //     {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
-    //     NEON_LAMBDA(NeoN::localIdx i) {
-    //         auto ownerIdx = faceOwnersView[i];
-    //         auto neighborIdx = faceNeighborsView[i];
-    //         if (ownerIdx > neighborIdx)
-    //         {
-    //             std::swap(faceOwnersView[i], faceNeighborsView[i]);
-    //         }
-    //     },
-    //     "correct face owner and neighbor indices of internal faces"
-    // );
+    NeoN::parallelFor(
+        exec_,
+        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto ownerIdx = faceOwnersView[i];
+            auto neighborIdx = faceNeighborsView[i];
+            if (ownerIdx > neighborIdx)
+            {
+                faceOwnersView[i] = neighborIdx;
+                faceNeighborsView[i] = ownerIdx;
+            }
+        },
+        "correct face owner and neighbor indices of internal faces"
+    );
 }
 
 void PermutationApplicator::validate(
