@@ -104,6 +104,8 @@ void \mbox{\hyperlink{namespaceNeoFOAM_a62eb8e5a163de38a7fbebd7a25c7b624}{update
 \item 
 nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&vol\+Field)
 \item 
+{\footnotesize template$<$typename Linear\+System\+Type, typename Volume\+Field\+Type$>$ }\\Neo\+N\+::label \mbox{\hyperlink{namespaceNeoFOAM_a72161ef3ce7998aa7ac9c452656084ce}{apply\+Velocity\+Damping}} (Linear\+System\+Type \&ls, const Volume\+Field\+Type \&U, Neo\+N\+::scalar UMax, Neo\+N\+::scalar C=1.\+0)
+\begin{DoxyCompactList}\small\item\em Port of Open\+FOAM\textquotesingle{}s fv\+::velocity\+Damping\+Constraint (fv\+Options). \end{DoxyCompactList}\item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}} (Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&vsf, const Neo\+N\+::scalar lower\+Bound, \mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{Bound\+Cache}} \&cache)
 \begin{DoxyCompactList}\small\item\em Bound a scalar field from below, following Open\+FOAM\textquotesingle{}s Foam\+::bound(). \end{DoxyCompactList}\item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_a6e6b831af8b12c7823794018471346a6}{bound}} (Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&vsf, const Neo\+N\+::scalar lower\+Bound)
@@ -268,7 +270,7 @@ using \mbox{\hyperlink{namespaceNeoFOAM_ac6c705c531174e3db7514bee80618ae1}{Neo\+
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00641}{641}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00670}{670}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ac29fa0e27622dcb0c44a8a2bb7a6d33b}\index{NeoFOAM@{NeoFOAM}!ResidualMap@{ResidualMap}}
 \index{ResidualMap@{ResidualMap}!NeoFOAM@{NeoFOAM}}
@@ -300,7 +302,53 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00644}{644}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00673}{673}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a72161ef3ce7998aa7ac9c452656084ce}\index{NeoFOAM@{NeoFOAM}!applyVelocityDamping@{applyVelocityDamping}}
+\index{applyVelocityDamping@{applyVelocityDamping}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{applyVelocityDamping()}{applyVelocityDamping()}}
+{\footnotesize\ttfamily \label{namespaceNeoFOAM_a72161ef3ce7998aa7ac9c452656084ce} 
+template$<$typename Linear\+System\+Type, typename Volume\+Field\+Type$>$ \\
+Neo\+N\+::label Neo\+FOAM\+::apply\+Velocity\+Damping (\begin{DoxyParamCaption}\item[{Linear\+System\+Type \&}]{ls}{, }\item[{const Volume\+Field\+Type \&}]{U}{, }\item[{Neo\+N\+::scalar}]{UMax}{, }\item[{Neo\+N\+::scalar}]{C}{ = {\ttfamily 1.0}}\end{DoxyParamCaption})}
+
+
+
+Port of Open\+FOAM\textquotesingle{}s fv\+::velocity\+Damping\+Constraint (fv\+Options). 
+
+\doxylink{namespaceNeoFOAM}{Neo\+FOAM} has no fv\+Options layer, so a case that ships \begin{DoxyVerb}velocityDamping { type velocityDampingConstraint; selectionMode all; UMax 300; }
+\end{DoxyVerb}
+
+
+in system/fv\+Options gets that constraint applied by simple\+Foam and silently NOT applied by neo\+Simple\+Foam. On the occ\+Driv\+Aer cold start this is not cosmetic\+: the reference run damps 12 cells on iteration 1 (and none of the remaining 3999), i.\+e. it is exactly the startup safety net that keeps the initial transient bounded.
+
+Faithful to upstream {\ttfamily add\+Damping} (velocity\+Damping\+Constraint.\+C), which is a DIAGONAL-\/\+ONLY constraint -- there is no source/rhs contribution\+: \begin{DoxyVerb}scale = cbrt(V_c)^2
+diag[c] += C * scale * (|U_c| - UMax)      for cells with |U_c| > UMax
+\end{DoxyVerb}
+
+
+The comment upstream explains the scaling\+: the added term is delta\+U/deltaT with a local time scale deltaT = cbrt(\+V)/U, and since the diagonal is manipulated directly it is multiplied by the cell volume, leaving V\texorpdfstring{$^\wedge$}{\string^}(2/3). Boosting the diagonal without a matching source drags the offending cells\textquotesingle{} velocity back toward zero; it is a constraint, not a conservative term, and it vanishes from the converged solution once no cell exceeds UMax.
+
+Applied to the ALREADY RELAXED system, matching simple\+Foam\textquotesingle{}s ordering ({\ttfamily UEqn.\+relax(); fv\+Options.\+constrain(\+UEqn);}) -- see \doxylink{classNeoFOAM_1_1PDE_afc566cf8232d8c83effa4c8981e8ca39}{PDE\+::set\+Post\+Relax\+Constraint}.
+
+Only {\ttfamily selection\+Mode all} is supported; the caller is responsible for rejecting cell-\/set restricted variants.
+
+
+\begin{DoxyParams}{Parameters}
+{\em ls} & The assembled (and relaxed) linear system; its diagonal is modified in place. \\
+\hline
+{\em U} & The velocity field whose current internal values decide which cells are damped. \\
+\hline
+{\em UMax} & Velocity magnitude above which damping engages. \\
+\hline
+{\em C} & Upstream\textquotesingle{}s {\ttfamily C} coefficient (default 1, as in fv\+::velocity\+Damping\+Constraint). \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Number of cells damped on THIS rank (caller reduces across ranks for reporting). 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{velocityDamping_8hpp_source_l00051}{51}} of file \mbox{\hyperlink{velocityDamping_8hpp_source}{velocity\+Damping.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a6e6b831af8b12c7823794018471346a6}\index{NeoFOAM@{NeoFOAM}!bound@{bound}}
 \index{bound@{bound}!NeoFOAM@{NeoFOAM}}
@@ -797,7 +845,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00663}{663}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00692}{692}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805}\index{NeoFOAM@{NeoFOAM}!operator==@{operator==}}
 \index{operator==@{operator==}!NeoFOAM@{NeoFOAM}}
