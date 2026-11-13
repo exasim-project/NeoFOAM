@@ -133,8 +133,9 @@ lookupFieldRelaxation(const NeoN::Dictionary& fvSolution, const std::string& fie
 /* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.
  *
  * The returned dictionary additionally carries a "reportName" meta key holding
- * the Ginkgo solver/preconditioner label (e.g. "Ic+Cg") used by the per-solve
- * residual report. The Ginkgo backend's config parser ignores that key.
+ * the Ginkgo solver/preconditioner label (e.g. "Ic+Cg", or "config(Cg+Multigrid)" for a
+ * configFile) used by the per-solve residual report. The Ginkgo backend's config parser
+ * ignores that key. The resulting settings are logged once per mapped entry.
  *
  * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).
  */
