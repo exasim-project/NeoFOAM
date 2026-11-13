@@ -53,7 +53,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="641" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="641" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="670" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="670" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespaceNeoFOAM_1a4f406b19b242a8f180cb1555e4a8b7ed" prot="public" static="no">
         <type>std::pair&lt; NeoN::scalar, NeoN::scalar &gt;</type>
@@ -344,6 +344,91 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="114" column="22" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="114" declcolumn="22"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a72161ef3ce7998aa7ac9c452656084ce" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename LinearSystemType</type>
+          </param>
+          <param>
+            <type>typename VolumeFieldType</type>
+          </param>
+        </templateparamlist>
+        <type>NeoN::label</type>
+        <definition>NeoN::label NeoFOAM::applyVelocityDamping</definition>
+        <argsstring>(LinearSystemType &amp;ls, const VolumeFieldType &amp;U, NeoN::scalar UMax, NeoN::scalar C=1.0)</argsstring>
+        <name>applyVelocityDamping</name>
+        <qualifiedname>NeoFOAM::applyVelocityDamping</qualifiedname>
+        <param>
+          <type>LinearSystemType &amp;</type>
+          <declname>ls</declname>
+        </param>
+        <param>
+          <type>const VolumeFieldType &amp;</type>
+          <declname>U</declname>
+        </param>
+        <param>
+          <type>NeoN::scalar</type>
+          <declname>UMax</declname>
+        </param>
+        <param>
+          <type>NeoN::scalar</type>
+          <declname>C</declname>
+          <defval>1.0</defval>
+        </param>
+        <briefdescription>
+<para>Port of OpenFOAM&apos;s fv::velocityDampingConstraint (fvOptions). </para>
+        </briefdescription>
+        <detaileddescription>
+<para><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> has no fvOptions layer, so a case that ships <verbatim>velocityDamping { type velocityDampingConstraint; selectionMode all; UMax 300; }
+</verbatim></para>
+<para>in system/fvOptions gets that constraint applied by simpleFoam and silently NOT applied by neoSimpleFoam. On the occDrivAer cold start this is not cosmetic: the reference run damps 12 cells on iteration 1 (and none of the remaining 3999), i.e. it is exactly the startup safety net that keeps the initial transient bounded.</para>
+<para>Faithful to upstream <computeroutput>addDamping</computeroutput> (velocityDampingConstraint.C), which is a DIAGONAL-ONLY constraint <ndash/> there is no source/rhs contribution: <verbatim>scale = cbrt(V_c)^2
+diag[c] += C * scale * (|U_c| - UMax)      for cells with |U_c| &gt; UMax
+</verbatim></para>
+<para>The comment upstream explains the scaling: the added term is deltaU/deltaT with a local time scale deltaT = cbrt(V)/U, and since the diagonal is manipulated directly it is multiplied by the cell volume, leaving V^(2/3). Boosting the diagonal without a matching source drags the offending cells&apos; velocity back toward zero; it is a constraint, not a conservative term, and it vanishes from the converged solution once no cell exceeds UMax.</para>
+<para>Applied to the ALREADY RELAXED system, matching simpleFoam&apos;s ordering (<computeroutput>UEqn.relax(); fvOptions.constrain(UEqn);</computeroutput>) <ndash/> see <ref refid="classNeoFOAM_1_1PDE_1afc566cf8232d8c83effa4c8981e8ca39" kindref="member">PDE::setPostRelaxConstraint</ref>.</para>
+<para>Only <computeroutput>selectionMode all</computeroutput> is supported; the caller is responsible for rejecting cell-set restricted variants.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ls</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The assembled (and relaxed) linear system; its diagonal is modified in place. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>U</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The velocity field whose current internal values decide which cells are damped. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>UMax</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Velocity magnitude above which damping engages. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>C</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Upstream&apos;s <computeroutput>C</computeroutput> coefficient (default 1, as in fv::velocityDampingConstraint). </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>Number of cells damped on THIS rank (caller reduces across ranks for reporting). </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/velocityDamping.hpp" line="51" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/velocityDamping.hpp" bodystart="51" bodyend="95"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a6cbdfd4b2fffd39d6929b34f32cb586f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>bool</type>
@@ -1956,7 +2041,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="644" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="644" bodyend="659"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="673" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="673" bodyend="688"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a999e61dc6e0868f9fe6cd7e4ea91f917" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1983,7 +2068,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="663" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="663" bodyend="669"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="692" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="692" bodyend="698"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ae0ba57edf5020731ae0454b2fe1a6716" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>const std::shared_ptr&lt; fvcc::GradOperatorFactory&lt; NeoN::Vec3 &gt; &gt; &amp;</type>
