@@ -214,13 +214,7 @@ struct EqualsRangeMatcher : Catch::Matchers::MatcherGenericBase
         auto host = actual.copyToHost();
         auto sub = host.view(range_);
 
-        return std::equal(
-            sub.begin(),
-            sub.end(),
-            expected_.begin(),
-            expected_.end(),
-            pred_
-        );
+        return std::equal(sub.begin(), sub.end(), expected_.begin(), expected_.end(), pred_);
     }
 
     std::string describe() const override
@@ -254,15 +248,9 @@ private:
  *         and comparison predicate.
  */
 template<typename Expected, typename Predicate>
-auto EqualsRange(
-    Expected expected,
-    std::pair<NeoN::localIdx, NeoN::localIdx> range,
-    Predicate pred
-)
+auto EqualsRange(Expected expected, std::pair<NeoN::localIdx, NeoN::localIdx> range, Predicate pred)
 {
-    return EqualsRangeMatcher<Expected, Predicate>{
-        std::move(expected), range, std::move(pred)
-    };
+    return EqualsRangeMatcher<Expected, Predicate> {std::move(expected), range, std::move(pred)};
 }
 
 /** @brief Approximate scalar comparison predicate for use with EqualsInternal/EqualsBoundary. */

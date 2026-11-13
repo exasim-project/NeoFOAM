@@ -118,6 +118,19 @@ void PermutationApplicator::remapConnectivity(
     );
 
     // Remap face owners of boundary faces
+    // Prepare a view of face owners for parallel construct
+    auto boundaryFaceOwnersView = mesh.boundaryMesh().faceOwners().view();
+
+    NeoN::parallelFor(
+        exec_,
+        {0, NeoN::toLocalIdx(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto oldOwnerIdx = boundaryFaceOwnersView[i];
+            boundaryFaceOwnersView[i] = oldToNew[oldOwnerIdx];
+        },
+        "remap face owners of boundary faces"
+    );
+
     // Correct the face owner and neighbor indices according to OpenFOAM convention
 }
 

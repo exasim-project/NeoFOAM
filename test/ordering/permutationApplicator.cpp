@@ -180,7 +180,8 @@ TEST_CASE("Reorder cell-associated data")
 }
 
 
-TEST_CASE("Applying permutation remaps connectivity") {
+TEST_CASE("Applying permutation remaps connectivity")
+{
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
@@ -195,7 +196,9 @@ TEST_CASE("Applying permutation remaps connectivity") {
     NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
-    SECTION("Applying permutation remaps owner cell indices of internal faces " + execName)
+    SECTION(
+        "Applying permutation remaps owner and neighbor cell indices of internal faces " + execName
+    )
     {
         // --- Arrange ---
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
@@ -213,10 +216,33 @@ TEST_CASE("Applying permutation remaps connectivity") {
         applicator.remapConnectivity(nfMesh, prepared);
 
         // --- Assert ---
-        // REQUIRE(applicator.exec() == exec);
+        REQUIRE(applicator.exec() == exec);
         REQUIRE_THAT(nfMesh.faceOwners(), EqualsRange(expectedOwners, {0, 4}, EqualInt {}));
         REQUIRE_THAT(nfMesh.faceNeighbors(), EqualsRange(expectedNeighbors, {0, 4}, EqualInt {}));
         // REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt {}));
+    }
+
+    SECTION("Applying permutation remaps owner cell indices of boundary faces " + execName)
+    {
+        // --- Arrange ---
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+
+        // Original owner cell indices of boundary faces:
+        // { 2, 3, 0, 2,
+        //   1, 3, 0, 1 };
+        const std::vector<NeoN::label> expectedOwners {3, 1, 2, 3, 0, 1, 2, 0};
+
+        const PermutationApplicator applicator(exec);
+
+        // --- Act ---
+        applicator.remapConnectivity(nfMesh, prepared);
+
+        // --- Assert ---
+        REQUIRE(applicator.exec() == exec);
+        REQUIRE(nfMesh.nBoundaryFaces() == 8);
+        REQUIRE_THAT(nfMesh.boundaryMesh().faceOwners(), Equals(expectedOwners, EqualInt {}));
     }
 }
 
