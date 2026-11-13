@@ -18,6 +18,8 @@
 #include <set>
 #include <sstream>
 
+#include <fmt/format.h>
+
 #include <NeoN/core/demangle.hpp>
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
@@ -709,12 +711,13 @@ std::string configFileLabel(const std::string& path)
     return "config(" + (secondary.empty() ? solver : solver + "+" + secondary) + ")";
 }
 
-// A dictionary value as text. Unknown types print their type name instead of throwing, so
+// A dictionary value as text. Scalars use the shortest round-trip form, so e.g. a 1e-13
+// tolerance is not rounded to zero. Unknown types print their type name instead of throwing, so
 // logging the config never aborts a run.
 std::string anyToString(const std::any& value)
 {
     if (const auto* p = std::any_cast<std::string>(&value)) return *p;
-    if (const auto* p = std::any_cast<NeoN::scalar>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<NeoN::scalar>(&value)) return fmt::format("{}", *p);
     if (const auto* p = std::any_cast<NeoN::label>(&value)) return std::to_string(*p);
     if (const auto* p = std::any_cast<int>(&value)) return std::to_string(*p);
     if (const auto* p = std::any_cast<bool>(&value)) return *p ? "true" : "false";
@@ -728,6 +731,7 @@ std::string anyToString(const std::any& value)
 }
 
 // The dictionary as an indented block, keys sorted so the output is stable across runs.
+// configFile is printed as its path, which may arrive as a TokenList (see configFilePath).
 std::string dictToString(const NeoN::Dictionary& dict, int indent = 0)
 {
     const std::string pad(static_cast<std::size_t>(indent) * 4, ' ');
@@ -735,15 +739,26 @@ std::string dictToString(const NeoN::Dictionary& dict, int indent = 0)
     for (const auto& key : sortedKeys(dict))
     {
         out += pad + "    " + key + ": ";
-        out += dict.isDict(key) ? dictToString(dict.subDict(key), indent + 1)
-                                : anyToString(dict.getMap().at(key));
+        if (dict.isDict(key))
+        {
+            out += dictToString(dict.subDict(key), indent + 1);
+        }
+        else if (key == "configFile")
+        {
+            out += configFilePath(dict);
+        }
+        else
+        {
+            out += anyToString(dict.getMap().at(key));
+        }
         out += "\n";
     }
     return out + pad + "}";
 }
 
-// The `optimize` flag as the PDE reads it (pde.hpp): absent means "false".
-std::string effectiveOptimize(const NeoN::Dictionary& dict)
+// The `optimize` value of this entry: absent means "false". The PDE reads it from the base field
+// entry only (pde.hpp), so a <field>Final entry's value is not the one applied.
+std::string entryOptimize(const NeoN::Dictionary& dict)
 {
     return dict.isType<std::string>("optimize") ? dict.get<std::string>("optimize") : "false";
 }
@@ -759,17 +774,17 @@ long effectiveCheckFrequency(const NeoN::Dictionary& dict)
     return 1;
 }
 
-// Log the solver settings NeoN/Ginkgo will run for one field, with the effective values of the
-// easy-to-miss keys `optimize` and `checkFrequency` even when they are defaulted.
+// Log the solver settings NeoN/Ginkgo will run for one entry, with the easy-to-miss keys
+// `optimize` and `checkFrequency` even when they are defaulted.
 void logSolverConfig(const NeoN::Dictionary& mapped, const std::string& origin)
 {
     NeoN::Logging::info(
-        "NeoFOAM solver config ({}) for '{}':\n{}\n    effective optimize: {}\n    effective "
-        "checkFrequency: {}",
+        "NeoFOAM solver config ({}) for '{}':\n{}\n    optimize of this entry: {} (the base field "
+        "entry's value is applied, also to its Final solve)\n    effective checkFrequency: {}",
         origin,
         mapped.get<std::string>("reportName"),
         dictToString(mapped),
-        effectiveOptimize(mapped),
+        entryOptimize(mapped),
         effectiveCheckFrequency(mapped)
     );
 }
