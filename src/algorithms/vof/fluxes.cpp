@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <cmath>
-#include <memory>
 
 #include "NeoN/NeoN.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary.hpp"
 #include "NeoN/core/parallelAlgorithms.hpp"
 
 #include "NeoFOAM/algorithms/vof/fluxes.hpp"
-#include "NeoFOAM/auxiliary/readers.hpp"
 #include "detail.hpp"
-
-#include "surfaceFields.H"
-#include "volFields.H"
+#include "foamGeometry.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
@@ -42,92 +38,6 @@ linearCompressionFaceFlux(scalar w, scalar phir, scalar alpha1P, scalar alpha1N)
     return (phir * alpha2f) * alpha1f;
 }
 
-// OpenFOAM's linear weights and owner-to-neighbour deltas of the internal faces, copied to the
-// device once per mesh and cached in its stencil database. NeoN's mesh cannot provide them: the
-// GeometryScheme frees the cell and face centres after first use, and its own weights are
-// computed differently.
-struct VofGeometry
-{
-    NeoN::Vector<scalar> weights;
-    NeoN::Vector<NeoN::Vec3> delta;
-};
-
-const VofGeometry& vofGeometry(RunTime& rt)
-{
-    auto& db = rt.nfMesh.stencilDB();
-    if (!db.contains("VofGeometry"))
-    {
-        const Foam::vectorField& centres = rt.mesh.C();
-        const Foam::labelUList& owner = rt.mesh.owner();
-        const Foam::labelUList& neighbour = rt.mesh.neighbour();
-        Foam::vectorField delta(owner.size());
-        forAll(delta, f)
-        {
-            delta[f] = centres[neighbour[f]] - centres[owner[f]];
-        }
-        db.insert(
-            "VofGeometry",
-            std::make_shared<VofGeometry>(VofGeometry {
-                fromFoamField(rt.exec, rt.mesh.weights().primitiveField()),
-                fromFoamField(rt.exec, delta)
-            })
-        );
-    }
-    return *db.get<std::shared_ptr<VofGeometry>>("VofGeometry");
-}
-
-// fvc::grad(psi) under "Gauss linear" (gaussGrad::gradf), in OpenFOAM's summation order:
-// internal faces, then boundary faces, then / V. Cell values only.
-NeoN::Vector<NeoN::Vec3>
-gaussLinearGrad(const fvcc::VolumeField<scalar>& psi, NeoN::View<const scalar> weights)
-{
-    const auto& mesh = psi.mesh();
-    const auto exec = psi.exec();
-    const auto own = mesh.faceOwners().view();
-    const auto nei = mesh.faceNeighbors().view();
-    const auto bOwn = mesh.boundaryMesh().faceOwners().view();
-    const auto sf = mesh.faceNormals().view();
-    const auto bSf = mesh.boundaryMesh().faceNormals().view();
-    const auto V = mesh.cellVolumes().view();
-    const auto psiI = psi.internalVector().view();
-    const auto psiB = psi.boundaryData().value().view();
-
-    NeoN::Vector<NeoN::Vec3> grad(exec, mesh.nCells(), NeoN::Vec3(0.0, 0.0, 0.0));
-    auto g = grad.view();
-    NeoN::parallelFor(
-        exec,
-        {0, mesh.nInternalFaces()},
-        NEON_LAMBDA(const localIdx f) {
-            const NeoN::Vec3 sfPsi = sf[f] * faceValue(weights[f], psiI[own[f]], psiI[nei[f]]);
-            for (int i = 0; i < 3; ++i)
-            {
-                Kokkos::atomic_add(&g[own[f]][i], sfPsi[i]);
-                Kokkos::atomic_sub(&g[nei[f]][i], sfPsi[i]);
-            }
-        },
-        "vof::gradInternal"
-    );
-    NeoN::parallelFor(
-        exec,
-        {0, mesh.nBoundaryFaces()},
-        NEON_LAMBDA(const localIdx bf) {
-            const NeoN::Vec3 sfPsi = bSf[bf] * psiB[bf];
-            for (int i = 0; i < 3; ++i)
-            {
-                Kokkos::atomic_add(&g[bOwn[bf]][i], sfPsi[i]);
-            }
-        },
-        "vof::gradBoundary"
-    );
-    NeoN::parallelFor(
-        exec,
-        {0, mesh.nCells()},
-        NEON_LAMBDA(const localIdx c) { g[c] = g[c] / V[c]; },
-        "vof::gradVolume"
-    );
-    return grad;
-}
-
 // A calculated-BC surface field on @p alpha's mesh and executor.
 fvcc::SurfaceField<scalar> newSurfaceField(const fvcc::VolumeField<scalar>& alpha, const char* name)
 {
@@ -153,7 +63,7 @@ void computeNHatf(
 {
     const auto exec = alpha1.exec();
     const auto& mesh = alpha1.mesh();
-    const auto weights = vofGeometry(rt).weights.view();
+    const auto weights = foamGeometry(rt).weights.view();
     NeoN::Vector<NeoN::Vec3> gradVec = gaussLinearGrad(alpha1, weights);
     const auto g = gradVec.view();
 
@@ -228,7 +138,7 @@ void vanLeerAlphaFlux(
 {
     const auto exec = alpha.exec();
     const auto& mesh = alpha.mesh();
-    const VofGeometry& geometry = vofGeometry(rt);
+    const FoamGeometry& geometry = foamGeometry(rt);
     const auto weights = geometry.weights.view();
     const auto delta = geometry.delta.view();
     NeoN::Vector<NeoN::Vec3> gradVec = gaussLinearGrad(alpha, weights);
@@ -436,7 +346,7 @@ void linearCompressionFlux(
 {
     const auto exec = alpha1.exec();
     const auto& mesh = alpha1.mesh();
-    const auto weights = vofGeometry(rt).weights.view();
+    const auto weights = foamGeometry(rt).weights.view();
     const auto own = mesh.faceOwners().view();
     const auto nei = mesh.faceNeighbors().view();
     const auto aI = alpha1.internalVector().view();
@@ -484,7 +394,7 @@ void addInterfaceCompressionFlux(
 {
     const auto exec = alpha1.exec();
     const auto& mesh = alpha1.mesh();
-    const auto weights = vofGeometry(rt).weights.view();
+    const auto weights = foamGeometry(rt).weights.view();
     const auto own = mesh.faceOwners().view();
     const auto nei = mesh.faceNeighbors().view();
     const auto aI = alpha1.internalVector().view();
@@ -536,7 +446,7 @@ fvcc::SurfaceField<scalar> alphaPhaseFlux(
     const auto exec = alpha1.exec();
     const auto& mesh = alpha1.mesh();
     fvcc::SurfaceField<scalar> nHatf = computeNHatf(rt, alpha1);
-    const auto weights = vofGeometry(rt).weights.view();
+    const auto weights = foamGeometry(rt).weights.view();
     const auto own = mesh.faceOwners().view();
     const auto nei = mesh.faceNeighbors().view();
     const auto aI = alpha1.internalVector().view();

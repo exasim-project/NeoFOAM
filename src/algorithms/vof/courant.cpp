@@ -1,11 +1,7 @@
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <cstddef>
-#include <memory>
-#include <numeric>
 #include <utility>
-#include <vector>
 
 #include "NeoN/NeoN.hpp"
 #include "NeoN/core/parallelAlgorithms.hpp"
@@ -15,6 +11,7 @@
 #endif
 
 #include "NeoFOAM/algorithms/vof/courant.hpp"
+#include "foamGeometry.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
@@ -26,63 +23,6 @@ namespace
 
 using NeoN::localIdx;
 using NeoN::scalar;
-
-// Faces of every cell in fvc::surfaceSum's order: internal faces by index (as owner or
-// neighbour), then the boundary faces, stored as nInternalFaces + boundary index. A per-cell
-// gather in this order adds up exactly as OpenFOAM does, which atomics on threads cannot.
-struct CellFaces
-{
-    NeoN::Vector<localIdx> offsets;
-    NeoN::Vector<localIdx> faces;
-};
-
-const CellFaces& cellFaces(const NeoN::UnstructuredMesh& mesh)
-{
-    auto& db = mesh.stencilDB();
-    if (!db.contains("VofCellFaces"))
-    {
-        const auto ownHost = mesh.faceOwners().copyToHost();
-        const auto neiHost = mesh.faceNeighbors().copyToHost();
-        const auto bOwnHost = mesh.boundaryMesh().faceOwners().copyToHost();
-        const auto own = ownHost.view();
-        const auto nei = neiHost.view();
-        const auto bOwn = bOwnHost.view();
-        const localIdx nInternal = mesh.nInternalFaces();
-        const auto nBoundary = static_cast<localIdx>(bOwn.size());
-
-        std::vector<localIdx> offsets(static_cast<std::size_t>(mesh.nCells()) + 1, 0);
-        for (localIdx f = 0; f < nInternal; ++f)
-        {
-            ++offsets[own[f] + 1];
-            ++offsets[nei[f] + 1];
-        }
-        for (localIdx bf = 0; bf < nBoundary; ++bf)
-        {
-            ++offsets[bOwn[bf] + 1];
-        }
-        std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
-
-        std::vector<localIdx> next(offsets.begin(), offsets.end() - 1);
-        std::vector<localIdx> faces(offsets.back());
-        for (localIdx f = 0; f < nInternal; ++f)
-        {
-            faces[next[own[f]]++] = f;
-            faces[next[nei[f]]++] = f;
-        }
-        for (localIdx bf = 0; bf < nBoundary; ++bf)
-        {
-            faces[next[bOwn[bf]]++] = nInternal + bf;
-        }
-        db.insert(
-            "VofCellFaces",
-            std::make_shared<CellFaces>(CellFaces {
-                NeoN::Vector<localIdx>(mesh.exec(), offsets),
-                NeoN::Vector<localIdx>(mesh.exec(), faces)
-            })
-        );
-    }
-    return *db.get<std::shared_ptr<CellFaces>>("VofCellFaces");
-}
 
 } // namespace
 

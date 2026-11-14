@@ -26,6 +26,22 @@ void constrainHbyA(
     nnfvcc::VolumeField<Vec3>& HbyA
 );
 
+/* @brief Foam::constrainPressure for rho == 1 and no MRF: the fixedFluxPressure patch gradient.
+ *
+ * @detail On every fixedFluxPressure patch of @p p sets the gradient
+ * refGrad_b = (phiHbyA_b - (Sf_b & U_b))/(magSf_b*rAUf_b), so the pressure equation's boundary
+ * flux cancels the boundary flux of phiHbyA (the buoyancy flux phig on a wall), and re-evaluates
+ * those patch values as fixedGradientFvPatchField::evaluate does (P + refGrad/deltaCoeffs).
+ * Other patches are left as they are. Call it after
+ * phiHbyA is complete and before the pressure equation is assembled, as pEqn.H does.
+ */
+void constrainPressure(
+    nnfvcc::VolumeField<scalar>& p,
+    const nnfvcc::VolumeField<Vec3>& U,
+    const nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::SurfaceField<scalar>& rAUf
+);
+
 /* @brief Inverse of the assembled momentum matrix diagonal: rAU = 1/diag.
  */
 nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr);

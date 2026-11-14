@@ -100,6 +100,21 @@ void registerPressureVelocityCoupling(nb::module_& m)
     );
 
     m.def(
+        "constrain_pressure",
+        [](fvcc::VolumeField<NeoN::scalar>& p,
+           const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
+           const fvcc::SurfaceField<NeoN::scalar>& rAUf)
+        { nf::constrainPressure(p, U, phiHbyA, rAUf); },
+        "p"_a,
+        "U"_a,
+        "phi_hbya"_a,
+        "rAUf"_a,
+        "Foam::constrainPressure (rho = 1, no MRF): set the fixedFluxPressure patch gradient "
+        "(phi_hbya - Sf & U)/(magSf*rAUf) and re-evaluate those patches"
+    );
+
+    m.def(
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const nf::PDE<NeoN::scalar>& pEqn,

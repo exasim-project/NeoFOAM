@@ -35,6 +35,47 @@ void constrainHbyA(
     }
 }
 
+void constrainPressure(
+    nnfvcc::VolumeField<scalar>& p,
+    const nnfvcc::VolumeField<Vec3>& u,
+    const nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::SurfaceField<scalar>& rAUf
+)
+{
+    const auto& mesh = p.mesh();
+    auto [refGrad, pB] = views(p.boundaryData().refGrad(), p.boundaryData().value());
+    const auto [pI, phiHbyAB, uB, rAUfB, sfB, magSfB, bOwn, deltaCoeffs] = views(
+        p.internalVector(),
+        phiHbyA.boundaryData().value(),
+        u.boundaryData().value(),
+        rAUf.boundaryData().value(),
+        mesh.boundaryMesh().faceNormals(),
+        mesh.boundaryMesh().faceAreas(),
+        mesh.boundaryMesh().faceOwners(),
+        mesh.boundaryMesh().deltaCoeffs()
+    );
+    const auto bcs = p.boundaryConditions();
+    for (std::size_t patchi = 0; patchi < bcs.size(); ++patchi)
+    {
+        if (bcs[patchi].name() != "fixedFluxPressure")
+        {
+            continue;
+        }
+        // The patch value as fixedGradientFvPatchField::evaluate forms it, P +
+        // gradient/deltaCoeffs; the NeoN BC multiplies by 1/deltaCoeffs when it corrects the patch
+        // later.
+        parallelFor(
+            p.exec(),
+            p.boundaryData().range(static_cast<NeoN::localIdx>(patchi)),
+            NEON_LAMBDA(const NeoN::localIdx bf) {
+                refGrad[bf] = (phiHbyAB[bf] - (sfB[bf] & uB[bf])) / (magSfB[bf] * rAUfB[bf]);
+                pB[bf] = pI[bOwn[bf]] + refGrad[bf] / deltaCoeffs[bf];
+            },
+            "constrainPressure"
+        );
+    }
+}
+
 nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
 {
     const auto& ls = expr.linearSystem();

@@ -30,6 +30,7 @@ _TEST_DIR = Path(__file__).parent
 _CASE = _TEST_DIR / "cases" / "sharpSphere"
 _OF_WORKER = _TEST_DIR / "_of_parity_worker.py"
 _NEON_WORKER = _TEST_DIR / "_neon_parity_worker.py"
+_TWO_PHASE_CASE = _TEST_DIR / "cases" / "twoPhase"
 
 MESH_NAMES = ["cartesian_nx5", "cartesian_nx20", "sheared"]
 EXECUTORS = ["Serial", "CPU", "GPU"]
@@ -44,8 +45,22 @@ def _stage_case(mesh: str, dest: Path) -> Path:
     return dest
 
 
+def _stage_two_phase_case(mesh: str, dest: Path) -> Path:
+    """Copy the two-phase inputs and the mesh, its own or the matching ``sharpSphere`` one."""
+    shutil.copytree(_TWO_PHASE_CASE, dest, ignore=shutil.ignore_patterns("meshes"))
+    shutil.copytree(dest / "0.orig", dest / "0")
+    own_mesh = _TWO_PHASE_CASE / "meshes" / mesh
+    mesh_dir = own_mesh if own_mesh.is_dir() else _CASE / "meshes" / mesh
+    shutil.copy(mesh_dir / "blockMeshDict", dest / "system")
+    return dest
+
+
 class _WorkerPool:
     """Stages each mesh once and keeps one worker per backend/case/executor."""
+
+    _stage = staticmethod(_stage_case)
+    _of_script = _OF_WORKER
+    _neon_script = _NEON_WORKER
 
     def __init__(self, tmp_path_factory: pytest.TempPathFactory):
         self._tmp = tmp_path_factory
@@ -60,8 +75,8 @@ class _WorkerPool:
     def of_worker(self, mesh: str) -> _Worker:
         key = ("of", mesh)
         if key not in self._workers:
-            case = _stage_case(mesh, self._tmp.mktemp(mesh) / "case")
-            worker = _Worker(_OF_WORKER, case, "of", argv=[])
+            case = self._stage(mesh, self._tmp.mktemp(mesh) / "case")
+            worker = _Worker(self._of_script, case, "of", argv=[])
             worker.wait_ready()
             self._cases[mesh] = case
             self._workers[key] = worker
@@ -72,7 +87,7 @@ class _WorkerPool:
         if key not in self._workers:
             self.of_worker(mesh)  # ensures the case is staged on disk
             self._workers[key] = _Worker(
-                _NEON_WORKER, self._cases[mesh], f"neon_{executor}", argv=[executor]
+                self._neon_script, self._cases[mesh], f"neon_{executor}", argv=[executor]
             )
         return self._workers[key]
 
@@ -107,11 +122,29 @@ class _WorkerPool:
             worker.close()
 
 
+class _TwoPhaseWorkerPool(_WorkerPool):
+    """The worker pool of the ``twoPhase`` case."""
+
+    _stage = staticmethod(_stage_two_phase_case)
+    _of_script = _TEST_DIR / "_of_two_phase_worker.py"
+    _neon_script = _TEST_DIR / "_neon_two_phase_worker.py"
+
+
 @pytest.fixture(scope="session")
 def parity_simulation(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Iterator[Callable[[str, str], _Simulation]]:
     """Factory of ``(mesh, executor)`` case handles on the session's worker pool."""
     pool = _WorkerPool(tmp_path_factory)
+    yield pool.simulation
+    pool.close()
+
+
+@pytest.fixture(scope="module")
+def two_phase_simulation(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[Callable[[str, str], _Simulation]]:
+    """Factory of two-phase case handles; module scope frees its workers after the tests."""
+    pool = _TwoPhaseWorkerPool(tmp_path_factory)
     yield pool.simulation
     pool.close()

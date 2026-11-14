@@ -16,9 +16,12 @@ endif()
 target_sources(
   NeoFOAM
   PRIVATE "algorithms/pressureVelocityCoupling.cpp"
-          "algorithms/vof/fluxes.cpp"
-          "algorithms/vof/mules.cpp"
+          "algorithms/vof/buoyancy.cpp"
           "algorithms/vof/courant.cpp"
+          "algorithms/vof/fluxes.cpp"
+          "algorithms/vof/foamGeometry.cpp"
+          "algorithms/vof/mules.cpp"
+          "algorithms/vof/twoPhaseMixture.cpp"
           "auxiliary/convert.cpp"
           "auxiliary/foamDictionary.cpp"
           "auxiliary/setup.cpp"

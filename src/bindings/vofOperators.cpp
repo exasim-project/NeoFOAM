@@ -11,9 +11,11 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/algorithms/vof/buoyancy.hpp"
 #include "NeoFOAM/algorithms/vof/courant.hpp"
 #include "NeoFOAM/algorithms/vof/fluxes.hpp"
 #include "NeoFOAM/algorithms/vof/mules.hpp"
+#include "NeoFOAM/algorithms/vof/twoPhaseMixture.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
 #include "bindings.hpp"
 
@@ -34,11 +36,14 @@ namespace
 {
 
 using SurfaceScalar = fvcc::SurfaceField<NeoN::scalar>;
+using VolumeScalar = fvcc::VolumeField<NeoN::scalar>;
+using VolumeVector = fvcc::VolumeField<NeoN::Vec3>;
 
 // The return-new / write-into-out convention of the per-step VoF bindings: without @p out the
-// result is a new field, with it the result goes into @p out (reused buffers) and None is returned.
-template<typename Into>
-nb::object intoOrNew(SurfaceScalar* out, const SurfaceScalar& like, const char* name, Into into)
+// result is a new field on @p like's mesh, with it the result goes into @p out (reused buffers)
+// and None is returned.
+template<typename Like, typename Into>
+nb::object intoOrNew(SurfaceScalar* out, const Like& like, const std::string& name, Into into)
 {
     if (out != nullptr)
     {
@@ -161,6 +166,214 @@ void registerIsoVolumeFractions(nb::module_& m)
         "cells"_a,
         "patches"_a,
         "Assign cell and patch values to a volScalarField and write it"
+    );
+}
+
+// The two-phase mixture properties, gravity head and buoyancy terms of interFoam's
+// createFields.H / UEqn.H / pEqn.H.
+void registerTwoPhaseMixture(nb::module_& m)
+{
+    m.def(
+        "read_two_phase_transport_properties",
+        [](nf::RunTime& rt)
+        {
+            const nf::TwoPhaseTransportProperties p = nf::readTwoPhaseTransportProperties(rt);
+            nb::dict props;
+            props["phase1"] = p.phase1;
+            props["phase2"] = p.phase2;
+            props["rho1"] = p.rho1;
+            props["nu1"] = p.nu1;
+            props["rho2"] = p.rho2;
+            props["nu2"] = p.nu2;
+            props["sigma"] = p.sigma;
+            return props;
+        },
+        "runtime"_a,
+        "constant/transportProperties of a two-phase case as {phase1, phase2, rho1, nu1, rho2, "
+        "nu2, sigma}; Newtonian phases and a constant sigma only"
+    );
+
+    m.def(
+        "update_mixture_density",
+        [](const VolumeScalar& alpha1, double rho1, double rho2, VolumeScalar& rho)
+        { nf::updateMixtureDensity(alpha1, rho1, rho2, rho); },
+        "alpha1"_a,
+        "rho1"_a,
+        "rho2"_a,
+        "rho"_a,
+        "rho = alpha1*rho1 + (1 - alpha1)*rho2 on internal and boundary values (alphaEqnSubCycle.H)"
+    );
+
+    m.def(
+        "update_mixture_viscosity",
+        [](const VolumeScalar& alpha1,
+           double rho1,
+           double nu1,
+           double rho2,
+           double nu2,
+           VolumeScalar& nu)
+        {
+            const nf::TwoPhaseTransportProperties properties {"", "", rho1, nu1, rho2, nu2, 0.0};
+            nf::updateMixtureViscosity(alpha1, properties, nu);
+        },
+        "alpha1"_a,
+        "rho1"_a,
+        "nu1"_a,
+        "rho2"_a,
+        "nu2"_a,
+        "nu"_a,
+        "Mixture kinematic viscosity of incompressibleTwoPhaseMixture::calcNu (Newtonian phases, "
+        "alpha1 clamped to [0, 1]) on internal and boundary values"
+    );
+
+    m.def(
+        "multiply",
+        [](const VolumeScalar& x, const VolumeScalar& y, VolumeScalar& out)
+        { nf::multiply(x, y, out); },
+        "x"_a,
+        "y"_a,
+        "out"_a,
+        "out = x*y on internal and boundary values, without a temporary field; out may be x or y"
+    );
+
+    m.def(
+        "multiply",
+        [](const SurfaceScalar& x, const SurfaceScalar& y, SurfaceScalar& out)
+        { nf::multiply(x, y, out); },
+        "x"_a,
+        "y"_a,
+        "out"_a,
+        "out = x*y on internal and boundary values, without a temporary field; out may be x or y"
+    );
+
+    m.def(
+        "linear_interpolate",
+        [](nf::RunTime& rt, const VolumeScalar& field, SurfaceScalar* out)
+        {
+            return intoOrNew(
+                out,
+                field,
+                field.name + "f",
+                [&](SurfaceScalar& faces) { nf::linearInterpolate(rt, field, faces); }
+            );
+        },
+        "runtime"_a,
+        "field"_a,
+        "out"_a.none() = nb::none(),
+        "fvc::interpolate(field) under linear with OpenFOAM's weights, boundary = patch values; "
+        "with out, written into out and None returned"
+    );
+
+    m.def(
+        "create_gh",
+        [](nf::RunTime& rt) { return nf::createGh(rt); },
+        "runtime"_a,
+        "gh = (g & C) - ghRef of gh.H (constant/g, constant/hRef if present)"
+    );
+
+    m.def(
+        "create_ghf",
+        [](nf::RunTime& rt) { return nf::createGhf(rt); },
+        "runtime"_a,
+        "ghf = (g & Cf) - ghRef of gh.H (constant/g, constant/hRef if present)"
+    );
+
+    m.def(
+        "gravity_face_force",
+        [](nf::RunTime& rt, const SurfaceScalar& ghf, const VolumeScalar& rho, SurfaceScalar* out)
+        {
+            return intoOrNew(
+                out,
+                ghf,
+                "gravityFaceForce",
+                [&](SurfaceScalar& force) { nf::gravityFaceForce(rt, ghf, rho, force); }
+            );
+        },
+        "runtime"_a,
+        "ghf"_a,
+        "rho"_a,
+        "out"_a.none() = nb::none(),
+        "-ghf*snGrad(rho), the face force of interFoam's UEqn.H/pEqn.H without surface tension; "
+        "with out, written into out and None returned"
+    );
+
+    m.def(
+        "buoyancy_flux",
+        [](const SurfaceScalar& force, const SurfaceScalar& rAUf, SurfaceScalar* out)
+        {
+            return intoOrNew(
+                out,
+                force,
+                "phig",
+                [&](SurfaceScalar& phig) { nf::buoyancyFlux(force, rAUf, phig); }
+            );
+        },
+        "force"_a,
+        "rAUf"_a,
+        "out"_a.none() = nb::none(),
+        "phig = force*rAUf*magSf (pEqn.H); with out, written into out and None returned"
+    );
+
+    m.def(
+        "buoyant_momentum_flux",
+        [](nf::RunTime& rt,
+           const SurfaceScalar& force,
+           const VolumeScalar& p_rgh,
+           SurfaceScalar* out)
+        {
+            return intoOrNew(
+                out,
+                force,
+                "momentumFlux",
+                [&](SurfaceScalar& flux) { nf::buoyantMomentumFlux(rt, force, p_rgh, flux); }
+            );
+        },
+        "runtime"_a,
+        "force"_a,
+        "p_rgh"_a,
+        "out"_a.none() = nb::none(),
+        "(force - snGrad(p_rgh))*magSf, whose reconstruct is UEqn.H's momentum source; with out, "
+        "written into out and None returned"
+    );
+
+    m.def(
+        "reconstruct",
+        [](const SurfaceScalar& ssf, VolumeVector& out) { nf::reconstruct(ssf, out); },
+        "ssf"_a,
+        "out"_a,
+        "fvc::reconstruct(ssf) into out as OpenFOAM evaluates it (face order, Tensor::safeInv); "
+        "boundary values = owner-cell values"
+    );
+
+    m.def(
+        "update_velocity_buoyant",
+        [](const VolumeVector& hByA,
+           const VolumeScalar& rAU,
+           const SurfaceScalar& phig,
+           const SurfaceScalar& pFlux,
+           const SurfaceScalar& rAUf,
+           VolumeVector& U) { nf::updateVelocityBuoyant(hByA, rAU, phig, pFlux, rAUf, U); },
+        "hbya"_a,
+        "rAU"_a,
+        "phig"_a,
+        "p_flux"_a,
+        "rAUf"_a,
+        "U"_a,
+        "U = HbyA + rAU*reconstruct((phig - p_flux)/rAUf) (pEqn.H), internal values; p_flux is "
+        "the pressure equation's face flux. Call U.correct_boundary_conditions() afterwards."
+    );
+
+    m.def(
+        "update_static_pressure",
+        [](const VolumeScalar& p_rgh,
+           const VolumeScalar& rho,
+           const VolumeScalar& gh,
+           VolumeScalar& p) { nf::updateStaticPressure(p_rgh, rho, gh, p); },
+        "p_rgh"_a,
+        "rho"_a,
+        "gh"_a,
+        "p"_a,
+        "p = p_rgh + rho*gh on internal and boundary values (pEqn.H, without reference levelling)"
     );
 }
 
@@ -406,6 +619,8 @@ void registerVofOperators(nb::module_& m)
         "phi"_a,
         "Correct alpha's boundary values with phi as the BoundaryContext flux (inletOutlet)"
     );
+
+    registerTwoPhaseMixture(m);
 }
 
 } // namespace NeoFOAM::bindings
