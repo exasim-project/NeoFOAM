@@ -18,7 +18,7 @@ from _neon_parity_worker import Op, _serve, _to_numpy, _with_boundary
 
 from neofoam import neofoam_bindings as nfb
 
-_SCALAR_FIELDS = ("T", "rAU", "alpha.water", "p_rgh")
+_SCALAR_FIELDS = ("T", "rAU", "alpha.water", "alphaInletOutlet", "p_rgh")
 
 
 def serve(case_dir: Path, executor: str) -> None:
@@ -130,6 +130,10 @@ def serve(case_dir: Path, executor: str) -> None:
         )
         return _to_numpy(result.internal_vector())
 
+    def corrected_with_flux(name: str) -> np.ndarray:
+        nfb.correct_boundary_conditions_with_flux(fields[name], fields["phi"])
+        return _to_numpy(fields[name].boundary_data_value())
+
     alpha_water = ("alpha.water",)
     ops: dict[tuple[str, tuple[str, ...]], Op] = {
         ("twoPhase.properties", ()): lambda d: np.array(
@@ -154,6 +158,9 @@ def serve(case_dir: Path, executor: str) -> None:
         ("buoyancy.momentumFlux", alpha_water): lambda d: _with_boundary(momentum_flux(d)),
         ("buoyancy.reconstruct", ("phi",)): lambda d: reconstructed(),
         ("buoyancy.velocity", alpha_water): lambda d: buoyant_velocity(),
+        ("bc.correctWithFlux", ("alphaInletOutlet",)): lambda d: corrected_with_flux(
+            "alphaInletOutlet"
+        ),
         ("field.reload", ("U",)): lambda d: reload_velocity(),
         ("flux.update", ("U",)): lambda d: update_flux(),
     }

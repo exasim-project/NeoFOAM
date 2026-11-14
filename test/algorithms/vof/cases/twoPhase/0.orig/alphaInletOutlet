@@ -1,0 +1,38 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      alphaInletOutlet;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 0 0 0 0];
+
+// placeholder — the tests seed the values (test_inlet_outlet_parity: alphaInletOutlet[:] = ...).
+// inletOutlet on every patch that carries faces: with the zeroGradient U the face flux takes
+// both signs there, so each patch has inflow faces (inletValue) and outflow faces (zero gradient).
+internalField   uniform 0;
+
+boundaryField
+{
+    "(walls|atmosphere)"
+    {
+        type            inletOutlet;
+        inletValue      uniform 0.25;
+        value           uniform 0.25;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

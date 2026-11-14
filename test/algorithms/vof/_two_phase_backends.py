@@ -88,6 +88,10 @@ class _TwoPhaseOps:
         """``U + rAU*reconstruct((phig - phi)/rAUf)``: HbyA = U, phi as the pressure flux."""
         return self._worker(alpha).evaluate("buoyancy.velocity", (alpha.name,))
 
+    def correct_with_flux(self, field: _Field) -> np.ndarray:
+        """The non-empty patches' values, in NeoN's face order, corrected with the case's phi."""
+        return self._worker(field).evaluate("bc.correctWithFlux", (field.name,))
+
 
 pyb = _TwoPhaseOps(_of_worker)
 nb = _TwoPhaseOps(_neon_worker)

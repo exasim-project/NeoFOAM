@@ -27,6 +27,12 @@ def _with_patches(mesh: Any, field: Any) -> np.ndarray:
     )
 
 
+def _corrected_patches(mesh: Any, field: Any) -> np.ndarray:
+    """The boundary values after ``correctBoundaryConditions`` with the current ``phi``."""
+    field.correctBoundaryConditions()
+    return _with_patches(mesh, field)[mesh.nCells() :]
+
+
 def _gravity_head(mesh: Any) -> tuple[Any, Any]:
     """gh.H's (gh, ghf), with ghRef = g & (cmptMag(g)/mag(g))*hRef in OpenFOAM's order."""
     g = pyf.uniformDimensionedVectorField(mesh, "g")
@@ -174,6 +180,7 @@ def run(case_dir: Path) -> None:
     t = volScalarField.read_field(mesh, "T")
     u = volVectorField.read_field(mesh, "U")
     rau = volScalarField.read_field(mesh, "rAU")
+    inlet_outlet = volScalarField.read_field(mesh, "alphaInletOutlet")
     phi = pyf.createPhi(u)
     centres = np.array(mesh.C().internalField())
     volumes = np.array(mesh.V())
@@ -188,6 +195,11 @@ def run(case_dir: Path) -> None:
         ("field.set", ("U",)): lambda d: _set_field(u, d),
         ("field.set", ("rAU",)): lambda d: _set_field(rau, d),
         ("flux.update", ("U",)): lambda d: phi.assign(fvc.flux(u)),
+        ("field.get", ("alphaInletOutlet",)): lambda d: np.array(inlet_outlet.internalField()),
+        ("field.set", ("alphaInletOutlet",)): lambda d: _set_field(inlet_outlet, d),
+        ("bc.correctWithFlux", ("alphaInletOutlet",)): lambda d: _corrected_patches(
+            mesh, inlet_outlet
+        ),
     }
     two_phase = _TwoPhase(mesh, {"T": t, "U": u, "phi": phi, "rAU": rau})
     ops |= two_phase.ops()
