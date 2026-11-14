@@ -37,6 +37,22 @@ the linked reference pages for the full API.
     The pure-Python time loop, with an injectable constraint list and a named
     measurement registry; time-step rules are opt-in models.
 
+``algorithms/mules/``
+    interFoam's MULES alpha equation written once: ``alpha_eqn`` (the
+    ``alphaEqn.H`` corrector loop) and ``sub_cycled_alpha_eqn``
+    (``alphaEqnSubCycle.H``) run over a ``MulesOps`` backend. ``openfoam.py``
+    holds the pybFoam primitives, controls and ``OpenFOAMMulesOps`` (every
+    branch); ``_neon_ops.py`` composes the NeoFOAM VoF bindings for
+    ``MULESCorr no``. Used by incompressibleVoF and ``algorithms/vof``.
+
+``algorithms/vof/``
+    Advection-only VoF (TwoPhaseFlow's ``advectorVoF`` with MULES): ``advect``
+    moves a case's ``alpha.<phase>`` through the fixed flux of its ``U`` on the
+    ``openfoam`` backend (pybFoam) or the ``neon`` backend (NeoN MULES kernels
+    on Serial/CPU/GPU), both through ``algorithms/mules``;
+    ``advect_in_subprocess`` runs it in its own process, one ``Foam::Time`` and
+    Kokkos runtime each.
+
 ``solver/incompressibleFluid/``
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.

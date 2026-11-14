@@ -1,0 +1,38 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Read only by the reference run (the two-phase mixture of incompressibleVoF);
+// advection-only VoF has no material properties.
+
+phases          (water air);
+
+water
+{
+    transportModel  Newtonian;
+    nu              1e-06;
+    rho             1000;
+}
+
+air
+{
+    transportModel  Newtonian;
+    nu              1.48e-05;
+    rho             1;
+}
+
+sigma           0;
+
+// ************************************************************************* //
