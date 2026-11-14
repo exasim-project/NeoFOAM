@@ -11,9 +11,10 @@ one-shot ``vof_row4`` fixture. Three, not two: this case's first pass is
 Courant-limited to a zero correction, so a cached correction only becomes
 non-zero — and only starts changing anything — from the third.
 
-``mules_implicit_predictor`` is wrapped before the call so each pass's pure
-upwind flux is captured as well: it is the base ``alphaEqn.H:230`` measures the
-cached correction against, and the only way to check that identity from outside.
+``neofoam.algorithms.mules.openfoam.mules_implicit_predictor`` is wrapped before
+the call so each pass's pure upwind flux is captured as well: it is the base
+``alphaEqn.H:230`` measures the cached correction against, and the only way to
+check that identity from outside.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ from typing import Any, Optional
 
 import numpy as np
 
+from neofoam.algorithms.mules import openfoam as openfoam_mules
 from neofoam.solver.incompressibleVoF.create_fields import create_init
 from neofoam.solver.incompressibleVoF.models.alpha_advection.models import mules
 
@@ -49,14 +51,14 @@ def run(case_dir: Path) -> dict[str, Any]:
     slot = ctx.models["alphaPhi1Corr0"]
 
     upwind: list[list[float]] = []
-    real_predictor = mules.mules_implicit_predictor
+    real_predictor = openfoam_mules.mules_implicit_predictor
 
     def recording_predictor(*args: Any, **kwargs: Any) -> Any:
         flux = real_predictor(*args, **kwargs)
         upwind.append(_internal(flux))
         return flux
 
-    mules.mules_implicit_predictor = recording_predictor
+    openfoam_mules.mules_implicit_predictor = recording_predictor
     passes: list[dict[str, Any]] = []
     try:
         for _ in range(_N_TIME_STEPS):
@@ -82,7 +84,7 @@ def run(case_dir: Path) -> dict[str, Any]:
                 }
             )
     finally:
-        mules.mules_implicit_predictor = real_predictor
+        openfoam_mules.mules_implicit_predictor = real_predictor
 
     return {"passes": passes}
 

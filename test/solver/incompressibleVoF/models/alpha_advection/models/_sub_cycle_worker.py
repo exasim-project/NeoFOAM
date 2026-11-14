@@ -8,9 +8,10 @@ Run as ``python _sub_cycle_worker.py <case_dir>``; writes
 a worker: the whole point of the dump is what ``Time`` does *inside* one
 ``alpha_advection`` call, which needs a real initialised case.
 
-``mules.alpha_eqn`` is wrapped with a recorder before the call — it is the one
-place per sub-step where the time-dependent boundary conditions are evaluated,
-so what it sees is exactly what a ``waveAlpha``/``waveVelocity`` patch would.
+``neofoam.algorithms.mules.equation.alpha_eqn`` (one pass) is wrapped with a
+recorder before the call — it is the one place per sub-step where the
+time-dependent boundary conditions are evaluated, so what it sees is exactly
+what a ``waveAlpha``/``waveVelocity`` patch would.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from neofoam.algorithms.mules import equation
 from neofoam.solver.incompressibleVoF.create_fields import create_init
 from neofoam.solver.incompressibleVoF.models.alpha_advection.models import mules
 
@@ -34,7 +36,7 @@ def run(case_dir: Path) -> dict[str, Any]:
     runtime.increment()  # one real time step, as the solver's time loop does
 
     seen: list[dict[str, Any]] = []
-    real_alpha_eqn = mules.alpha_eqn
+    real_alpha_eqn = equation.alpha_eqn
 
     def recording_alpha_eqn(*args: Any, **kwargs: Any) -> Any:
         seen.append(
@@ -51,7 +53,7 @@ def run(case_dir: Path) -> dict[str, Any]:
         "deltaT": runtime.deltaTValue(),
         "timeIndex": runtime.timeIndex(),
     }
-    mules.alpha_eqn = recording_alpha_eqn
+    equation.alpha_eqn = recording_alpha_eqn
     try:
         mules.alpha_advection(
             ctx.fields["alpha1"],
@@ -65,7 +67,7 @@ def run(case_dir: Path) -> dict[str, Any]:
             ctx.models["alphaPhi1Corr0"],
         )
     finally:
-        mules.alpha_eqn = real_alpha_eqn
+        equation.alpha_eqn = real_alpha_eqn
 
     return {
         "before": before,

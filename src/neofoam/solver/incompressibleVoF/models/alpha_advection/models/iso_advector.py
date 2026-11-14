@@ -36,6 +36,7 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam.algorithms.mules import alpha_sub_cycle
 from neofoam.foam.initialization import read_vol_field
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import model
@@ -48,7 +49,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 from ..advectionModel import Model, advectionModel
-from ..shared import MixtureProtocol, alpha_sub_cycle, shared_field_build_steps
+from ..shared import MixtureProtocol, shared_field_build_steps
 
 __all__ = ["PorosityPropertiesConfig", "iso_advector"]
 
