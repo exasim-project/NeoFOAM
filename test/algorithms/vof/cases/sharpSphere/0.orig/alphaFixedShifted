@@ -1,0 +1,32 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      alphaFixedShifted;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 0 0 0 0];
+
+// setFields writes the shifted sphere: the base of mules.correct, whose difference
+// from alpha gives a nonzero boundary correction flux
+internalField   uniform 0;
+
+boundaryField
+{
+    walls
+    {
+        type            fixedValue;
+        value           uniform 1;
+    }
+}
+
+// ************************************************************************* //

@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         Euler;
+}
+
+gradSchemes
+{
+    default         none;
+    // the vanLeer limiter of the alpha flux reads grad(<field>)
+    grad(alpha)         Gauss linear;
+    grad(alphaFixed)    Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+    // interFoam's alpha schemes, looked up by name
+    div(phi,alpha)      Gauss vanLeer;
+    div(phirb,alpha)    Gauss linear;
+    // the donor flux of mules.correct: fvc.flux takes a lookup key only
+    divT_upwind         Gauss upwind;
+}
+
+laplacianSchemes
+{
+    default         none;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         uncorrected;
+}
+
+// ************************************************************************* //

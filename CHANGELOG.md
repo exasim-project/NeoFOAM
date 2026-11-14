@@ -1,4 +1,5 @@
 # Version 0.4.0 (unreleased)
+- Add device-safe MULES operators for VoF (alpha fluxes, interface compression, `explicitSolve`, `correct` and Courant numbers) with Python bindings, tested for parity with OpenFOAM on Serial, CPU and GPU [#502](https://github.com/exasim-project/NeoFOAM/pull/502)
 
 # Version 0.3.0 (unreleased)
 - Make the steady `simpleFoam` parity tests tolerant of FMA round-off between pybFoam and prebuilt OpenFOAM [#495](https://github.com/exasim-project/NeoFOAM/pull/495)
