@@ -63,13 +63,15 @@ class SubjectSolver:
     ``Foam::Time`` and Kokkos runtime each); ``prepare_case`` edits each staged
     case before either solver runs; ``rel_l2_ceilings`` maps a compared field
     name to the largest relative L2 difference ``|subject - native|/|native|``
-    accepted at any write time.
+    accepted at any write time; ``inspect_cases``, if set, is called with the subject
+    and the native case after both runs (logs in ``log.<solver>``), before cleanup.
     """
 
     name: str
     command: list[str]
     prepare_case: Callable[[Path], None]
     rel_l2_ceilings: Mapping[str, float]
+    inspect_cases: Optional[Callable[[Path, Path], None]] = None
 
 
 def _run_subject(subject: SubjectSolver, case: Path) -> None:
@@ -190,6 +192,9 @@ def run_dambreak_comparison(
         assert result.returncode == 0, f"{native_solver} failed:\n{result.stderr}"
 
         if subject is not None:
+            (test_case_native / f"log.{native_solver}").write_text(result.stdout)
+            if subject.inspect_cases is not None:
+                subject.inspect_cases(test_case_custom, test_case_native)
             return _assert_rel_l2(test_case_custom, test_case_native, subject)
 
         # ------------------------------------------------------------------ #

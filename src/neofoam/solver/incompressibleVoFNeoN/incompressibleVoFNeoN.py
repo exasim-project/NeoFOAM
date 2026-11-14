@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""incompressibleVoFNeoN: interFoam on NeoN, laminar with MULES and a fixed deltaT."""
+"""incompressibleVoFNeoN: interFoam on NeoN, laminar with MULES and a fixed or adaptive deltaT."""
 
 import os
 import sys
@@ -12,7 +12,13 @@ from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.model import ModelRuntime
-from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
+from neofoam.framework.operations import (
+    IterativeOp,
+    Operation,
+    Operations,
+    SequentialOp,
+    StepBuilder,
+)
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
@@ -49,6 +55,11 @@ incompressibleVoFNeoN.models(advectionModelNeoN, required=True)
 incompressibleVoFNeoN.models(PressureVelocityAlgorithmVoFNeoN, required=True)
 
 
+def _report_time_step(ctx: Context) -> None:
+    """setDeltaT.H's ``deltaT = ...`` line, at full precision."""
+    print(f"deltaT = {ctx.models['solution_loop'].current_delta_t()!r}", flush=True)
+
+
 def _core_model(state: Any, spec_name: str) -> Any:
     """An instantiated core model by its spec name."""
     return next(
@@ -83,6 +94,12 @@ def execution_graph(
     )
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(loop_ops["set_time_step"])
+        time_builder.step(
+            Operation(
+                func=SequentialOp(_report_time_step),
+                metadata=OperationMetadata(op_name="report_time_step"),
+            )
+        )
         time_builder.step(loop_ops["increment_time"])
         time_builder.step(alpha_ops["alpha_advection"])
         time_builder.step(pimple_ops["momentum"])
@@ -94,8 +111,9 @@ def execution_graph(
 def run(argv: Optional[list[str]] = None, log_file: Optional[Any] = None) -> Context:
     """Run one incompressibleVoFNeoN simulation in the working directory; return the Context.
 
-    Use it for laminar, fixed-deltaT MULES cases without surface tension on Serial, CPU or
-    GPU; ``neofoam.solver.incompressibleVoF`` runs the other cases on pybFoam.
+    Use it for laminar MULES cases with a fixed or adaptive deltaT and without surface
+    tension on Serial, CPU or GPU; ``neofoam.solver.incompressibleVoF`` runs the other
+    cases on pybFoam.
 
     Kokkos can be initialized once per process, so run one case per process. With
     ``log_file``, fd 1 is redirected to it for the duration of the solve. Boundary conditions

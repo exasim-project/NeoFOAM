@@ -31,6 +31,7 @@ from neofoam.solver.neon_runtime import requested_executor
 from .models.alpha_advection import advectionModelNeoN
 from .models.field_writer import neon_vof_writer_backend_steps
 from .models.pressure_velocity import PressureVelocityAlgorithmVoFNeoN
+from .models.time_step import adaptiveTimeStepNeoN
 
 # The linear-solver dicts mapped to Ginkgo; the alpha predictor's is mapped by NeoNMulesOps.
 _MAPPED_SOLVER_DICTS = ("p_rgh", "p_rghFinal", "U", "UFinal")
@@ -40,12 +41,11 @@ _CASE_STRESS_KEY = "div(((rho*nuEff)*dev2(T(grad(U)))))"
 _NEON_STRESS_KEY = "div((nuEff*dev2(T(grad(U)))))"
 
 
-def _check_fixed_time_step(case_dir: Path) -> None:
-    """Adaptive deltaT (setDeltaT.H with maxCo/maxAlphaCo) is not ported yet."""
-    if ControlDictConfig.load(case_dir=case_dir, validate=False).adjustTimeStep:
-        raise NotImplementedError(
-            "incompressibleVoFNeoN: adjustTimeStep yes is not implemented; set it to no"
-        )
+def _time_step_models(case_dir: Path) -> list[ModelRuntime]:
+    """The adaptive time-step model when ``adjustTimeStep yes``, else none (fixed deltaT)."""
+    if not ControlDictConfig.load(case_dir=case_dir, validate=False).adjustTimeStep:
+        return []
+    return [adaptiveTimeStepNeoN.instantiate(case_dir, adaptiveTimeStepNeoN.name)]
 
 
 def _map_dictionaries(runtime: Any) -> None:
@@ -93,14 +93,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
     @spec_builder.load
     def load_config() -> LoadResult:
-        _check_fixed_time_step(resolved_case_dir)
         core_models: list[Any] = [
             advectionModelNeoN.detect_and_create(),
             PressureVelocityAlgorithmVoFNeoN.detect_and_create(),
             solutionLoop.instantiate(resolved_case_dir, "main"),
             fieldWriter.instantiate(resolved_case_dir, "main"),
         ]
-        return LoadResult(core_models=core_models, optional_models=[])
+        return LoadResult(
+            core_models=core_models, optional_models=_time_step_models(resolved_case_dir)
+        )
 
     @spec_builder.resolve
     def resolve_models(config: ConfigContext) -> None:
@@ -135,6 +136,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         )
         for spec in (alpha_model, pressure_model):
             builder.extend(spec.build_steps())
+        # In ctx.models by name: the solution-loop limits dispatch to active models only.
+        for optional_model in optional_models:
+            builder.add_model(optional_model.name, optional_model)
 
         builder.add(
             init_model(
