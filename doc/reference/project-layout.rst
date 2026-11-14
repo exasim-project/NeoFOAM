@@ -58,6 +58,14 @@ the linked reference pages for the full API.
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
 
+``solver/incompressibleVoFNeoN/``
+    interFoam on the NeoN backend (Serial/CPU/GPU), first version: laminar, MULES
+    through ``algorithms/mules``' ``NeoNMulesOps``, fixed ``deltaT``, one outer
+    corrector without momentum predictor, no surface tension. The alpha-advection
+    (``models/alpha_advection``) and PIMPLE (``models/pressure_velocity``) models
+    follow ``incompressibleVoF``; the time loop and NeoN runtime are
+    ``incompressibleFluidNeoN``'s.
+
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and
     ``select_turbulence_model``, which builds the native-NeoN or the pybFoam

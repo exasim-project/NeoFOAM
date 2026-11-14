@@ -107,6 +107,45 @@ void registerFieldFactories(nb::module_& m)
     );
 
     m.def(
+        "create_registered_scalar_volume_field",
+        [](nf::RunTime& rt, const std::string& name, double value
+        ) -> fvcc::VolumeField<NeoN::scalar>&
+        {
+            // A uniform calculated field, registered like a field read from disk so that
+            // oldTime() works on it (ddt(rho, U) reads rho.oldTime()).
+            Foam::volScalarField ofField(
+                Foam::IOobject(
+                    name,
+                    rt.mesh.time().timeName(),
+                    rt.mesh,
+                    Foam::IOobject::NO_READ,
+                    Foam::IOobject::NO_WRITE,
+                    Foam::IOobject::NO_REGISTER
+                ),
+                rt.mesh,
+                Foam::dimensionedScalar(Foam::dimless, value),
+                Foam::calculatedFvPatchScalarField::typeName
+            );
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            return vc.registerVector<fvcc::VolumeField<NeoN::scalar>>(
+                nf::CreateFromFoamField<Foam::volScalarField> {
+                    .exec = rt.exec,
+                    .nfMesh = rt.nfMesh,
+                    .foamField = ofField,
+                    .name = name
+                }
+            );
+        },
+        "runtime"_a,
+        "name"_a,
+        "value"_a,
+        nb::rv_policy::reference,
+        "Create a uniform scalar VolumeField with calculated patches, registered so that "
+        "old_time/rotate_old_times work on it"
+    );
+
+    m.def(
         "read_vector_volume_field",
         [](nf::RunTime& rt, const std::string& name) -> fvcc::VolumeField<NeoN::Vec3>&
         {

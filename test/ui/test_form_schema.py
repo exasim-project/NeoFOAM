@@ -262,6 +262,9 @@ _SCALAR_GRIDS = {
         "dict:VofPimpleAlgorithmConfig": [""],
         "dict:DynamicMeshControls": [""],
     },
+    "incompressibleVoFNeoN": {
+        "dict:PimpleVoFNeoN_fvSolution": ["/properties/PIMPLE"],
+    },
 }
 
 

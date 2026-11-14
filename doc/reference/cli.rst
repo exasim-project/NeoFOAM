@@ -18,7 +18,7 @@ unchanged (OpenFOAM-style, e.g. ``-case <dir>``):
 
 Available solvers: ``icofoam``, ``pimplefoam``, ``incompressiblefluid``,
 ``incompressiblevof`` (pybFoam backend); ``neoicofoam``, ``neopimplefoam``,
-``incompressiblefluidneon`` (NeoN backend).
+``incompressiblefluidneon``, ``incompressiblevofneon`` (NeoN backend).
 
 Executor selection and GPU initialization
 -----------------------------------------

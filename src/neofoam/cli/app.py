@@ -12,6 +12,7 @@ from neofoam.solver.icofoam import IcoFoam
 from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
 from neofoam.solver.incompressibleFluidNeoN import run as run_neon
 from neofoam.solver.incompressibleVoF import run as run_incompressible_vof
+from neofoam.solver.incompressibleVoFNeoN import run as run_incompressible_vof_neon
 from neofoam.solver.neoIcoFoam import NeoIcoFoam
 from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
 from neofoam.solver.pimplefoam import PimpleFoam
@@ -249,6 +250,17 @@ def incompressiblefluidneon(ctx: typer.Context) -> None:
     _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_neon(argv)
+
+
+@solver_app.command(
+    name="incompressiblevofneon",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def incompressiblevofneon(ctx: typer.Context) -> None:
+    """incompressibleVoFNeoN - interFoam-style VoF solver (NeoN backend; laminar, sigma 0)."""
+    _reject_postprocess(ctx.args)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    run_incompressible_vof_neon(argv)
 
 
 @app.command()
