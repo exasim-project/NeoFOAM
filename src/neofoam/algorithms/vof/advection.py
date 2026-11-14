@@ -157,12 +157,14 @@ def advect(
     start of the step and ``dt`` the step just set. The Courant numbers of the
     next ``setDeltaT`` see that flux. Both backends apply it the same way.
 
-    Supported MULES paths: the openfoam backend runs every ``alphaEqn.H`` branch
+    Supported MULES paths: both backends run every ``alphaEqn.H`` branch
     (``MULESCorr`` yes/no, any ``nAlphaCorr``, sub-cycling, ``alphaApplyPrevCorr``,
-    Euler/CrankNicolson). The neon backend runs ``MULESCorr no`` (any
-    ``nAlphaCorr``, sub-cycling allowed), Euler, ``Gauss vanLeer`` /
-    ``Gauss linear`` and a ``Gauss linear`` gradient, and raises
-    ``NotImplementedError`` for anything else.
+    Euler/CrankNicolson ``ddt(alpha)``). The neon backend solves the
+    ``MULESCorr`` implicit predictor with Ginkgo, mapped from the alpha solver
+    dict, so it agrees with the openfoam backend to the solver tolerance rather
+    than to round-off; it implements only ``Gauss vanLeer`` / ``Gauss linear``
+    and a ``Gauss linear`` gradient, and raises ``NotImplementedError`` for other
+    schemes.
 
     Process model: a run constructs the process's one ``Foam::Time``, and the neon
     backend initializes Kokkos, which can happen once per process. So a process can

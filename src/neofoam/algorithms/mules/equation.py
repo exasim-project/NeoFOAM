@@ -84,12 +84,12 @@ class MulesOps(Protocol):
     """The backend operations of one ``alphaEqn.H`` pass.
 
     Implement it to run :func:`alpha_eqn` on another field backend.
-    ``OpenFOAMMulesOps`` implements every branch on pybFoam fields; the NeoN ops
-    cover ``MULESCorr no``. Everything backend-specific (fluxes, MULES, the
-    implicit predictor, sub-stepping) goes through here: the loop itself only uses
-    ``assign`` and field arithmetic with scalars and fields (``+``, ``-``, ``*``,
-    ``-x + 1.0``). Methods that take an ``out`` or a field to advance update it in
-    place.
+    ``OpenFOAMMulesOps`` implements every branch on pybFoam fields, ``NeoNMulesOps``
+    on NeoN fields. Everything backend-specific (fluxes, MULES, the implicit
+    predictor, sub-stepping, the field updates of the MULESCorr correctors) goes
+    through here: the loop itself only uses ``assign`` and field arithmetic with
+    scalars and fields (``+``, ``-``, ``*``, ``-x + 1.0``). Methods that take an
+    ``out`` or a field to advance update it in place.
 
     Example::
 
@@ -113,7 +113,10 @@ class MulesOps(Protocol):
         """``MULES::correct``: limit ``alpha_phi_corr`` and apply it to ``alpha1``."""
 
     def copy(self, field: Any) -> Any:
-        """An independent copy of ``field`` with the same values."""
+        """A copy of ``field``'s values, valid until the next ``copy`` of the same field."""
+
+    def linear_combination(self, a: float, x: Any, b: float, y: Any, out: Any) -> None:
+        """``out = a*x + b*y``; ``out`` may be ``x`` or ``y``."""
 
     def correct_interface(self) -> None:
         """Refresh the interface state after ``alpha1`` changed (``mixture.correct()``)."""
@@ -157,7 +160,7 @@ def alpha_eqn(
             ops.explicit_solve(phases.alpha1, flux.phi_cn, fluxes.phi10)
         _update_alpha2(ops, phases)
 
-    _cache_compression_correction(controls, fluxes)
+    _cache_compression_correction(ops, controls, fluxes)
     return fluxes.phi10
 
 
@@ -209,7 +212,7 @@ def _implicit_predictor(
     if controls.alpha_apply_prev_corr and previous_corr is not None:
         ops.info("Applying the previous iteration compression flux")
         ops.correct(phases.alpha1, fluxes.phi10, previous_corr)
-        fluxes.phi10.assign(fluxes.phi10 + previous_corr)
+        ops.linear_combination(1.0, fluxes.phi10, 1.0, previous_corr, fluxes.phi10)
 
     fluxes.corr0 = alpha_phi1_ud
     _update_alpha2(ops, phases)
@@ -222,22 +225,24 @@ def _limited_correction(
     # alpha1 before this corrector, so later correctors can under-relax (alpha10).
     alpha10 = ops.copy(alpha1)
     alpha_phi_corr = ops.copy(alpha_phi_un)
-    alpha_phi_corr.assign(alpha_phi_un - fluxes.phi10)
+    ops.linear_combination(1.0, alpha_phi_un, -1.0, fluxes.phi10, alpha_phi_corr)
     ops.correct(alpha1, alpha_phi_un, alpha_phi_corr)
 
     if first:
-        fluxes.phi10.assign(fluxes.phi10 + alpha_phi_corr)
+        ops.linear_combination(1.0, fluxes.phi10, 1.0, alpha_phi_corr, fluxes.phi10)
         return
-    alpha1.assign(0.5 * alpha1 + 0.5 * alpha10)
-    fluxes.phi10.assign(fluxes.phi10 + 0.5 * alpha_phi_corr)
+    ops.linear_combination(0.5, alpha1, 0.5, alpha10, alpha1)
+    ops.linear_combination(1.0, fluxes.phi10, 0.5, alpha_phi_corr, fluxes.phi10)
 
 
-def _cache_compression_correction(controls: AlphaControls, fluxes: AlphaFluxes) -> None:
+def _cache_compression_correction(
+    ops: MulesOps, controls: AlphaControls, fluxes: AlphaFluxes
+) -> None:
     """Turn the cached upwind flux into this pass's correction, or empty the slot."""
     # Any other configuration empties the slot, so switching alphaApplyPrevCorr off
     # mid-run cannot leave a stale correction in use.
     cached_upwind = fluxes.corr0
     if controls.mules_corr and controls.alpha_apply_prev_corr and cached_upwind is not None:
-        cached_upwind.assign(fluxes.phi10 - cached_upwind)
+        ops.linear_combination(1.0, fluxes.phi10, -1.0, cached_upwind, cached_upwind)
     else:
         fluxes.corr0 = None

@@ -42,8 +42,9 @@ the linked reference pages for the full API.
     ``alphaEqn.H`` corrector loop) and ``sub_cycled_alpha_eqn``
     (``alphaEqnSubCycle.H``) run over a ``MulesOps`` backend. ``openfoam.py``
     holds the pybFoam primitives, controls and ``OpenFOAMMulesOps`` (every
-    branch); ``_neon_ops.py`` composes the NeoFOAM VoF bindings for
-    ``MULESCorr no``. Used by incompressibleVoF and ``algorithms/vof``.
+    branch); ``_neon_ops.py`` composes the NeoN PDE solver and the NeoFOAM
+    VoF bindings for every branch too. Used by incompressibleVoF and
+    ``algorithms/vof``.
 
 ``algorithms/vof/``
     Advection-only VoF (TwoPhaseFlow's ``advectorVoF`` with MULES): ``advect``

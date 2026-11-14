@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The neon backend: interFoam's explicit MULES alpha equation on NeoN fields."""
+"""The neon backend: interFoam's MULES alpha equation on NeoN fields."""
 
 from __future__ import annotations
 
@@ -17,15 +17,16 @@ from neofoam.algorithms.mules import (
     PhaseFractions,
     VolumetricFlux,
     read_alpha_controls,
+    read_alpha_ddt_off_centring,
     sub_cycled_alpha_eqn,
 )
 from neofoam.algorithms.mules._neon_ops import NeoNMulesOps
 from neofoam.io import DictFile
 from neofoam.solver.neon_runtime import ensure_neon_initialized
 
-# The schemes the NeoN kernels hard-code, keyed by their fvSchemes entry.
+# The schemes the NeoN kernels hard-code, keyed by their fvSchemes entry. ddt(alpha)
+# is checked every solve, by read_alpha_ddt_off_centring as on the openfoam backend.
 _SUPPORTED_SCHEMES = {
-    ("ddtSchemes", "default"): "Euler",
     ("divSchemes", "div(phi,alpha)"): "Gauss vanLeer",
     ("divSchemes", "div(phirb,alpha)"): "Gauss linear",
     ("gradSchemes", "default"): "Gauss linear",
@@ -45,8 +46,10 @@ class NeoNBackend:
         self._alpha: Any = nfb.read_scalar_volume_field(self._neon_runtime, alpha_name)
         # The kernels derive alpha2 = 1 - alpha itself, so no alpha2 field is kept.
         self._phases = PhaseFractions(self._alpha)
-        self._ops = NeoNMulesOps(runtime, self._neon_runtime, self._alpha, c_alpha, n_limiter_iter)
         self._neon_phi: Any = nfb.create_phi(self._neon_runtime, "U")
+        self._ops = NeoNMulesOps(
+            runtime, self._neon_runtime, self._alpha, self._neon_phi, (c_alpha, n_limiter_iter)
+        )
         # advectorVoF's phi0: the start-time flux that scale_flux modulates.
         self._neon_phi0: Any = self._neon_phi * 1.0
         # createAlphaFluxes.H's persistent phase fluxes, overwritten every corrector.
@@ -71,9 +74,10 @@ class NeoNBackend:
         self._neon_phi.assign(self._neon_phi0 * factor)
 
     def advance(self) -> None:
-        """``alphaEqnSubCycle.H`` for ``MULESCorr no``, Euler; MULESCorr yes raises."""
+        """``alphaEqnSubCycle.H`` minus rho/rhoPhi, at the runtime's current deltaT."""
         controls = AlphaControls(*read_alpha_controls(self._alpha_name))
-        flux = VolumetricFlux(self._neon_phi, self._neon_phi)
+        oc_coeff = read_alpha_ddt_off_centring(self._neon_runtime.mesh, controls.n_alpha_sub_cycles)
+        flux = VolumetricFlux(self._neon_phi, self._ops.crank_nicolson_flux(oc_coeff))
         for _ in sub_cycled_alpha_eqn(self._ops, self._phases, flux, controls, self._fluxes):
             pass
 

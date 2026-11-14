@@ -24,14 +24,24 @@ makes the flux time-dependent (``phi = phi0*cos(...)``, ``period`` /
   same ``alpha_eqn`` with a stand-in for the mixture's interface terms, so the
   two only differ in how ``nHatf`` is computed; they agree to round-off
   (``atol = 1e-12`` on a field in [0, 1]).
-* neon backend vs openfoam backend, per executor: the same algorithm in other
-  kernels, so the agreement is round-off too, accumulated over 40 steps and
+* neon backend vs openfoam backend, per executor, every regime. Explicit
+  MULES (``MULESCorr no``, Euler or CrankNicolson) is the same algorithm in
+  other kernels, so the agreement is round-off, accumulated over 40 steps and
   with reordered atomic sums on the CPU/GPU executors (``atol = 1e-10``).
-  The neon backend runs ``MULESCorr no`` only (see ``_neon_backend``), so
-  the explicit regimes are the parity set; the adaptive one
+  ``MULESCorr yes`` solves its implicit upwind predictor with Ginkgo on the
+  neon backend and with OpenFOAM's smoothSolver on the openfoam one, both to
+  the alpha solver's ``tolerance`` (``ALPHA_SOLVER_TOLERANCE``, set in the
+  regime's fvSolution, ``relTol 0``), so those regimes agree to that
+  tolerance, not to round-off; see ``MULES_CORR_ATOL``. The adaptive regime
   also checks that both backends take the same ``maxAlphaCo`` time steps.
-  The time-dependent regimes are in the parity set: the neon backend scales
-  its flux on the executor, the openfoam one in pybFoam, from the same factor.
+  The time-dependent regimes: the neon backend scales its flux on the
+  executor, the openfoam one in pybFoam, from the same factor.
+* CrankNicolson: in this time loop ``phi.oldTime()`` is ``phi`` as it is at
+  the alpha solve (the flux changes before the time step starts, so OpenFOAM
+  stores it as the old value), so ``phiCN`` differs from ``phi`` by round-off
+  only; the regimes check that the neon backend accepts the scheme, switches
+  it on after the first step and refreshes ``phi.oldTime()`` every step (a
+  stale one is off by the flux modulation), not the off-centring itself.
 * time-dependent flux vs a prescribed velocity: the openfoam backend with
   ``isoAdvector { period 0.3; }`` against the same backend driven by
   ``U(x, t) = U0 cos(2 pi t/0.3)`` evaluated at mid-step
@@ -68,6 +78,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from neofoam.algorithms.vof import AdvectionResult, advect_in_subprocess
+from neofoam.io import DictFile
 
 CASE = Path(__file__).parent / "cases" / "discUniformFlow"
 REFERENCE_WORKER = Path(__file__).parent / "_incompressible_vof_alpha_worker.py"
@@ -77,41 +88,69 @@ U0 = (1.0, 0.5, 0.0)
 
 Controls = Mapping[str, Union[bool, float]]
 
+# The alpha solver tolerance of the MULESCorr regimes (absolute, relTol 0): the
+# openfoam backend's smoothSolver and the neon backend's Ginkgo solver stop at the
+# same normalised residual, so their predictor solutions differ by up to about
+# this per solve.
+ALPHA_SOLVER_TOLERANCE = 1e-12
+_MULES_CORR: Controls = {"MULESCorr": True, "tolerance": ALPHA_SOLVER_TOLERANCE}
+# 40 steps (80 sub-steps when sub-cycling) of one predictor solve each, the solve
+# differences adding up, times 100 for the MULES limiter, which amplifies a
+# perturbation of alpha (measured: at most 7.7e-10, about 20x 40 tolerances).
+MULES_CORR_ATOL = 80 * ALPHA_SOLVER_TOLERANCE * 100
+
 # (alpha solver controls, controlDict entries) per regime.
 REGIMES: dict[str, tuple[Controls, Controls]] = {
     "explicit_nAlphaCorr2": ({}, {}),
     "explicit_nAlphaCorr1": ({"nAlphaCorr": 1}, {}),
     "explicit_subCycles2": ({"nAlphaCorr": 1, "nAlphaSubCycles": 2}, {}),
-    "MULESCorr": ({"MULESCorr": True}, {}),
+    "MULESCorr": (_MULES_CORR, {}),
+    "MULESCorr_nAlphaCorr1": ({**_MULES_CORR, "nAlphaCorr": 1}, {}),
+    "MULESCorr_prevCorr": ({**_MULES_CORR, "alphaApplyPrevCorr": True}, {}),
+    "MULESCorr_prevCorr_nAlphaCorr1": (
+        {**_MULES_CORR, "alphaApplyPrevCorr": True, "nAlphaCorr": 1},
+        {},
+    ),
+    "MULESCorr_prevCorr_subCycles2": (
+        {**_MULES_CORR, "alphaApplyPrevCorr": True, "nAlphaSubCycles": 2},
+        {},
+    ),
     "explicit_adaptive": ({"nAlphaCorr": 1}, {"adjustTimeStep": True}),
     # maxDeltaT: where the flow turns, setDeltaT sees the previous step's
     # near-zero flux and would take one large step
     "explicit_period_adaptive": ({"nAlphaCorr": 1}, {"adjustTimeStep": True, "maxDeltaT": 0.01}),
     "explicit_spiralling_reversed": ({}, {}),
+    "explicit_CrankNicolson_period": ({}, {}),
+    "MULESCorr_CrankNicolson_period": (_MULES_CORR, {}),
 }
 # The isoAdvector dict (advectorVoF's time-dependent flux) per regime that has one.
 FLUX_MODULATION: dict[str, Controls] = {
     "explicit_period_adaptive": {"period": 0.3},
     "explicit_spiralling_reversed": {"spirallingFlow": 0.15, "reverseTime": 0.1},
+    "explicit_CrankNicolson_period": {"period": 0.3},
+    "MULESCorr_CrankNicolson_period": {"period": 0.3},
 }
-BOUND_SLACK = {name: 1e-4 if name == "MULESCorr" else 1e-8 for name in REGIMES}
+# The ddtSchemes entries per regime that changes them.
+DDT_SCHEMES: dict[str, Mapping[str, str]] = {
+    "explicit_CrankNicolson_period": {"default": "CrankNicolson 0.9"},
+    "MULESCorr_CrankNicolson_period": {"default": "CrankNicolson 0.9"},
+}
+BOUND_SLACK = {
+    name: 1e-4 if controls.get("MULESCorr") else 1e-8 for name, (controls, _) in REGIMES.items()
+}
 # incompressibleVoF holds the flux fixed and steps with a fixed deltaT.
 FIXED_DT_REGIMES = [
     name for name in REGIMES if name != "explicit_adaptive" and name not in FLUX_MODULATION
 ]
-NEON_REGIMES = [
-    "explicit_nAlphaCorr2",
-    "explicit_nAlphaCorr1",
-    "explicit_subCycles2",
-    "explicit_adaptive",
-    "explicit_period_adaptive",
-    "explicit_spiralling_reversed",
-]
+NEON_ATOL = {
+    name: MULES_CORR_ATOL if controls.get("MULESCorr") else 1e-10
+    for name, (controls, _) in REGIMES.items()
+}
 EXECUTORS = ["Serial", "CPU", "GPU"]
 
 
 def _stage(regime: str, dest: Path) -> Path:
-    """Copy the case, mesh it, and apply the regime through pybFoam's dictionary writer."""
+    """Copy the case, mesh it, and apply the regime through the dictionary writers."""
     shutil.copytree(CASE, dest)
     neofoam = Path(sys.executable).with_name("neofoam")
     subprocess.run([str(neofoam), "preprocess", str(dest)], check=True, capture_output=True)
@@ -131,6 +170,11 @@ def _stage(regime: str, dest: Path) -> Path:
     for key, value in control_dict_entries.items():
         control_dict.set(key, value)
     control_dict.write(str(dest / "system" / "controlDict"))
+    # A scheme spec is two tokens, which DictFile writes verbatim.
+    fv_schemes = DictFile(dest / "system" / "fvSchemes")
+    for key, value in DDT_SCHEMES.get(regime, {}).items():
+        fv_schemes.set(("ddtSchemes", key), value)
+    fv_schemes.write()
     return dest
 
 
@@ -216,7 +260,7 @@ def test_openfoam_backend_reproduces_incompressible_vof_alpha(runs: _Runs, regim
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
-@pytest.mark.parametrize("regime", NEON_REGIMES)
+@pytest.mark.parametrize("regime", list(REGIMES))
 def test_neon_backend_matches_openfoam_backend(runs: _Runs, regime: str, executor: str) -> None:
     """The neon backend reproduces the openfoam backend on every executor."""
     if executor == "GPU" and not _gpu_available():
@@ -227,7 +271,7 @@ def test_neon_backend_matches_openfoam_backend(runs: _Runs, regime: str, executo
 
     label = f"{regime} on {executor}"
     assert_allclose(result.times, reference.times, rtol=1e-12, atol=0, err_msg=label)
-    assert_allclose(result.alpha, reference.alpha, rtol=0, atol=1e-10, err_msg=label)
+    assert_allclose(result.alpha, reference.alpha, rtol=0, atol=NEON_ATOL[regime], err_msg=label)
 
 
 @pytest.mark.parametrize("regime", list(REGIMES))

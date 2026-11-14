@@ -63,6 +63,35 @@ nnfvcc::SurfaceField<NeoN::scalar> upwindAlphaFlux(
     const nnfvcc::SurfaceField<NeoN::scalar>& phi
 );
 
+/* @brief upwindAlphaFlux into an existing field (internal and boundary values overwritten). */
+void upwindAlphaFlux(
+    const nnfvcc::VolumeField<NeoN::scalar>& alpha,
+    const nnfvcc::SurfaceField<NeoN::scalar>& phi,
+    nnfvcc::SurfaceField<NeoN::scalar>& flux
+);
+
+/* @brief out = a*x + b*y on the internal and boundary values; @p out may be @p x or @p y.
+ *
+ * @detail The in-place field update of the MULES corrector loop (alphaPhi10 += corr, the 0.5
+ * blend, phiCN), which field arithmetic would do through a temporary field per operation.
+ */
+void linearCombination(
+    NeoN::scalar a,
+    const nnfvcc::VolumeField<NeoN::scalar>& x,
+    NeoN::scalar b,
+    const nnfvcc::VolumeField<NeoN::scalar>& y,
+    nnfvcc::VolumeField<NeoN::scalar>& out
+);
+
+/* @brief linearCombination of surface fields. */
+void linearCombination(
+    NeoN::scalar a,
+    const nnfvcc::SurfaceField<NeoN::scalar>& x,
+    NeoN::scalar b,
+    const nnfvcc::SurfaceField<NeoN::scalar>& y,
+    nnfvcc::SurfaceField<NeoN::scalar>& out
+);
+
 /* @brief alphaEqn.H interface compression velocity phic = cAlpha*|phi/magSf|.
  *
  * @detail Zero on the boundary faces: interFoam zeroes phic on non-coupled patches, and NeoN

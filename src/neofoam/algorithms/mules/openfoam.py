@@ -338,6 +338,11 @@ class OpenFOAMMulesOps:
     def copy(self, field: Any) -> Any:
         return type(field)(pyf.Word(f"{field.name()}Copy"), 1.0 * field)
 
+    def linear_combination(self, a: float, x: Any, b: float, y: Any, out: Any) -> None:
+        # The loop's coefficients are 1, -1 and 0.5, so a*x + b*y rounds exactly as
+        # alphaEqn.H's x + y, x - y and 0.5*x + 0.5*y do.
+        out.assign(a * x + b * y)
+
     def correct_interface(self) -> None:
         self._interface.correct()
 

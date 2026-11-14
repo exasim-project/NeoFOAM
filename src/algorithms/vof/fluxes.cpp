@@ -292,17 +292,14 @@ fvcc::SurfaceField<scalar> vanLeerAlphaFlux(
     return flux;
 }
 
-fvcc::SurfaceField<scalar>
-upwindAlphaFlux(const fvcc::VolumeField<scalar>& alpha, const fvcc::SurfaceField<scalar>& phi)
+void upwindAlphaFlux(
+    const fvcc::VolumeField<scalar>& alpha,
+    const fvcc::SurfaceField<scalar>& phi,
+    fvcc::SurfaceField<scalar>& flux
+)
 {
     const auto exec = alpha.exec();
     const auto& mesh = alpha.mesh();
-    fvcc::SurfaceField<scalar> flux(
-        exec,
-        "alphaPhiUpwind",
-        mesh,
-        fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<scalar>>(mesh)
-    );
     const auto own = mesh.faceOwners().view();
     const auto nei = mesh.faceNeighbors().view();
     const auto aI = alpha.internalVector().view();
@@ -326,7 +323,74 @@ upwindAlphaFlux(const fvcc::VolumeField<scalar>& alpha, const fvcc::SurfaceField
         NEON_LAMBDA(const localIdx bf) { fB[bf] = phiB[bf] * aB[bf]; },
         "vof::upwindFluxBoundary"
     );
+}
+
+fvcc::SurfaceField<scalar>
+upwindAlphaFlux(const fvcc::VolumeField<scalar>& alpha, const fvcc::SurfaceField<scalar>& phi)
+{
+    fvcc::SurfaceField<scalar> flux = newSurfaceField(alpha, "alphaPhiUpwind");
+    upwindAlphaFlux(alpha, phi, flux);
     return flux;
+}
+
+namespace
+{
+
+void linearCombination(
+    scalar a,
+    const NeoN::Vector<scalar>& x,
+    scalar b,
+    const NeoN::Vector<scalar>& y,
+    NeoN::Vector<scalar>& out
+)
+{
+    const auto xv = x.view();
+    const auto yv = y.view();
+    auto ov = out.view();
+    NeoN::parallelFor(
+        out.exec(),
+        {0, out.size()},
+        NEON_LAMBDA(const localIdx i) { ov[i] = a * xv[i] + b * yv[i]; },
+        "vof::linearCombination"
+    );
+}
+
+} // namespace
+
+void linearCombination(
+    scalar a,
+    const fvcc::VolumeField<scalar>& x,
+    scalar b,
+    const fvcc::VolumeField<scalar>& y,
+    fvcc::VolumeField<scalar>& out
+)
+{
+    linearCombination(a, x.internalVector(), b, y.internalVector(), out.internalVector());
+    linearCombination(
+        a,
+        x.boundaryData().value(),
+        b,
+        y.boundaryData().value(),
+        out.boundaryData().value()
+    );
+}
+
+void linearCombination(
+    scalar a,
+    const fvcc::SurfaceField<scalar>& x,
+    scalar b,
+    const fvcc::SurfaceField<scalar>& y,
+    fvcc::SurfaceField<scalar>& out
+)
+{
+    linearCombination(a, x.internalVector(), b, y.internalVector(), out.internalVector());
+    linearCombination(
+        a,
+        x.boundaryData().value(),
+        b,
+        y.boundaryData().value(),
+        out.boundaryData().value()
+    );
 }
 
 void interfaceCompressionVelocity(

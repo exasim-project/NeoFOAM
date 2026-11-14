@@ -173,10 +173,50 @@ void registerVofOperators(nb::module_& m)
     m.def(
         "upwind_flux",
         [](const fvcc::VolumeField<NeoN::scalar>& alpha,
-           const fvcc::SurfaceField<NeoN::scalar>& phi) { return nf::upwindAlphaFlux(alpha, phi); },
+           const SurfaceScalar& phi,
+           SurfaceScalar* out)
+        {
+            return intoOrNew(
+                out,
+                phi,
+                "alphaPhiUpwind",
+                [&](SurfaceScalar& flux) { nf::upwindAlphaFlux(alpha, phi, flux); }
+            );
+        },
         "alpha"_a,
         "phi"_a,
-        "Upwind convective flux phi_f * alpha_upwind(f)"
+        "out"_a.none() = nb::none(),
+        "Upwind convective flux phi_f * alpha_upwind(f); with out, written into out and None "
+        "returned"
+    );
+
+    m.def(
+        "linear_combination",
+        [](double a,
+           const fvcc::VolumeField<NeoN::scalar>& x,
+           double b,
+           const fvcc::VolumeField<NeoN::scalar>& y,
+           fvcc::VolumeField<NeoN::scalar>& out) { nf::linearCombination(a, x, b, y, out); },
+        "a"_a,
+        "x"_a,
+        "b"_a,
+        "y"_a,
+        "out"_a,
+        "out = a*x + b*y on internal and boundary values, without a temporary field; out may be "
+        "x or y"
+    );
+
+    m.def(
+        "linear_combination",
+        [](double a, const SurfaceScalar& x, double b, const SurfaceScalar& y, SurfaceScalar& out)
+        { nf::linearCombination(a, x, b, y, out); },
+        "a"_a,
+        "x"_a,
+        "b"_a,
+        "y"_a,
+        "out"_a,
+        "out = a*x + b*y on internal and boundary values, without a temporary field; out may be "
+        "x or y"
     );
 
     m.def(
