@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""incompressibleVoFNeoN: interFoam on NeoN, laminar with MULES and a fixed or adaptive deltaT."""
+"""incompressibleVoFNeoN: laminar interFoam on NeoN, surface tension, fixed or adaptive deltaT."""
 
 import os
 import sys
@@ -37,6 +37,7 @@ from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from .create_fields import create_init
 from .models.alpha_advection import advectionModelNeoN
 from .models.pressure_velocity import PressureVelocityAlgorithmVoFNeoN
+from .models.surface_forces import SurfaceForcesVoFNeoN
 
 incompressibleVoFNeoN = Solver("incompressibleVoFNeoN")
 
@@ -53,6 +54,7 @@ incompressibleVoFNeoN.config(SetFieldsConfig)
 
 incompressibleVoFNeoN.models(advectionModelNeoN, required=True)
 incompressibleVoFNeoN.models(PressureVelocityAlgorithmVoFNeoN, required=True)
+incompressibleVoFNeoN.models(SurfaceForcesVoFNeoN, required=True)
 
 
 def _report_time_step(ctx: Context) -> None:
@@ -79,10 +81,11 @@ def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)
 def execution_graph(
     self: Any, ctx: Context, domain_name: Optional[str] = None
 ) -> tuple[StepBuilder, Operations]:
-    """The time loop: alpha_advection -> momentum -> continuity -> write_output."""
+    """The time loop: alpha_advection -> surface_forces -> momentum -> continuity -> write."""
     _ = domain_name
-    alpha_model, pimple_model = self.state.core_models[0], self.state.core_models[1]
+    alpha_model, pimple_model, forces_model = self.state.core_models[:3]
     alpha_ops = Operations(alpha_model.build_operations_for(alpha_model))
+    forces_ops = Operations(forces_model.build_operations_for(forces_model))
     pimple_ops = Operations(pimple_model.build_operations_for(pimple_model))
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
@@ -102,6 +105,7 @@ def execution_graph(
         )
         time_builder.step(loop_ops["increment_time"])
         time_builder.step(alpha_ops["alpha_advection"])
+        time_builder.step(forces_ops["surface_forces"])
         time_builder.step(pimple_ops["momentum"])
         time_builder.step(pimple_ops["continuity"])
         time_builder.step(writer_ops["write_output"])
@@ -111,7 +115,7 @@ def execution_graph(
 def run(argv: Optional[list[str]] = None, log_file: Optional[Any] = None) -> Context:
     """Run one incompressibleVoFNeoN simulation in the working directory; return the Context.
 
-    Use it for laminar MULES cases with a fixed or adaptive deltaT and without surface
+    Use it for laminar MULES cases with a fixed or adaptive deltaT and constant surface
     tension on Serial, CPU or GPU; ``neofoam.solver.incompressibleVoF`` runs the other
     cases on pybFoam.
 

@@ -62,7 +62,7 @@ the linked reference pages for the full API.
     interFoam on the NeoN backend (Serial/CPU/GPU), first version: laminar, MULES
     through ``algorithms/mules``' ``NeoNMulesOps``, fixed or interFoam's adaptive
     ``deltaT`` (``models/time_step``: maxCo, maxAlphaCo, maxDeltaT), one outer
-    corrector without momentum predictor, no surface tension. The alpha-advection
+    corrector without momentum predictor, Brackbill CSF surface tension. The alpha-advection
     (``models/alpha_advection``) and PIMPLE (``models/pressure_velocity``) models
     follow ``incompressibleVoF``; the time loop and NeoN runtime are
     ``incompressibleFluidNeoN``'s.

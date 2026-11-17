@@ -31,6 +31,7 @@ from neofoam.solver.neon_runtime import requested_executor
 from .models.alpha_advection import advectionModelNeoN
 from .models.field_writer import neon_vof_writer_backend_steps
 from .models.pressure_velocity import PressureVelocityAlgorithmVoFNeoN
+from .models.surface_forces import SurfaceForcesVoFNeoN
 from .models.time_step import adaptiveTimeStepNeoN
 
 # The linear-solver dicts mapped to Ginkgo; the alpha predictor's is mapped by NeoNMulesOps.
@@ -96,6 +97,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         core_models: list[Any] = [
             advectionModelNeoN.detect_and_create(),
             PressureVelocityAlgorithmVoFNeoN.detect_and_create(),
+            SurfaceForcesVoFNeoN.detect_and_create(),
             solutionLoop.instantiate(resolved_case_dir, "main"),
             fieldWriter.instantiate(resolved_case_dir, "main"),
         ]
@@ -109,7 +111,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
     @spec_builder.build
     def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-        alpha_model, pressure_model = core_models[0], core_models[1]
+        alpha_model, pressure_model, forces_model = core_models[:3]
 
         def by_spec(spec_name: str) -> Any:
             return next(
@@ -132,9 +134,13 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
         # The bare specs only register; their @build steps carry the NeoN field reads.
         builder.add_core_models(
-            [("alpha_advection", alpha_model), ("pressure_velocity", pressure_model)]
+            [
+                ("alpha_advection", alpha_model),
+                ("pressure_velocity", pressure_model),
+                ("surface_force_model", forces_model),
+            ]
         )
-        for spec in (alpha_model, pressure_model):
+        for spec in (alpha_model, pressure_model, forces_model):
             builder.extend(spec.build_steps())
         # In ctx.models by name: the solution-loop limits dispatch to active models only.
         for optional_model in optional_models:

@@ -257,7 +257,7 @@ def incompressiblefluidneon(ctx: typer.Context) -> None:
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
 def incompressiblevofneon(ctx: typer.Context) -> None:
-    """incompressibleVoFNeoN - interFoam-style VoF solver (NeoN backend; laminar, sigma 0)."""
+    """incompressibleVoFNeoN - interFoam-style VoF solver (NeoN backend; laminar)."""
     _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_incompressible_vof_neon(argv)

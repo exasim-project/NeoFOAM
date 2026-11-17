@@ -4,7 +4,7 @@
 # NB: no ``from __future__ import annotations`` — the dependency_resolver
 # matches ``Annotated[..., "models"]`` live.
 
-"""interFoam's UEqn.H and pEqn.H on NeoN, laminar and without surface tension."""
+"""interFoam's UEqn.H and pEqn.H on NeoN, laminar, with the summed face forces."""
 
 from dataclasses import dataclass
 from typing import Annotated, Any, Callable
@@ -36,6 +36,8 @@ from neofoam.framework.initialization import field, model
 from neofoam.framework.model import Model
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata
+
+from ..surface_forces import surfaceForces
 
 __all__ = ["PimpleVoFControls", "PimpleVoFWorkspace", "pimpleVoFNeoN"]
 
@@ -122,7 +124,6 @@ class PimpleVoFWorkspace:
     rAUf: Any
     rho_rAU: Any
     rho_rAUf: Any
-    force: Any
     phig: Any
     p_flux: Any
 
@@ -186,7 +187,6 @@ def build(self: Any) -> list[Any]:
             rAUf=surface("rAUf"),
             rho_rAU=volume("rhorAU"),
             rho_rAUf=surface("rhorAUf"),
-            force=surface("gravityFaceForce"),
             phig=surface("phig"),
             p_flux=surface("pFlux"),
         )
@@ -262,10 +262,10 @@ def momentum(
 
 
 def _predicted_flux(
-    UEqn: Any, fields: tuple[Any, Any, Any, Any], workspace: PimpleVoFWorkspace, runtime: Any
+    UEqn: Any, fields: tuple[Any, Any, Any, Any, Any], workspace: PimpleVoFWorkspace, runtime: Any
 ) -> tuple[Any, Any, Any]:
     """pEqn.H up to constrainPressure: ``(rAU, HbyA, phiHbyA)``; rAUf and phig in workspace."""
-    U, phi, rho, p_rgh = fields
+    U, phi, rho, p_rgh, face_force = fields
     rAU, hByA = nfb.compute_rau_and_hbya(UEqn)
     nfb.linear_interpolate(runtime, rAU, out=workspace.rAUf)
     nfb.constrain_hbya(U, p_rgh, hByA)
@@ -278,9 +278,9 @@ def _predicted_flux(
     phi_hbya = nfb.flux(hByA)
     nfb.linear_combination(1.0, phi_hbya, 1.0, ddt_corr, phi_hbya)
 
-    nfb.buoyancy_flux(workspace.force, workspace.rAUf, out=workspace.phig)
+    nfb.buoyancy_flux(face_force, workspace.rAUf, out=workspace.phig)
     nfb.linear_combination(1.0, phi_hbya, 1.0, workspace.phig, phi_hbya)
-    # After phig: the fixedFluxPressure gradient balances the buoyancy flux at the walls.
+    # After phig: the fixedFluxPressure gradient balances the face-force flux at the walls.
     nfb.constrain_pressure(p_rgh, U, phi_hbya, workspace.rAUf)
     return rAU, hByA, phi_hbya
 
@@ -323,19 +323,20 @@ def continuity(
     p_rgh: Any,
     p: Any,
     gh: Any,
-    ghf: Any,
     UEqn: Any,
     pimple_controls: Annotated[PimpleVoFControls, "models"],
     workspace: Annotated[PimpleVoFWorkspace, "models"],
+    surface_forces: Annotated[surfaceForces, "models"],
     neon_runtime: Annotated[Any, "models"],
 ) -> FieldUpdates:
     """The p_rgh correctors of pEqn.H, then ``p = p_rgh + rho*gh``."""
-    # -ghf*snGrad(rho): rho is fixed across the correctors, so once per step.
-    nfb.gravity_face_force(neon_runtime, ghf, rho, out=workspace.force)
+    face_force = surface_forces.face_force
     n_correctors = pimple_controls.n_correctors
     n_non_orthogonal = pimple_controls.n_non_orthogonal_correctors
     for corrector in range(n_correctors):
-        rAU, hByA, phi_hbya = _predicted_flux(UEqn, (U, phi, rho, p_rgh), workspace, neon_runtime)
+        rAU, hByA, phi_hbya = _predicted_flux(
+            UEqn, (U, phi, rho, p_rgh, face_force), workspace, neon_runtime
+        )
         # p_rgh.select(pimple.finalInnerIter()): p_rghFinal on the very last solve only.
         final_solves = [
             corrector == n_correctors - 1 and non_orthogonal == n_non_orthogonal

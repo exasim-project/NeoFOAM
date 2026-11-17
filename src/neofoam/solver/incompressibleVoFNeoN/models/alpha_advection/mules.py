@@ -171,7 +171,7 @@ def build(self: Any) -> list[Any]:
             _check_kernel_schemes()
         controls = AlphaControls(*read_alpha_controls(alpha1.name))
         return MulesNeoNState(
-            # No surface tension: the ops' own nHatf stands in for the interface.
+            # The compression reads the ops' own nHatf; surface tension reads models.interface.
             ops=NeoNMulesOps(ctx["_foam_time"], runtime, alpha1, phi, (c_alpha, n_limiter_iter)),
             controls=controls,
             oc_coeff=read_alpha_ddt_off_centring(runtime.mesh, controls.n_alpha_sub_cycles),
