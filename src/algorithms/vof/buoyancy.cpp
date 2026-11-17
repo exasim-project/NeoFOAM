@@ -390,6 +390,39 @@ void gravityFaceForce(
     );
 }
 
+void surfaceTensionFaceForce(
+    RunTime& rt,
+    const fvcc::VolumeField<scalar>& sigmaK,
+    const fvcc::VolumeField<scalar>& alpha1,
+    fvcc::SurfaceField<scalar>& force
+)
+{
+    snGrad(rt, alpha1, force);
+    const auto& mesh = alpha1.mesh();
+    const auto [own, nei, weights, skI, skB] = NeoN::views(
+        mesh.faceOwners(),
+        mesh.faceNeighbors(),
+        foamGeometry(rt).weights,
+        sigmaK.internalVector(),
+        sigmaK.boundaryData().value()
+    );
+    auto [fI, fB] = NeoN::views(force.internalVector(), force.boundaryData().value());
+    NeoN::parallelFor(
+        alpha1.exec(),
+        {0, mesh.nInternalFaces()},
+        NEON_LAMBDA(const localIdx f) {
+            fI[f] = faceValue(weights[f], skI[own[f]], skI[nei[f]]) * fI[f];
+        },
+        "buoyancy::surfaceTensionInternal"
+    );
+    NeoN::parallelFor(
+        alpha1.exec(),
+        {0, mesh.nBoundaryFaces()},
+        NEON_LAMBDA(const localIdx bf) { fB[bf] = skB[bf] * fB[bf]; },
+        "buoyancy::surfaceTensionBoundary"
+    );
+}
+
 void buoyancyFlux(
     const fvcc::SurfaceField<scalar>& force,
     const fvcc::SurfaceField<scalar>& rAUf,

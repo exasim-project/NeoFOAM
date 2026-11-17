@@ -25,8 +25,8 @@ nnfvcc::SurfaceField<NeoN::scalar> createGhf(RunTime& rt);
 
 /* @brief The gravity face force -ghf*snGrad(rho) of interFoam's UEqn.H / pEqn.H, into @p force.
  *
- * @detail The term `mixture.surfaceTensionForce() - ghf*fvc::snGrad(rho)` without surface
- * tension (sigma == 0 makes the first term a signed zero, which leaves the difference exact).
+ * @detail The gravity part of `mixture.surfaceTensionForce() - ghf*fvc::snGrad(rho)`;
+ * surfaceTensionFaceForce computes the first term.
  * snGrad follows fvc::snGrad with the snGradSchemes entry for rho: "uncorrected", or "corrected"
  * with the non-orthogonal correction from grad(rho) under "Gauss linear" (other schemes throw).
  * Internal faces use OpenFOAM's nonOrthDeltaCoeffs and weights (foamGeometry), so Serial matches
@@ -40,9 +40,23 @@ void gravityFaceForce(
     nnfvcc::SurfaceField<NeoN::scalar>& force
 );
 
+/* @brief interfaceProperties::surfaceTensionForce, interpolate(sigmaK)*snGrad(alpha1), into
+ * @p force.
+ *
+ * @detail @p sigmaK is sigma*K on cells and boundary faces. interpolate is linear with
+ * OpenFOAM's weights (boundary: the patch values of sigmaK); snGrad(alpha1) as in
+ * gravityFaceForce, with the snGradSchemes entry for alpha1. Coupled patches throw.
+ */
+void surfaceTensionFaceForce(
+    RunTime& rt,
+    const nnfvcc::VolumeField<NeoN::scalar>& sigmaK,
+    const nnfvcc::VolumeField<NeoN::scalar>& alpha1,
+    nnfvcc::SurfaceField<NeoN::scalar>& force
+);
+
 /* @brief pEqn.H's buoyancy flux phig = force*rAUf*magSf (internal and boundary faces).
  *
- * @p force is gravityFaceForce's result.
+ * @p force is the face force: gravityFaceForce's result, plus surfaceTensionFaceForce's.
  */
 void buoyancyFlux(
     const nnfvcc::SurfaceField<NeoN::scalar>& force,

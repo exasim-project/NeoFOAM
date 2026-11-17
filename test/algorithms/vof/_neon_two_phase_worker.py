@@ -96,6 +96,20 @@ def serve(case_dir: Path, executor: str) -> None:
         density = rho()
         return into_or_new(data, lambda **out: nfb.gravity_face_force(rt, ghf, density, **out))
 
+    def curvature() -> Any:
+        result = nfb.create_uniform_volume_field(rt, "K", 7.0)
+        nfb.interface_curvature(nfb.interface_nhatf(rt, fields["alpha.water"]), out=result)
+        return result
+
+    def surface_tension_force(data: Any) -> Any:
+        sigma_k = nfb.create_uniform_volume_field(rt, "sigmaK", 7.0)
+        interface_k = curvature()
+        nfb.linear_combination(props["sigma"], interface_k, 0.0, interface_k, sigma_k)
+        return into_or_new(
+            data,
+            lambda **out: nfb.surface_tension_face_force(rt, sigma_k, fields["alpha.water"], **out),
+        )
+
     def phig(data: Any = None) -> Any:
         force = gravity_face_force()
         return into_or_new(data, lambda **out: nfb.buoyancy_flux(force, rauf(), **out))
@@ -152,6 +166,13 @@ def serve(case_dir: Path, executor: str) -> None:
         ("twoPhase.staticPressure", alpha_water): lambda d: _with_boundary(static_pressure()),
         ("buoyancy.gravityFaceForce", alpha_water): lambda d: _with_boundary(gravity_face_force(d)),
         ("buoyancy.flux", alpha_water): lambda d: _with_boundary(phig(d)),
+        ("interface.nHatf", alpha_water): lambda d: _with_boundary(
+            into_or_new(d, lambda **out: nfb.interface_nhatf(rt, fields["alpha.water"], **out))
+        ),
+        ("interface.curvature", alpha_water): lambda d: _with_boundary(curvature()),
+        ("interface.surfaceTensionForce", alpha_water): lambda d: _with_boundary(
+            surface_tension_force(d)
+        ),
         ("buoyancy.constrainPressure", alpha_water): lambda d: _to_numpy(
             constrain_pressure().boundary_data_value()
         ),

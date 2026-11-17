@@ -14,6 +14,7 @@
 #include "NeoFOAM/algorithms/vof/buoyancy.hpp"
 #include "NeoFOAM/algorithms/vof/courant.hpp"
 #include "NeoFOAM/algorithms/vof/fluxes.hpp"
+#include "NeoFOAM/algorithms/vof/interface.hpp"
 #include "NeoFOAM/algorithms/vof/mules.hpp"
 #include "NeoFOAM/algorithms/vof/twoPhaseMixture.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
@@ -298,6 +299,29 @@ void registerTwoPhaseMixture(nb::module_& m)
     );
 
     m.def(
+        "surface_tension_face_force",
+        [](nf::RunTime& rt,
+           const VolumeScalar& sigmaK,
+           const VolumeScalar& alpha1,
+           SurfaceScalar* out)
+        {
+            return intoOrNew(
+                out,
+                alpha1,
+                "surfaceTensionForce",
+                [&](SurfaceScalar& force)
+                { nf::surfaceTensionFaceForce(rt, sigmaK, alpha1, force); }
+            );
+        },
+        "runtime"_a,
+        "sigma_k"_a,
+        "alpha1"_a,
+        "out"_a.none() = nb::none(),
+        "interpolate(sigma_k)*snGrad(alpha1), interfaceProperties::surfaceTensionForce (linear "
+        "interpolate); with out, written into out and None returned"
+    );
+
+    m.def(
         "buoyancy_flux",
         [](const SurfaceScalar& force, const SurfaceScalar& rAUf, SurfaceScalar* out)
         {
@@ -541,6 +565,16 @@ void registerVofOperators(nb::module_& m)
         "out"_a.none() = nb::none(),
         "Interface unit-normal flux nHatf = nHatfv & Sf (interfaceProperties::calculateK); "
         "with out, written into out and None returned"
+    );
+
+    m.def(
+        "interface_curvature",
+        [](const SurfaceScalar& nHatf, fvcc::VolumeField<NeoN::scalar>& out)
+        { nf::interfaceCurvature(nHatf, out); },
+        "nhatf"_a,
+        "out"_a,
+        "Interface curvature K = -fvc::div(nhatf) (interfaceProperties::calculateK) into out; "
+        "boundary values = owner-cell values"
     );
 
     m.def(

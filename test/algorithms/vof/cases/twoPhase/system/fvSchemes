@@ -36,6 +36,7 @@ gradSchemes
     grad(alphaFixed)    Gauss linear;
     grad(rho)           Gauss linear;
     grad(p_rgh)         Gauss linear;
+    grad(alpha.water)   Gauss linear;
     nHat                Gauss linear;
 }
 
@@ -75,6 +76,8 @@ snGradSchemes
     default         uncorrected;
     snGrad(rho)     corrected;
     snGrad(p_rgh)   corrected;
+    // the surface tension force's snGrad(alpha1), with the correction from grad(alpha.water)
+    snGrad(alpha.water) corrected;
 }
 
 // ************************************************************************* //

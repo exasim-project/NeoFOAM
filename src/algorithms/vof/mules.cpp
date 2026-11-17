@@ -12,6 +12,7 @@
 
 #include "NeoFOAM/algorithms/vof/mules.hpp"
 #include "detail.hpp"
+#include "foamGeometry.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
@@ -28,42 +29,15 @@ using NeoN::scalar;
 constexpr scalar rootVSmall = 1.0e-150;
 constexpr scalar small = 1.0e-15;
 
-// fvc::surfaceIntegrate: owner += flux, neighbour -= flux, boundary owner += flux, then / V.
-// NeoN's surfaceIntegrate multiplies by 1/V, which rounds differently from OpenFOAM's division.
+// fvc::surfaceIntegrate as a new cell vector (see integrateFluxInto).
 NeoN::Vector<scalar> integrateFlux(
     const NeoN::UnstructuredMesh& mesh,
     NeoN::View<const scalar> flux,
     NeoN::View<const scalar> bFlux
 )
 {
-    const auto exec = mesh.exec();
-    const auto own = mesh.faceOwners().view();
-    const auto nei = mesh.faceNeighbors().view();
-    const auto bOwn = mesh.boundaryMesh().faceOwners().view();
-    const auto V = mesh.cellVolumes().view();
-    NeoN::Vector<scalar> result(exec, mesh.nCells(), 0.0);
-    auto res = result.view();
-    NeoN::parallelFor(
-        exec,
-        {0, mesh.nInternalFaces()},
-        NEON_LAMBDA(const localIdx f) {
-            Kokkos::atomic_add(&res[own[f]], flux[f]);
-            Kokkos::atomic_sub(&res[nei[f]], flux[f]);
-        },
-        "vof::integrateInternal"
-    );
-    NeoN::parallelFor(
-        exec,
-        {0, mesh.nBoundaryFaces()},
-        NEON_LAMBDA(const localIdx bf) { Kokkos::atomic_add(&res[bOwn[bf]], bFlux[bf]); },
-        "vof::integrateBoundary"
-    );
-    NeoN::parallelFor(
-        exec,
-        {0, mesh.nCells()},
-        NEON_LAMBDA(const localIdx c) { res[c] /= V[c]; },
-        "vof::integrateVolume"
-    );
+    NeoN::Vector<scalar> result(mesh.exec(), mesh.nCells(), 0.0);
+    integrateFluxInto(mesh, flux, bFlux, result.view());
     return result;
 }
 

@@ -69,6 +69,18 @@ class _TwoPhaseOps:
     def gravity_face_force(self, alpha: _Field, into: bool = False) -> np.ndarray:
         return self._face_op("buoyancy.gravityFaceForce", alpha, into)
 
+    def interface_normal(self, alpha: _Field, into: bool = False) -> np.ndarray:
+        """interfaceProperties' ``nHatf`` of the current ``alpha.water``."""
+        return self._face_op("interface.nHatf", alpha, into)
+
+    def curvature(self, alpha: _Field) -> np.ndarray:
+        """calculateK's ``K = -fvc::div(nHatf)``, cell then boundary values (neon: via out=)."""
+        return self._worker(alpha).evaluate("interface.curvature", (alpha.name,))
+
+    def surface_tension_force(self, alpha: _Field, into: bool = False) -> np.ndarray:
+        """``interpolate(sigma*K)*snGrad(alpha.water)``, the CSF face force."""
+        return self._face_op("interface.surfaceTensionForce", alpha, into)
+
     def buoyancy_flux(self, alpha: _Field, into: bool = False) -> np.ndarray:
         """``phig = gravity_face_force*interpolate(rAU)*magSf``."""
         return self._face_op("buoyancy.flux", alpha, into)

@@ -145,4 +145,39 @@ gaussLinearGrad(const nnfvcc::VolumeField<scalar>& psi, NeoN::View<const scalar>
     return grad;
 }
 
+void integrateFluxInto(
+    const NeoN::UnstructuredMesh& mesh,
+    NeoN::View<const scalar> flux,
+    NeoN::View<const scalar> bFlux,
+    NeoN::View<scalar> res
+)
+{
+    const auto exec = mesh.exec();
+    const auto own = mesh.faceOwners().view();
+    const auto nei = mesh.faceNeighbors().view();
+    const auto bOwn = mesh.boundaryMesh().faceOwners().view();
+    const auto V = mesh.cellVolumes().view();
+    NeoN::parallelFor(
+        exec,
+        {0, mesh.nInternalFaces()},
+        NEON_LAMBDA(const localIdx f) {
+            Kokkos::atomic_add(&res[own[f]], flux[f]);
+            Kokkos::atomic_sub(&res[nei[f]], flux[f]);
+        },
+        "vof::integrateInternal"
+    );
+    NeoN::parallelFor(
+        exec,
+        {0, mesh.nBoundaryFaces()},
+        NEON_LAMBDA(const localIdx bf) { Kokkos::atomic_add(&res[bOwn[bf]], bFlux[bf]); },
+        "vof::integrateBoundary"
+    );
+    NeoN::parallelFor(
+        exec,
+        {0, mesh.nCells()},
+        NEON_LAMBDA(const localIdx c) { res[c] /= V[c]; },
+        "vof::integrateVolume"
+    );
+}
+
 } // namespace NeoFOAM

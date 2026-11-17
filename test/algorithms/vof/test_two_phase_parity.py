@@ -5,7 +5,8 @@
 
 pybFoam spells each term as interFoam's createFields.H, gh.H, UEqn.H and pEqn.H do (the
 mixture properties from a real ``immiscibleIncompressibleTwoPhaseMixture``); neon calls the
-NeoFOAM bindings. Surface tension is left out, as in the NeoN VoF solver for now. The
+NeoFOAM bindings. The interface terms (``nHatf``, the curvature ``K = -div(nHatf)`` and
+``surfaceTensionForce``) come from that mixture's own interfaceProperties. The
 ``twoPhase`` case keeps these inputs apart from ``sharpSphere``, whose parity tests stay as
 they are; its three operator meshes are the ``sharpSphere`` ones.
 
@@ -28,7 +29,11 @@ face sums are atomic on CPU and GPU, so only Serial is guaranteed exact (the GPU
 of the peak). The buoyant velocity update inherits this through its buoyancy flux (seen on
 the sheared mesh with threads: 6e-14 absolute). The other reconstructions gather each cell's
 faces in OpenFOAM's order, exact off the GPU, which fuses the tensor algebra (seen: 1e-14 of
-the peak at most).
+the peak at most). The interface normal and the curvature add the gradient's round-off up
+atomically too, and the normalisation ``gradAlphaf/(|gradAlphaf| + deltaN)`` with
+``deltaN = 1e-8/h`` amplifies it where alpha is nearly flat (see ``test_mules_parity``): off Serial
+they may differ by 1e-9 of the peak (seen: 1e-11); the surface tension force multiplies the
+curvature by snGrad(alpha), which is small exactly there, so it keeps the snGrad tolerance.
 """
 
 from __future__ import annotations
@@ -70,6 +75,11 @@ def _exact_off_gpu(executor: str) -> tuple[float, float]:
 def _atomic_sums(executor: str) -> tuple[float, float]:
     """(rtol, atol relative to the peak) of the snGrad terms: exact on Serial only."""
     return (0.0, 0.0) if executor == "Serial" else (1e-12, 1e-14)
+
+
+def _normalised_gradient(executor: str) -> tuple[float, float]:
+    """(rtol, atol relative to the peak) of nHatf and K: exact on Serial only."""
+    return (0.0, 0.0) if executor == "Serial" else (0.0, 1e-9)
 
 
 def _assert_matches(
@@ -201,5 +211,52 @@ def test_update_velocity_buoyant_matches_openfoam(
 
     expected = pyb.buoyant_velocity(alpha)
     result = nb.buoyant_velocity(alpha)
+
+    _assert_matches(result, expected, _atomic_sums(executor), f"{mesh}/{executor}")
+
+
+@pytest.mark.parametrize("into", [False, True], ids=["new", "out"])
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESHES)
+def test_interface_normal_matches_openfoam(
+    two_phase_simulation: _SimulationFactory, mesh: str, executor: str, into: bool
+) -> None:
+    sim = two_phase_simulation(mesh, executor)
+    _seed(sim)
+    alpha = sim.field("alpha.water")
+
+    expected = pyb.interface_normal(alpha)
+    result = nb.interface_normal(alpha, into)
+
+    _assert_matches(result, expected, _normalised_gradient(executor), f"{mesh}/{executor}")
+
+
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESHES)
+def test_interface_curvature_matches_openfoam(
+    two_phase_simulation: _SimulationFactory, mesh: str, executor: str
+) -> None:
+    sim = two_phase_simulation(mesh, executor)
+    _seed(sim)
+    alpha = sim.field("alpha.water")
+
+    expected = pyb.curvature(alpha)
+    result = nb.curvature(alpha)
+
+    _assert_matches(result, expected, _normalised_gradient(executor), f"{mesh}/{executor}")
+
+
+@pytest.mark.parametrize("into", [False, True], ids=["new", "out"])
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESHES)
+def test_surface_tension_force_matches_openfoam(
+    two_phase_simulation: _SimulationFactory, mesh: str, executor: str, into: bool
+) -> None:
+    sim = two_phase_simulation(mesh, executor)
+    _seed(sim)
+    alpha = sim.field("alpha.water")
+
+    expected = pyb.surface_tension_force(alpha)
+    result = nb.surface_tension_force(alpha, into)
 
     _assert_matches(result, expected, _atomic_sums(executor), f"{mesh}/{executor}")

@@ -77,6 +77,17 @@ class _TwoPhase:
     def rho_phi(self) -> Any:
         return surfaceScalarField(pyf.Word("rhoPhi"), fvc.interpolate(self.rho()) * self.phi)
 
+    def n_hat_f(self) -> Any:
+        self.mixture.correct()
+        return self.mixture.nHatf()
+
+    def curvature(self) -> Any:
+        return volScalarField(pyf.Word("K"), -fvc.div(self.n_hat_f()))
+
+    def surface_tension_force(self) -> Any:
+        self.mixture.correct()
+        return surfaceScalarField(pyf.Word("stf"), self.mixture.surfaceTensionForce())
+
     def rauf(self) -> Any:
         return surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(self.rau))
 
@@ -157,6 +168,11 @@ class _TwoPhase:
                 mesh, self.gravity_face_force()
             ),
             ("buoyancy.flux", alpha): lambda d: _with_patches(mesh, self.phig()),
+            ("interface.nHatf", alpha): lambda d: _with_patches(mesh, self.n_hat_f()),
+            ("interface.curvature", alpha): lambda d: _with_patches(mesh, self.curvature()),
+            ("interface.surfaceTensionForce", alpha): lambda d: _with_patches(
+                mesh, self.surface_tension_force()
+            ),
             ("buoyancy.constrainPressure", alpha): lambda d: _with_patches(
                 mesh, self.constrain_pressure()
             )[mesh.nCells() :],

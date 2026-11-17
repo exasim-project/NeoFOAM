@@ -60,4 +60,16 @@ NeoN::Vector<NeoN::Vec3> gaussLinearGrad(
     NeoN::View<const NeoN::scalar> weights
 );
 
+/* @brief fvc::surfaceIntegrate into the zeroed @p res.
+ *
+ * @detail owner += flux, neighbour -= flux, boundary owner += flux, then / V. NeoN's
+ * surfaceIntegrate multiplies by 1/V, which rounds differently from OpenFOAM's division.
+ */
+void integrateFluxInto(
+    const NeoN::UnstructuredMesh& mesh,
+    NeoN::View<const NeoN::scalar> flux,
+    NeoN::View<const NeoN::scalar> bFlux,
+    NeoN::View<NeoN::scalar> res
+);
+
 } // namespace NeoFOAM

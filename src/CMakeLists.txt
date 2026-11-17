@@ -20,6 +20,7 @@ target_sources(
           "algorithms/vof/courant.cpp"
           "algorithms/vof/fluxes.cpp"
           "algorithms/vof/foamGeometry.cpp"
+          "algorithms/vof/interface.cpp"
           "algorithms/vof/mules.cpp"
           "algorithms/vof/twoPhaseMixture.cpp"
           "auxiliary/convert.cpp"
