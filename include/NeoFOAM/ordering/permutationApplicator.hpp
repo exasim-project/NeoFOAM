@@ -39,7 +39,7 @@ public:
     explicit PermutationApplicator(const NeoN::Executor& exec);
 
     // return executor on which the applicator is performed
-    const NeoN::Executor& exec() const { return exec_; }
+    [[nodiscard]] const NeoN::Executor& exec() const noexcept { return exec_; }
 
     /**
      * @brief Applies a cell permutation to a mesh.
@@ -62,81 +62,22 @@ public:
      */
     void apply(NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
 
-    /**
-     * @brief Applies a cell permutation to a cell-associated physical field.
-     *
-     * The values of @p field are reordered according to @p permutation so
-     * that each value remains associated with the same physical cell after
-     * the cell ordering changes.
-     *
-     * @tparam T Value type of the cell-associated field.
-     *
-     * @param field Cell-associated field to reorder.
-     * @param permutation Permutation defining the mapping from old cell
-     *                    indices to new cell indices.
-     *
-     * @pre @p permutation is a valid permutation over the cells represented
-     *      by @p field.
-     *
-     * @post Each field value remains associated with the same cell as before
-     *       the permutation was applied.
-     */
-    // template<typename T>
-    // void reorderCellField(
-    //     NeoN::Field<T>& field,
-    //     const PreparedPermutation& permutation) const;
-
-    /**
-     * @brief Applies a cell permutation to a cell-associated data.
-     *
-     * The values of @p data are reordered according to @p permutation so
-     * that each value remains associated with the same physical cell after
-     * the cell ordering changes.
-     *
-     * @param data Cell-associated data to reorder.
-     * @param permutation Permutation defining the mapping from old cell
-     *                    indices to new cell indices.
-     *
-     * @pre @p permutation is a valid permutation over the cells represented
-     *      by @p data.
-     *
-     * @post Each data value remains associated with the same cell as before
-     *       the permutation was applied.
-     */
-    template<typename T>
-    void reorderCellData(NeoN::Vector<T>& data, const PreparedPermutation& permutation) const;
-
-    /**
-     * @brief Remaps cell indices in the mesh connectivity according to a cell permutation.
-     *
-     * The cell indices stored in the mesh connectivity are remapped according to
-     * @p permutation so that they refer to the same physical cells after the cell
-     * ordering changes. The connectivity itself is preserved; only the cell
-     * indices are updated.
-     *
-     * @param mesh Mesh whose cell connectivity is to be remapped.
-     * @param permutation Permutation defining the mapping from old cell
-     *                    indices to new cell indices.
-     *
-     * @pre @p permutation is a valid permutation over the cells represented
-     *      by @p mesh.
-     *
-     * @post All cell indices in the mesh connectivity refer to the same
-     *       physical cells as before the permutation was applied.
-     */
-    void
-    remapConnectivity(NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
 
 private:
 
     NeoN::Executor exec_;
 
     // check that permutation is valid for mesh (host side)
-    void validate(const NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
+    void validateCompatibility(
+        const NeoN::UnstructuredMesh& mesh,
+        const PreparedPermutation& permutation
+    ) const;
 
-    // void remapCellReferences(
-    //     NeoN::UnstructuredMesh& mesh,
-    //     const PreparedPermutation& permutation) const;
+    template<typename T>
+    void reorderCellData(NeoN::Vector<T>& data, const PreparedPermutation& permutation) const;
+
+    void
+    remapConnectivity(NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
 };
 
 } // namespace NeoFOAM

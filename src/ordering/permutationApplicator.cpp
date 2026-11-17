@@ -4,6 +4,98 @@
 #include "NeoFOAM/ordering/permutationApplicator.hpp"
 #include <stdexcept>
 
+namespace NeoFOAM::detail
+{
+template<typename T>
+void reorderCellData(
+    const NeoN::Executor& exec,
+    NeoN::Vector<T>& data,
+    const PreparedPermutation& permutation
+)
+{
+    auto oldData = data.makeCopy();
+
+    const auto oldToNew = permutation.oldToNew();
+
+    auto oldDataView = oldData.view();
+    auto dataView = data.view();
+
+    NeoN::parallelFor(
+        exec,
+        {0, NeoN::toLocalIdx(permutation.size())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto j = oldToNew[i];
+            dataView[j] = oldDataView[i];
+        },
+        "reorder cell-associated data"
+    );
+}
+
+void remapConnectivity(
+    const NeoN::Executor& exec,
+    NeoN::UnstructuredMesh& mesh,
+    const PreparedPermutation& permutation
+)
+{
+    auto faceOwnersView = mesh.faceOwners().view();
+
+    const auto oldToNew = permutation.oldToNew();
+
+    // Remap face owners of interior faces
+    NeoN::parallelFor(
+        exec,
+        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto oldOwnerIdx = faceOwnersView[i];
+            faceOwnersView[i] = oldToNew[oldOwnerIdx];
+        },
+        "remap face owners of internal faces"
+    );
+
+    // Remap face neighbors of interior faces
+    auto faceNeighborsView = mesh.faceNeighbors().view();
+
+    NeoN::parallelFor(
+        exec,
+        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto oldNeighborIdx = faceNeighborsView[i];
+            faceNeighborsView[i] = oldToNew[oldNeighborIdx];
+        },
+        "remap face neighbors of internal faces"
+    );
+
+    // Remap face owners of boundary faces
+    auto boundaryFaceOwnersView = mesh.boundaryMesh().faceOwners().view();
+
+    NeoN::parallelFor(
+        exec,
+        {0, NeoN::toLocalIdx(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto oldOwnerIdx = boundaryFaceOwnersView[i];
+            boundaryFaceOwnersView[i] = oldToNew[oldOwnerIdx];
+        },
+        "remap face owners of boundary faces"
+    );
+
+    // Correct the face owner and neighbor indices according to OpenFOAM convention
+    NeoN::parallelFor(
+        exec,
+        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
+        NEON_LAMBDA(NeoN::localIdx i) {
+            auto ownerIdx = faceOwnersView[i];
+            auto neighborIdx = faceNeighborsView[i];
+            if (ownerIdx > neighborIdx)
+            {
+                faceOwnersView[i] = neighborIdx;
+                faceNeighborsView[i] = ownerIdx;
+            }
+        },
+        "correct face owner and neighbor indices of internal faces"
+    );
+}
+} // namespace NeoFOAM::detail
+
 namespace NeoFOAM
 {
 PermutationApplicator::PermutationApplicator(const NeoN::Executor& exec)
@@ -15,63 +107,26 @@ void PermutationApplicator::apply(
     const PreparedPermutation& permutation
 ) const
 {
-    // validate permutation
-    validate(mesh, permutation);
+    validateCompatibility(mesh, permutation);
 
-    // Check if the permutation is identity
     if (!permutation.isIdentity())
     {
-        // reorder cell volumes
         reorderCellData(mesh.cellVolumes(), permutation);
 
-        // reorder cell centers
         reorderCellData(mesh.cellCenters(), permutation);
 
-        // remap face owners
-
-        // remap face neighbors
+        remapConnectivity(mesh, permutation);
     }
 }
 
-// template<typename T>
-// void PermutationApplicator::apply(
-//     NeoN::Field<T>& field,
-//     const PreparedPermutation& permutation) const
-// {
-//     // validate permutation
 
-//     // reorder field values
-// }
-
-// new cell volumes [oldToNew[old index i]] = old cell volumes [old index i]
 template<typename T>
 void PermutationApplicator::reorderCellData(
     NeoN::Vector<T>& data,
     const PreparedPermutation& permutation
 ) const
 {
-    // Create a copy of the data with the name old data
-    auto oldData = data.makeCopy();
-
-    // Prepare a View of permutation for parallel construct
-    const auto oldToNew = permutation.oldToNew();
-
-    // Prepare a View of data for parallel construct
-    auto oldDataView = oldData.view();
-    auto dataView = data.view();
-
-    // for each old index i,
-    // get the new index j
-    // data[j] = old data[i]
-    NeoN::parallelFor(
-        exec_,
-        {0, NeoN::toLocalIdx(permutation.size())},
-        NEON_LAMBDA(NeoN::localIdx i) {
-            auto j = oldToNew[i];
-            dataView[j] = oldDataView[i];
-        },
-        "reorder cell-associated data"
-    );
+    detail::reorderCellData(exec_, data, permutation);
 }
 
 // Explicit instantiation of reorderCellData template function
@@ -87,68 +142,10 @@ void PermutationApplicator::remapConnectivity(
     const PreparedPermutation& permutation
 ) const
 {
-    // Prepare a view of face owners for parallel construct
-    auto faceOwnersView = mesh.faceOwners().view();
-
-    // Prepare a view of oldToNew permutation for parallel construct
-    const auto oldToNew = permutation.oldToNew();
-
-    // Remap face owners of interior faces
-    NeoN::parallelFor(
-        exec_,
-        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
-        NEON_LAMBDA(NeoN::localIdx i) {
-            auto oldOwnerIdx = faceOwnersView[i];
-            faceOwnersView[i] = oldToNew[oldOwnerIdx];
-        },
-        "remap face owners of internal faces"
-    );
-
-    // Remap face neighbors of interior faces
-    // Prepare a view of face neighbors for parallel construct
-    auto faceNeighborsView = mesh.faceNeighbors().view();
-    NeoN::parallelFor(
-        exec_,
-        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
-        NEON_LAMBDA(NeoN::localIdx i) {
-            auto oldNeighborIdx = faceNeighborsView[i];
-            faceNeighborsView[i] = oldToNew[oldNeighborIdx];
-        },
-        "remap face neighbors of internal faces"
-    );
-
-    // Remap face owners of boundary faces
-    // Prepare a view of face owners for parallel construct
-    auto boundaryFaceOwnersView = mesh.boundaryMesh().faceOwners().view();
-
-    NeoN::parallelFor(
-        exec_,
-        {0, NeoN::toLocalIdx(mesh.nBoundaryFaces())},
-        NEON_LAMBDA(NeoN::localIdx i) {
-            auto oldOwnerIdx = boundaryFaceOwnersView[i];
-            boundaryFaceOwnersView[i] = oldToNew[oldOwnerIdx];
-        },
-        "remap face owners of boundary faces"
-    );
-
-    // Correct the face owner and neighbor indices according to OpenFOAM convention
-    NeoN::parallelFor(
-        exec_,
-        {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
-        NEON_LAMBDA(NeoN::localIdx i) {
-            auto ownerIdx = faceOwnersView[i];
-            auto neighborIdx = faceNeighborsView[i];
-            if (ownerIdx > neighborIdx)
-            {
-                faceOwnersView[i] = neighborIdx;
-                faceNeighborsView[i] = ownerIdx;
-            }
-        },
-        "correct face owner and neighbor indices of internal faces"
-    );
+    detail::remapConnectivity(exec_, mesh, permutation);
 }
 
-void PermutationApplicator::validate(
+void PermutationApplicator::validateCompatibility(
     const NeoN::UnstructuredMesh& mesh,
     const PreparedPermutation& permutation
 ) const
