@@ -3,8 +3,8 @@
 
 """incompressibleVoFNeoN against native interFoam on ``tutorials/damBreak``, per executor.
 
-Both cases are the tutorial (blockMesh + setFields) with ``sigma 0`` (the NeoN solver has
-no surface tension) and a fixed ``deltaT 1e-3`` (the adaptive step is
+Both cases are the tutorial (blockMesh + setFields) with ``sigma 0`` (gravity alone; the
+``sigma`` variant keeps the tutorial's 0.07) and a fixed ``deltaT 1e-3`` (the adaptive step is
 ``test_damBreak_adaptive_time_step``'s), so both take the same 50 steps to ``t = 0.05``,
 compared every 0.01. The NeoN solver runs in a subprocess per executor: Kokkos and
 ``Foam::Time`` initialise once per process.
@@ -48,6 +48,10 @@ atmosphere patch (nu = 0 leaves it unchanged; an upwind div(rhoPhi,U) shrinks it
 At the default tolerances below, alpha.water differs as much as with the tutorial BCs, while
 the largest p_rgh and U differences are 3.6x and 2.8x smaller, so their ceilings (again 3x
 the largest relL2 measured) are tighter than the tutorial ones.
+
+**Surface tension** (``commonBCs_sigma``). commonBCs with the tutorial's ``sigma 0.07``: the
+Brackbill CSF force joins the face force in both codes. Ceilings again 3x the largest relL2
+measured.
 """
 
 import sys
@@ -71,6 +75,10 @@ _CEILINGS = {"alpha.water": 5.9e-6, "p_rgh": 1.3e-5, "U": 2.2e-3}
 # commonBCs, measured the same way: alpha.water 1.95e-6, p_rgh 1.18e-6, U 2.58e-4 (x3).
 _COMMON_BC_CEILINGS = {"alpha.water": 5.9e-6, "p_rgh": 3.6e-6, "U": 7.8e-4}
 
+# commonBCs with sigma 0.07, measured the same way: alpha.water 2.22e-6, p_rgh 1.13e-6,
+# U 2.91e-4 (x3).
+_SIGMA_CEILINGS = {"alpha.water": 6.7e-6, "p_rgh": 3.4e-6, "U": 8.8e-4}
+
 # The atmosphere patch types NeoN and OpenFOAM evaluate identically (see the docstring).
 _COMMON_ATMOSPHERE = {
     "p_rgh": {"type": "fixedValue", "value": "uniform 0"},
@@ -85,14 +93,14 @@ def _set_common_atmosphere(case: Path) -> None:
         field_file.write()
 
 
-def _prepare(executor: str, common_bcs: bool) -> Callable[[Path], None]:
-    """sigma 0, fixed deltaT, the NeoN executor (interFoam ignores it), common matrix solvers."""
+def _prepare(executor: str, common_bcs: bool, sigma: float) -> Callable[[Path], None]:
+    """sigma, fixed deltaT, the NeoN executor (interFoam ignores it), common matrix solvers."""
 
     def prepare(case: Path) -> None:
         if common_bcs:
             _set_common_atmosphere(case)
         transport = DictFile(case / "constant" / "transportProperties")
-        transport.set("sigma", 0)
+        transport.set("sigma", sigma)
         transport.write()
         control = DictFile(case / "system" / "controlDict")
         control.set("adjustTimeStep", "no")
@@ -110,23 +118,24 @@ def _prepare(executor: str, common_bcs: bool) -> Callable[[Path], None]:
 
 
 @pytest.mark.parametrize(
-    ("common_bcs", "ceilings"),
-    [(False, _CEILINGS), (True, _COMMON_BC_CEILINGS)],
-    ids=["tutorialBCs", "commonBCs"],
+    ("common_bcs", "sigma", "ceilings"),
+    [(False, 0, _CEILINGS), (True, 0, _COMMON_BC_CEILINGS), (True, 0.07, _SIGMA_CEILINGS)],
+    ids=["tutorialBCs", "commonBCs", "commonBCs_sigma"],
 )
 @pytest.mark.parametrize("executor", ["Serial", "CPU", "GPU"])
 def test_damBreak_matches_interFoam_within_the_solver_tolerance(
-    executor: str, common_bcs: bool, ceilings: dict[str, float]
+    executor: str, common_bcs: bool, sigma: float, ceilings: dict[str, float]
 ) -> None:
+    variant = ("_commonBCs" if common_bcs else "") + ("_sigma" if sigma else "")
     run_dambreak_comparison(
         tutorial_name="damBreak",
         native_solver="interFoam",
-        case_prefix=f"damBreak_neon_{executor}{'_commonBCs' if common_bcs else ''}",
+        case_prefix=f"damBreak_neon_{executor}{variant}",
         times=(_END_TIME, _WRITE_INTERVAL),
         subject=SubjectSolver(
             name="incompressibleVoFNeoN",
             command=[sys.executable, "-m", "neofoam.cli.app", "solver", "incompressiblevofneon"],
-            prepare_case=_prepare(executor, common_bcs),
+            prepare_case=_prepare(executor, common_bcs, sigma),
             rel_l2_ceilings=ceilings,
         ),
     )
