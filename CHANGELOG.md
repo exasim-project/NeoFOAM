@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Add a Lagrangian particle tracking library (`NeoFOAM::lagrangian`): particle cloud, drag models (sphere, Schiller-Naumann, Stokes), drag and gravity forces, Euler and RK2 integrators, findCell and GPU-capable walk locate, with unit tests [#477](https://github.com/exasim-project/NeoFOAM/pull/477)
 - Add a C++ test of the `slip` boundary reader against OpenFOAM [#481](https://github.com/exasim-project/NeoFOAM/pull/481)
 - Apply the fvOptions `velocityDampingConstraint` in neoSimpleFoam (diagonal-only damping of cells above `UMax`, as in OpenFOAM) via a new post-relaxation `PDE::setPostRelaxConstraint` hook; other fvOptions entries are now reported as unsupported instead of silently ignored [#479](https://github.com/exasim-project/NeoFOAM/pull/479)
 - Keep the linear system and momentum solver across time steps, so NeoN's solver caches (e.g. the distributed matrix cache) can hit [#448](https://github.com/exasim-project/NeoFOAM/pull/448)
