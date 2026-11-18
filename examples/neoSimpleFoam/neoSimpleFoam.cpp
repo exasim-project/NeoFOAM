@@ -77,6 +77,16 @@ int main(int argc, char* argv[])
 
         auto turb = nf::TurbulenceModel::create(rt, nu);
 
+        // Split inletOutlet-type velocity patches by the initial flux before the first UEqn,
+        // as the fvMatrix constructor's updateCoeffs() does upstream; field construction updated
+        // them without a flux. Before validate(): it computes the grad(U) the first UEqn's
+        // explicit stress uses, and that reads the boundary values.
+        {
+            fvcc::BoundaryContext uCtx;
+            uCtx.insert("phi", phi);
+            U.correctBoundaryConditions(uCtx);
+        }
+
         turb->validate(U);
 
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -169,15 +179,6 @@ int main(int argc, char* argv[])
                     );
                 }
             }
-        }
-
-        // Split inletOutlet-type velocity patches by the initial flux before the first UEqn,
-        // as the fvMatrix constructor's updateCoeffs() does upstream; field construction updated
-        // them without a flux.
-        {
-            fvcc::BoundaryContext uCtx;
-            uCtx.insert("phi", phi);
-            U.correctBoundaryConditions(uCtx);
         }
 
         NeoN::Logging::info("Starting time loop");

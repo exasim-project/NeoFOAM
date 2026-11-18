@@ -786,6 +786,8 @@ TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
         fvcc::BoundaryContext uCtx;
         uCtx.insert("phi", m.nfPhi);
         m.nfU.correctBoundaryConditions(uCtx);
+        // grad(U) on the flux-split boundary, as OpenFOAM evaluates it in divDevReff.
+        m.turbNF.updateGradU(m.nfU);
         nf::PDE<NeoN::Vec3> UEqn(
             dsl::Expression<NeoN::Vec3>(
                 dsl::imp::div(m.nfPhi, m.nfU) - dsl::imp::laplacian(m.turbNF.nuEff(), m.nfU)
