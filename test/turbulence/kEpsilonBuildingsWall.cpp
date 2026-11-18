@@ -146,6 +146,32 @@ std::vector<T> head(std::vector<T> v, Foam::label n)
     return v;
 }
 
+// Per-volume cell residual (A x - b)/V of an assembled vector system (scalar matrix, Vec3 rhs).
+template<typename LinearSystem>
+std::vector<NeoN::Vec3> cellResidualVec(
+    const LinearSystem& ls,
+    const NeoN::Vector<NeoN::Vec3>& x,
+    const NeoN::Vector<NeoN::scalar>& vol
+)
+{
+    const auto valsH = ls.matrix().values().copyToHost();
+    const auto rowsH = ls.matrix().sparsity()->rowOffs().copyToHost();
+    const auto colsH = ls.matrix().sparsity()->colIdxs().copyToHost();
+    const auto rhsH = ls.rhs().copyToHost();
+    const auto xH = x.copyToHost();
+    const auto volH = vol.copyToHost();
+    const auto [vals, rows, cols, rhs, xv, v] =
+        NeoN::views(valsH, rowsH, colsH, rhsH, xH, volH);
+    std::vector<NeoN::Vec3> r(static_cast<std::size_t>(xv.size()));
+    for (NeoN::localIdx i = 0; i < xv.size(); ++i)
+    {
+        NeoN::Vec3 ax(0, 0, 0);
+        for (auto j = rows[i]; j < rows[i + 1]; ++j) ax += vals[j] * xv[cols[j]];
+        r[static_cast<std::size_t>(i)] = (ax - rhs[i]) * (1.0 / v[i]);
+    }
+    return r;
+}
+
 // Per-volume cell residual (A x - b)/V of an assembled scalar system: the NeoFOAM counterpart of
 // OpenFOAM's (M & psi).
 template<typename LinearSystem>
@@ -846,6 +872,73 @@ TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
             std::cout << "  " << name << " (" << n[r] << " cells): neo " << sN[r] << " of " << sO[r]
                       << " |d| " << sD[r] << " (" << 100 * sD[r] / Foam::max(tD, 1e-300)
                       << "% of the difference)\n";
+        }
+    }
+
+    // The difference by term, in the regions next to each patch.
+    {
+        auto nfTerm = [&](auto&& expr)
+        {
+            nf::PDE<NeoN::Vec3> pde(dsl::Expression<NeoN::Vec3>(expr), m.nfU, rt);
+            pde.assemble();
+            const auto& ls = pde.linearSystem();
+            auto r = cellResidualVec(ls, m.nfU.internalVector(), rt.nfMesh.cellVolumes());
+            if (ls.diagCmpt() && ls.diagCmpt()->size() > 0)
+            {
+                const auto dcH = ls.diagCmpt()->copyToHost();
+                const auto xH = m.nfU.internalVector().copyToHost();
+                for (Foam::label c = 0; c < mesh.nCells(); ++c)
+                    for (int k = 0; k < 3; ++k)
+                        r[static_cast<std::size_t>(c)][k] -=
+                            dcH.view()[c][k] * xH.view()[c][k] / mesh.V()[c];
+            }
+            return r;
+        };
+        const Foam::volScalarField nuEff(m.foamTurb->nuEff());
+        struct Term
+        {
+            std::string name;
+            std::vector<NeoN::Vec3> nfR;
+            Foam::vectorField ofR;
+        };
+        std::vector<Term> terms;
+        terms.push_back(
+            {"div(phi,U)",
+             nfTerm(dsl::imp::div(m.nfPhi, m.nfU)),
+             (Foam::fvVectorMatrix(Foam::fvm::div(m.phi, m.U)) & m.U)().primitiveField()}
+        );
+        terms.push_back(
+            {"-laplacian(nuEff,U)",
+             nfTerm(-1.0 * dsl::imp::laplacian(m.turbNF.nuEff(), m.nfU)),
+             (Foam::fvVectorMatrix(-Foam::fvm::laplacian(nuEff, m.U)) & m.U)().primitiveField()}
+        );
+        terms.push_back(
+            {"viscousStress",
+             nfTerm(dsl::exp::viscousStress(m.nfNu, m.nfNut, m.turbNF.gradU())),
+             (-fvc::div(nuEff * Foam::dev2(Foam::T(fvc::grad(m.U)))))().primitiveField()}
+        );
+        terms.push_back({"grad(p)", nfTerm(dsl::exp::grad(nfP)), fvc::grad(p)().primitiveField()});
+        for (const auto& t : terms)
+        {
+            std::vector<NeoN::scalar> d(bm.size() + 1, 0), o(bm.size() + 1, 0), nn(bm.size() + 1, 0);
+            forAll(oRes, c)
+            {
+                const auto r = static_cast<std::size_t>(region[c]);
+                d[r] += Foam::mag(t.nfR[static_cast<std::size_t>(c)][2] - t.ofR[c][2]) * V[c];
+                o[r] += Foam::mag(t.ofR[c][2]) * V[c];
+                nn[r] += Foam::mag(t.nfR[static_cast<std::size_t>(c)][2]) * V[c];
+            }
+            std::cout << "term " << t.name << " (z): sum|r_neo - r_of|V by region:";
+            for (std::size_t r = 0; r < d.size(); ++r)
+            {
+                if (d[r] < 1e-6 * Foam::max(o[r], 1e-300) && d[r] < 1e-3) continue;
+                const std::string name = r < static_cast<std::size_t>(bm.size())
+                                           ? std::string(bm[r].name())
+                                           : "interior";
+                std::cout << " " << name << " " << d[r] << " (neo " << nn[r] << ", of " << o[r]
+                          << ")";
+            }
+            std::cout << "\n";
         }
     }
 
