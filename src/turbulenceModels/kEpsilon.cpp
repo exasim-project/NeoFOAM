@@ -631,18 +631,22 @@ void KEpsilon::correct(
         }
     }
 
-    // Update spK from the new ε (ε/k destruction term)
+    // Update spK from the new ε (ε/k destruction term). The implicit half of the k dilatation
+    // sink, -SuSp((2/3) divU, k), sits in spK too: re-add it, or overwriting spK here drops it in
+    // every cell with divU > 0 and k comes out high there.
     {
         const scalar rootVSmall = scalar(1e-30);
         const auto kV = k.internalVector().view();
         const auto epsV = epsilon.internalVector().view();
+        const auto divUV = divU_.internalVector().view();
         auto spKView = spK_.internalVector().view();
         NeoN::parallelFor(
             exec_,
             {0, static_cast<localIdx>(epsilon.internalVector().size())},
             NEON_LAMBDA(const localIdx i) {
                 const scalar kI = Kokkos::max(kV[i], rootVSmall);
-                spKView[i] = epsV[i] / kI;
+                const scalar suspK = (scalar(2) / scalar(3)) * divUV[i];
+                spKView[i] = epsV[i] / kI + Kokkos::max(suspK, scalar(0));
             },
             "kEpsilon::updateSpKFromNewEpsilon"
         );
