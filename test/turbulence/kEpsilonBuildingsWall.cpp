@@ -865,6 +865,57 @@ TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
             std::cout << "  " << bmP[patchi].name() << "  " << dn / Foam::max(mn, 1e-300) << "  "
                       << du / Foam::max(mu, 1e-300) << "  " << dg / Foam::max(mg, 1e-300) << "\n";
         }
+        // The geometry of the boundary correction, and the boundary gradient row by row.
+        const auto dcN = toStd(rt.nfMesh.boundaryMesh().deltaCoeffs());
+        const auto nN = toStd(rt.nfMesh.boundaryMesh().faceUnitNormals());
+        std::cout << "boundary geometry: patch  max|d deltaCoeffs|/max  max|d n|  "
+                     "worst grad(U) face: neo / of (OpenFOAM layout)\n";
+        forAll(bmP, patchi)
+        {
+            if (bmP[patchi].empty()) continue;
+            const auto start = m.nfNut.boundaryData().range(static_cast<NeoN::localIdx>(patchi)).first;
+            const auto& dcO = mesh.boundary()[patchi].deltaCoeffs();
+            const auto nO = mesh.boundary()[patchi].nf();
+            NeoN::scalar dd = 0, md = 0, dnn = 0, dg = 0;
+            Foam::label worst = -1;
+            forAll(bmP[patchi], f)
+            {
+                const auto i = static_cast<std::size_t>(start + f);
+                dd = Foam::max(dd, Foam::mag(dcN[i] - dcO[f]));
+                md = Foam::max(md, dcO[f]);
+                dnn = Foam::max(
+                    dnn, Foam::mag(Foam::vector(nN[i][0], nN[i][1], nN[i][2]) - nO()[f])
+                );
+                const auto& g = gH.view()[static_cast<NeoN::localIdx>(i)];
+                const Foam::tensor gT(
+                    g(0, 0), g(1, 0), g(2, 0), g(0, 1), g(1, 1), g(2, 1), g(0, 2), g(1, 2), g(2, 2)
+                );
+                const NeoN::scalar d = Foam::mag(gT - ofGrad.boundaryField()[patchi][f]);
+                if (d > dg)
+                {
+                    dg = d;
+                    worst = f;
+                }
+            }
+            std::cout << "  " << bmP[patchi].name() << "  " << dd / Foam::max(md, 1e-300) << "  "
+                      << dnn;
+            if (worst >= 0 && dg > 1e-8)
+            {
+                const auto i = static_cast<NeoN::localIdx>(start + worst);
+                const auto& g = gH.view()[i];
+                std::cout << "  face " << worst << " cell " << bmP[patchi].faceCells()[worst]
+                          << ": neo (" << g(0, 0) << " " << g(1, 0) << " " << g(2, 0) << " / "
+                          << g(0, 1) << " " << g(1, 1) << " " << g(2, 1) << " / " << g(0, 2) << " "
+                          << g(1, 2) << " " << g(2, 2) << ") of (";
+                const auto& o = ofGrad.boundaryField()[patchi][worst];
+                for (int k = 0; k < 9; ++k) std::cout << o[k] << (k % 3 == 2 && k < 8 ? " / " : " ");
+                const auto& ub = m.U.boundaryField()[patchi][worst];
+                const auto& uc = m.U[bmP[patchi].faceCells()[worst]];
+                std::cout << ") U_b (" << ub.x() << " " << ub.y() << " " << ub.z() << ") U_c ("
+                          << uc.x() << " " << uc.y() << " " << uc.z() << ")";
+            }
+            std::cout << "\n";
+        }
         // The cell gradient of the cells next to each patch.
         const auto gI = m.turbNF.gradU().internalVector().copyToHost();
         std::cout << "cell grad(U) next to: patch  max|d|/max|gradU|  worst cell\n";
