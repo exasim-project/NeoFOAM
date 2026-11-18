@@ -729,3 +729,142 @@ TEST_CASE("one SIMPLE iteration at a Buildings wall region matches OpenFOAM stag
     CHECK(relEps < 1e-6);
     CHECK(relNut < 1e-6);
 }
+
+// Diagnostic for a full case, not run by ctest ([.] hides it): run the binary inside a case
+// directory with "[fullmesh]". Assembles the momentum equation of the first SIMPLE iteration in
+// both codes on the case's state -- NeoFOAM as neoSimpleFoam, OpenFOAM as simpleFoam -- and
+// compares the per-cell residual A U - b (relaxation does not change it at the current U), summed
+// as |r| V by region: the cells next to each patch, and the interior.
+TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
+{
+    Foam::Time& runTime = *timePtr;
+    NeoN::Database db;
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
+    NeoN::Executor exec = NeoN::GPUExecutor {};
+
+    auto rt = prepareRunTime(runTime, exec);
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+    std::cout << "=== full-mesh momentum residual, " << mesh.nCells() << " cells\n";
+
+    Models m(runTime, mesh, rt, fieldCollection);
+    Foam::volScalarField p(
+        Foam::IOobject("p", runTime.timeName(), mesh, Foam::IOobject::MUST_READ), mesh
+    );
+    auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
+    namespace dsl = NeoN::dsl;
+
+    // NeoFOAM: neoSimpleFoam's UEqn with -grad(p) moved to the left.
+    std::vector<NeoN::Vec3> nRes;
+    {
+        fvcc::BoundaryContext uCtx;
+        uCtx.insert("phi", m.nfPhi);
+        m.nfU.correctBoundaryConditions(uCtx);
+        nf::PDE<NeoN::Vec3> UEqn(
+            dsl::Expression<NeoN::Vec3>(
+                dsl::imp::div(m.nfPhi, m.nfU) - dsl::imp::laplacian(m.turbNF.nuEff(), m.nfU)
+                + dsl::exp::viscousStress(m.nfNu, m.nfNut, m.turbNF.gradU())
+                + dsl::exp::grad(nfP)
+            ),
+            m.nfU,
+            rt
+        );
+        UEqn.assemble();
+        const auto& ls = UEqn.linearSystem();
+        const auto valsH = ls.matrix().values().copyToHost();
+        const auto rowsH = ls.matrix().sparsity()->rowOffs().copyToHost();
+        const auto colsH = ls.matrix().sparsity()->colIdxs().copyToHost();
+        const auto rhsH = ls.rhs().copyToHost();
+        const auto xH = m.nfU.internalVector().copyToHost();
+        const auto volH = rt.nfMesh.cellVolumes().copyToHost();
+        const auto [vals, rows, cols, rhs, xv, v] =
+            NeoN::views(valsH, rowsH, colsH, rhsH, xH, volH);
+        nRes.resize(static_cast<std::size_t>(xv.size()));
+        for (NeoN::localIdx i = 0; i < xv.size(); ++i)
+        {
+            NeoN::Vec3 ax(0, 0, 0);
+            for (auto j = rows[i]; j < rows[i + 1]; ++j) ax += vals[j] * xv[cols[j]];
+            nRes[static_cast<std::size_t>(i)] = (ax - rhs[i]) * (1.0 / v[i]);
+        }
+        // The implicit symmetry/slip normal damping lives outside the matrix (diagCmpt) and is
+        // subtracted from the diagonal per component at the solve; include it here too.
+        if (ls.diagCmpt() && ls.diagCmpt()->size() > 0)
+        {
+            const auto dcH = ls.diagCmpt()->copyToHost();
+            const auto dc = dcH.view();
+            for (NeoN::localIdx i = 0; i < xv.size(); ++i)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    nRes[static_cast<std::size_t>(i)][c] -= dc[i][c] * xv[i][c] / v[i];
+                }
+            }
+            std::cout << "diagCmpt present (implicit symmetry/slip damping)\n";
+        }
+    }
+
+    // OpenFOAM: simpleFoam's UEqn, residual (M & U) + grad(p).
+    Foam::fvVectorMatrix UEqn(Foam::fvm::div(m.phi, m.U) + m.foamTurb->divDevReff(m.U));
+    const Foam::vectorField oRes(((UEqn & m.U)().primitiveField()) + fvc::grad(p)().primitiveField());
+
+    // Region of each cell: the first patch it touches, else interior.
+    const auto& bm = mesh.boundaryMesh();
+    Foam::labelList region(mesh.nCells(), bm.size());
+    forAll(bm, patchi)
+    {
+        for (const auto c : bm[patchi].faceCells())
+            if (region[c] == bm.size()) region[c] = patchi;
+    }
+    const auto& V = mesh.V();
+    const auto& C = mesh.C();
+    for (int cmpt = 0; cmpt < 3; ++cmpt)
+    {
+        std::vector<NeoN::scalar> sN(bm.size() + 1, 0), sO(bm.size() + 1, 0), sD(bm.size() + 1, 0);
+        std::vector<Foam::label> n(bm.size() + 1, 0);
+        forAll(oRes, c)
+        {
+            const auto r = static_cast<std::size_t>(region[c]);
+            const NeoN::scalar rn = nRes[static_cast<std::size_t>(c)][cmpt], ro = oRes[c][cmpt];
+            sN[r] += Foam::mag(rn) * V[c];
+            sO[r] += Foam::mag(ro) * V[c];
+            sD[r] += Foam::mag(rn - ro) * V[c];
+            ++n[r];
+        }
+        NeoN::scalar tN = 0, tO = 0, tD = 0;
+        for (std::size_t r = 0; r < sN.size(); ++r)
+        {
+            tN += sN[r];
+            tO += sO[r];
+            tD += sD[r];
+        }
+        std::cout << "component " << "xyz"[cmpt] << ": sum|r|V neo " << tN << " of " << tO
+                  << ", sum|r_neo - r_of|V " << tD << "\n";
+        for (std::size_t r = 0; r < sN.size(); ++r)
+        {
+            const std::string name =
+                r < static_cast<std::size_t>(bm.size()) ? std::string(bm[r].name()) : "interior";
+            std::cout << "  " << name << " (" << n[r] << " cells): neo " << sN[r] << " of " << sO[r]
+                      << " |d| " << sD[r] << " (" << 100 * sD[r] / Foam::max(tD, 1e-300)
+                      << "% of the difference)\n";
+        }
+    }
+
+    // The cells where the codes differ most in z.
+    std::vector<Foam::label> order(static_cast<std::size_t>(mesh.nCells()));
+    std::iota(order.begin(), order.end(), 0);
+    auto dz = [&](Foam::label c)
+    { return Foam::mag(nRes[static_cast<std::size_t>(c)][2] - oRes[c][2]) * V[c]; };
+    std::partial_sort(
+        order.begin(), order.begin() + 20, order.end(), [&](auto a, auto b) { return dz(a) > dz(b); }
+    );
+    std::cout << "worst cells in z: cell region centre r_neo r_of (per volume) V\n";
+    for (int i = 0; i < 20; ++i)
+    {
+        const auto c = order[static_cast<std::size_t>(i)];
+        const std::string name = region[c] < bm.size() ? std::string(bm[region[c]].name())
+                                                      : "interior";
+        std::cout << "  " << c << " " << name << " (" << C[c].x() << " " << C[c].y() << " "
+                  << C[c].z() << ") " << nRes[static_cast<std::size_t>(c)][2] << " "
+                  << oRes[c][2] << " " << V[c] << "\n";
+    }
+}
