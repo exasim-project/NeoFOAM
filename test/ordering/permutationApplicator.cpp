@@ -255,7 +255,60 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
     }
 
     SECTION("Applying permutation keeps boundary faces associated with the same cells " + execName)
-    {}
+    {
+        // --- Arrange ---
+        // Prepare a permutation and the applicator
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+        const PermutationApplicator applicator(exec);
+
+        // Prepare expected results
+        // The original cell centers of cell 0, 1, 2, 3
+        // cell 0: {0.166666666666667, 0.166666666666667, 0.05},
+        // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
+        // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
+        // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
+        // boundary face owners after reordering: {3, 1, 2, 3, 0, 1, 2, 0};
+        const std::vector<NeoN::Vec3> expectedBoundaryFaceOwnerCenters {
+            {0.166666666666667, 0.666666666666667, 0.05},
+            {0.666666666666667, 0.666666666666667, 0.05},
+            {0.166666666666667, 0.166666666666667, 0.05},
+            {0.166666666666667, 0.666666666666667, 0.05},
+            {0.666666666666667, 0.166666666666667, 0.05},
+            {0.666666666666667, 0.666666666666667, 0.05},
+            {0.166666666666667, 0.166666666666667, 0.05},
+            {0.666666666666667, 0.166666666666667, 0.05}
+        };
+
+        // --- Act ---
+        applicator.apply(nfMesh, prepared);
+
+        // --- Assert ---
+        // Prepare actual boundary face owner centers
+        const NeoN::vectorVector cellCenters = nfMesh.cellCenters().copyToHost();
+        auto cellCentersView = cellCenters.view();
+
+        const NeoN::labelVector boundaryFaceOwners =
+            nfMesh.boundaryMesh().faceOwners().copyToHost();
+        auto boundaryFaceOwnersView = boundaryFaceOwners.view();
+
+        const std::vector<NeoN::Vec3> boundaryFaceOwnerCenters {
+            cellCentersView[boundaryFaceOwnersView[0]],
+            cellCentersView[boundaryFaceOwnersView[1]],
+            cellCentersView[boundaryFaceOwnersView[2]],
+            cellCentersView[boundaryFaceOwnersView[3]],
+            cellCentersView[boundaryFaceOwnersView[4]],
+            cellCentersView[boundaryFaceOwnersView[5]],
+            cellCentersView[boundaryFaceOwnersView[6]],
+            cellCentersView[boundaryFaceOwnersView[7]]
+        };
+
+        REQUIRE_THAT(
+            boundaryFaceOwnerCenters,
+            Equals(expectedBoundaryFaceOwnerCenters, ApproxVector {1e-12})
+        );
+    }
 }
 
 TEST_CASE("Applying permutation preserves field-cell association") {}
