@@ -49,13 +49,12 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         // The original cell volumes of cell 0, 1, 2, 3
         // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
         const sizeType expectedCellCount = 4;
-        const std::vector<NeoN::scalar> expectedCellData {
+        const std::vector<NeoN::scalar> expectedCellVolumes {
             0.0222222222222222,
             0.0444444444444444,
             0.0111111111111111,
             0.0222222222222222
         };
-        const NeoN::scalarVector expectedCellVolumes(exec, expectedCellData);
 
         // --- Act ---
         applicator.apply(nfMesh, prepared);
@@ -81,13 +80,12 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
         // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
         const sizeType expectedCellCount = 4;
-        const std::vector<NeoN::Vec3> expectedCellData {
+        const std::vector<NeoN::Vec3> expectedCellCenters {
             {0.666666666666667, 0.166666666666667, 0.05},
             {0.666666666666667, 0.666666666666667, 0.05},
             {0.166666666666667, 0.166666666666667, 0.05},
             {0.166666666666667, 0.666666666666667, 0.05}
         };
-        const NeoN::vectorVector expectedCellCenters(exec, expectedCellData);
 
         // --- Act ---
         applicator.apply(nfMesh, prepared);
@@ -177,7 +175,53 @@ TEST_CASE("Applying permutation remaps connectivity")
     }
 }
 
-TEST_CASE("Applying permutation remaps neighbour indices") {}
+// TEST_CASE("Applying permutation preserves face-cell connectivity") {
+
+//     auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+//     // Set up a mesh
+//     Foam::Time& runTime = *timePtr;
+//     auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
+//     Foam::scalar startTime = 0.0;
+//     Foam::label startTimeIndex = 0;
+//     runTime.setTime(startTime, startTimeIndex);
+
+//     std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+//     NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+//     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
+//     SECTION("Applying permutation keeps internal faces associated with the same cells " + execName)
+//     {
+//         // --- Arrange ---
+//         // Prepare a permutation and the applicator
+//         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+//         const Permutation permutation {oldToNew};
+//         const PreparedPermutation prepared {exec, permutation};
+//         const PermutationApplicator applicator(exec);
+
+//         // Prepare expected results
+//         // The original cell centers of cell 0, 1, 2, 3
+//         // cell 0: {0.166666666666667, 0.166666666666667, 0.05},
+//         // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
+//         // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
+//         // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
+//         const std::vector<NeoN::Vec3> expectedFaceOwnerCenters {
+//         {0.666666666666667, 0.166666666666667, 0.05},
+//         {0.166666666666667, 0.166666666666667, 0.05},
+//         {0.666666666666667, 0.166666666666667, 0.05},
+//         {0.666666666666667, 0.666666666666667, 0.05}
+//         };
+
+//         // --- Act ---
+//         applicator.apply(nfMesh, prepared);
+
+//         // --- Assert ---
+//         // REQUIRE_THAT(nfMesh.cellCenters(), Equals(expectedCellCenters, ApproxVector {1e-12}));
+//     }
+
+//     SECTION("Applying permutation keeps boundary faces associated with the same cells " + execName)
+//     {}
+// }
 
 TEST_CASE("Applying permutation preserves field-cell association") {}
 
