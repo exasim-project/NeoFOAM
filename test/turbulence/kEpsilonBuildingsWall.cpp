@@ -37,6 +37,8 @@
 #include "singlePhaseTransportModel.H"
 #include "turbulentTransportModel.H"
 
+#include "NeoFOAM/compatibility/fvSolution.hpp"
+
 namespace fvc = Foam::fvc;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
@@ -53,6 +55,15 @@ std::vector<NeoN::scalar> toStd(const NeoN::Vector<NeoN::scalar>& v)
     const auto h = v.copyToHost();
     const auto view = h.view();
     std::vector<NeoN::scalar> out(static_cast<std::size_t>(view.size()));
+    for (NeoN::localIdx i = 0; i < view.size(); ++i) out[static_cast<std::size_t>(i)] = view[i];
+    return out;
+}
+
+std::vector<NeoN::Vec3> toStd(const NeoN::Vector<NeoN::Vec3>& v)
+{
+    const auto h = v.copyToHost();
+    const auto view = h.view();
+    std::vector<NeoN::Vec3> out(static_cast<std::size_t>(view.size()));
     for (NeoN::localIdx i = 0; i < view.size(); ++i) out[static_cast<std::size_t>(i)] = view[i];
     return out;
 }
@@ -89,6 +100,50 @@ NeoN::scalar compare(
                   << of[i] << "\n";
     }
     return rel;
+}
+
+// compare() for vector fields: max|nf - of| / max|of| with |.| the vector magnitude.
+NeoN::scalar compare(
+    const std::string& name,
+    const std::vector<NeoN::Vec3>& nfValues,
+    const Foam::vectorField& of,
+    const std::vector<Foam::label>& show
+)
+{
+    REQUIRE(nfValues.size() == static_cast<std::size_t>(of.size()));
+    NeoN::scalar ofMax = 0, dMax = 0;
+    Foam::label at = -1;
+    auto asFoam = [](const NeoN::Vec3& v) { return Foam::vector(v[0], v[1], v[2]); };
+    forAll(of, i)
+    {
+        ofMax = Foam::max(ofMax, Foam::mag(of[i]));
+        const NeoN::scalar d = Foam::mag(asFoam(nfValues[static_cast<std::size_t>(i)]) - of[i]);
+        if (d > dMax)
+        {
+            dMax = d;
+            at = i;
+        }
+    }
+    const NeoN::scalar rel = dMax / Foam::max(ofMax, NeoN::scalar(1e-300));
+    std::cout << "TERM " << name << ": max|d|/max|of| " << rel << " at " << at << " (max|of| "
+              << ofMax << ")\n";
+    std::vector<Foam::label> idx(show);
+    if (at >= 0) idx.push_back(at);
+    for (const auto i : idx)
+    {
+        const auto& n = nfValues[static_cast<std::size_t>(i)];
+        std::cout << "  [" << i << "] neo (" << n[0] << " " << n[1] << " " << n[2] << ") of ("
+                  << of[i].x() << " " << of[i].y() << " " << of[i].z() << ")\n";
+    }
+    return rel;
+}
+
+// The first n entries (the internal faces of a NeoN surface field).
+template<typename T>
+std::vector<T> head(std::vector<T> v, Foam::label n)
+{
+    v.resize(static_cast<std::size_t>(n));
+    return v;
 }
 
 // Per-volume cell residual (A x - b)/V of an assembled scalar system: the NeoFOAM counterpart of
@@ -251,6 +306,8 @@ nf::RunTime prepareRunTime(Foam::Time& runTime, const NeoN::Executor& exec)
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     solverDict.subDict("k") = nf::mapFvSolution(solverDict.subDict("k"));
     solverDict.subDict("epsilon") = nf::mapFvSolution(solverDict.subDict("epsilon"));
+    solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+    solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
     rt.fvSchemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
     return rt;
 }
@@ -512,4 +569,158 @@ TEST_CASE("kEpsilon: k and epsilon transport terms at a Buildings wall cell matc
     CHECK(relDiagLapK < 1e-8);
     CHECK(relDivEps < 1e-8);
     CHECK(relLapEps < 1e-8);
+}
+
+TEST_CASE("one SIMPLE iteration at a Buildings wall region matches OpenFOAM stage by stage")
+{
+    Foam::Time& runTime = *timePtr;
+    NeoN::Database db;
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    auto rt = prepareRunTime(runTime, exec);
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+
+    Models m(runTime, mesh, rt, fieldCollection);
+    Foam::volScalarField p(
+        Foam::IOobject("p", runTime.timeName(), mesh, Foam::IOobject::MUST_READ), mesh
+    );
+    mesh.setFluxRequired(p.name());
+    auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
+
+    const Foam::label nNonOrth = mesh.solutionDict().subDict("SIMPLE").getOrDefault<Foam::label>(
+        "nNonOrthogonalCorrectors", 0
+    );
+    const Foam::label nIntFaces = mesh.nInternalFaces();
+    const std::vector<Foam::label> cells {hotCell, 31};
+    namespace dsl = NeoN::dsl;
+
+    // ---- NeoFOAM: the body of neoSimpleFoam's SIMPLE loop ----
+    std::vector<NeoN::Vec3> nUStar, nHbyA, nUCorr;
+    std::vector<NeoN::scalar> nRAU, nPhiHbyA, nPSolved, nPhi, nPRelaxed, nK, nEps, nNut;
+    {
+        auto& U = m.nfU;
+        auto& phi = m.nfPhi;
+        fvcc::BoundaryContext uCtx;
+        uCtx.insert("phi", phi);
+        U.correctBoundaryConditions(uCtx);
+
+        nf::PDESolver<NeoN::Vec3> UEqn(
+            dsl::imp::div(phi, U) - dsl::imp::laplacian(m.turbNF.nuEff(), U)
+                + dsl::exp::viscousStress(m.nfNu, m.nfNut, m.turbNF.gradU()),
+            U,
+            rt
+        );
+        UEqn.relax();
+        UEqn.solve(-1.0 * dsl::exp::grad(nfP));
+        nUStar = toStd(U.internalVector());
+
+        auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
+        nf::constrainHbyA(U, nfP, hByA);
+        nRAU = toStd(crAU.internalVector());
+        nHbyA = toStd(hByA.internalVector());
+
+        auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
+            rt.exec, rt.nfMesh, NeoN::TokenList({std::string("linear")})
+        );
+        fvcc::SurfaceField<NeoN::scalar> rAUf = surfInterpol.interpolate(crAU);
+        rAUf.name = "rAUf";
+        auto phiHbyA = nf::flux(hByA);
+        nPhiHbyA = head(toStd(phiHbyA.internalVector()), nIntFaces);
+
+        auto pPrev = NeoN::dsl::fieldRelaxationSnapshot(nfP);
+        fvcc::BoundaryContext pCtx;
+        pCtx.insert("phi", phi);
+        pCtx.insert("U", U);
+        for (Foam::label corr = 0; corr <= nNonOrth; ++corr)
+        {
+            nfP.correctBoundaryConditions(pCtx);
+            nf::PDESolver<NeoN::scalar> pEqn(
+                dsl::imp::laplacian(rAUf, nfP) - dsl::exp::div(phiHbyA), nfP, rt
+            );
+            pEqn.linearSystem().keepFaceFluxCorrection(true);
+            pEqn.solve();
+            nfP.correctBoundaryConditions(pCtx);
+            if (corr == nNonOrth) nf::updateFaceVelocity(phiHbyA, pEqn, phi);
+        }
+        nPSolved = toStd(nfP.internalVector());
+        nPhi = head(toStd(phi.internalVector()), nIntFaces);
+
+        NeoN::dsl::applyFieldRelaxation(
+            nfP,
+            pPrev,
+            nf::lookupFieldRelaxation(rt.fvSolutionDict, "p", false).value_or(NeoN::scalar(1))
+        );
+        nfP.correctBoundaryConditions(pCtx);
+        nPRelaxed = toStd(nfP.internalVector());
+
+        nf::updateVelocity(hByA, crAU, nfP, U, rt);
+        U.correctBoundaryConditions(pCtx);
+        nUCorr = toStd(U.internalVector());
+
+        m.turbNF.correct(U, phi, m.nfK, m.nfEps, m.nfNut, rt);
+        nK = toStd(m.nfK.internalVector());
+        nEps = toStd(m.nfEps.internalVector());
+        nNut = toStd(m.nfNut.internalVector());
+    }
+
+    // ---- OpenFOAM: simpleFoam's UEqn.H and pEqn.H ----
+    auto& U = m.U;
+    auto& phi = m.phi;
+    p.storePrevIter();
+    Foam::tmp<Foam::fvVectorMatrix> tUEqn(
+        Foam::fvm::div(phi, U) + m.foamTurb->divDevReff(U)
+    );
+    Foam::fvVectorMatrix& UEqn = tUEqn.ref();
+    UEqn.relax();
+    Foam::solve(UEqn == -fvc::grad(p));
+    const Foam::vectorField oUStar(U.primitiveField());
+
+    Foam::volScalarField rAU(1.0 / UEqn.A());
+    Foam::volVectorField HbyA(Foam::constrainHbyA(rAU * UEqn.H(), U, p));
+    Foam::surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
+    Foam::adjustPhi(phiHbyA, U, p);
+    tUEqn.clear();
+    Foam::constrainPressure(p, U, phiHbyA, rAU);
+    for (Foam::label corr = 0; corr <= nNonOrth; ++corr)
+    {
+        Foam::fvScalarMatrix pEqn(Foam::fvm::laplacian(rAU, p) == fvc::div(phiHbyA));
+        pEqn.solve();
+        if (corr == nNonOrth) phi = phiHbyA - pEqn.flux();
+    }
+    const Foam::scalarField oPSolved(p.primitiveField());
+    p.relax();
+    U = HbyA - rAU * fvc::grad(p);
+    U.correctBoundaryConditions();
+    m.foamTurb->correct();
+
+    const auto& ofK = mesh.lookupObject<Foam::volScalarField>("k");
+    const auto& ofEps = mesh.lookupObject<Foam::volScalarField>("epsilon");
+    const auto& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
+
+    std::cout << "=== one SIMPLE iteration (" << execName << ")\n";
+    const auto relUStar = compare("U after the momentum predictor", nUStar, oUStar, cells);
+    const auto relRAU = compare("rAU", nRAU, rAU.primitiveField(), cells);
+    const auto relHbyA = compare("HbyA", nHbyA, HbyA.primitiveField(), cells);
+    const auto relPhiHbyA = compare("phiHbyA", nPhiHbyA, phiHbyA.primitiveField(), {});
+    const auto relP = compare("p after the pressure solve", nPSolved, oPSolved, cells);
+    const auto relPhi = compare("phi", nPhi, phi.primitiveField(), {});
+    const auto relPRelaxed = compare("p relaxed", nPRelaxed, p.primitiveField(), cells);
+    const auto relU = compare("U corrected", nUCorr, U.primitiveField(), cells);
+    const auto relK = compare("k", nK, ofK.primitiveField(), cells);
+    const auto relEps = compare("epsilon", nEps, ofEps.primitiveField(), cells);
+    const auto relNut = compare("nut", nNut, ofNut.primitiveField(), cells);
+
+    CHECK(relUStar < 1e-6);
+    CHECK(relRAU < 1e-6);
+    CHECK(relHbyA < 1e-6);
+    CHECK(relPhiHbyA < 1e-6);
+    CHECK(relP < 1e-6);
+    CHECK(relPhi < 1e-6);
+    CHECK(relPRelaxed < 1e-6);
+    CHECK(relU < 1e-6);
+    CHECK(relK < 1e-6);
+    CHECK(relEps < 1e-6);
+    CHECK(relNut < 1e-6);
 }
