@@ -28,13 +28,11 @@ namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
 #define SECTION_IF(condition, ...) SECTION(__VA_ARGS__) if (condition)
 
-namespace {
-    /** @brief Checks whether T provides a const copyToHost() member function */
-    template<typename T>
-    concept HasCopyToHost = requires(const T& value)
-    {
-        value.copyToHost();
-    };
+namespace
+{
+/** @brief Checks whether T provides a const copyToHost() member function */
+template<typename T>
+concept HasCopyToHost = requires(const T& value) { value.copyToHost(); };
 }
 
 /** @brief Predicate for exact equality comparison using the built-in == operator.
@@ -91,9 +89,10 @@ struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
     /**
      * @brief Performs element-wise comparison against the @p actual argument.
      *
-     * The @p actual object is assumed to be a NeoN field (or compatible type)
-     * exposing @c copyToHost() and @c view(). The data is copied to host memory
-     * and compared against @ref expected_ using @ref pred_.
+     * The @p actual object can either be a NeoN container exposing @c copyToHost()
+     * and @c view() or be a std container. In case of a NeoN container, the data is
+     * copied to host memory first. Then the data is compared against @ref expected_
+     *  using @ref pred_.
      *
      * @tparam Actual Type of the actual object passed by Catch2.
      * @param actual  The object under test (typically a NeoN field).
@@ -106,21 +105,9 @@ struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
         using std::begin;
         using std::end;
 
-        auto actualHost = actual.copyToHost();
-
-        if constexpr (HasCopyToHost<Expected>)
+        if constexpr (HasCopyToHost<Actual>)
         {
-            auto expectedHost = expected_.copyToHost();
-            return std::equal(
-                begin(actualHost.view()),
-                end(actualHost.view()),
-                begin(expectedHost.view()),
-                end(expectedHost.view()),
-                pred_
-            );
-        }
-        else
-        {
+            auto actualHost = actual.copyToHost();
             return std::equal(
                 begin(actualHost.view()),
                 end(actualHost.view()),
@@ -128,6 +115,10 @@ struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
                 end(expected_),
                 pred_
             );
+        }
+        else
+        {
+            return std::equal(begin(actual), end(actual), begin(expected_), end(expected_), pred_);
         }
     }
 
