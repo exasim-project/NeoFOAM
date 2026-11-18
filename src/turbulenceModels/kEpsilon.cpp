@@ -356,7 +356,8 @@ void KEpsilon::validate(
     const nnfvcc::VolumeField<Vec3>& U,
     const nnfvcc::VolumeField<scalar>& k,
     const nnfvcc::VolumeField<scalar>& epsilon,
-    nnfvcc::VolumeField<scalar>& nut
+    nnfvcc::VolumeField<scalar>& nut,
+    const nnfvcc::SurfaceField<scalar>* phi
 )
 {
     gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
@@ -372,6 +373,9 @@ void KEpsilon::validate(
     ctx.insert("k", k);
     ctx.insert("nu", nu_);
     ctx.insert("nearWallDist", nearWallDist_);
+    // inletOutlet-type patches on nut (a case may put atmBoundaryLayerInletK there) switch on
+    // the flux; without it they take their inlet value on every face, outflow included.
+    if (phi != nullptr) ctx.insert("phi", *phi);
     nut.correctBoundaryConditions(ctx);
 
     calcDiffusivities(nut);
@@ -982,6 +986,13 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
 void KEpsilonModel::validate(const nnfvcc::VolumeField<Vec3>& U)
 {
     model_.validate(U, *k_, *epsilon_, *nut_);
+}
+
+void KEpsilonModel::validate(
+    const nnfvcc::VolumeField<Vec3>& U, const nnfvcc::SurfaceField<scalar>& phi
+)
+{
+    model_.validate(U, *k_, *epsilon_, *nut_, &phi);
 }
 
 void KEpsilonModel::correct(

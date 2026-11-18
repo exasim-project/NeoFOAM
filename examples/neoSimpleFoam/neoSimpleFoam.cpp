@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
             U.correctBoundaryConditions(uCtx);
         }
 
-        turb->validate(U);
+        turb->validate(U, phi);
 
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,

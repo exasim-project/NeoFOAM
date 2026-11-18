@@ -316,7 +316,7 @@ struct Models
                 mesh.lookupObject<Foam::volScalarField>("epsilon"), rt.nfMesh
             )
         ));
-        turbNF.validate(nfU, nfK, nfEps, nfNut);
+        turbNF.validate(nfU, nfK, nfEps, nfNut, &nfPhi);
     }
 
     void correct()
@@ -864,6 +864,31 @@ TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
             }
             std::cout << "  " << bmP[patchi].name() << "  " << dn / Foam::max(mn, 1e-300) << "  "
                       << du / Foam::max(mu, 1e-300) << "  " << dg / Foam::max(mg, 1e-300) << "\n";
+        }
+        // The cell gradient of the cells next to each patch.
+        const auto gI = m.turbNF.gradU().internalVector().copyToHost();
+        std::cout << "cell grad(U) next to: patch  max|d|/max|gradU|  worst cell\n";
+        forAll(bmP, patchi)
+        {
+            if (bmP[patchi].empty()) continue;
+            NeoN::scalar dg = 0, mg = 0;
+            Foam::label at = -1;
+            for (const auto c : bmP[patchi].faceCells())
+            {
+                const auto& g = gI.view()[c];
+                const Foam::tensor gT(
+                    g(0, 0), g(1, 0), g(2, 0), g(0, 1), g(1, 1), g(2, 1), g(0, 2), g(1, 2), g(2, 2)
+                );
+                const NeoN::scalar d = Foam::mag(gT - ofGrad[c]);
+                if (d > dg)
+                {
+                    dg = d;
+                    at = c;
+                }
+                mg = Foam::max(mg, Foam::mag(ofGrad[c]));
+            }
+            std::cout << "  " << bmP[patchi].name() << "  " << dg / Foam::max(mg, 1e-300) << "  "
+                      << at << "\n";
         }
     }
 

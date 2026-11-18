@@ -61,6 +61,15 @@ public:
     /** @brief Seed gradU and nut before the time loop. */
     virtual void validate(const nnfvcc::VolumeField<NeoN::Vec3>& U) = 0;
 
+    /** @brief As validate(U), with the flux for inletOutlet-type patches of the model's fields
+     *  (OpenFOAM's validate() updates them with phi registered). Defaults to validate(U). */
+    virtual void
+    validate(const nnfvcc::VolumeField<NeoN::Vec3>& U, const nnfvcc::SurfaceField<NeoN::scalar>& phi)
+    {
+        (void)phi;
+        validate(U);
+    }
+
     /** @brief Update the turbulence model after the momentum solve each time step. */
     virtual void correct(
         const nnfvcc::VolumeField<NeoN::Vec3>& U,

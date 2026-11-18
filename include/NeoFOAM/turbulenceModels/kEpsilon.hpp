@@ -104,7 +104,8 @@ public:
         const nnfvcc::VolumeField<Vec3>& U,
         const nnfvcc::VolumeField<scalar>& k,
         const nnfvcc::VolumeField<scalar>& epsilon,
-        nnfvcc::VolumeField<scalar>& nut
+        nnfvcc::VolumeField<scalar>& nut,
+        const nnfvcc::SurfaceField<scalar>* phi = nullptr
     );
 
     /**
@@ -292,6 +293,9 @@ public:
 
     /** @brief Initialise ν_t and diffusivities from the on-disk k/ε. */
     void validate(const nnfvcc::VolumeField<Vec3>& U) override;
+    void validate(
+        const nnfvcc::VolumeField<Vec3>& U, const nnfvcc::SurfaceField<scalar>& phi
+    ) override;
 
     /** @brief Solve the ε and k PDEs and update ν_t. */
     void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
