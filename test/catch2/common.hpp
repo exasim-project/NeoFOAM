@@ -28,13 +28,14 @@ namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
 #define SECTION_IF(condition, ...) SECTION(__VA_ARGS__) if (condition)
 
-/** @brief Detects whether T has a copyToHost() member function. */
-template<typename T, typename = void>
-inline constexpr bool hasCopyToHost = false;
-
-template<typename T>
-inline constexpr bool
-    hasCopyToHost<T, std::void_t<decltype(std::declval<const T&>().copyToHost())>> = true;
+namespace {
+    /** @brief Checks whether T provides a const copyToHost() member function */
+    template<typename T>
+    concept HasCopyToHost = requires(const T& value)
+    {
+        value.copyToHost();
+    };
+}
 
 /** @brief Predicate for exact equality comparison using the built-in == operator.
  *
@@ -107,7 +108,7 @@ struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
 
         auto actualHost = actual.copyToHost();
 
-        if constexpr (hasCopyToHost<Expected>)
+        if constexpr (HasCopyToHost<Expected>)
         {
             auto expectedHost = expected_.copyToHost();
             return std::equal(
