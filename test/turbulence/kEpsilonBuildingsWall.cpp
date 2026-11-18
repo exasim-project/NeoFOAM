@@ -6,14 +6,23 @@
 // OpenFOAM's converged simpleFoam state, cut faces fixed. In the full case NeoFOAM restarted from
 // that state drove k in the wall cell from 0.13 to 0.23 within five SIMPLE iterations and then
 // into a period-2 flip-flop of k and nut (nut 1e-5 <-> 6), while OpenFOAM keeps k at 0.124. The
-// flip-flop holds the Uz residual at ~4e-4 and seeds the k-epsilon blow-ups.
+// flip-flop held the Uz residual at ~4e-4 and seeded the k-epsilon blow-ups.
 //
-// In a wall-function cell epsilon is pinned to Cmu^0.75 k^1.5/(kappa y) and G to
-// (nut_w + nu_w) |dU/dn|_w Cmu^0.25 sqrt(k)/(kappa y), so k settles where G = (epsilon/k) k: its
-// level is set by the wall-face inputs. The test cases compare, on the frozen U/phi:
+// With identical wall-function inputs and identical k matrices one turbulence step still took k
+// to 0.185 (OpenFOAM 0.129) in the wall cell and to 1.78 (1.27) in a wall cell whose bounded
+// convection left a negative diagonal. Two causes:
+//   - bound() refilled undershooting cells from a neighbourhood average over stale boundary
+//     values; fvMatrix::solve() evaluates the boundary before OpenFOAM's bound() runs;
+//   - NeoN's equation relaxation kept a negative diagonal negative, where fvMatrix::relax()
+//     makes every relaxed diagonal positive (D = max(|D|, sumOff)).
+//
+// The test cases compare, on the frozen U/phi:
 //   - the wall-function inputs face by face (y, deltaCoeffs, |dU/dn|, nut_w) and the production;
 //   - one turbulence step (k, epsilon, nut);
-//   - ten turbulence steps, to see whether the turbulence model alone drifts.
+//   - the k and epsilon transport terms, including the diagonal/off-diagonal split that
+//     relaxation acts on.
+// (Several steps on the frozen flow are no test: with U and the cut faces frozen OpenFOAM itself
+// flip-flops after five steps.)
 
 #define CATCH_CONFIG_RUNNER
 
@@ -403,41 +412,6 @@ TEST_CASE("kEpsilon: one turbulence step at a Buildings wall cell matches OpenFO
     CHECK(relK < 1e-6);
     CHECK(relEps < 1e-6);
     CHECK(relNut < 1e-6);
-}
-
-TEST_CASE("kEpsilon: ten turbulence steps on frozen flow keep the Buildings wall cell steady")
-{
-    Foam::Time& runTime = *timePtr;
-    NeoN::Database db;
-    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
-    auto [execName, exec] = GENERATE(allAvailableExecutor());
-
-    auto rt = prepareRunTime(runTime, exec);
-    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
-    NeoFOAM::MeshAdapter& mesh = *meshPtr;
-
-    Models m(runTime, mesh, rt, fieldCollection);
-    const auto& ofK = mesh.lookupObject<Foam::volScalarField>("k");
-    const auto& ofEps = mesh.lookupObject<Foam::volScalarField>("epsilon");
-    const auto& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
-
-    std::cout << "=== ten steps, hot cell " << hotCell << " (" << execName << ")\n"
-              << "  step  k neo / of   epsilon neo / of   nut neo / of\n";
-    NeoN::scalar relK = 0;
-    for (int step = 1; step <= 10; ++step)
-    {
-        m.correct();
-        const auto k = toStd(m.nfK.internalVector());
-        const auto eps = toStd(m.nfEps.internalVector());
-        const auto nut = toStd(m.nfNut.internalVector());
-        std::cout << "  " << step << "  " << k[hotCell] << " / " << ofK[hotCell] << "   "
-                  << eps[hotCell] << " / " << ofEps[hotCell] << "   " << nut[hotCell] << " / "
-                  << ofNut[hotCell] << "\n";
-        relK = Foam::mag(k[hotCell] - ofK[hotCell]) / ofK[hotCell];
-    }
-    compare("k after ten steps", toStd(m.nfK.internalVector()), ofK, {hotCell});
-
-    CHECK(relK < 1e-3);
 }
 
 TEST_CASE("kEpsilon: k and epsilon transport terms at a Buildings wall cell match OpenFOAM")
