@@ -1,0 +1,53 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      epsilon;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -3 0 0 0 0];
+
+internalField   uniform 8.44e-3;
+
+boundaryField
+{
+    fixedWalls
+    {
+        type            atmEpsilonWallFunction;
+        z0              uniform 0.01;
+        value           uniform 8.44e-3;
+    }
+    inlet
+    {
+        type            atmBoundaryLayerInletEpsilon;
+        flowDir         (-1 0 0);
+        zDir            (0 0 1);
+        Uref            0.5;
+        Zref            0.5;
+        z0              uniform 0.01;
+        d               uniform 0;
+    }
+    // An ABL inlet on an outflow patch, as atmospheric cases carry on their outlet: it must
+    // act as zero gradient there.
+    outlet
+    {
+        type            atmBoundaryLayerInletEpsilon;
+        flowDir         (-1 0 0);
+        zDir            (0 0 1);
+        Uref            0.5;
+        Zref            0.5;
+        z0              uniform 0.01;
+        d               uniform 0;
+    }
+}
+
+// ************************************************************************* //

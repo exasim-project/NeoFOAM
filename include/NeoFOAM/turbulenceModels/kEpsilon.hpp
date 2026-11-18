@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "NeoFOAM/auxiliary/bound.hpp"
 
 #include "NeoN/NeoN.hpp"
@@ -50,6 +52,16 @@ namespace NeoFOAM
  * this helper everywhere, tests included, so the boundary is always populated.
  */
 Foam::volScalarField makeNearWallDistField(MeshAdapter& mesh);
+
+/**
+ * @brief Per-boundary-face roughness length of the epsilon wall functions, for
+ * KEpsilon::setWallRoughness.
+ *
+ * z0 on the faces of atmEpsilonWallFunction patches of @p ofEpsilon, evaluated as the reader does
+ * (readPatchZ0), and 0 on every other boundary face.
+ */
+std::vector<scalar>
+readEpsilonWallRoughness(const Foam::volScalarField& ofEpsilon, const NeoN::UnstructuredMesh& mesh);
 
 class KEpsilon
 {
@@ -173,6 +185,14 @@ public:
         gradUOp_ = std::move(op);
     }
 
+    /** @brief Set the per-boundary-face roughness length z0 of the epsilon wall functions.
+     *
+     *  atmEpsilonWallFunction evaluates its wall-cell epsilon and G at y + z0. The model applies
+     *  both, so it needs z0 per boundary face: one entry per boundary face of the mesh, z0 on
+     *  atmEpsilonWallFunction faces and 0 elsewhere (which leaves epsilonWallFunction as is).
+     *  Defaults to all zero. */
+    void setWallRoughness(NeoN::Vector<scalar> z0);
+
 private:
 
     NeoN::Executor exec_;
@@ -229,6 +249,10 @@ private:
     // log-law value each wall-adjacent cell is fixed to, and the 0/1 mask selecting them.
     NeoN::Vector<scalar> epsilonWallValue_;
     NeoN::Vector<scalar> epsilonWallMask_;
+
+    // Per-boundary-face roughness length z0 of atmEpsilonWallFunction patches, 0 elsewhere.
+    // The wall-cell epsilon and G are evaluated at y + z0.
+    NeoN::Vector<scalar> wallRoughness_;
 
     // fvc::div(phi) for the dilatation sinks, recomputed each correct().
     nnfvcc::VolumeField<scalar> divU_;

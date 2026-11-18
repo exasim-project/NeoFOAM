@@ -171,6 +171,15 @@ int main(int argc, char* argv[])
             }
         }
 
+        // Split inletOutlet-type velocity patches by the initial flux before the first UEqn,
+        // as the fvMatrix constructor's updateCoeffs() does upstream; field construction updated
+        // them without a flux.
+        {
+            fvcc::BoundaryContext uCtx;
+            uCtx.insert("phi", phi);
+            U.correctBoundaryConditions(uCtx);
+        }
+
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
@@ -296,7 +305,10 @@ int main(int argc, char* argv[])
                 p.correctBoundaryConditions(pCtx);
 
                 nf::updateVelocity(hByA, crAtU, p, U, rt);
-                U.correctBoundaryConditions();
+                // With phi in the context inletOutlet-type velocity patches switch per face on
+                // the corrected flux, as OpenFOAM's updateCoeffs() does when the next UEqn is
+                // built; without it they fall back to zero gradient on inflow faces too.
+                U.correctBoundaryConditions(pCtx);
             }
 
             turb->correct(U, phi, rt);

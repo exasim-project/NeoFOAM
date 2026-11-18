@@ -10,9 +10,15 @@
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "wallDist.H"
 #include "nearWallDist.H"
 #include "IOobject.H"
+#include "IStringStream.H"
+#include "OStringStream.H"
 #include "volFields.H"
 
 namespace dsl = NeoN::dsl;
@@ -28,6 +34,13 @@ namespace NeoFOAM
 // Named (not anonymous) so this model's SYCL device-kernel names stay unique across TUs.
 namespace kEpsilonDetail
 {
+
+// The epsilon wall functions whose wall-adjacent cells the model pins and whose G it feeds
+// back. atmEpsilonWallFunction is epsilonWallFunction with y shifted by the roughness z0.
+bool isEpsilonWallFunction(const std::string& bcName)
+{
+    return bcName == "epsilonWallFunction" || bcName == "atmEpsilonWallFunction";
+}
 
 // ---------------------------------------------------------------------------
 // Fused kernel: compute the production source Pk = nut * GbyNu0 and the
@@ -279,6 +292,7 @@ KEpsilon::KEpsilon(
     , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , epsilonWallValue_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , epsilonWallMask_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , wallRoughness_(exec, static_cast<NeoN::localIdx>(mesh.nBoundaryFaces()), scalar(0))
     , divU_(exec, "divU", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
 {
     surfInterp_.interpolate(nu_, surfNu_);
@@ -336,6 +350,9 @@ void KEpsilon::correct(
     ctx.insert("k", k);
     ctx.insert("nu", nu_);
     ctx.insert("nearWallDist", nearWallDist_);
+    // inletOutlet-type patches (inletOutlet, atmBoundaryLayerInlet) switch per face on the sign
+    // of phi; without it they degenerate to zero gradient on every face, inflow included.
+    ctx.insert("phi", phi);
 
     // Compute Pk, spK, εSource, spε using OLD ν_t
     computeSources(k, epsilon, nut, gradU_);
@@ -366,6 +383,7 @@ void KEpsilon::correct(
         const auto nuBoundaryV = nu_.boundaryData().value().view();
         const auto nutBoundaryV = nut.boundaryData().value().view();
         const auto yBoundaryV = nearWallDist_.boundaryData().value().view();
+        const auto z0BoundaryV = wallRoughness_.view();
         const auto kInternalV = k.internalVector().view();
         auto pkInternalV = Pk_.internalVector().view();
         const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
@@ -381,8 +399,7 @@ void KEpsilon::correct(
                  patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
                  ++patchID)
             {
-                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()
-                    != "epsilonWallFunction")
+                if (!isEpsilonWallFunction(epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()))
                     continue;
                 const auto [start, end] = epsilon.boundaryData().range(patchID);
                 NeoN::parallelFor(
@@ -436,7 +453,7 @@ void KEpsilon::correct(
         for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
              ++patchID)
         {
-            if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+            if (!isEpsilonWallFunction(epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()))
             {
                 continue;
             }
@@ -455,7 +472,9 @@ void KEpsilon::correct(
                     const scalar magGradUw = NeoN::mag(snGradU);
                     const scalar nuw = nuBoundaryV[i];
                     const scalar nutw = nutBoundaryV[i];
-                    const scalar y = yBoundaryV[i];
+                    // atmEpsilonWallFunction evaluates both terms at y + z0 (z0 = 0 on smooth
+                    // epsilonWallFunction faces).
+                    const scalar y = yBoundaryV[i] + z0BoundaryV[i];
                     const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
                     const scalar gWall =
                         (nutw + nuw) * magGradUw * cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
@@ -541,6 +560,12 @@ void KEpsilon::correct(
     // ----- epsilon equation -----
     // Solved BEFORE k so spK can be updated from the new ε to match OF's
     // sequencing (kEpsilon.C:251-291: ε first, then k).
+    //
+    // Upstream updates the patches before assembling (kEpsilon.C calls
+    // epsilon_.boundaryFieldRef().updateCoeffs(), and the fvMatrix constructor does the same for
+    // k), so flux-switching patches -- inletOutlet, atmBoundaryLayerInlet -- are assembled
+    // against the current phi rather than the state left by the previous update.
+    epsilon.correctBoundaryConditions(ctx);
     auto epsEqn = PDESolver<scalar>(
         dsl::imp::ddt(epsilon) + dsl::imp::div(phi, epsilon)
             - dsl::imp::laplacian(depsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
@@ -585,7 +610,7 @@ void KEpsilon::correct(
         for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
              ++patchID)
         {
-            if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+            if (!isEpsilonWallFunction(epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()))
             {
                 continue;
             }
@@ -624,6 +649,7 @@ void KEpsilon::correct(
     }
 
     // ----- k equation -----
+    k.correctBoundaryConditions(ctx);
     auto kEqn = PDESolver<scalar>(
         dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(dkEffF_, k)
             + dsl::imp::source(spK_, k) - dsl::exp::source(Pk_),
@@ -643,6 +669,18 @@ void KEpsilon::correct(
 
     // Refresh surface diffusivities with new ν_t
     calcDiffusivities(nut);
+}
+
+void KEpsilon::setWallRoughness(NeoN::Vector<scalar> z0)
+{
+    if (z0.size() != wallRoughness_.size())
+    {
+        NF_THROW(
+            "setWallRoughness: got " + std::to_string(z0.size()) + " values for "
+            + std::to_string(wallRoughness_.size()) + " boundary faces"
+        );
+    }
+    wallRoughness_ = std::move(z0);
 }
 
 nnfvcc::SurfaceField<scalar>& KEpsilon::nuEff() { return nuEff_; }
@@ -776,6 +814,32 @@ Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string&
 
 } // namespace kEpsilonDetail
 
+// The OpenFOAM patch order is the NeoN patch order (processor patches last in both), so patch i's
+// faces sit at boundaryMesh().offset()[i].
+std::vector<scalar>
+readEpsilonWallRoughness(const Foam::volScalarField& ofEpsilon, const NeoN::UnstructuredMesh& mesh)
+{
+    std::vector<scalar> z0(mesh.nBoundaryFaces(), scalar(0));
+    const auto& offset = mesh.boundaryMesh().offset();
+    const Foam::scalar t = ofEpsilon.time().timeOutputValue();
+    forAll(ofEpsilon.boundaryField(), patchi)
+    {
+        const auto& patchField = ofEpsilon.boundaryField()[patchi];
+        if (patchField.type() != "atmEpsilonWallFunction") continue;
+
+        Foam::OStringStream os;
+        patchField.write(os);
+        Foam::IStringStream is(os.str());
+        const Foam::dictionary patchDict(is);
+
+        const auto values = readPatchZ0(patchField.patch(), patchDict, t);
+        std::copy(
+            values.begin(), values.end(), z0.begin() + offset[static_cast<NeoN::sizeType>(patchi)]
+        );
+    }
+    return z0;
+}
+
 Foam::volScalarField makeNearWallDistField(MeshAdapter& mesh)
 {
     Foam::volScalarField y(
@@ -814,8 +878,11 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "k"), true);
-    epsilon_ =
-        &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "epsilon"), true);
+    const auto ofEpsilon = readOFScalarFieldKEps(rt.mesh, "epsilon");
+    epsilon_ = &NeoFOAM::constructAndRegister(vc, rt, ofEpsilon, true);
+    model_.setWallRoughness(
+        NeoN::Vector<scalar>(rt.exec, readEpsilonWallRoughness(ofEpsilon, rt.nfMesh))
+    );
     nut_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "nut"), false);
 
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");

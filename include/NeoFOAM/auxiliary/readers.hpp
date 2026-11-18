@@ -3,6 +3,7 @@
 #pragma once
 
 #include <type_traits>
+#include <vector>
 
 #include "NeoN/NeoN.hpp"
 
@@ -12,11 +13,29 @@
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
 #include "messageStream.H"
 #include "processorFvPatch.H"
+#include "mixedFvPatchField.H"
+#include "PatchFunction1.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
 namespace NeoFOAM
 {
+
+/**
+ * @brief Per-face aerodynamic roughness length z0 of an atm* wall-function patch.
+ *
+ * Evaluated through OpenFOAM's PatchFunction1, as atmNutkWallFunction and
+ * atmEpsilonWallFunction do, so every form OpenFOAM accepts (uniform, nonuniform, a
+ * Function1, ...) is read the same way. @p patchDict is the patch entry of the field's
+ * boundaryField.
+ */
+inline std::vector<NeoN::scalar>
+readPatchZ0(const Foam::fvPatch& patch, const Foam::dictionary& patchDict, Foam::scalar t)
+{
+    const auto z0 = Foam::PatchFunction1<Foam::scalar>::New(patch.patch(), "z0", patchDict);
+    const Foam::scalarField values(z0->value(t));
+    return std::vector<NeoN::scalar>(values.begin(), values.end());
+}
 
 namespace detail
 {
@@ -311,6 +330,19 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              [](auto& dict) { dict.insert("type", std::string("epsilonWallFunction")); }},
             {"nutkWallFunction",
              [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }},
+            // The rough-wall functions get their per-face z0 from insertAtmWallEntries below.
+            {"atmNutkWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("atmNutkWallFunction")); }},
+            {"atmEpsilonWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("atmEpsilonWallFunction")); }},
+            // The three ABL inlets share one per-face inletOutlet; the profile is OpenFOAM's
+            // refValue, inserted by insertAtmInletValues below.
+            {"atmBoundaryLayerInletVelocity",
+             [](auto& dict) { dict.insert("type", std::string("atmBoundaryLayerInlet")); }},
+            {"atmBoundaryLayerInletK",
+             [](auto& dict) { dict.insert("type", std::string("atmBoundaryLayerInlet")); }},
+            {"atmBoundaryLayerInletEpsilon",
+             [](auto& dict) { dict.insert("type", std::string("atmBoundaryLayerInlet")); }},
             {"inletOutlet",
              [](auto& dict)
              {
@@ -565,6 +597,47 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         dict.insert("fixedValues", std::vector<type_primitive_t>(begin, begin + patchField.size()));
     };
 
+    // atmBoundaryLayerInlet{Velocity,K,Epsilon} are inletOutlet (mixed) patch fields whose
+    // refValue() OpenFOAM fills with the ABL profile of the face centres at construction.
+    // Take that profile instead of re-deriving it, so every atmBoundaryLayer input form is read.
+    auto insertAtmInletValues = [&](const Foam::word& patchName, NeoN::Dictionary& dict)
+    {
+        const auto patchID = ofVolField.mesh().boundaryMesh().findPatchID(patchName);
+        if (patchID < 0) return;
+        const auto& patchField = ofVolField.boundaryField()[patchID];
+        using foam_value_t = typename std::remove_cvref_t<decltype(patchField)>::value_type;
+        const auto* mixed = dynamic_cast<const Foam::mixedFvPatchField<foam_value_t>*>(&patchField);
+        if (mixed == nullptr)
+        {
+            throw std::runtime_error(
+                "Patch '" + std::string(patchName) + "' of type '" + std::string(patchField.type())
+                + "' is not a mixed patch field; cannot read its ABL inlet profile."
+            );
+        }
+        const auto* begin = reinterpret_cast<const type_primitive_t*>(mixed->refValue().cdata());
+        dict.insert("inletValues", std::vector<type_primitive_t>(begin, begin + patchField.size()));
+    };
+
+    // The rough-wall functions need per-face z0 and the non-scalar entries the generic
+    // dictionary conversion does not type: boundNut is a bool, and lowReCorrection (the
+    // viscous-sublayer branch of atmEpsilonWallFunction) is not ported.
+    auto insertAtmWallEntries =
+        [&](const Foam::word& patchName, const Foam::dictionary& patchDict, NeoN::Dictionary& dict)
+    {
+        const auto patchID = ofVolField.mesh().boundaryMesh().findPatchID(patchName);
+        if (patchID < 0) return;
+        const Foam::scalar t = ofVolField.time().timeOutputValue();
+        dict.insert("z0Values", readPatchZ0(ofVolField.mesh().boundary()[patchID], patchDict, t));
+        dict.insert("boundNut", static_cast<bool>(patchDict.getOrDefault<bool>("boundNut", false)));
+        if (patchDict.getOrDefault<bool>("lowReCorrection", false))
+        {
+            throw std::runtime_error(
+                "lowReCorrection on patch '" + std::string(patchName)
+                + "' is not supported by atmEpsilonWallFunction."
+            );
+        }
+    };
+
     int patchi = 0;
     std::vector<fvcc::VolumeBoundary<type_primitive_t>> bcs;
     // do non processor first
@@ -576,6 +649,14 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {
             NeoN::Dictionary neoPatchDict = convert(patchDict);
             if (bcType == "fixedValue") insertPatchValues(bName, neoPatchDict);
+            if (bcType.starts_with("atmBoundaryLayerInlet"))
+            {
+                insertAtmInletValues(bName, neoPatchDict);
+            }
+            if (bcType == "atmNutkWallFunction" || bcType == "atmEpsilonWallFunction")
+            {
+                insertAtmWallEntries(bName, patchDict, neoPatchDict);
+            }
             applyVolInserter(bName, bcType, neoPatchDict);
             bcs.emplace_back(nfMesh, neoPatchDict, patchi);
             patchi++;
