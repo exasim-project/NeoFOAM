@@ -311,26 +311,74 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
     }
 }
 
-TEST_CASE("Applying permutation preserves field-cell association") {}
-
 TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationApplicator]")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    SECTION("Identity mapping on " + execName);
-    {
-        // Arrange
-        constexpr sizeType size = 4;
-        const Permutation permutation = Permutation::identity(size);
-        const PreparedPermutation prepared(exec, permutation);
-        NeoN::UnstructuredMesh mesh = NeoN::create1DUniformMesh(exec, size);
+    // Set up a mesh
+    Foam::Time& runTime = *timePtr;
+    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
+    Foam::scalar startTime = 0.0;
+    Foam::label startTimeIndex = 0;
+    runTime.setTime(startTime, startTimeIndex);
 
-        // Act
-        PermutationApplicator applicator {exec};
-        // applicator.reorderCellVolumes(mesh, prepared);
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
-        // Assert
-        REQUIRE(applicator.exec() == exec);
-        // REQUIRE_THAT(result, Equals(expected, EqualInt{}));
-    }
+    // --- Arrange ---
+    // Prepare a permutation and the applicator
+    const Permutation permutation = Permutation::identity(nfMesh.nCells());
+    const PreparedPermutation prepared {exec, permutation};
+    const PermutationApplicator applicator(exec);
+
+    // Prepare expected results
+    const sizeType expectedCellCount {4};
+    const sizeType expectedInternalFaces {4};
+
+    const NeoN::scalarVector originalCellVolumes = nfMesh.cellVolumes().copyToHost();
+    auto originalCellVolulmesView = originalCellVolumes.view();
+
+    const NeoN::vectorVector originalCellCenters = nfMesh.cellCenters().copyToHost();
+    auto originalCellCentersView = originalCellCenters.view();
+
+    const NeoN::labelVector originalFaceOwners = nfMesh.faceOwners().copyToHost();
+    auto originalInternalFaceOwners = originalFaceOwners.view({0, expectedInternalFaces});
+
+    const NeoN::labelVector originalFaceNeighbors = nfMesh.faceNeighbors().copyToHost();
+    auto originalInternalFaceNeighbors = originalFaceNeighbors.view({0, expectedInternalFaces});
+
+    const NeoN::labelVector originalBoundaryFaceOwners =
+        nfMesh.boundaryMesh().faceOwners().copyToHost();
+    auto originalBoundaryFaceOwnersView = originalBoundaryFaceOwners.view();
+
+    // --- Act ---
+    applicator.apply(nfMesh, prepared);
+
+    // --- Assert ---
+    REQUIRE(nfMesh.nCells() == expectedCellCount);
+    REQUIRE_THAT(nfMesh.cellVolumes(), Equals(originalCellVolulmesView, ApproxScalar {1e-12}));
+    REQUIRE_THAT(nfMesh.cellCenters(), Equals(originalCellCentersView, ApproxVector {1e-12}));
+    REQUIRE_THAT(
+        nfMesh.faceOwners(),
+        EqualsRange(
+            originalInternalFaceOwners,
+            {0, NeoN::toLocalIdx(expectedInternalFaces)},
+            EqualInt {}
+        )
+    );
+    REQUIRE_THAT(
+        nfMesh.faceNeighbors(),
+        EqualsRange(
+            originalInternalFaceNeighbors,
+            {0, NeoN::toLocalIdx(expectedInternalFaces)},
+            EqualInt {}
+        )
+    );
+    REQUIRE_THAT(
+        nfMesh.boundaryMesh().faceOwners(),
+        Equals(originalBoundaryFaceOwnersView, EqualInt {})
+    );
 }
+
+TEST_CASE("Applying permutation preserves field-cell association") {}

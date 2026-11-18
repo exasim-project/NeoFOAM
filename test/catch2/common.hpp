@@ -200,18 +200,30 @@ struct EqualsRangeMatcher : Catch::Matchers::MatcherGenericBase
         , pred_(std::move(pred))
     {}
 
-    template<typename T>
-    bool match(const NeoN::Vector<T>& actual) const
+    template<typename Actual>
+    bool match(const Actual& actual) const
     {
-        auto host = actual.copyToHost();
-        auto sub = host.view(range_);
+        using std::begin;
+        using std::end;
 
-        return std::equal(sub.begin(), sub.end(), expected_.begin(), expected_.end(), pred_);
+        if constexpr (HasCopyToHost<Actual>)
+        {
+            auto actualHost = actual.copyToHost();
+            auto subView = actualHost.view(range_);
+            return std::equal(
+                begin(subView),
+                end(subView),
+                begin(expected_),
+                end(expected_),
+                pred_
+            );
+        }
     }
 
     std::string describe() const override
     {
-        return "range equals " + Catch::rangeToString(expected_);
+        return "in range [" + std::to_string(range_.first) + ", " + std::to_string(range_.second)
+             + ") equals " + Catch::rangeToString(expected_);
     }
 
 private:
