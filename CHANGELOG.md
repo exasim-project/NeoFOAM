@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Read the kEpsilon coefficients (Cmu, C1, C2, C3, sigmak, sigmaEps) from turbulenceProperties `RAS/kEpsilonCoeffs` as OpenFOAM does; they were fixed at the defaults, so e.g. an atmospheric case's sigmaEps 1.11 ran as 1.3
 - Fix kEpsilon dropping the implicit half of the k dilatation sink `-SuSp((2/3) divU, k)`: the epsilon/k update overwrote it, so k came out high wherever the flux divergence is positive
 - Add the atmospheric boundary layer BCs to neoSimpleFoam: `atmBoundaryLayerInlet{Velocity,K,Epsilon}` (an inletOutlet holding OpenFOAM's ABL profile per face) and the rough-wall `atmNutkWallFunction`/`atmEpsilonWallFunction`, whose wall-cell epsilon pin and G feedback kEpsilon now evaluates at y + z0. kEpsilon and neoSimpleFoam also pass phi to the k, epsilon, nut and U boundary updates and update k and epsilon before assembling, as OpenFOAM does, so inletOutlet patches switch on the current flux instead of acting as zero gradient everywhere
 - Add a C++ test of the `slip` boundary reader against OpenFOAM [#481](https://github.com/exasim-project/NeoFOAM/pull/481)

@@ -185,6 +185,10 @@ public:
         gradUOp_ = std::move(op);
     }
 
+    /** @brief Replace the model coefficients (see readKEpsilonCoefficients). Set them before
+     *  validate(): the diffusivities are built from sigmaK and sigmaEps there. */
+    void setCoefficients(const Coefficients& coeffs) { coeffs_ = coeffs; }
+
     /** @brief Set the per-boundary-face roughness length z0 of the epsilon wall functions.
      *
      *  atmEpsilonWallFunction evaluates its wall-cell epsilon and G at y + z0. The model applies
@@ -257,6 +261,15 @@ private:
     // fvc::div(phi) for the dilatation sinks, recomputed each correct().
     nnfvcc::VolumeField<scalar> divU_;
 };
+
+/**
+ * @brief The k-epsilon coefficients of a turbulenceProperties dictionary.
+ *
+ * Read like OpenFOAM's kEpsilon: from RAS/kEpsilonCoeffs, or from the RAS dictionary itself when
+ * that has no kEpsilonCoeffs, each with the upstream default (Cmu, C1, C2, C3, sigmak, sigmaEps).
+ * Atmospheric cases set sigmaEps to keep the inlet profile in equilibrium.
+ */
+KEpsilon::Coefficients readKEpsilonCoefficients(const Foam::dictionary& turbulenceProperties);
 
 /**
  * @brief TurbulenceModel-factory wrapper for k-epsilon.

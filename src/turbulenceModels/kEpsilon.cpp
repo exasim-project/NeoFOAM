@@ -16,6 +16,7 @@
 
 #include "wallDist.H"
 #include "nearWallDist.H"
+#include "IOdictionary.H"
 #include "IOobject.H"
 #include "IStringStream.H"
 #include "OStringStream.H"
@@ -818,6 +819,23 @@ Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string&
 
 } // namespace kEpsilonDetail
 
+KEpsilon::Coefficients readKEpsilonCoefficients(const Foam::dictionary& turbulenceProperties)
+{
+    KEpsilon::Coefficients coeffs;
+    if (!turbulenceProperties.found("RAS")) return coeffs;
+
+    // OpenFOAM's RASModel::coeffDict_: the <type>Coeffs sub-dictionary if present, else RAS itself.
+    const Foam::dictionary& dict =
+        turbulenceProperties.subDict("RAS").optionalSubDict("kEpsilonCoeffs");
+    coeffs.cmu = dict.getOrDefault<Foam::scalar>("Cmu", coeffs.cmu);
+    coeffs.C1 = dict.getOrDefault<Foam::scalar>("C1", coeffs.C1);
+    coeffs.C2 = dict.getOrDefault<Foam::scalar>("C2", coeffs.C2);
+    coeffs.C3 = dict.getOrDefault<Foam::scalar>("C3", coeffs.C3);
+    coeffs.sigmaK = dict.getOrDefault<Foam::scalar>("sigmak", coeffs.sigmaK);
+    coeffs.sigmaEps = dict.getOrDefault<Foam::scalar>("sigmaEps", coeffs.sigmaEps);
+    return coeffs;
+}
+
 // The OpenFOAM patch order is the NeoN patch order (processor patches last in both), so patch i's
 // faces sit at boundaryMesh().offset()[i].
 std::vector<scalar>
@@ -878,6 +896,26 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     // grad(U) honours the configured gradSchemes; the operator is shared with the
     // solver's other grad(U) call sites via RunTime's cache.
     model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+
+    const Foam::IOdictionary turbProps(Foam::IOobject(
+        "turbulenceProperties",
+        rt.mesh.time().constant(),
+        rt.mesh,
+        Foam::IOobject::MUST_READ,
+        Foam::IOobject::NO_WRITE,
+        Foam::IOobject::NO_REGISTER
+    ));
+    const auto coeffs = readKEpsilonCoefficients(turbProps);
+    model_.setCoefficients(coeffs);
+    NeoN::Logging::info(
+        "kEpsilon coefficients: Cmu {} C1 {} C2 {} C3 {} sigmak {} sigmaEps {}",
+        coeffs.cmu,
+        coeffs.C1,
+        coeffs.C2,
+        coeffs.C3,
+        coeffs.sigmaK,
+        coeffs.sigmaEps
+    );
 
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 

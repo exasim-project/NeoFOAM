@@ -124,6 +124,67 @@ NeoN::scalar compareTerm(
     }
     return rel;
 }
+
+// Per-volume cell residual (A x - b)/V of an assembled scalar system.
+template<typename LinearSystem>
+std::vector<NeoN::scalar> cellResidualScalar(
+    const LinearSystem& ls,
+    const NeoN::Vector<NeoN::scalar>& x,
+    const NeoN::Vector<NeoN::scalar>& vol
+)
+{
+    const auto valsH = ls.matrix().values().copyToHost();
+    const auto rowsH = ls.matrix().sparsity()->rowOffs().copyToHost();
+    const auto colsH = ls.matrix().sparsity()->colIdxs().copyToHost();
+    const auto rhsH = ls.rhs().copyToHost();
+    const auto xH = x.copyToHost();
+    const auto volH = vol.copyToHost();
+    const auto [vals, rows, cols, rhs, xv, v] =
+        NeoN::views(valsH, rowsH, colsH, rhsH, xH, volH);
+    std::vector<NeoN::scalar> r(static_cast<std::size_t>(xv.size()));
+    for (NeoN::localIdx i = 0; i < xv.size(); ++i)
+    {
+        NeoN::scalar ax = 0;
+        for (auto j = rows[i]; j < rows[i + 1]; ++j)
+        {
+            ax += vals[j] * xv[cols[j]];
+        }
+        r[static_cast<std::size_t>(i)] = (ax - rhs[i]) / v[i];
+    }
+    return r;
+}
+
+// compareTerm for scalar fields.
+NeoN::scalar compareScalarTerm(
+    const std::string& name,
+    const std::vector<NeoN::scalar>& nf,
+    const Foam::scalarField& of,
+    const std::vector<Foam::label>& cells
+)
+{
+    std::vector<NeoN::Vec3> nfV(nf.size());
+    Foam::vectorField ofV(of.size());
+    forAll(of, c)
+    {
+        nfV[static_cast<std::size_t>(c)] = NeoN::Vec3(nf[static_cast<std::size_t>(c)], 0, 0);
+        ofV[c] = Foam::vector(of[c], 0, 0);
+    }
+    return compareTerm(name, nfV, ofV, cells);
+}
+
+// The case's kEpsilonCoeffs, as KEpsilonModel reads them.
+nf::KEpsilon::Coefficients caseCoefficients(const Foam::Time& runTime)
+{
+    const Foam::IOdictionary turbProps(Foam::IOobject(
+        "turbulenceProperties",
+        runTime.constant(),
+        runTime,
+        Foam::IOobject::MUST_READ,
+        Foam::IOobject::NO_WRITE,
+        Foam::IOobject::NO_REGISTER
+    ));
+    return nf::readKEpsilonCoefficients(turbProps);
+}
 } // namespace
 
 TEST_CASE("kEpsilon: low-k wall cell next to high-k cells matches OpenFOAM")
@@ -185,6 +246,7 @@ TEST_CASE("kEpsilon: low-k wall cell next to high-k cells matches OpenFOAM")
         NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, tnu(), ofNut);
 
     nf::KEpsilon turbNF(rt.exec, rt.nfMesh, nfNu, nfWallDist);
+    turbNF.setCoefficients(caseCoefficients(runTime));
     turbNF.setWallRoughness(
         NeoN::Vector<NeoN::scalar>(rt.exec, nf::readEpsilonWallRoughness(ofEps, rt.nfMesh))
     );
@@ -205,12 +267,27 @@ TEST_CASE("kEpsilon: low-k wall cell next to high-k cells matches OpenFOAM")
                     << nutHost.view()[hotCell] << ", OpenFOAM " << nutFoam[hotCell]
     );
 
-    // The cell the blow-ups started from, on its own so a failure names it.
-    REQUIRE(kHost.view()[hotCell] == Catch::Approx(kFoam[hotCell]).epsilon(1e-3));
+    // Report every field before judging, so one mismatch does not hide the others.
+    auto asVector = [](const auto& field)
+    {
+        const auto h = field.internalVector().copyToHost();
+        const auto v = h.view();
+        std::vector<NeoN::scalar> out(static_cast<std::size_t>(v.size()));
+        for (NeoN::localIdx i = 0; i < v.size(); ++i) out[static_cast<std::size_t>(i)] = v[i];
+        return out;
+    };
+    std::cout << "=== turbulence step (" << execName << ")\n";
+    const std::vector<Foam::label> cells {hotCell};
+    compareScalarTerm("k after correct", asVector(nfK), kFoam.primitiveField(), cells);
+    compareScalarTerm("epsilon after correct", asVector(nfEps), epsFoam.primitiveField(), cells);
+    compareScalarTerm("nut after correct", asVector(nfNut), nutFoam.primitiveField(), cells);
 
-    REQUIRE_THAT(nfEps, EqualsInternal(epsFoam, ApproxScalar(1e-6)));
-    REQUIRE_THAT(nfK, EqualsInternal(kFoam, ApproxScalar(1e-5)));
-    REQUIRE_THAT(nfNut, EqualsInternal(nutFoam, ApproxScalar(1e-5)));
+    // The cell the blow-ups started from, on its own so a failure names it.
+    CHECK(kHost.view()[hotCell] == Catch::Approx(kFoam[hotCell]).epsilon(1e-3));
+
+    CHECK_THAT(nfEps, EqualsInternal(epsFoam, ApproxScalar(1e-6)));
+    CHECK_THAT(nfK, EqualsInternal(kFoam, ApproxScalar(1e-5)));
+    CHECK_THAT(nfNut, EqualsInternal(nutFoam, ApproxScalar(1e-5)));
 }
 
 TEST_CASE("momentum terms at a Buildings wall region match OpenFOAM")
@@ -267,6 +344,7 @@ TEST_CASE("momentum terms at a Buildings wall region match OpenFOAM")
         NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, tnu(), ofNut);
 
     nf::KEpsilon turbNF(rt.exec, rt.nfMesh, nfNu, nfWallDist);
+    turbNF.setCoefficients(caseCoefficients(runTime));
     turbNF.setWallRoughness(
         NeoN::Vector<NeoN::scalar>(rt.exec, nf::readEpsilonWallRoughness(ofEps, rt.nfMesh))
     );
@@ -352,4 +430,130 @@ TEST_CASE("momentum terms at a Buildings wall region match OpenFOAM")
     CHECK(relStress < 1e-8);
     CHECK(relGradP < 1e-8);
     CHECK(relGradU < 1e-8);
+}
+
+TEST_CASE("k and epsilon transport terms at a Buildings wall region match OpenFOAM")
+{
+    Foam::Time& runTime = *timePtr;
+
+    NeoN::Database db;
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
+
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+    rt.fvSchemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
+
+    Foam::volVectorField U(
+        Foam::IOobject("U", runTime.timeName(), mesh, Foam::IOobject::MUST_READ),
+        mesh
+    );
+    Foam::surfaceScalarField phi(
+        Foam::IOobject(
+            "phi",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        fvc::flux(U)
+    );
+
+    Foam::singlePhaseTransportModel transport(U, phi);
+    auto tnu = transport.nu();
+    Foam::autoPtr<Foam::incompressible::turbulenceModel> foamTurb(
+        Foam::incompressible::turbulenceModel::New(U, phi, transport)
+    );
+    foamTurb->validate();
+
+    const Foam::volScalarField& ofK = mesh.lookupObject<Foam::volScalarField>("k");
+    const Foam::volScalarField& ofEps = mesh.lookupObject<Foam::volScalarField>("epsilon");
+    const Foam::volScalarField& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
+    const Foam::volScalarField wallDist = nf::makeNearWallDistField(mesh);
+
+    // (M & epsilon) updates epsilon's wall-function patches, which look up the model's production
+    // field; kEpsilon only creates it in its first correct(). Same workaround as the
+    // epsilonWallFunction test.
+    Foam::volScalarField::Internal kEpsilonG(
+        Foam::IOobject(
+            foamTurb->GName(),
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE,
+            Foam::IOobject::REGISTER
+        ),
+        mesh,
+        Foam::dimensionedScalar(Foam::sqr(Foam::dimVelocity) / Foam::dimTime, Foam::Zero)
+    );
+
+    // OpenFOAM's kEpsilon::DkEff()/DepsilonEff(): nut/sigma + nu with the case's coefficients.
+    const auto coeffs = caseCoefficients(runTime);
+    REQUIRE(coeffs.sigmaEps == Catch::Approx(1.11));
+    const Foam::volScalarField ofDkEff("DkEff", ofNut / coeffs.sigmaK + tnu());
+    const Foam::volScalarField ofDepsEff("DepsilonEff", ofNut / coeffs.sigmaEps + tnu());
+
+    auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U, false);
+    auto& nfPhi = NeoFOAM::constructAndRegister(fieldCollection, rt, phi, false);
+    auto& nfK = NeoFOAM::constructAndRegister(fieldCollection, rt, ofK, false);
+    auto& nfEps = NeoFOAM::constructAndRegister(fieldCollection, rt, ofEps, false);
+    auto [nfWallDist, nfNu, nfNut] =
+        NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, tnu(), ofNut);
+
+    nf::KEpsilon turbNF(rt.exec, rt.nfMesh, nfNu, nfWallDist);
+    turbNF.setCoefficients(coeffs);
+    turbNF.setWallRoughness(
+        NeoN::Vector<NeoN::scalar>(rt.exec, nf::readEpsilonWallRoughness(ofEps, rt.nfMesh))
+    );
+    turbNF.validate(nfU, nfK, nfEps, nfNut);
+
+    std::vector<Foam::label> cells {hotCell};
+    {
+        const auto& wallCells = mesh.boundary()[mesh.boundaryMesh().findPatchID("Buildings")].faceCells();
+        for (const auto c : wallCells)
+            if (std::find(cells.begin(), cells.end(), c) == cells.end() && cells.size() < 6)
+                cells.push_back(c);
+    }
+
+    const auto& vol = rt.nfMesh.cellVolumes();
+    auto residualOf = [&](auto& field, auto&& expr)
+    {
+        nf::PDE<NeoN::scalar> pde(dsl::Expression<NeoN::scalar>(expr), field, rt);
+        pde.assemble();
+        return cellResidualScalar(pde.linearSystem(), field.internalVector(), vol);
+    };
+
+    std::cout << "=== k and epsilon transport terms (" << execName << ")\n";
+
+    const auto relDivEps = compareScalarTerm(
+        "div(phi,epsilon)",
+        residualOf(nfEps, dsl::imp::div(nfPhi, nfEps)),
+        (Foam::fvScalarMatrix(fvm::div(phi, ofEps)) & ofEps)().primitiveField(),
+        cells
+    );
+    const auto relLapEps = compareScalarTerm(
+        "laplacian(DepsilonEff,epsilon)",
+        residualOf(nfEps, dsl::imp::laplacian(turbNF.depsilonEff(), nfEps)),
+        (Foam::fvScalarMatrix(fvm::laplacian(ofDepsEff, ofEps)) & ofEps)().primitiveField(),
+        cells
+    );
+    const auto relDivK = compareScalarTerm(
+        "div(phi,k)",
+        residualOf(nfK, dsl::imp::div(nfPhi, nfK)),
+        (Foam::fvScalarMatrix(fvm::div(phi, ofK)) & ofK)().primitiveField(),
+        cells
+    );
+    const auto relLapK = compareScalarTerm(
+        "laplacian(DkEff,k)",
+        residualOf(nfK, dsl::imp::laplacian(turbNF.dkEff(), nfK)),
+        (Foam::fvScalarMatrix(fvm::laplacian(ofDkEff, ofK)) & ofK)().primitiveField(),
+        cells
+    );
+
+    CHECK(relDivEps < 1e-8);
+    CHECK(relLapEps < 1e-8);
+    CHECK(relDivK < 1e-8);
+    CHECK(relLapK < 1e-8);
 }
