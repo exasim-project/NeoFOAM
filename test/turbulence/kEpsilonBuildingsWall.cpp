@@ -516,6 +516,11 @@ TEST_CASE("kEpsilon: k and epsilon transport terms at a Buildings wall cell matc
     namespace dsl = NeoN::dsl;
     namespace fvm = Foam::fvm;
 
+    // Building an epsilon matrix runs the epsilonWallFunction's updateCoeffs(), which sets the
+    // wall cells and faces to epsilon0. Do it once up front and compare both codes on that state.
+    const_cast<Foam::volScalarField&>(ofEps).boundaryFieldRef().updateCoeffs();
+    auto nfEpsW = nf::constructFrom(rt.exec, rt.nfMesh, ofEps);
+
     std::cout << "=== k and epsilon transport terms (" << execName << ")\n";
     const std::vector<Foam::label> cells {hotCell, 31};
     const auto relDivK = compare(
@@ -532,13 +537,13 @@ TEST_CASE("kEpsilon: k and epsilon transport terms at a Buildings wall cell matc
     );
     const auto relDivEps = compare(
         "div(phi,epsilon)",
-        residualOf(m.nfEps, dsl::imp::div(m.nfPhi, m.nfEps)),
+        residualOf(nfEpsW, dsl::imp::div(m.nfPhi, nfEpsW)),
         (Foam::fvScalarMatrix(fvm::div(m.phi, ofEps)) & ofEps)().primitiveField(),
         cells
     );
     const auto relLapEps = compare(
         "laplacian(DepsilonEff,epsilon)",
-        residualOf(m.nfEps, dsl::imp::laplacian(m.turbNF.depsilonEff(), m.nfEps)),
+        residualOf(nfEpsW, dsl::imp::laplacian(m.turbNF.depsilonEff(), nfEpsW)),
         (Foam::fvScalarMatrix(fvm::laplacian(ofDepsEff, ofEps)) & ofEps)().primitiveField(),
         cells
     );
