@@ -181,8 +181,16 @@ int main(int argc, char* argv[])
         }
 
         NeoN::Logging::info("Starting time loop");
+        // SIMPLE/residualControl as OpenFOAM's simpleControl applies it: the run stops once every
+        // controlled field's first initial residual of an iteration is below its tolerance (the
+        // PDE solves record theirs in rt.residuals). simpleControl's own check cannot be used: it
+        // only sees residuals of fields registered with the OpenFOAM mesh. The final iteration's
+        // fields are written after the loop unless it was a write time anyway.
+        bool iterated = false;
+        bool lastIterationWritten = false;
         while (runTime.loop())
         {
+            iterated = true;
             rt.t = runTime.time().value();
             NeoN::Logging::info("Time = {}", rt.t);
 
@@ -314,7 +322,8 @@ int main(int argc, char* argv[])
             turb->correct(U, phi, rt);
 
             runTime.write();
-            if (runTime.outputTime())
+            lastIterationWritten = runTime.outputTime();
+            if (lastIterationWritten)
             {
                 NeoN::Logging::info("Writing p");
                 write(p, mesh);
@@ -325,6 +334,22 @@ int main(int argc, char* argv[])
             }
 
             runTime.printExecutionTime(Info);
+
+            if (nf::simpleResidualControlSatisfied(rt.fvSolutionDict, rt.residuals))
+            {
+                Info << nl << "SIMPLE solution converged in " << runTime.timeName()
+                     << " iterations" << nl << endl;
+                break;
+            }
+        }
+
+        if (iterated && !lastIterationWritten)
+        {
+            NeoN::Logging::info("Writing p, U and turbulence variables of the final iteration");
+            runTime.writeNow();
+            write(p, mesh);
+            write(U, mesh);
+            turb->write(mesh);
         }
     }
     NeoN::finalize();

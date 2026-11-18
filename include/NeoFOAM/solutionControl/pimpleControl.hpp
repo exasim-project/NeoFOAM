@@ -61,4 +61,12 @@ private:
     std::vector<FieldCtrl> residualControl_;
 };
 
+/** @brief OpenFOAM simpleControl's residualControl check on NeoFOAM's residuals.
+ *
+ * True when every solved field matched by a SIMPLE/residualControl entry (keys may be regexes,
+ * e.g. "(k|epsilon)") had its first initial residual of the iteration below that tolerance, and
+ * at least one field was matched. False without SIMPLE/residualControl.
+ */
+bool simpleResidualControlSatisfied(const NeoN::Dictionary& fvSolution, const ResidualMap& residuals);
+
 } // namespace NeoFOAM

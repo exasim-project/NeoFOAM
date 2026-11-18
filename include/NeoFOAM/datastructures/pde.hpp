@@ -641,6 +641,33 @@ private:
                 stat.numIter
             );
         }
+        recordResiduals(stats);
+    }
+
+    // Record the first solve of this field in the time step in runTime.residuals, the per-field
+    // residuals residualControl is checked against (simpleResidualControlSatisfied). A vector field
+    // solved component by component counts with its largest component residual, as OpenFOAM's
+    // cmptMax of the vector residual.
+    void recordResiduals(const NeoN::la::SolverStats& stats) const
+    {
+        if (stats.entries.empty()) return;
+        auto& rt = *runTime_;
+        const Foam::label timeIndex = rt.mesh.time().timeIndex();
+        if (rt.residualsTimeIndex != timeIndex)
+        {
+            rt.residuals.clear();
+            rt.residualsTimeIndex = timeIndex;
+        }
+        if (rt.residuals.count(psi_->name) != 0) return;
+        // Written so that a NaN residual propagates (std::max(0, NaN) is 0): a diverged solve must
+        // never pass residualControl.
+        FieldResidual residual {0, 0};
+        for (const auto& stat : stats.entries)
+        {
+            if (!(stat.initResNorm <= residual.first)) residual.first = stat.initResNorm;
+            if (!(stat.finalResNorm <= residual.second)) residual.second = stat.finalResNorm;
+        }
+        rt.residuals[psi_->name] = residual;
     }
 
     VolumeField* psi_;

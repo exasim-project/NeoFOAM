@@ -13,6 +13,7 @@
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
 #include "NeoFOAM/datastructures/databaseWrapper.hpp"
 #include "NeoFOAM/compatibility/fvSchemes.hpp"
+#include "NeoFOAM/solutionControl/pimpleControl.hpp"
 
 namespace NeoFOAM
 {
@@ -37,6 +38,10 @@ struct RunTime
     std::unique_ptr<DatabaseWrapper> dbWrapper; ///< Registers db in Foam::Time objectRegistry
     /// Gradient operators built from gradSchemes, keyed by entry ("grad(p)"), see gradScheme()
     std::map<std::string, std::shared_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>>> gradOps;
+    /// First {initial, final} residual of each field solved in time step residualsTimeIndex,
+    /// filled by the PDE solves; what residualControl is checked against
+    ResidualMap residuals;
+    Foam::label residualsTimeIndex = -1;
 };
 
 

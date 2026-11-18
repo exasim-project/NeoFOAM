@@ -135,4 +135,26 @@ bool PimpleControl::criteriaSatisfied(const ResidualMap& residuals)
     return checked && achieved;
 }
 
+bool simpleResidualControlSatisfied(const NeoN::Dictionary& fvSolution, const ResidualMap& residuals)
+{
+    if (!fvSolution.contains("SIMPLE") || !fvSolution.isDict("SIMPLE")) return false;
+    const auto& simple = fvSolution.subDict("SIMPLE");
+    if (!simple.contains("residualControl") || !simple.isDict("residualControl")) return false;
+    const auto& rc = simple.subDict("residualControl");
+
+    bool achieved = true;
+    bool checked = false; // safety that some checks were indeed performed
+    for (const auto& [field, residual] : residuals)
+    {
+        for (const auto& key : rc.keys())
+        {
+            if (rc.isDict(key) || (key != field && !keyMatches(key, field))) continue;
+            checked = true;
+            achieved = achieved && residual.first < asScalar(rc, key);
+            break;
+        }
+    }
+    return checked && achieved;
+}
+
 } // namespace NeoFOAM
