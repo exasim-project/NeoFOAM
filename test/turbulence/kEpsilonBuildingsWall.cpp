@@ -831,6 +831,42 @@ TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
         }
     }
 
+    // The boundary values the explicit stress uses, patch by patch: nut, U and grad(U).
+    {
+        const auto& bmP = mesh.boundaryMesh();
+        const auto nutB = toStd(m.nfNut.boundaryData().value());
+        const auto uB = toStd(m.nfU.boundaryData().value());
+        const auto gH = m.turbNF.gradU().boundaryData().value().copyToHost();
+        const auto& ofNutB = mesh.lookupObject<Foam::volScalarField>("nut").boundaryField();
+        const Foam::volTensorField ofGrad(fvc::grad(m.U));
+        std::cout << "boundary values: patch  max|d nut|/max|nut|  max|d U|/max|U|  "
+                     "max|d gradU|/max|gradU|\n";
+        forAll(bmP, patchi)
+        {
+            if (bmP[patchi].empty()) continue;
+            const auto start = m.nfNut.boundaryData().range(static_cast<NeoN::localIdx>(patchi)).first;
+            NeoN::scalar dn = 0, mn = 0, du = 0, mu = 0, dg = 0, mg = 0;
+            forAll(bmP[patchi], f)
+            {
+                const auto i = static_cast<std::size_t>(start + f);
+                dn = Foam::max(dn, Foam::mag(nutB[i] - ofNutB[patchi][f]));
+                mn = Foam::max(mn, Foam::mag(ofNutB[patchi][f]));
+                const Foam::vector u(uB[i][0], uB[i][1], uB[i][2]);
+                du = Foam::max(du, Foam::mag(u - m.U.boundaryField()[patchi][f]));
+                mu = Foam::max(mu, Foam::mag(m.U.boundaryField()[patchi][f]));
+                // NeoN stores dU_i/dx_j at (i, j), OpenFOAM at (j, i).
+                const auto& g = gH.view()[static_cast<NeoN::localIdx>(i)];
+                const Foam::tensor gT(
+                    g(0, 0), g(1, 0), g(2, 0), g(0, 1), g(1, 1), g(2, 1), g(0, 2), g(1, 2), g(2, 2)
+                );
+                dg = Foam::max(dg, Foam::mag(gT - ofGrad.boundaryField()[patchi][f]));
+                mg = Foam::max(mg, Foam::mag(ofGrad.boundaryField()[patchi][f]));
+            }
+            std::cout << "  " << bmP[patchi].name() << "  " << dn / Foam::max(mn, 1e-300) << "  "
+                      << du / Foam::max(mu, 1e-300) << "  " << dg / Foam::max(mg, 1e-300) << "\n";
+        }
+    }
+
     // OpenFOAM: simpleFoam's UEqn, residual (M & U) + grad(p).
     Foam::fvVectorMatrix UEqn(Foam::fvm::div(m.phi, m.U) + m.foamTurb->divDevReff(m.U));
     const Foam::vectorField oRes(((UEqn & m.U)().primitiveField()) + fvc::grad(p)().primitiveField());
