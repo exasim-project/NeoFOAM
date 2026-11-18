@@ -219,6 +219,50 @@ void initNearWallDistBoundary(
     );
 }
 
+// Write the corner-weighted wall-cell epsilon onto every epsilon wall-function face of that
+// cell. Upstream's calculateTurbulenceFields sets each wall face to epsilon0 of its cell
+// (`epf == scalarField(epsilon0, faceCells)`), so a cell touched by several wall faces carries one
+// averaged value on all of them. The BC cannot do that itself: it sees one patch at a time, while
+// a corner cell can touch two -- upstream solves this with a master patch that aggregates across
+// all of them. Free function because NVCC forbids NEON_LAMBDA in private members.
+void scatterEpsilonWallValue(
+    const NeoN::Executor& exec,
+    const NeoN::UnstructuredMesh& mesh,
+    const NeoN::Vector<scalar>& wallValue,
+    const NeoN::Vector<scalar>& wallMask,
+    nnfvcc::VolumeField<scalar>& epsilon
+)
+{
+    const auto epsWallValueV = wallValue.view();
+    const auto maskV = wallMask.view();
+    const auto faceOwnersV = mesh.boundaryMesh().faceOwners().view();
+    auto [epsValueV, epsRefValueV] =
+        NeoN::views(epsilon.boundaryData().value(), epsilon.boundaryData().refValue());
+    const auto& epsilonBCs = epsilon.boundaryConditions();
+    for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
+         ++patchID)
+    {
+        if (!isEpsilonWallFunction(epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()))
+        {
+            continue;
+        }
+        const auto [start, end] = epsilon.boundaryData().range(patchID);
+        NeoN::parallelFor(
+            exec,
+            {start, end},
+            NEON_LAMBDA(const NeoN::localIdx i) {
+                const auto owner = faceOwnersV[i];
+                if (maskV[owner] > scalar(0))
+                {
+                    epsValueV[i] = epsWallValueV[owner];
+                    epsRefValueV[i] = epsWallValueV[owner];
+                }
+            },
+            "kEpsilon::epsilonWFCornerAverage"
+        );
+    }
+}
+
 } // namespace kEpsilonDetail
 
 using namespace kEpsilonDetail;
@@ -565,8 +609,14 @@ void KEpsilon::correct(
     // Upstream updates the patches before assembling (kEpsilon.C calls
     // epsilon_.boundaryFieldRef().updateCoeffs(), and the fvMatrix constructor does the same for
     // k), so flux-switching patches -- inletOutlet, atmBoundaryLayerInlet -- are assembled
-    // against the current phi rather than the state left by the previous update.
+    // against the current phi rather than the state left by the previous update. Upstream's
+    // updateCoeffs also puts the corner-weighted epsilon0 on the wall faces before assembling, and
+    // the convection limiter reads them through grad(epsilon) of the wall cells.
     epsilon.correctBoundaryConditions(ctx);
+    if (anyEpsilonWF)
+    {
+        scatterEpsilonWallValue(exec_, mesh_, epsilonWallValue_, epsilonWallMask_, epsilon);
+    }
     auto epsEqn = PDESolver<scalar>(
         dsl::imp::ddt(epsilon) + dsl::imp::div(phi, epsilon)
             - dsl::imp::laplacian(depsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
@@ -589,50 +639,21 @@ void KEpsilon::correct(
     // fvMatrix::solve() leaves the boundary evaluated at the new solution; bound()'s
     // neighbourhood average reads the boundary values, so refresh them before bounding.
     epsilon.correctBoundaryConditions(ctx);
+    if (anyEpsilonWF)
+    {
+        scatterEpsilonWallValue(exec_, mesh_, epsilonWallValue_, epsilonWallMask_, epsilon);
+    }
 
     // Bound ε > 0. A plain clamp pins an undershooting cell at the floor, and ν_t = Cμ k²/ε then
     // explodes; bound() refills those cells from the neighbourhood as OpenFOAM does.
     bound(epsilon, epsilonMin_, boundCache_);
     epsilon.correctBoundaryConditions(ctx);
 
-    // Corner averaging of the wall face value. Upstream writes the corner-weighted
-    // epsilon0[celli] onto every face of a wall-adjacent cell (updateCoeffs, then
-    // setValues(faceCells, patchInternalField())), so a cell touched by several wall faces
-    // carries one averaged value rather than a different value per face. The BC cannot do
-    // that itself: it sees one patch at a time, while a corner cell can touch two -- upstream
-    // solves this with a master patch that aggregates across all of them. epsilonWallValue_
-    // is already that cross-patch corner-weighted value (it is what the pin uses, built from
-    // the same k), so scatter it back onto the faces here.
+    // The wall faces carry the corner-weighted epsilon0 again (correctBoundaryConditions put the
+    // BC's per-face value there).
     if (anyEpsilonWF)
     {
-        const auto epsWallValueV = epsilonWallValue_.view();
-        const auto maskV = epsilonWallMask_.view();
-        const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
-        auto [epsValueV, epsRefValueV] =
-            NeoN::views(epsilon.boundaryData().value(), epsilon.boundaryData().refValue());
-        const auto& epsilonBCs = epsilon.boundaryConditions();
-        for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
-             ++patchID)
-        {
-            if (!isEpsilonWallFunction(epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()))
-            {
-                continue;
-            }
-            const auto [start, end] = epsilon.boundaryData().range(patchID);
-            NeoN::parallelFor(
-                exec_,
-                {start, end},
-                NEON_LAMBDA(const NeoN::localIdx i) {
-                    const auto owner = faceOwnersV[i];
-                    if (maskV[owner] > scalar(0))
-                    {
-                        epsValueV[i] = epsWallValueV[owner];
-                        epsRefValueV[i] = epsWallValueV[owner];
-                    }
-                },
-                "kEpsilon::epsilonWFCornerAverage"
-            );
-        }
+        scatterEpsilonWallValue(exec_, mesh_, epsilonWallValue_, epsilonWallMask_, epsilon);
     }
 
     // Update spK from the new ε (ε/k destruction term). The implicit half of the k dilatation
