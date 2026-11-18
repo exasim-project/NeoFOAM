@@ -56,6 +56,17 @@ neofoam_generate_controldict(
   EXTRAS
   "libs    ( \"libturbulenceModels.so\" \"libatmosphericModels.so\" );")
 
+neofoam_generate_controldict(
+  turbulence/setup_kEpsilonBuildingsWall
+  APPLICATION
+  simpleFoam
+  END_TIME
+  1
+  DELTA_T
+  1
+  EXTRAS
+  "libs    ( \"libturbulenceModels.so\" \"libatmosphericModels.so\" );")
+
 # --- Tests ---
 
 neofoam_unit_test(spalartAllmarasDDES setup_pressureVelocityCoupling SOURCE spalartAllmarasDDES.cpp)
@@ -68,3 +79,5 @@ neofoam_unit_test(epsilonWallFunction turbulence/setup_epsilonWallFunction SOURC
 neofoam_unit_test(atmBoundaryLayer turbulence/setup_atmBoundaryLayer SOURCE atmBoundaryLayer.cpp)
 neofoam_unit_test(kEpsilonUndershoot turbulence/setup_kEpsilonUndershoot SOURCE
                   kEpsilonUndershoot.cpp)
+neofoam_unit_test(kEpsilonBuildingsWall turbulence/setup_kEpsilonBuildingsWall SOURCE
+                  kEpsilonBuildingsWall.cpp)

@@ -586,6 +586,9 @@ void KEpsilon::correct(
     }
     epsEqn.relax(); // OpenFOAM kEpsilon.C: epsEqn.ref().relax()
     epsEqn.solve();
+    // fvMatrix::solve() leaves the boundary evaluated at the new solution; bound()'s
+    // neighbourhood average reads the boundary values, so refresh them before bounding.
+    epsilon.correctBoundaryConditions(ctx);
 
     // Bound ε > 0. A plain clamp pins an undershooting cell at the floor, and ν_t = Cμ k²/ε then
     // explodes; bound() refills those cells from the neighbourhood as OpenFOAM does.
@@ -663,6 +666,7 @@ void KEpsilon::correct(
     );
     kEqn.relax(); // OpenFOAM kEpsilon.C: kEqn.ref().relax()
     kEqn.solve();
+    k.correctBoundaryConditions(ctx);
 
     // Bound k >= kMin
     bound(k, kMin_, boundCache_);
