@@ -612,6 +612,26 @@ void KEpsilon::correct(
     // against the current phi rather than the state left by the previous update. Upstream's
     // updateCoeffs also puts the corner-weighted epsilon0 on the wall faces before assembling, and
     // the convection limiter reads them through grad(epsilon) of the wall cells.
+    //
+    // updateCoeffs also overwrites epsilon in the wall cells with epsilon0 (epsilon[celli] =
+    // epsilon0[celli]), before the assembly: the explicit parts of the equation -- the convection
+    // limiter through grad(epsilon), the bounded correction, the non-orthogonal correction of the
+    // laplacian -- read the wall cells' current value in their neighbours' rows. The pin below
+    // imposes the same value only at the solve.
+    if (anyEpsilonWF)
+    {
+        const auto wallValueV = epsilonWallValue_.view();
+        const auto maskV = epsilonWallMask_.view();
+        auto epsInternalV = epsilon.internalVector().view();
+        NeoN::parallelFor(
+            exec_,
+            {0, static_cast<NeoN::localIdx>(mesh_.nCells())},
+            NEON_LAMBDA(const NeoN::localIdx c) {
+                if (maskV[c] > scalar(0)) epsInternalV[c] = wallValueV[c];
+            },
+            "kEpsilon::epsilonWFAssignWallCells"
+        );
+    }
     epsilon.correctBoundaryConditions(ctx);
     if (anyEpsilonWF)
     {
