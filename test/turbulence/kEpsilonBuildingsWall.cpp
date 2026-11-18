@@ -1075,3 +1075,262 @@ TEST_CASE("full-mesh momentum residual by region", "[.fullmesh]")
                   << oRes[c][2] << " " << V[c] << "\n";
     }
 }
+
+namespace
+{
+// Region of each cell for the full-mesh diagnostics: the first patch it touches, else interior
+// (index nPatches).
+Foam::labelList cellRegions(const Foam::fvMesh& mesh)
+{
+    const auto& bm = mesh.boundaryMesh();
+    Foam::labelList region(mesh.nCells(), bm.size());
+    forAll(bm, patchi)
+    {
+        for (const auto c : bm[patchi].faceCells())
+            if (region[c] == bm.size()) region[c] = patchi;
+    }
+    return region;
+}
+
+// One line per stage: the summed |nf - of| (weighted by w, e.g. the cell volume) relative to the
+// summed |of|, overall and in the regions that carry at least 1% of the difference, with the
+// region's max |nf - of| / max |of|.
+template<typename GetNf, typename GetOf>
+void reportByRegion(
+    const std::string& name,
+    Foam::label n,
+    const Foam::labelList& region,
+    const Foam::polyBoundaryMesh& bm,
+    GetNf nfAt,
+    GetOf ofAt,
+    const Foam::scalarField& w
+)
+{
+    const auto nR = static_cast<std::size_t>(bm.size() + 1);
+    std::vector<NeoN::scalar> sd(nR, 0), so(nR, 0), md(nR, 0), mo(nR, 0);
+    for (Foam::label i = 0; i < n; ++i)
+    {
+        const auto r = static_cast<std::size_t>(region[i]);
+        const NeoN::scalar d = nfAt(i), o = ofAt(i);
+        sd[r] += d * w[i];
+        so[r] += o * w[i];
+        md[r] = Foam::max(md[r], d);
+        mo[r] = Foam::max(mo[r], o);
+    }
+    NeoN::scalar tD = 0, tO = 0, mD = 0, mO = 0;
+    for (std::size_t r = 0; r < nR; ++r)
+    {
+        tD += sd[r];
+        tO += so[r];
+        mD = Foam::max(mD, md[r]);
+        mO = Foam::max(mO, mo[r]);
+    }
+    std::cout << "STAGE " << name << ": sum|d|/sum|of| " << tD / Foam::max(tO, 1e-300)
+              << ", max|d|/max|of| " << mD / Foam::max(mO, 1e-300) << " |";
+    for (std::size_t r = 0; r < nR; ++r)
+    {
+        if (sd[r] < 0.01 * tD || tD == 0) continue;
+        const std::string rn =
+            r < static_cast<std::size_t>(bm.size()) ? std::string(bm[r].name()) : "interior";
+        std::cout << " " << rn << " " << 100 * sd[r] / tD << "% (max " << md[r] / Foam::max(mo[r], 1e-300)
+                  << ")";
+    }
+    std::cout << "\n";
+}
+} // namespace
+
+// Diagnostic for a full case, not run by ctest: one SIMPLE iteration of neoSimpleFoam and of
+// simpleFoam from the case's state, every stage compared by region (cells next to each patch,
+// interior). Run the binary inside a case directory with "[fullsimple]".
+TEST_CASE("full-mesh SIMPLE iteration by region", "[.fullsimple]")
+{
+    Foam::Time& runTime = *timePtr;
+    NeoN::Database db;
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
+    NeoN::Executor exec = NeoN::GPUExecutor {};
+
+    auto rt = prepareRunTime(runTime, exec);
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+    std::cout << "=== full-mesh SIMPLE iteration, " << mesh.nCells() << " cells\n";
+
+    Models m(runTime, mesh, rt, fieldCollection);
+    Foam::volScalarField p(
+        Foam::IOobject("p", runTime.timeName(), mesh, Foam::IOobject::MUST_READ), mesh
+    );
+    mesh.setFluxRequired(p.name());
+    auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
+
+    const Foam::label nNonOrth = mesh.solutionDict().subDict("SIMPLE").getOrDefault<Foam::label>(
+        "nNonOrthogonalCorrectors", 0
+    );
+    const Foam::label nIntFaces = mesh.nInternalFaces();
+    namespace dsl = NeoN::dsl;
+
+    // ---- NeoFOAM: neoSimpleFoam's loop body ----
+    std::vector<NeoN::Vec3> nUStar, nHbyA, nUCorr;
+    std::vector<NeoN::scalar> nRAU, nPhiHbyA, nPSolved, nPhi, nPRelaxed, nK, nEps, nNut;
+    {
+        auto& U = m.nfU;
+        auto& phi = m.nfPhi;
+        fvcc::BoundaryContext uCtx;
+        uCtx.insert("phi", phi);
+        U.correctBoundaryConditions(uCtx);
+        m.turbNF.updateGradU(U);
+
+        nf::PDESolver<NeoN::Vec3> UEqn(
+            dsl::imp::div(phi, U) - dsl::imp::laplacian(m.turbNF.nuEff(), U)
+                + dsl::exp::viscousStress(m.nfNu, m.nfNut, m.turbNF.gradU()),
+            U,
+            rt
+        );
+        UEqn.relax();
+        UEqn.solve(-1.0 * dsl::exp::grad(nfP));
+        nUStar = toStd(U.internalVector());
+
+        auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
+        nf::constrainHbyA(U, nfP, hByA);
+        nRAU = toStd(crAU.internalVector());
+        nHbyA = toStd(hByA.internalVector());
+
+        auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
+            rt.exec, rt.nfMesh, NeoN::TokenList({std::string("linear")})
+        );
+        fvcc::SurfaceField<NeoN::scalar> rAUf = surfInterpol.interpolate(crAU);
+        rAUf.name = "rAUf";
+        auto phiHbyA = nf::flux(hByA);
+        nPhiHbyA = head(toStd(phiHbyA.internalVector()), nIntFaces);
+
+        auto pPrev = NeoN::dsl::fieldRelaxationSnapshot(nfP);
+        fvcc::BoundaryContext pCtx;
+        pCtx.insert("phi", phi);
+        pCtx.insert("U", U);
+        for (Foam::label corr = 0; corr <= nNonOrth; ++corr)
+        {
+            nfP.correctBoundaryConditions(pCtx);
+            nf::PDESolver<NeoN::scalar> pEqn(
+                dsl::imp::laplacian(rAUf, nfP) - dsl::exp::div(phiHbyA), nfP, rt
+            );
+            pEqn.linearSystem().keepFaceFluxCorrection(true);
+            pEqn.solve();
+            nfP.correctBoundaryConditions(pCtx);
+            if (corr == nNonOrth) nf::updateFaceVelocity(phiHbyA, pEqn, phi);
+        }
+        nPSolved = toStd(nfP.internalVector());
+        nPhi = head(toStd(phi.internalVector()), nIntFaces);
+
+        NeoN::dsl::applyFieldRelaxation(
+            nfP,
+            pPrev,
+            nf::lookupFieldRelaxation(rt.fvSolutionDict, "p", false).value_or(NeoN::scalar(1))
+        );
+        nfP.correctBoundaryConditions(pCtx);
+        nPRelaxed = toStd(nfP.internalVector());
+
+        nf::updateVelocity(hByA, crAU, nfP, U, rt);
+        U.correctBoundaryConditions(pCtx);
+        nUCorr = toStd(U.internalVector());
+
+        m.turbNF.correct(U, phi, m.nfK, m.nfEps, m.nfNut, rt);
+        nK = toStd(m.nfK.internalVector());
+        nEps = toStd(m.nfEps.internalVector());
+        nNut = toStd(m.nfNut.internalVector());
+    }
+
+    // ---- OpenFOAM: simpleFoam's UEqn.H and pEqn.H ----
+    auto& U = m.U;
+    auto& phi = m.phi;
+    p.storePrevIter();
+    Foam::tmp<Foam::fvVectorMatrix> tUEqn(Foam::fvm::div(phi, U) + m.foamTurb->divDevReff(U));
+    Foam::fvVectorMatrix& UEqn = tUEqn.ref();
+    UEqn.relax();
+    Foam::solve(UEqn == -fvc::grad(p));
+    const Foam::vectorField oUStar(U.primitiveField());
+
+    Foam::volScalarField rAU(1.0 / UEqn.A());
+    Foam::volVectorField HbyA(Foam::constrainHbyA(rAU * UEqn.H(), U, p));
+    Foam::surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
+    Foam::adjustPhi(phiHbyA, U, p);
+    tUEqn.clear();
+    Foam::constrainPressure(p, U, phiHbyA, rAU);
+    for (Foam::label corr = 0; corr <= nNonOrth; ++corr)
+    {
+        Foam::fvScalarMatrix pEqn(Foam::fvm::laplacian(rAU, p) == fvc::div(phiHbyA));
+        pEqn.solve();
+        if (corr == nNonOrth) phi = phiHbyA - pEqn.flux();
+    }
+    const Foam::scalarField oPSolved(p.primitiveField());
+    p.relax();
+    U = HbyA - rAU * fvc::grad(p);
+    U.correctBoundaryConditions();
+    m.foamTurb->correct();
+
+    const auto& ofK = mesh.lookupObject<Foam::volScalarField>("k");
+    const auto& ofEps = mesh.lookupObject<Foam::volScalarField>("epsilon");
+    const auto& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
+
+    // ---- compare stage by stage ----
+    const auto region = cellRegions(mesh);
+    const auto& bm = mesh.boundaryMesh();
+    const Foam::scalarField V(mesh.V().field());
+    const auto& own = mesh.owner();
+    Foam::labelList faceRegion(nIntFaces);
+    Foam::scalarField faceW(nIntFaces, 1.0);
+    for (Foam::label f = 0; f < nIntFaces; ++f) faceRegion[f] = region[own[f]];
+    const auto nC = mesh.nCells();
+    auto vecStage = [&](const std::string& name, const std::vector<NeoN::Vec3>& nf, const Foam::vectorField& of)
+    {
+        auto d = [&](Foam::label i)
+        {
+            const auto& n = nf[static_cast<std::size_t>(i)];
+            return Foam::mag(Foam::vector(n[0], n[1], n[2]) - of[i]);
+        };
+        reportByRegion(name, nC, region, bm, d, [&](Foam::label i) { return Foam::mag(of[i]); }, V);
+        // and the z component on its own
+        reportByRegion(
+            name + " (z)",
+            nC,
+            region,
+            bm,
+            [&](Foam::label i) { return Foam::mag(nf[static_cast<std::size_t>(i)][2] - of[i].z()); },
+            [&](Foam::label i) { return Foam::mag(of[i].z()); },
+            V
+        );
+    };
+    auto scalarStage = [&](const std::string& name, const std::vector<NeoN::scalar>& nf, const Foam::scalarField& of)
+    {
+        reportByRegion(
+            name,
+            nC,
+            region,
+            bm,
+            [&](Foam::label i) { return Foam::mag(nf[static_cast<std::size_t>(i)] - of[i]); },
+            [&](Foam::label i) { return Foam::mag(of[i]); },
+            V
+        );
+    };
+    auto faceStage = [&](const std::string& name, const std::vector<NeoN::scalar>& nf, const Foam::scalarField& of)
+    {
+        reportByRegion(
+            name + " (internal faces, by owner)",
+            nIntFaces,
+            faceRegion,
+            bm,
+            [&](Foam::label i) { return Foam::mag(nf[static_cast<std::size_t>(i)] - of[i]); },
+            [&](Foam::label i) { return Foam::mag(of[i]); },
+            faceW
+        );
+    };
+
+    vecStage("U after the momentum predictor", nUStar, oUStar);
+    scalarStage("rAU", nRAU, rAU.primitiveField());
+    vecStage("HbyA", nHbyA, HbyA.primitiveField());
+    faceStage("phiHbyA", nPhiHbyA, phiHbyA.primitiveField());
+    scalarStage("p after the pressure solve", nPSolved, oPSolved);
+    faceStage("phi", nPhi, phi.primitiveField());
+    scalarStage("p relaxed", nPRelaxed, p.primitiveField());
+    vecStage("U corrected", nUCorr, U.primitiveField());
+    scalarStage("k", nK, ofK.primitiveField());
+    scalarStage("epsilon", nEps, ofEps.primitiveField());
+    scalarStage("nut", nNut, ofNut.primitiveField());
+}
