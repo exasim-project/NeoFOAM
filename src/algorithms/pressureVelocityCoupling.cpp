@@ -11,6 +11,56 @@ namespace la = NeoN::la;
 namespace NeoFOAM
 {
 
+namespace
+{
+// The per-component diagonal a vector system may carry outside its scalar matrix (NeoN's
+// diagCmpt: the implicit normal damping of symmetry/slip patches), which the solver subtracts
+// from the diagonal component by component. OpenFOAM's fvMatrix::A() holds the component average
+// of such boundary diagonals and H() the per-component remainder (addCmptAvBoundaryDiag), so with
+// d the scalar diagonal and dc the per-component one, the effective diagonal of component c is
+// E_c = d - dc_c and
+//   A = d - avg(dc),   H_c = H_c(scalar) + (dc_c - avg(dc)) U_c.
+// rAU = V/d and HbyA = H/d come in from the scalar matrix; rescale both. hByA may be null.
+template<typename LinearSystem>
+void addDiagCmptToRAUandHbyA(
+    const LinearSystem& ls,
+    const nnfvcc::VolumeField<Vec3>& u,
+    const NeoN::UnstructuredMesh& mesh,
+    nnfvcc::VolumeField<scalar>& rAU,
+    nnfvcc::VolumeField<Vec3>* hByA
+)
+{
+    if (!ls.diagCmpt() || ls.diagCmpt()->size() == 0) return;
+    const auto dcV = ls.diagCmpt()->view();
+    const auto uV = u.internalVector().view();
+    const auto volV = mesh.cellVolumes().view();
+    auto rAUV = rAU.internalVector().view();
+    const bool withH = hByA != nullptr;
+    auto hV = withH ? hByA->internalVector().view() : NeoN::View<Vec3>();
+    NeoN::parallelFor(
+        u.exec(),
+        {0, static_cast<NeoN::localIdx>(mesh.nCells())},
+        NEON_LAMBDA(const NeoN::localIdx c) {
+            const Vec3 dc = dcV[c];
+            const scalar avg = (dc[0] + dc[1] + dc[2]) / scalar(3);
+            const scalar d = volV[c] / rAUV[c];
+            const scalar a = d - avg;
+            rAUV[c] = volV[c] / a;
+            if (withH)
+            {
+                Vec3 h = hV[c];
+                for (int k = 0; k < 3; ++k)
+                {
+                    h[k] = (h[k] * d + (dc[k] - avg) * uV[c][k]) / a;
+                }
+                hV[c] = h;
+            }
+        },
+        "addDiagCmptToRAUandHbyA"
+    );
+}
+} // namespace
+
 void constrainHbyA(
     const nnfvcc::VolumeField<Vec3>& u,
     const nnfvcc::VolumeField<scalar>& p,
@@ -53,6 +103,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
         mesh.cellVolumes(),
         rAU.internalVector()
     );
+    addDiagCmptToRAUandHbyA(ls, expr.getField(), mesh, rAU, nullptr);
     rAU.correctBoundaryConditions();
     return rAU;
 }
@@ -121,6 +172,8 @@ computeRAUandHByA(const PDE<Vec3>& expr)
             "computeHbyAProcBoundary"
         );
     }
+
+    addDiagCmptToRAUandHbyA(ls, u, mesh, rAU, &hByA);
 
     rAU.correctBoundaryConditions();
     hByA.correctBoundaryConditions();
