@@ -205,8 +205,9 @@ private:
 
     // Lower bounds applied to k and epsilon after each solve, as OpenFOAM's kMin_/epsilonMin_.
     // They floor the field; cells that undershoot to zero or below are refilled from the
-    // neighbourhood by bound() rather than pinned here.
-    scalar kMin_ = 0.0;
+    // neighbourhood by bound() rather than pinned here. kMin is OpenFOAM's SMALL: with 0, a wall
+    // cell whose k is floored at exactly 0 gets the log-law epsilon 0 pinned.
+    scalar kMin_ = 1e-15;
     scalar epsilonMin_ = 1e-10;
 
     // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
