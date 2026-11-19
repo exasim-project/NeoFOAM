@@ -229,12 +229,19 @@ class SolverSpec:
     # Instantiation
     # ------------------------------------------------------------------
 
-    def instantiate(self, argv: Optional[list[Any]] = None) -> SolverRuntime:
-        """Create a fresh SolverRuntime for one run of this solver."""
+    def instantiate(
+        self, argv: Optional[list[Any]] = None, region: Optional[str] = None
+    ) -> SolverRuntime:
+        """Create a fresh SolverRuntime for one run of this solver.
+
+        ``region`` names the region of a multi-region case the runtime solves;
+        ``None`` (the default) is a single-region case.
+        """
         return SolverRuntime(
             spec=self,
             name=self.name,
             argv=argv or [],
+            region=region,
         )
 
     # ------------------------------------------------------------------

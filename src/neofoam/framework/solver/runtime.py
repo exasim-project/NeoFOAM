@@ -42,6 +42,8 @@ class SolverRuntime:
     spec: "SolverSpec"
     name: str
     argv: list[Any] = field(default_factory=list)
+    # the region of a multi-region case this runtime solves; None for a single region
+    region: Optional[str] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
