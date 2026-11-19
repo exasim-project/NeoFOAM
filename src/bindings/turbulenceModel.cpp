@@ -48,6 +48,15 @@ struct TurbulenceModelHandle
     {
         model->correct(U, phi, rt);
     }
+    void correctCompressible(
+        const fvcc::VolumeField<NeoN::Vec3>& U,
+        fvcc::SurfaceField<NeoN::scalar>& phi,
+        fvcc::VolumeField<NeoN::scalar>& rho,
+        nf::RunTime& rt
+    )
+    {
+        model->correctCompressible(U, phi, rho, rt);
+    }
     fvcc::SurfaceField<NeoN::scalar>& nuEff() { return model->nuEff(); }
     const fvcc::VolumeField<NeoN::scalar>& nut() const { return model->nut(); }
     const fvcc::VolumeField<NeoN::Tensor>& gradU() const { return model->gradU(); }
@@ -532,6 +541,17 @@ void registerTurbulenceModel(nb::module_& m)
             "phi"_a,
             "runtime"_a,
             "Update the turbulence model after the PIMPLE loop each time step"
+        )
+        .def(
+            "correct_compressible",
+            &TurbulenceModelHandle::correctCompressible,
+            "u"_a,
+            "phi"_a,
+            "rho"_a,
+            "runtime"_a,
+            "Compressible update: phi is the mass flux and rho the density. The nu passed to "
+            "create_turbulence_model must hold mu/rho and be refreshed in place beforehand; "
+            "nu_eff() then returns mu + rho*nut"
         )
         .def(
             "nu_eff",

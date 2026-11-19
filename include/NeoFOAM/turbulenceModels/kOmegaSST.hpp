@@ -102,7 +102,32 @@ public:
         RunTime& rt
     );
 
-    /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian)
+    /**
+     * @brief Compressible update: the density-weighted k and omega transport equations.
+     *
+     * Equivalent to OpenFOAM's compressible kOmegaSSTBase::correct() with alpha = 1:
+     * ddt(rho, psi) + div(phi, psi) - laplacian(rho*DpsiEff, psi) = rho*(sources) with the
+     * dilatation terms -SuSp((2/3) rho divU, k) and -SuSp((2/3) rho gamma divU, omega).
+     * divU is the divergence of the volumetric flux phi/interpolate(rho). nut stays kinematic.
+     *
+     * The kinematic viscosity passed to the constructor must hold mu/rho at the current
+     * state; the caller refreshes it (in place) before every call.
+     *
+     * @param phi Face MASS flux (kg/s)
+     * @param rho Density (internal and boundary values current)
+     */
+    void correct(
+        const nnfvcc::VolumeField<Vec3>& U,
+        nnfvcc::SurfaceField<scalar>& phi,
+        nnfvcc::VolumeField<scalar>& rho,
+        nnfvcc::VolumeField<scalar>& k,
+        nnfvcc::VolumeField<scalar>& omega,
+        nnfvcc::VolumeField<scalar>& nut,
+        RunTime& rt
+    );
+
+    /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian).
+    /// After the compressible correct() it is the dynamic mu + rho*nut instead.
     nnfvcc::SurfaceField<scalar>& nuEff();
 
     /// @brief Effective k diffusion coefficient on faces: alphaK(F1)*nut + nu
@@ -167,8 +192,14 @@ public:
      *
      * Interpolates nut → surfNutTmp_, F1Tmp_ → surfF1Tmp_, then fills
      * dkEffFTmp_, domegaEffFTmp_, nuEffTmp_.
+     *
+     * With a non-null rho the diffusivities are density-weighted: rho*nut and rho*nu are
+     * interpolated (instead of nut and the cached nu), as the compressible equations need.
      */
-    void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
+    void calcDiffusivities(
+        const nnfvcc::VolumeField<scalar>& nut,
+        const nnfvcc::VolumeField<scalar>* rho = nullptr
+    );
 
     /** @brief Replace the default Gauss-Green tensor-gradient operator with the
      *  gradSchemes-configured one, so grad(U) honours e.g. cellLimited. Used by the
@@ -178,7 +209,67 @@ public:
         gradUOp_ = std::move(op);
     }
 
+    /** @brief Use the gradSchemes-configured operators for grad(k) and grad(omega), which feed
+     *  CDkOmega and hence F1 and the cross-diffusion source. OpenFOAM evaluates them with
+     *  fvc::grad(k_) / fvc::grad(omega_), i.e. with the scheme the case names for them (e.g.
+     *  cellLimited Gauss linear 1). Without this the model keeps the plain Gauss gradient. */
+    void setScalarGradOperators(
+        std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradK,
+        std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradOmega
+    )
+    {
+        gradKOp_ = std::move(gradK);
+        gradOmegaOp_ = std::move(gradOmega);
+    }
+
 private:
+
+    /// Shared body of both correct() overloads; rho == nullptr is the incompressible path.
+    void correctImpl(
+        const nnfvcc::VolumeField<Vec3>& U,
+        nnfvcc::SurfaceField<scalar>& phi,
+        nnfvcc::VolumeField<scalar>* rho,
+        nnfvcc::VolumeField<scalar>& k,
+        nnfvcc::VolumeField<scalar>& omega,
+        nnfvcc::VolumeField<scalar>& nut,
+        RunTime& rt
+    );
+
+    /// Per-cell scratch allocated on first use: the cell-level k/omega diffusivities (both paths)
+    /// and the fields only the compressible path needs.
+    struct Scratch
+    {
+        Scratch(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh);
+
+        nnfvcc::SurfaceField<scalar> rhoF;   ///< interpolated density
+        nnfvcc::SurfaceField<scalar> phiv;   ///< volumetric flux phi/rhoF
+        nnfvcc::VolumeField<scalar> divU;    ///< div(phiv)
+        nnfvcc::VolumeField<scalar> mu;      ///< rho*nu
+        nnfvcc::VolumeField<scalar> rhoNut;  ///< rho*nut
+        nnfvcc::VolumeField<scalar> dkCell;     ///< rho*(alphaK(F1)*nut + nu)
+        nnfvcc::VolumeField<scalar> domegaCell; ///< rho*(alphaOmega(F1)*nut + nu)
+    };
+
+    /// Build cornerWeightTmp_ (1/number of omegaWallFunction faces on a cell) once.
+    void buildCornerWeights(const nnfvcc::VolumeField<scalar>& omega);
+
+    /**
+     * Rewrite omega in the cells next to an omegaWallFunction patch from the CURRENT k, like
+     * omegaWallFunction::updateCoeffs(), which OpenFOAM's kOmegaSSTBase::correct() calls before
+     * CDkOmega and F1 (so those read the refreshed wall-cell omega, not last step's pin).
+     */
+    void refreshOmegaWallCells(
+        const nnfvcc::VolumeField<scalar>& k,
+        nnfvcc::VolumeField<scalar>& omega,
+        fvcc::BoundaryContext& ctx
+    );
+
+    /// grad of a scalar with the configured operator, or plain Gauss when none was set.
+    void gradScalar(
+        const std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>>& op,
+        const nnfvcc::VolumeField<scalar>& field,
+        nnfvcc::VolumeField<Vec3>& grad
+    );
 
     void reserveScratch();
     void releaseScratch();
@@ -234,6 +325,9 @@ private:
     nnfvcc::GaussGreenGrad gradOp_;
     // gradSchemes-configured tensor-gradient operator, shared with RunTime's gradScheme cache
     std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
+    // Optional gradSchemes operators for grad(k) / grad(omega); null means plain Gauss (gradOp_).
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradKOp_;
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradOmegaOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // Model coefficients
@@ -245,6 +339,10 @@ private:
 
     // 1/(N wall faces touching cell) for corner averaging; 0 for non-wall cells.
     NeoN::Vector<scalar> cornerWeightTmp_;
+
+    // G = nut*GbyNu0 with the wall-function override, uncapped: Pk(G) is capped after the omega
+    // solve, with the new omega, as OpenFOAM does when it assembles the k equation.
+    NeoN::Vector<scalar> gRawTmp_;
     bool cornerWeightsBuilt_ = false;
 
     // Lower bound applied to k after each solve, as OpenFOAM's kMin_.
@@ -252,6 +350,8 @@ private:
 
     // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
     mutable BoundCache boundCache_;
+
+    std::unique_ptr<Scratch> scratch_;
 };
 
 /**
@@ -279,6 +379,14 @@ public:
     /** @brief Solve the k and omega PDEs and update nut. */
     void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
         override;
+
+    /** @brief Compressible variant: density-weighted k and omega equations (see KOmegaSST). */
+    void correctCompressible(
+        const nnfvcc::VolumeField<Vec3>& U,
+        nnfvcc::SurfaceField<scalar>& phi,
+        nnfvcc::VolumeField<scalar>& rho,
+        RunTime& rt
+    ) override;
 
     /** @brief Surface effective viscosity (ν + ν_t). */
     nnfvcc::SurfaceField<scalar>& nuEff() override;
