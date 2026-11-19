@@ -27,7 +27,7 @@ using Catch::Matchers::RangeEquals;
 
 
 // Test Permutation class
-TEST_CASE("Permutation can be constructed from a valid old-to-new mapping", "[permutation]")
+TEST_CASE("Permutation can be constructed from a valid old-to-new mapping")
 {
     const std::vector<IndexType> oldToNew {2, 0, 3, 1};
     const std::vector<IndexType> newToOld {1, 3, 0, 2};
@@ -44,7 +44,7 @@ TEST_CASE("Permutation can be constructed from a valid old-to-new mapping", "[pe
 }
 
 
-TEST_CASE("Permutation creates an identity mapping", "[permutation]")
+TEST_CASE("Permutation creates an identity mapping")
 {
     const std::vector<IndexType> identity {0, 1, 2, 3};
 
@@ -60,7 +60,7 @@ TEST_CASE("Permutation creates an identity mapping", "[permutation]")
 }
 
 
-TEST_CASE("Permutation supports an empty identity mapping", "[permutation]")
+TEST_CASE("Permutation supports an empty identity mapping")
 {
     const auto permutation = Permutation::identity(0);
 
@@ -70,7 +70,7 @@ TEST_CASE("Permutation supports an empty identity mapping", "[permutation]")
     REQUIRE(permutation.isIdentity());
 }
 
-TEST_CASE("Permutation supports a single-element identity mapping", "[permutation]")
+TEST_CASE("Permutation supports a single-element identity mapping")
 {
     const std::vector<IndexType> expected {0};
     const auto permutation = Permutation::identity(1);
@@ -81,7 +81,7 @@ TEST_CASE("Permutation supports a single-element identity mapping", "[permutatio
     REQUIRE(permutation.isIdentity());
 }
 
-TEST_CASE("Old-to-new and new-to-old mappings are inverses", "[permutation]")
+TEST_CASE("Old-to-new and new-to-old mappings are inverses")
 {
     const Permutation permutation {std::vector<IndexType> {2, 0, 4, 1, 3}};
 
@@ -101,7 +101,7 @@ TEST_CASE("Old-to-new and new-to-old mappings are inverses", "[permutation]")
 }
 
 
-TEST_CASE("Inverse swaps the old-to-new and new-to-old mappings", "[permutation]")
+TEST_CASE("Inverse swaps the old-to-new and new-to-old mappings")
 {
     const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
 
@@ -118,7 +118,7 @@ TEST_CASE("Inverse swaps the old-to-new and new-to-old mappings", "[permutation]
 }
 
 
-TEST_CASE("Inverting a permutation twice recovers the original mapping", "[permutation]")
+TEST_CASE("Inverting a permutation twice recovers the original mapping")
 {
     const Permutation permutation {std::vector<IndexType> {2, 0, 4, 1, 3}};
 
@@ -130,7 +130,7 @@ TEST_CASE("Inverting a permutation twice recovers the original mapping", "[permu
 }
 
 
-TEST_CASE("The inverse of an identity permutation is identity", "[permutation]")
+TEST_CASE("The inverse of an identity permutation is identity")
 {
     const auto identity = Permutation::identity(5);
 
@@ -143,19 +143,19 @@ TEST_CASE("The inverse of an identity permutation is identity", "[permutation]")
     REQUIRE_THAT(inverse.newToOld(), RangeEquals(identity.newToOld()));
 }
 
-TEST_CASE("Permutation rejects duplicate new indices", "[permutation][validation]")
+TEST_CASE("Permutation rejects duplicate new indices")
 {
     REQUIRE_THROWS_AS(Permutation(std::vector<IndexType> {0, 1, 1, 3}), std::invalid_argument);
 }
 
 
-TEST_CASE("Permutation rejects an index outside its valid range", "[permutation][validation]")
+TEST_CASE("Permutation rejects an index outside its valid range")
 {
     REQUIRE_THROWS_AS(Permutation(std::vector<IndexType> {0, 1, 2, 4}), std::invalid_argument);
 }
 
 
-TEST_CASE("Permutation rejects a negative index", "[permutation][validation]")
+TEST_CASE("Permutation rejects a negative index")
 {
     if constexpr (std::is_signed_v<IndexType>)
     {
@@ -163,7 +163,7 @@ TEST_CASE("Permutation rejects a negative index", "[permutation][validation]")
     }
 }
 
-TEST_CASE("Permutation has value semantics", "[permutation]")
+TEST_CASE("Permutation has value semantics")
 {
     static_assert(std::is_copy_constructible_v<Permutation>);
 
@@ -175,7 +175,7 @@ TEST_CASE("Permutation has value semantics", "[permutation]")
 }
 
 
-TEST_CASE("Permutation mapping views provide read-only access", "[permutation]")
+TEST_CASE("Permutation mapping views provide read-only access")
 {
     using OldToNewView = decltype(std::declval<const Permutation&>().oldToNew());
 
@@ -187,10 +187,7 @@ TEST_CASE("Permutation mapping views provide read-only access", "[permutation]")
 }
 
 // Test PreparedPermutation class
-TEST_CASE(
-    "PreparedPermutation provides executor-accessible permutation mappings",
-    "[preparedPermutation]"
-)
+TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
@@ -231,7 +228,7 @@ TEST_CASE(
     }
 }
 
-TEST_CASE("PreparedPermutation provides identity mappings", "[preparedPermutation]")
+TEST_CASE("PreparedPermutation provides identity mappings")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 

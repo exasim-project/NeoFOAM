@@ -17,7 +17,7 @@ using NeoFOAM::Permutation;
 using IndexType = Permutation::IndexType;
 } // namespace
 
-TEST_CASE("Identity ordering creates an identity permutation", "[ordering]")
+TEST_CASE("Identity ordering creates an identity permutation")
 {
     const IdentityOrdering ordering {};
 

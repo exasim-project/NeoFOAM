@@ -311,7 +311,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
     }
 }
 
-TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationApplicator]")
+TEST_CASE("Applying identity permutation leaves mesh unchanged")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
@@ -381,10 +381,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationAp
     );
 }
 
-TEST_CASE(
-    "Applying an incompatible permutation to a mesh throws an exception",
-    "[permutationApplicator]"
-)
+TEST_CASE("Applying an incompatible permutation to a mesh throws an exception")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
