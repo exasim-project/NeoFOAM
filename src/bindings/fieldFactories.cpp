@@ -75,6 +75,16 @@ void registerFieldFactories(nb::module_& m)
     // Field factories — read OF fields, return NeoN fields registered in db
     // -------------------------------------------------------------------
     m.def(
+        "set_faithful_freestream",
+        [](bool enabled) { nf::detail::faithfulFreestream() = enabled; },
+        "enabled"_a,
+        "Translate freestreamVelocity / freestreamPressure to NeoN's flow-direction BCs instead of "
+        "the default approximations (fixedValue / zeroGradient). Only for solvers that pass the "
+        "velocity U in the BoundaryContext when they evaluate p (neorhoPimpleFoam); call it before "
+        "reading the fields."
+    );
+
+    m.def(
         "read_scalar_volume_field",
         [](nf::RunTime& rt, const std::string& name) -> fvcc::VolumeField<NeoN::scalar>&
         {

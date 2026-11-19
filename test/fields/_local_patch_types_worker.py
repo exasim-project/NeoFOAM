@@ -12,6 +12,8 @@ Roles (``python _local_patch_types_worker.py <role> <case_dir>``):
 * ``fields`` — read ``0/U`` and ``0/p`` through the NeoN field reader and save the
   boundary values, split per patch, to ``U_boundary.npz`` / ``p_boundary.npz``.
   An unsupported patch type aborts here instead.
+  With ``NEOFOAM_FAITHFUL_FREESTREAM=1`` in the environment the far-field patch types are
+  translated faithfully (``set_faithful_freestream(True)``) instead of approximated.
 """
 
 from __future__ import annotations
@@ -55,6 +57,8 @@ def _per_patch(runtime: Any, values: np.ndarray) -> dict[str, np.ndarray]:
 def role_fields(case: Path) -> None:
     """Read U and p through the NeoN reader → one ``.npz`` of patch values each."""
     nn.initialize(["neon"])
+    if os.environ.get("NEOFOAM_FAITHFUL_FREESTREAM") == "1":
+        nfb.set_faithful_freestream(True)
 
     # Foam::Time keeps a raw reference to the argList and the NeoN runtime a raw
     # reference to the Time, so all three stay bound for the lifetime of the read.

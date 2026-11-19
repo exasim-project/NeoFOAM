@@ -187,4 +187,15 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
     return rt;
 }
 
+namespace detail
+{
+
+bool& faithfulFreestream()
+{
+    static bool enabled = false;
+    return enabled;
+}
+
+}
+
 }
