@@ -48,7 +48,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         // Prepare expected results
         // The original cell volumes of cell 0, 1, 2, 3
         // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
-        const sizeType expectedCellCount = 4;
+        const sizeType expectedCellCount {4};
         const std::vector<NeoN::scalar> expectedCellVolumes {
             0.0222222222222222,
             0.0444444444444444,
@@ -79,7 +79,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
         // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
         // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
-        const sizeType expectedCellCount = 4;
+        const sizeType expectedCellCount {4};
         const std::vector<NeoN::Vec3> expectedCellCenters {
             {0.666666666666667, 0.166666666666667, 0.05},
             {0.666666666666667, 0.666666666666667, 0.05},
@@ -124,7 +124,7 @@ TEST_CASE("Applying permutation remaps connectivity")
 
         // Original owner cell indices of internal faces: {0, 0, 1, 2}
         // Original neighbor cell indices of internal faces: {1, 2, 3, 3}
-        const sizeType expectedInternalFaces = 4;
+        const sizeType expectedInternalFaces {4};
         const std::vector<NeoN::label> expectedOwners {0, 2, 0, 1};
         const std::vector<NeoN::label> expectedNeighbors {2, 3, 1, 3};
 
