@@ -185,6 +185,41 @@ TEST_CASE("Interpolation")
         REQUIRE_THAT(nfDivU, EqualsInternal(ofDivU, approxRel));
     }
 
+    // linearUpwindV = linearUpwind whose face correction is limited directionally: a correction
+    // pointing against the jump to the central-differencing face value is dropped, and one longer
+    // than its projection on that jump is scaled back. The random field makes the limiter active,
+    // which is checked against OpenFOAM's plain linearUpwind first.
+    SECTION("GaussGreenDiv linearUpwindV[vector] on " + execName)
+    {
+        Foam::IStringStream isLinUpwV("linearUpwindV grad(U)");
+        auto foamDivVec = Foam::fv::gaussConvectionScheme<Foam::vector>(mesh, ofPhi, isLinUpwV);
+        Foam::volVectorField ofDivU("ofDivU", foamDivVec.fvcDiv(ofPhi, ofU));
+
+        Foam::IStringStream isLinUpw("linearUpwind grad(U)");
+        auto foamDivPlain = Foam::fv::gaussConvectionScheme<Foam::vector>(mesh, ofPhi, isLinUpw);
+        Foam::volVectorField ofDivPlain("ofDivPlain", foamDivPlain.fvcDiv(ofPhi, ofU));
+        REQUIRE(Foam::gMax(Foam::mag(ofDivU - ofDivPlain)().primitiveField()) > 1.0);
+
+        auto nfDivU = NeoFOAM::constructFrom(exec, nfMesh, ofDivU);
+        zero(nfDivU, NeoN::Vec3(0.0, 0.0, 0.0));
+
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("linearUpwindV"), std::string("grad(U)")});
+        fvcc::GaussGreenDiv<NeoN::Vec3>(exec, nfMesh, scheme)
+            .div(nfDivU, nfPhi, nfU, dsl::Coeff(1.0));
+        nfDivU.correctBoundaryConditions();
+
+        // Divergence values are O(1e6) here (see the linearUpwind[vector] section above), so a
+        // relative tolerance per component is used rather than an absolute one.
+        auto approxRelV = [](NeoN::Vec3 nf, Foam::vector of)
+        {
+            return Catch::Approx(of[0]).epsilon(1e-6).margin(1.0) == nf[0]
+                && Catch::Approx(of[1]).epsilon(1e-6).margin(1.0) == nf[1]
+                && Catch::Approx(of[2]).epsilon(1e-6).margin(1.0) == nf[2];
+        };
+        REQUIRE_THAT(nfDivU, EqualsInternal(ofDivU, approxRelV));
+    }
+
     SECTION("GaussGreenDiv bounded[vector] on " + execName)
     {
         Foam::IStringStream isInnerVec("Gauss linearUpwind grad(U)");
