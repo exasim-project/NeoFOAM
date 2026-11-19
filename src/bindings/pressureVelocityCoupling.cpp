@@ -30,6 +30,16 @@ namespace NeoFOAM::bindings
 
 void registerPressureVelocityCoupling(nb::module_& m)
 {
+    nb::enum_<nf::PEqnConvention>(
+        m,
+        "PEqnConvention",
+        "Overall sign convention a pEqn was assembled with; must match for "
+        "update_face_velocity to reconstruct the correctly-signed flux. See the C++ "
+        "PEqnConvention doc (pressureVelocityCoupling.hpp) for the full rationale."
+    )
+        .value("LaplacianMinusDiv", nf::PEqnConvention::LaplacianMinusDiv)
+        .value("DivMinusLaplacian", nf::PEqnConvention::DivMinusLaplacian);
+
     // -------------------------------------------------------------------
     // Pressure-velocity coupling helpers (free functions)
     // -------------------------------------------------------------------
@@ -103,11 +113,18 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const nf::PDE<NeoN::scalar>& pEqn,
-           fvcc::SurfaceField<NeoN::scalar>& phi) { nf::updateFaceVelocity(phiHbyA, pEqn, phi); },
+           fvcc::SurfaceField<NeoN::scalar>& phi,
+           nf::PEqnConvention convention)
+        { nf::updateFaceVelocity(phiHbyA, pEqn, phi, convention); },
         "phi_hbya"_a,
         "pEqn"_a,
         "phi"_a,
-        "Update face velocity (phi) after pressure correction"
+        "convention"_a = nf::PEqnConvention::LaplacianMinusDiv,
+        "Update face velocity (phi) after pressure correction. `convention` must match "
+        "how pEqn was assembled -- LaplacianMinusDiv (+laplacian(...) - div(...), the "
+        "default, used by NeoFOAM's incompressible solvers) or DivMinusLaplacian "
+        "(+div(...) - laplacian(...), used by the compressible solver to keep its pEqn "
+        "positive-definite for DIC/IC preconditioning)."
     );
 
     m.def(
