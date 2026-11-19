@@ -381,4 +381,33 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationAp
     );
 }
 
+TEST_CASE(
+    "Applying an incompatible permutation to a mesh throws an exception",
+    "[permutationApplicator]"
+)
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    // Set up a mesh
+    Foam::Time& runTime = *timePtr;
+    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
+    Foam::scalar startTime = 0.0;
+    Foam::label startTimeIndex = 0;
+    runTime.setTime(startTime, startTimeIndex);
+
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
+    // --- Arrange ---
+    // Prepare an incompatible permutation and the applicator
+    const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
+    const Permutation permutation {oldToNew};
+    const PreparedPermutation prepared {exec, permutation};
+    const PermutationApplicator applicator(exec);
+
+    // --- Act & Assert ---
+    REQUIRE_THROWS_AS(applicator.apply(nfMesh, prepared), std::invalid_argument);
+}
+
 TEST_CASE("Applying permutation preserves field-cell association") {}

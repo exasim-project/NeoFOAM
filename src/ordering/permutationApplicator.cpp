@@ -152,7 +152,11 @@ void PermutationApplicator::validateCompatibility(
 {
     if (permutation.size() != mesh.nCells())
     {
-        throw std::invalid_argument("Permutation size does not match number of cells in mesh.");
+        throw std::invalid_argument(
+            "The permutation size (" + std::to_string(permutation.size())
+            + ") does not match the number of cells in the mesh (" + std::to_string(mesh.nCells())
+            + ")."
+        );
     }
 }
 } // namespace NeoFOAM
