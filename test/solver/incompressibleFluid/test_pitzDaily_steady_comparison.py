@@ -19,7 +19,6 @@ The history behind this test — the SIMPLE gap it originally captured as an
 ``report/incompressibleFluid-steady-state-limitations.md``.
 """
 
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -58,7 +57,7 @@ run(["incompressibleFluid"])
 """
 
 
-def test_framework_matches_native_simpleFoam() -> None:
+def test_framework_matches_native_simpleFoam(tmp_path: Path) -> None:
     """incompressibleFluid vs native simpleFoam on the steady pitzDaily case.
 
     The framework solver runs the ``SIMPLE`` algorithm and its ``U/p/k/epsilon``
@@ -73,43 +72,38 @@ def test_framework_matches_native_simpleFoam() -> None:
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / "pitzDaily_steady"
 
-    case_framework = repo_root / "test_cases" / "pitzDaily_steady_framework"
-    case_native = repo_root / "test_cases" / "pitzDaily_steady_native"
+    case_framework = tmp_path / "pitzDaily_steady_framework"
+    case_native = tmp_path / "pitzDaily_steady_native"
 
-    try:
-        setup_case(source_case, case_framework, _END_TIME, _WRITE_INTERVAL)
-        setup_case(source_case, case_native, _END_TIME, _WRITE_INTERVAL)
+    setup_case(source_case, case_framework, _END_TIME, _WRITE_INTERVAL)
+    setup_case(source_case, case_native, _END_TIME, _WRITE_INTERVAL)
 
-        framework = subprocess.run(
-            [sys.executable, "-c", _FRAMEWORK_DRIVER],
-            cwd=case_framework,
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
-        assert framework.returncode == 0, (
-            "incompressibleFluid aborted on the steady SIMPLE case:\n"
-            f"{framework.stdout[-1500:]}\n{framework.stderr[-1500:]}"
-        )
+    framework = subprocess.run(
+        [sys.executable, "-c", _FRAMEWORK_DRIVER],
+        cwd=case_framework,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert framework.returncode == 0, (
+        "incompressibleFluid aborted on the steady SIMPLE case:\n"
+        f"{framework.stdout[-1500:]}\n{framework.stderr[-1500:]}"
+    )
 
-        native = subprocess.run(
-            ["simpleFoam", "-case", str(case_native)],
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
-        assert native.returncode == 0, f"simpleFoam failed: {native.stderr}"
+    native = subprocess.run(
+        ["simpleFoam", "-case", str(case_native)],
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert native.returncode == 0, f"simpleFoam failed: {native.stderr}"
 
-        all_match, failed_fields, failed_details = compare_solver_fields(
-            case_framework, case_native, FIELDS_TO_COMPARE, rtol=1e-10, atol=1e-15
-        )
-        if not all_match:
-            parts = []
-            for fname in failed_fields:
-                max_abs, max_rel = failed_details.get(fname, (float("nan"), float("nan")))
-                parts.append(f"{fname}(abs={max_abs:.3e}, rel={max_rel:.3e})")
-            pytest.fail("Field values differ between solvers: " + ", ".join(parts))
-    finally:
-        for tc in [case_framework, case_native]:
-            if tc.exists():
-                shutil.rmtree(tc)
+    all_match, failed_fields, failed_details = compare_solver_fields(
+        case_framework, case_native, FIELDS_TO_COMPARE, rtol=1e-10, atol=1e-15
+    )
+    if not all_match:
+        parts = []
+        for fname in failed_fields:
+            max_abs, max_rel = failed_details.get(fname, (float("nan"), float("nan")))
+            parts.append(f"{fname}(abs={max_abs:.3e}, rel={max_rel:.3e})")
+        pytest.fail("Field values differ between solvers: " + ", ".join(parts))
