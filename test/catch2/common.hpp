@@ -28,6 +28,234 @@ namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
 #define SECTION_IF(condition, ...) SECTION(__VA_ARGS__) if (condition)
 
+namespace
+{
+/** @brief Checks whether T provides a const copyToHost() member function */
+template<typename T>
+concept HasCopyToHost = requires(const T& value) { value.copyToHost(); };
+}
+
+/** @brief Predicate for exact equality comparison using the built-in == operator.
+ *
+ * Used with @ref EqualsMatcher and @ref Equals to compare integer or
+ * other exactly-comparable types (e.g. NeoN::Vec3, NeoN::label).
+ */
+struct EqualInt
+{
+    /**
+     * @brief Returns true if @p rhs and @p lhs are equal within the stored margin.
+     * @param rhs Left-hand value passed to Catch::Approx.
+     * @param lhs Right-hand value to compare against.
+     */
+    bool operator()(auto rhs, auto lhs) const { return rhs == lhs; }
+};
+
+/**
+ * @brief Catch2 matcher for element-wise comparison between an actual field and expected values.
+ *
+ * This matcher compares a NeoN field (or any compatible range) against an
+ * expected container using a user-provided predicate. The comparison is
+ * performed element-wise via @c std::equal.
+ *
+ * If the @p actual argument represents a device-resident field, it is first
+ * copied to host memory via @c copyToHost() before comparison.
+ *
+ * Typical usage:
+ * @code
+ * std::vector<NeoN::Vec3> expected = { ... };
+ *
+ * REQUIRE_THAT(mesh.cellCenters(),
+ *              Equals(expected, ApproxVec3{1e-12}));
+ * @endcode
+ *
+ * @tparam Expected   Container type holding expected values (e.g. std::vector).
+ * @tparam Predicate  Binary callable returning @c bool for comparing two elements
+ *                    (e.g. @ref ApproxScalar, @ref ApproxVec3, @ref EqualInt).
+ */
+template<typename Expected, typename Predicate>
+struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
+{
+    /**
+     * @brief Constructs the matcher with expected values and comparison predicate.
+     *
+     * @param expected Container holding the expected values.
+     * @param pred     Predicate used for element-wise comparison.
+     */
+    EqualsMatcher(Expected expected, Predicate pred)
+        : expected_(std::move(expected))
+        , pred_(pred)
+    {}
+
+    /**
+     * @brief Performs element-wise comparison against the @p actual argument.
+     *
+     * The @p actual object can either be a NeoN container exposing @c copyToHost()
+     * and @c view() or be a std container. In case of a NeoN container, the data is
+     * copied to host memory first. Then the data is compared against @ref expected_
+     *  using @ref pred_.
+     *
+     * @tparam Actual Type of the actual object passed by Catch2.
+     * @param actual  The object under test (typically a NeoN field).
+     * @return @c true if all elements compare equal under the predicate,
+     *         @c false otherwise.
+     */
+    template<typename Actual>
+    bool match(const Actual& actual) const
+    {
+        using std::begin;
+        using std::end;
+
+        if constexpr (HasCopyToHost<Actual>)
+        {
+            auto actualHost = actual.copyToHost();
+            return std::equal(
+                begin(actualHost.view()),
+                end(actualHost.view()),
+                begin(expected_),
+                end(expected_),
+                pred_
+            );
+        }
+        else
+        {
+            return std::equal(begin(actual), end(actual), begin(expected_), end(expected_), pred_);
+        }
+    }
+
+    /**
+     * @brief Returns a human-readable description of the matcher.
+     *
+     * This string is used by Catch2 when reporting assertion failures.
+     *
+     * @return Description of the expected values.
+     */
+    std::string describe() const override { return "equals " + Catch::rangeToString(expected_); }
+
+private:
+
+    Expected expected_; ///< Container holding expected values.
+    Predicate pred_;    ///< Predicate used for element-wise comparison.
+};
+
+/**
+ * @brief Factory function to create an @ref EqualsMatcher for element-wise comparison.
+ *
+ * This function constructs an @ref EqualsMatcher that compares an actual range
+ * (e.g. NeoN field or container) against an expected container using a
+ * user-defined predicate.
+ *
+ * It is intended for use with Catch2's @ref REQUIRE_THAT macro:
+ * @code
+ * REQUIRE_THAT(mesh.cellCenters(),
+ *              Equals(expectedCenters, ApproxVec3{1e-12}));
+ * @endcode
+ *
+ * If no predicate is provided, @ref ApproxScalar is used by default for
+ * floating-point comparisons with a small tolerance.
+ *
+ * @tparam Expected   Type of the expected container (e.g. std::vector<T>).
+ * @tparam Predicate  Binary predicate used for element-wise comparison.
+ *                    Defaults to @ref ApproxScalar.
+ *
+ * @param expected    Container holding the expected values.
+ * @param pred        Predicate used for comparison (default: ApproxScalar{1e-32}).
+ *
+ * @return An @ref EqualsMatcher configured with the provided expected values
+ *         and comparison predicate.
+ */
+template<typename Expected, typename Predicate>
+auto Equals(Expected expected, Predicate pred)
+{
+    return EqualsMatcher<Expected, Predicate> {std::move(expected), pred};
+}
+
+/**
+ * @brief Catch2 matcher for comparing a range of a NeoN::Vector against an expected range.
+ *
+ * The matcher compares the elements in a specified range of a NeoN::Vector
+ * against the elements of an expected container. The comparison is performed
+ * element-wise using the provided predicate.
+ *
+ * The specified range follows the half-open interval convention [first, last),
+ * where @p first is inclusive and @p last is exclusive.
+ *
+ * The Vector is copied to host memory before comparison, allowing the matcher
+ * to work with Vectors residing in different memory spaces.
+ *
+ * @tparam Expected Type of the expected container.
+ * @tparam Predicate Type of the binary predicate used for element-wise comparison.
+ *
+ * @note The expected container and predicate are stored by value.
+ * @note The expected range and the selected Vector range must have the same size
+ *       for the comparison to succeed.
+ */
+template<typename Expected, typename Predicate>
+struct EqualsRangeMatcher : Catch::Matchers::MatcherGenericBase
+{
+    using Range = std::pair<NeoN::localIdx, NeoN::localIdx>;
+
+    EqualsRangeMatcher(Expected expected, Range range, Predicate pred)
+        : expected_(std::move(expected))
+        , range_(range)
+        , pred_(std::move(pred))
+    {}
+
+    template<typename Actual>
+    bool match(const Actual& actual) const
+    {
+        using std::begin;
+        using std::end;
+
+        if constexpr (HasCopyToHost<Actual>)
+        {
+            auto actualHost = actual.copyToHost();
+            auto subView = actualHost.view(range_);
+            return std::equal(
+                begin(subView),
+                end(subView),
+                begin(expected_),
+                end(expected_),
+                pred_
+            );
+        }
+    }
+
+    std::string describe() const override
+    {
+        return "in range [" + std::to_string(range_.first) + ", " + std::to_string(range_.second)
+             + ") equals " + Catch::rangeToString(expected_);
+    }
+
+private:
+
+    Expected expected_;
+    Range range_;
+    Predicate pred_;
+};
+
+/**
+ * @brief Creates a matcher for comparing a specified range of a NeoN::Vector
+ *        against expected values.
+ *
+ * The returned matcher compares the elements in the half-open range [first, last)
+ * of a NeoN::Vector against the elements of the expected container using the
+ * provided predicate.
+ *
+ * @tparam Expected Type of the container holding the expected values.
+ * @tparam Predicate Type of the binary predicate used for element-wise comparison.
+ *
+ * @param expected Container holding the expected values.
+ * @param range Half-open range [first, last) of Vector indices to compare.
+ * @param pred Binary predicate used to compare corresponding elements.
+ *
+ * @return An EqualsRangeMatcher configured with the expected values, range,
+ *         and comparison predicate.
+ */
+template<typename Expected, typename Predicate>
+auto EqualsRange(Expected expected, std::pair<NeoN::localIdx, NeoN::localIdx> range, Predicate pred)
+{
+    return EqualsRangeMatcher<Expected, Predicate> {std::move(expected), range, std::move(pred)};
+}
 
 /** @brief Approximate scalar comparison predicate for use with EqualsInternal/EqualsBoundary. */
 struct ApproxScalar
@@ -122,14 +350,16 @@ void randomizeField(auto& field)
     }
 }
 
-/** @brief Create and return a named OpenFOAM field of type @p FieldType with values supplied by @p
- * rand. */
-template<typename FieldType, typename RandomFunc>
-FieldType createRandomField(
+/** @brief
+ * Create and return a named OpenFOAM field of type @p FieldType with values
+ * supplied by @p init functor.
+ */
+template<typename FieldType, typename Initializer>
+FieldType createOpenFOAMField(
     const Foam::Time& runTime,
     const Foam::fvMesh& mesh,
     Foam::word name,
-    RandomFunc rand
+    Initializer init
 )
 {
     FieldType t(
@@ -148,20 +378,20 @@ FieldType createRandomField(
         // Surface field — fill internal + boundary
         auto& intF = t.primitiveFieldRef();
         forAll(intF, facei)
-            intF[facei] = rand();
+            intF[facei] = init();
 
         forAll(t.boundaryField(), patchi)
         {
             auto& p = t.boundaryFieldRef()[patchi];
             forAll(p, i)
-                p[i] = rand();
+                p[i] = init();
         }
     }
     else
     {
         for (auto celli = 0; celli < t.size(); celli++)
         {
-            t[celli] = rand();
+            t[celli] = init();
         }
 
         t.correctBoundaryConditions();
@@ -169,12 +399,32 @@ FieldType createRandomField(
     return t;
 }
 
+
+/** @brief Create a volScalarField with values equal to the cell indices */
+auto cellIndexScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
+{
+    // createOpenFOAMField calls init() once per cell in ascending cell order,
+    // so a running counter yields value == cell index.
+    return createOpenFOAMField<Foam::volScalarField>(
+        runTime,
+        mesh,
+        name,
+        [celli = Foam::label {0}]() mutable { return Foam::scalar(celli++); }
+    );
+}
+
+
 /** @brief Create a volScalarField with uniform random values in [1, 2]. */
 auto randomScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
 {
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
-    return createRandomField<Foam::volScalarField>(runTime, mesh, name, [&]() { return dis(gen); });
+    return createOpenFOAMField<Foam::volScalarField>(
+        runTime,
+        mesh,
+        name,
+        [&]() { return dis(gen); }
+    );
 }
 
 /** @brief Create a volVectorField with random component values in [1, 2]. */
@@ -182,7 +432,7 @@ auto randomVectorField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam
 {
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
-    return createRandomField<Foam::volVectorField>(
+    return createOpenFOAMField<Foam::volVectorField>(
         runTime,
         mesh,
         name,
@@ -197,7 +447,7 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 {
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
-    return createRandomField<Foam::surfaceScalarField>(
+    return createOpenFOAMField<Foam::surfaceScalarField>(
         runTime,
         mesh,
         name,
@@ -393,22 +643,41 @@ using NeoFOAM::EqualsBoundary;
 
 namespace Catch
 {
+// Disable Catch2's generic range handling.
+template<typename T>
+struct is_range<NeoN::Array<T>> : std::false_type
+{
+};
 
-/** @brief Disable Catch2's range StringMaker for NeoN::Vector to avoid ambiguous specializations.
- */
 template<typename T>
 struct is_range<NeoN::Vector<T>> : std::false_type
 {
 };
 
-/** @brief Stringify a NeoN::Vector by copying to host first. */
+// Common conversion.
+template<typename T>
+std::string stringifyNeoNContainer(const T& value)
+{
+    auto host = value.copyToHost();
+    return rangeToString(host.view());
+}
+
+// Explicit Catch2 integrations.
+template<typename T>
+struct StringMaker<NeoN::Array<T>>
+{
+    static std::string convert(const NeoN::Array<T>& value)
+    {
+        return stringifyNeoNContainer(value);
+    }
+};
+
 template<typename T>
 struct StringMaker<NeoN::Vector<T>>
 {
-    static std::string convert(const NeoN::Vector<T>& v)
+    static std::string convert(const NeoN::Vector<T>& value)
     {
-        auto host = v.copyToHost();
-        return rangeToString(host.view());
+        return stringifyNeoNContainer(value);
     }
 };
 
