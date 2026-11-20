@@ -9,8 +9,8 @@ namespace
 template<typename T>
 void reorderCellData(
     const NeoN::Executor& exec,
-    NeoN::Vector<T>& data,
-    const NeoFOAM::PreparedPermutation& permutation
+    const NeoFOAM::PreparedPermutation& permutation,
+    NeoN::Vector<T>& data
 )
 {
     auto oldData = data.makeCopy();
@@ -33,8 +33,8 @@ void reorderCellData(
 
 void remapConnectivity(
     const NeoN::Executor& exec,
-    NeoN::UnstructuredMesh& mesh,
-    const NeoFOAM::PreparedPermutation& permutation
+    const NeoFOAM::PreparedPermutation& permutation,
+    NeoN::UnstructuredMesh& mesh
 )
 {
     auto faceOwnersView = mesh.faceOwners().view();
@@ -98,31 +98,37 @@ void remapConnectivity(
 
 namespace NeoFOAM
 {
-// PermutationApplicator::PermutationApplicator(const NeoN::Executor& exec)
-//     : exec_ {exec}
-// {}
-
+// --- Definitions of public member functions ---
 void PermutationApplicator::apply(
-    NeoN::UnstructuredMesh& mesh,
-    const PreparedPermutation& permutation
+    const PreparedPermutation& permutation,
+    NeoN::UnstructuredMesh& mesh
 ) const
 {
-    validateCompatibility(mesh, permutation);
+    validateCompatibility(permutation, mesh);
 
     if (!permutation.isIdentity())
     {
-        reorderCellData(mesh.cellVolumes(), permutation);
+        reorderCellData(permutation, mesh.cellVolumes());
 
-        reorderCellData(mesh.cellCenters(), permutation);
+        reorderCellData(permutation, mesh.cellCenters());
 
-        remapConnectivity(mesh, permutation);
+        remapConnectivity(permutation, mesh);
     }
 }
 
+// template<typename ValueType>
+// void PermutationApplicator::apply(
+//     NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field,
+//     const PreparedPermutation& permutation
+// ) const
+// {
+//     validateCompatibility(field, permutation);
+// }
 
+// --- Definitions of private member functions ---
 void PermutationApplicator::validateCompatibility(
-    const NeoN::UnstructuredMesh& mesh,
-    const PreparedPermutation& permutation
+    const PreparedPermutation& permutation,
+    const NeoN::UnstructuredMesh& mesh
 ) const
 {
     if (permutation.size() != mesh.nCells())
@@ -135,21 +141,30 @@ void PermutationApplicator::validateCompatibility(
     }
 }
 
+// template<typename ValueType>
+// void validateCompatibility(
+//     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field,
+//     const PreparedPermutation& permutation
+// ) const
+// {
+
+// }
+
 template<typename T>
 void PermutationApplicator::reorderCellData(
-    NeoN::Vector<T>& data,
-    const PreparedPermutation& permutation
+    const PreparedPermutation& permutation,
+    NeoN::Vector<T>& data
 ) const
 {
-    ::reorderCellData(exec_, data, permutation);
+    ::reorderCellData(exec_, permutation, data);
 }
 
 void PermutationApplicator::remapConnectivity(
-    NeoN::UnstructuredMesh& mesh,
-    const PreparedPermutation& permutation
+    const PreparedPermutation& permutation,
+    NeoN::UnstructuredMesh& mesh
 ) const
 {
-    ::remapConnectivity(exec_, mesh, permutation);
+    ::remapConnectivity(exec_, permutation, mesh);
 }
 
 } // namespace NeoFOAM

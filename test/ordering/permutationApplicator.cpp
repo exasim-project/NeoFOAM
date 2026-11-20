@@ -43,7 +43,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
         const Permutation permutation {oldToNew};
         const PreparedPermutation prepared {exec, permutation};
-        const PermutationApplicator applicator(exec);
+        const PermutationApplicator applicator {exec};
 
         // Prepare expected results
         // The original cell volumes of cell 0, 1, 2, 3
@@ -57,7 +57,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         };
 
         // --- Act ---
-        applicator.apply(nfMesh, prepared);
+        applicator.apply(prepared, nfMesh);
 
         // --- Assert ---
         REQUIRE(nfMesh.nCells() == expectedCellCount);
@@ -71,7 +71,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
         const Permutation permutation {oldToNew};
         const PreparedPermutation prepared {exec, permutation};
-        const PermutationApplicator applicator(exec);
+        const PermutationApplicator applicator {exec};
 
         // Prepare expected results
         // The original cell centers of cell 0, 1, 2, 3
@@ -88,7 +88,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         };
 
         // --- Act ---
-        applicator.apply(nfMesh, prepared);
+        applicator.apply(prepared, nfMesh);
 
         // --- Assert ---
         REQUIRE(nfMesh.nCells() == expectedCellCount);
@@ -128,10 +128,10 @@ TEST_CASE("Applying permutation remaps connectivity")
         const std::vector<NeoN::label> expectedOwners {0, 2, 0, 1};
         const std::vector<NeoN::label> expectedNeighbors {2, 3, 1, 3};
 
-        const PermutationApplicator applicator(exec);
+        const PermutationApplicator applicator {exec};
 
         // --- Act ---
-        applicator.apply(nfMesh, prepared);
+        applicator.apply(prepared, nfMesh);
 
         // --- Assert ---
         REQUIRE(applicator.exec() == exec);
@@ -163,10 +163,10 @@ TEST_CASE("Applying permutation remaps connectivity")
         const sizeType expectedBoundaryFaces = 8;
         const std::vector<NeoN::label> expectedOwners {3, 1, 2, 3, 0, 1, 2, 0};
 
-        const PermutationApplicator applicator(exec);
+        const PermutationApplicator applicator {exec};
 
         // --- Act ---
-        applicator.apply(nfMesh, prepared);
+        applicator.apply(prepared, nfMesh);
 
         // --- Assert ---
         REQUIRE(applicator.exec() == exec);
@@ -198,7 +198,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
         const Permutation permutation {oldToNew};
         const PreparedPermutation prepared {exec, permutation};
-        const PermutationApplicator applicator(exec);
+        const PermutationApplicator applicator {exec};
 
         // Prepare expected results
         // The original cell centers of cell 0, 1, 2, 3
@@ -221,7 +221,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
         };
 
         // --- Act ---
-        applicator.apply(nfMesh, prepared);
+        applicator.apply(prepared, nfMesh);
 
         // --- Assert ---
         // Prepare actual face owner centers
@@ -261,7 +261,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
         const Permutation permutation {oldToNew};
         const PreparedPermutation prepared {exec, permutation};
-        const PermutationApplicator applicator(exec);
+        const PermutationApplicator applicator {exec};
 
         // Prepare expected results
         // The original cell centers of cell 0, 1, 2, 3
@@ -282,7 +282,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
         };
 
         // --- Act ---
-        applicator.apply(nfMesh, prepared);
+        applicator.apply(prepared, nfMesh);
 
         // --- Assert ---
         // Prepare actual boundary face owner centers
@@ -330,7 +330,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged")
     // Prepare a permutation and the applicator
     const Permutation permutation = Permutation::identity(nfMesh.nCells());
     const PreparedPermutation prepared {exec, permutation};
-    const PermutationApplicator applicator(exec);
+    const PermutationApplicator applicator {exec};
 
     // Prepare expected results
     const sizeType expectedCellCount {4};
@@ -353,7 +353,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged")
     auto originalBoundaryFaceOwnersView = originalBoundaryFaceOwners.view();
 
     // --- Act ---
-    applicator.apply(nfMesh, prepared);
+    applicator.apply(prepared, nfMesh);
 
     // --- Assert ---
     REQUIRE(nfMesh.nCells() == expectedCellCount);
@@ -401,10 +401,10 @@ TEST_CASE("Applying an incompatible permutation to a mesh throws an exception")
     const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
     const Permutation permutation {oldToNew};
     const PreparedPermutation prepared {exec, permutation};
-    const PermutationApplicator applicator(exec);
+    const PermutationApplicator applicator {exec};
 
     // --- Act & Assert ---
-    REQUIRE_THROWS_AS(applicator.apply(nfMesh, prepared), std::invalid_argument);
+    REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
 }
 
 TEST_CASE("Applying permutation preserves field-cell association") {}
