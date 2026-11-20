@@ -55,6 +55,13 @@ TEST_CASE("fvSolution")
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Bicgstab");
         }
+        SECTION("smoothSolver")
+        {
+            solver1.insert("solver", std::string("smoothSolver"));
+            NeoFOAM::updateSolver(solver1);
+            REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
+            REQUIRE(solver1.get<std::string>("type") == "solver::Ir");
+        }
         // GAMG maps to a CG outer iteration preconditioned by Ginkgo's Pgm algebraic
         // multigrid: the solver entry becomes Ginkgo/solver::Cg and the multigrid is
         // synthesised into the preconditioner sub-dict, replacing the OpenFOAM one.
@@ -126,6 +133,21 @@ TEST_CASE("fvSolution")
             solver1.insert("preconditioner", std::string("diagonal"));
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "Jacobi+Cg");
+        }
+        SECTION("GaussSeidel smoothSolver -> Jacobi+Ir")
+        {
+            solver1.remove("preconditioner"); // the case's T entry has DIC
+            solver1.insert("solver", std::string("smoothSolver"));
+            solver1.insert("smoother", std::string("GaussSeidel"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Jacobi+Ir");
+        }
+        SECTION("smoothSolver without smoother -> Jacobi+Ir")
+        {
+            solver1.remove("preconditioner"); // the case's T entry has DIC
+            solver1.insert("solver", std::string("smoothSolver"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Jacobi+Ir");
         }
         SECTION("configFile -> configFile")
         {
