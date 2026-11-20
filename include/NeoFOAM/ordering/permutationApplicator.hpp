@@ -106,11 +106,11 @@ public:
      * @note Surface (face-centred) fields are not handled by this function.
      *       A cell permutation does not reorder faces.
      */
-    // template<typename ValueType>
-    // void apply(
-    //     NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field,
-    //     const PreparedPermutation& permutation
-    // ) const;
+    template<typename ValueType>
+    void apply(
+        const PreparedPermutation& permutation,
+        NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field
+    ) const;
 
 
 private:
@@ -122,11 +122,11 @@ private:
         const NeoN::UnstructuredMesh& mesh
     ) const;
 
-    // template<typename ValueType>
-    // void validateCompatibility(
-    //     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field,
-    //     const PreparedPermutation& permutation
-    // ) const;
+    template<typename ValueType>
+    void validateCompatibility(
+        const PreparedPermutation& permutation,
+        const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field
+    ) const;
 
     template<typename T>
     void reorderCellData(const PreparedPermutation& permutation, NeoN::Vector<T>& data) const;

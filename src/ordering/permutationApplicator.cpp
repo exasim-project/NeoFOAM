@@ -116,14 +116,25 @@ void PermutationApplicator::apply(
     }
 }
 
-// template<typename ValueType>
-// void PermutationApplicator::apply(
-//     NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field,
-//     const PreparedPermutation& permutation
-// ) const
-// {
-//     validateCompatibility(field, permutation);
-// }
+template<typename ValueType>
+void PermutationApplicator::apply(
+    const PreparedPermutation& permutation,
+    NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field
+) const
+{
+    validateCompatibility(permutation, field);
+}
+
+// Explicit instantiations of the apply function for field
+template void PermutationApplicator::apply(
+    const PreparedPermutation& permutation,
+    NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& field
+) const;
+
+template void PermutationApplicator::apply(
+    const PreparedPermutation& permutation,
+    NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>& field
+) const;
 
 // --- Definitions of private member functions ---
 void PermutationApplicator::validateCompatibility(
@@ -141,14 +152,21 @@ void PermutationApplicator::validateCompatibility(
     }
 }
 
-// template<typename ValueType>
-// void validateCompatibility(
-//     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field,
-//     const PreparedPermutation& permutation
-// ) const
-// {
-
-// }
+template<typename ValueType>
+void PermutationApplicator::validateCompatibility(
+    const PreparedPermutation& permutation,
+    const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& field
+) const
+{
+    if (permutation.size() != field.internalVector().size())
+    {
+        throw std::invalid_argument(
+            "The permutation size (" + std::to_string(permutation.size())
+            + ") does not match the number of internal values in the field ("
+            + std::to_string(field.internalVector().size()) + ")."
+        );
+    }
+}
 
 template<typename T>
 void PermutationApplicator::reorderCellData(

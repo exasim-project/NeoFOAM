@@ -25,15 +25,10 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Set up a mesh: 2x2x1 non-uniform mesh with 4 cells
+    // Create a 2x2x1 non-uniform mesh
     Foam::Time& runTime = *timePtr;
-    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-    Foam::scalar startTime = 0.0;
-    Foam::label startTimeIndex = 0;
-    runTime.setTime(startTime, startTimeIndex);
-
-    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     SECTION("Applying permutation reorders cell volumes " + execName)
@@ -102,15 +97,10 @@ TEST_CASE("Applying permutation remaps connectivity")
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Set up a mesh
+    // Create a 2x2x1 non-uniform mesh
     Foam::Time& runTime = *timePtr;
-    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-    Foam::scalar startTime = 0.0;
-    Foam::label startTimeIndex = 0;
-    runTime.setTime(startTime, startTimeIndex);
-
-    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     SECTION(
@@ -180,15 +170,10 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Set up a mesh
+    // Create a 2x2x1 non-uniform mesh
     Foam::Time& runTime = *timePtr;
-    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-    Foam::scalar startTime = 0.0;
-    Foam::label startTimeIndex = 0;
-    runTime.setTime(startTime, startTimeIndex);
-
-    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     SECTION("Applying permutation keeps internal faces associated with the same cells " + execName)
@@ -315,15 +300,10 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Set up a mesh
+    // Create a 2x2x1 non-uniform mesh
     Foam::Time& runTime = *timePtr;
-    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-    Foam::scalar startTime = 0.0;
-    Foam::label startTimeIndex = 0;
-    runTime.setTime(startTime, startTimeIndex);
-
-    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     // --- Arrange ---
@@ -385,15 +365,10 @@ TEST_CASE("Applying an incompatible permutation to a mesh throws an exception")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Set up a mesh
+    // Create a 2x2x1 non-uniform mesh
     Foam::Time& runTime = *timePtr;
-    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-    Foam::scalar startTime = 0.0;
-    Foam::label startTimeIndex = 0;
-    runTime.setTime(startTime, startTimeIndex);
-
-    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     // --- Arrange ---
@@ -407,4 +382,24 @@ TEST_CASE("Applying an incompatible permutation to a mesh throws an exception")
     REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
 }
 
+// TEST_CASE("Applying an incompatible permutation to a field throws an exception")
+// {
+//     auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+//     // Create a 2x2x1 non-uniform mesh
+//     Foam::Time& runTime = *timePtr;
+//     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+//     NeoFOAM::MeshAdapter& mesh = *meshPtr;
+//     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
+//     // --- Arrange ---
+//     // Prepare an incompatible permutation and the applicator
+//     const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
+//     const Permutation permutation {oldToNew};
+//     const PreparedPermutation prepared {exec, permutation};
+//     const PermutationApplicator applicator {exec};
+
+//     // --- Act & Assert ---
+//     // REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
+// }
 TEST_CASE("Applying permutation preserves field-cell association") {}
