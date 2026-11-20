@@ -4,13 +4,13 @@
 #include "NeoFOAM/ordering/permutationApplicator.hpp"
 #include <stdexcept>
 
-namespace NeoFOAM::detail
+namespace
 {
 template<typename T>
 void reorderCellData(
     const NeoN::Executor& exec,
     NeoN::Vector<T>& data,
-    const PreparedPermutation& permutation
+    const NeoFOAM::PreparedPermutation& permutation
 )
 {
     auto oldData = data.makeCopy();
@@ -34,7 +34,7 @@ void reorderCellData(
 void remapConnectivity(
     const NeoN::Executor& exec,
     NeoN::UnstructuredMesh& mesh,
-    const PreparedPermutation& permutation
+    const NeoFOAM::PreparedPermutation& permutation
 )
 {
     auto faceOwnersView = mesh.faceOwners().view();
@@ -94,13 +94,13 @@ void remapConnectivity(
         "correct face owner and neighbor indices of internal faces"
     );
 }
-} // namespace NeoFOAM::detail
+} // anonymous namespace
 
 namespace NeoFOAM
 {
-PermutationApplicator::PermutationApplicator(const NeoN::Executor& exec)
-    : exec_ {exec}
-{}
+// PermutationApplicator::PermutationApplicator(const NeoN::Executor& exec)
+//     : exec_ {exec}
+// {}
 
 void PermutationApplicator::apply(
     NeoN::UnstructuredMesh& mesh,
@@ -120,31 +120,6 @@ void PermutationApplicator::apply(
 }
 
 
-template<typename T>
-void PermutationApplicator::reorderCellData(
-    NeoN::Vector<T>& data,
-    const PreparedPermutation& permutation
-) const
-{
-    detail::reorderCellData(exec_, data, permutation);
-}
-
-// Explicit instantiation of reorderCellData template function
-template void PermutationApplicator::reorderCellData<
-    NeoN::scalar>(NeoN::Vector<NeoN::scalar>&, const PreparedPermutation&) const;
-
-template void PermutationApplicator::reorderCellData<
-    NeoN::Vec3>(NeoN::Vector<NeoN::Vec3>&, const PreparedPermutation&) const;
-
-
-void PermutationApplicator::remapConnectivity(
-    NeoN::UnstructuredMesh& mesh,
-    const PreparedPermutation& permutation
-) const
-{
-    detail::remapConnectivity(exec_, mesh, permutation);
-}
-
 void PermutationApplicator::validateCompatibility(
     const NeoN::UnstructuredMesh& mesh,
     const PreparedPermutation& permutation
@@ -159,4 +134,22 @@ void PermutationApplicator::validateCompatibility(
         );
     }
 }
+
+template<typename T>
+void PermutationApplicator::reorderCellData(
+    NeoN::Vector<T>& data,
+    const PreparedPermutation& permutation
+) const
+{
+    ::reorderCellData(exec_, data, permutation);
+}
+
+void PermutationApplicator::remapConnectivity(
+    NeoN::UnstructuredMesh& mesh,
+    const PreparedPermutation& permutation
+) const
+{
+    ::remapConnectivity(exec_, mesh, permutation);
+}
+
 } // namespace NeoFOAM
