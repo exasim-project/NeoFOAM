@@ -382,24 +382,30 @@ TEST_CASE("Applying an incompatible permutation to a mesh throws an exception")
     REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
 }
 
-// TEST_CASE("Applying an incompatible permutation to a field throws an exception")
-// {
-//     auto [execName, exec] = GENERATE(allAvailableExecutor());
+TEST_CASE("Applying an incompatible permutation to a field throws an exception")
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-//     // Create a 2x2x1 non-uniform mesh
-//     Foam::Time& runTime = *timePtr;
-//     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
-//     NeoFOAM::MeshAdapter& mesh = *meshPtr;
-//     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+    // Create a 2x2x1 non-uniform mesh
+    Foam::Time& runTime = *timePtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
-//     // --- Arrange ---
-//     // Prepare an incompatible permutation and the applicator
-//     const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
-//     const Permutation permutation {oldToNew};
-//     const PreparedPermutation prepared {exec, permutation};
-//     const PermutationApplicator applicator {exec};
+    auto ofT = cellIndexScalarField(runTime, mesh, "T");
+    auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
 
-//     // --- Act & Assert ---
-//     // REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
-// }
+    const std::vector<NeoN::scalar> expectedScalarField {0.0, 1.0, 2.0, 3.0};
+
+    // --- Arrange ---
+    // Prepare an incompatible permutation and the applicator
+    // const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
+    // const Permutation permutation {oldToNew};
+    // const PreparedPermutation prepared {exec, permutation};
+    // const PermutationApplicator applicator {exec};
+
+    // --- Act & Assert ---
+    // REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
+    REQUIRE_THAT(nfT.internalVector(), Equals(expectedScalarField, ApproxScalar {1e-12}));
+}
 TEST_CASE("Applying permutation preserves field-cell association") {}
