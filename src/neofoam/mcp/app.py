@@ -20,6 +20,7 @@ try:
 except ModuleNotFoundError:  # optional [mcp] extra
     uvicorn = None  # type: ignore[assignment]
 
+from neofoam.core.entry_points import load_plugins
 from neofoam.mcp.server import ROOT_ENV_VAR, configure_root, mcp
 
 
@@ -30,6 +31,8 @@ def build_fastapi_app(*, name: str = "neofoam", root: str | None = None) -> Fast
     it (relative paths only, escapes rejected) — the trust boundary for an untrusted
     client. ``None`` leaves paths unconfined (trusted/local use).
     """
+    # The --reload worker builds this app in a fresh process, without the CLI callback.
+    load_plugins()
     configure_root(root)
     mcp_app = mcp.http_app(path="/mcp")  # Streamable-HTTP ASGI app, endpoint at /mcp
 

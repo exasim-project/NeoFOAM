@@ -7,6 +7,9 @@ Real installed distributions are not used: the result would depend on what else 
 installed in the environment. The modules live under ``cases/plugin_modules``.
 """
 
+import importlib
+import sys
+from collections.abc import Iterator
 from importlib import metadata
 from pathlib import Path
 
@@ -18,10 +21,25 @@ from neofoam.core.plugin_system import PluginSystem
 PLUGIN_MODULES = Path(__file__).parent / "cases" / "plugin_modules"
 
 
+@pytest.fixture(autouse=True)
+def restore_plugin_state() -> Iterator[None]:
+    """Forget the imported test plugins and what they registered, so each test starts clean."""
+    before = {family: list(plugins) for family, plugins in PluginSystem.list_plugins().items()}
+    yield
+    for module in PLUGIN_MODULES.glob("*.py"):
+        sys.modules.pop(module.stem, None)
+    # Dropped whole: remove_plugin_model cannot rebuild a family left with no plugins.
+    for family in set(PluginSystem.list_plugins()) - set(before):
+        del PluginSystem._registry[family]
+    for family, plugins in PluginSystem.list_plugins().items():
+        for plugin_cls in list(plugins):
+            if plugin_cls not in before[family]:
+                PluginSystem.remove_plugin_model(family, plugin_cls)
+
+
 def _install(monkeypatch: pytest.MonkeyPatch, *installed: metadata.EntryPoint) -> None:
-    """Make ``installed`` the only entry points, with a fresh load state."""
+    """Make ``installed`` the only entry points."""
     monkeypatch.syspath_prepend(str(PLUGIN_MODULES))
-    monkeypatch.setattr(entry_points, "_loaded", set())
     monkeypatch.setattr(
         metadata,
         "entry_points",
@@ -44,19 +62,26 @@ def test_load_plugins_registers_the_plugin_models(monkeypatch: pytest.MonkeyPatc
 
 
 def test_load_plugins_imports_each_plugin_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    _install(monkeypatch, _plugin("test", "entry_point_test_plugin"))
+    _install(monkeypatch, _plugin("counting", "entry_point_counting_plugin"))
 
-    first = entry_points.load_plugins()
-    second = entry_points.load_plugins()
+    entry_points.load_plugins()
+    entry_points.load_plugins()
 
-    assert (first, second) == (["test"], [])
+    assert importlib.import_module("entry_point_counting_plugin").import_count == 1
 
 
-def test_load_plugins_names_the_failing_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
-    _install(monkeypatch, _plugin("broken", "entry_point_broken_plugin"))
+def test_load_plugins_imports_both_plugins_of_the_same_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install(
+        monkeypatch,
+        _plugin("shared", "entry_point_test_plugin"),
+        _plugin("shared", "entry_point_counting_plugin"),
+    )
 
-    with pytest.raises(RuntimeError, match="neofoam plugin 'broken'"):
-        entry_points.load_plugins()
+    entry_points.load_plugins()
+
+    assert {"entry_point_test_plugin", "entry_point_counting_plugin"} <= set(sys.modules)
 
 
 def test_a_failed_plugin_fails_again_on_retry(monkeypatch: pytest.MonkeyPatch) -> None:

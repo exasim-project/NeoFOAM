@@ -11,9 +11,10 @@ Two groups are read:
 * ``neofoam.plugins`` — each entry point names a **module**. Importing it runs its
   registrations (``Model(...).register_with(viscosityModel)``, ``@Node.register``,
   …), so a plugin can add to *any* PluginSystem family. :func:`load_plugins`
-  imports them once per process; the ``neofoam`` CLI calls it before every command.
+  imports them all; every ``neofoam`` process entry point calls it before building
+  models or schemas.
 * ``neofoam.solvers`` — each entry point names a ``run(argv: list[str]) -> None``
-  callable, exposed as ``neofoam solver <entry point name>``.
+  callable, exposed as ``neofoam solver <lower-cased entry point name>``.
 
 A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.
@@ -34,26 +35,31 @@ __all__ = ["PLUGIN_GROUP", "SOLVER_GROUP", "load_plugins", "solver_entry_points"
 PLUGIN_GROUP = "neofoam.plugins"
 SOLVER_GROUP = "neofoam.solvers"
 
-_loaded: set[str] = set()
 
+def load_plugins() -> None:
+    """Import every installed ``neofoam.plugins`` module.
 
-def load_plugins() -> list[str]:
-    """Import every ``neofoam.plugins`` module not imported yet and return their names."""
-    newly_loaded: list[str] = []
+    Call it at a process entry point, before models or schemas are built. Code inside
+    neofoam registers directly with :class:`~neofoam.core.plugin_system.PluginSystem`
+    and does not need it.
+
+    Repeat calls are cheap and run no module body twice, because Python's import cache
+    holds each module; a module that failed to import is not cached, so a retry raises
+    again. Concurrent calls are safe for the same reason: the import system locks each
+    module while it runs.
+
+    Example::
+
+        load_plugins()
+        spec = resolve_solver("incompressibleFluid")
+    """
     for entry_point in metadata.entry_points(group=PLUGIN_GROUP):
-        if entry_point.name in _loaded:
-            continue
-        # Marked before the import so a plugin that itself calls load_plugins() cannot recurse.
-        _loaded.add(entry_point.name)
         try:
             entry_point.load()
         except Exception as exc:
-            _loaded.discard(entry_point.name)  # a retry must fail again, not skip it
             raise RuntimeError(
                 f"neofoam plugin {entry_point.name!r} ({entry_point.value}) failed to load: {exc}"
             ) from exc
-        newly_loaded.append(entry_point.name)
-    return newly_loaded
 
 
 def solver_entry_points() -> list[metadata.EntryPoint]:

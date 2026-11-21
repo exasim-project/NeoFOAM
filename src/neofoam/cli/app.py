@@ -271,27 +271,28 @@ def _plugin_solver_command(entry_point: metadata.EntryPoint) -> Callable[[typer.
     return command
 
 
-def add_plugin_solvers(solvers: typer.Typer) -> None:
-    """Add one ``solvers`` command per ``neofoam.solvers`` entry point."""
+def _add_plugin_solvers(solvers: typer.Typer) -> None:
+    """Add one lower-cased ``solvers`` command per ``neofoam.solvers`` entry point."""
     taken = {
-        command.name or (command.callback.__name__ if command.callback else "")
+        (command.name or (command.callback.__name__ if command.callback else "")).lower()
         for command in solvers.registered_commands
     }
     for entry_point in solver_entry_points():
-        if entry_point.name in taken:
+        command_name = entry_point.name.lower()
+        if command_name in taken:
             raise ValueError(
-                f"plugin solver {entry_point.name!r} ({entry_point.value}) clashes with an "
-                "existing solver command"
+                f"plugin solver {entry_point.name!r} ({entry_point.value}) clashes with the "
+                f"existing solver command {command_name!r}"
             )
-        taken.add(entry_point.name)
+        taken.add(command_name)
         solvers.command(
-            name=entry_point.name,
+            name=command_name,
             help=f"Plugin solver from {entry_point.value}.",
             context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
         )(_plugin_solver_command(entry_point))
 
 
-add_plugin_solvers(solver_app)
+_add_plugin_solvers(solver_app)
 
 
 @app.command()
