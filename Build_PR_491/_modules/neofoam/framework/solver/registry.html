@@ -657,7 +657,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Solver-name registry — filesystem-discovered, not hand-maintained.</span>
+<span class="sd">"""Solver-name registry — discovered from the package layout and entry points.</span>
 
 <span class="sd">Domain-level solver discovery: a solver is any package ``neofoam.solver.&lt;name&gt;``</span>
 <span class="sd">carrying a module ``&lt;name&gt;.py`` that exports a ``&lt;name&gt;`` spec object (the convention</span>
@@ -665,14 +665,16 @@
 <span class="sd">``incompressibleFluid``). New solvers register automatically by following that layout;</span>
 <span class="sd">there is no per-solver line to add here.</span>
 
-<span class="sd">Importing a solver spec pulls ``pybFoam`` (the native bindings), so discovery is</span>
-<span class="sd">**filesystem-only** (no spec import) and :func:`resolve_solver` imports the spec lazily</span>
-<span class="sd">(pulling ``pybFoam``) only when actually called. This lives in ``framework`` rather than</span>
+<span class="sd">Importing a solver spec pulls ``pybFoam`` (the native bindings), so discovery reads only</span>
+<span class="sd">the package layout and the installed entry-point metadata (no spec import) and</span>
+<span class="sd">:func:`resolve_solver` imports the spec lazily (pulling ``pybFoam``) only when actually</span>
+<span class="sd">called. This lives in ``framework`` rather than</span>
 <span class="sd">in a frontend package so both the MCP host (``neofoam.mcp.registry`` re-exports it) and</span>
 <span class="sd">the tooling/sweep runners depend on the framework, not on each other.</span>
 
 <span class="sd">Separately installed packages add solvers through the ``neofoam.region_solvers`` entry</span>
-<span class="sd">point group (:mod:`neofoam.core.entry_points`). A built-in solver of the same name wins.</span>
+<span class="sd">point group (:mod:`neofoam.core.entry_points`). A built-in solver of the same name wins;</span>
+<span class="sd">two entry points sharing another name with different targets raise ``ValueError``.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -704,8 +706,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_plugin_solvers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">EntryPoint</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Region solvers of installed packages by name, unloaded."""</span>
-    <span class="k">return</span> <span class="p">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">entry_point</span> <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="n">region_solver_entry_points</span><span class="p">()}</span>
+<span class="w">    </span><span class="sd">"""Region solvers of installed packages by name, unloaded; conflicting targets raise."""</span>
+    <span class="n">built_in</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_discover_solver_names</span><span class="p">())</span>
+    <span class="n">solvers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">EntryPoint</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="n">region_solver_entry_points</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">entry_point</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">built_in</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">solvers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">entry_point</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">first</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">entry_point</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"region solver </span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has conflicting targets: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> and </span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">solvers</span>
 
 
 <div class="viewcode-block" id="list_solver_names">
