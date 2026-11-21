@@ -6,7 +6,7 @@
 Use it when the extension lives in its own repository (e.g. ``neofoam_mdao``);
 code inside neofoam registers directly with :class:`~neofoam.core.plugin_system.PluginSystem`.
 
-Three groups are read:
+Four groups extend neofoam; :mod:`neofoam.ui.plugins` reads the last, this module the rest:
 
 * ``neofoam.plugins`` — each entry point names a **module**. Importing it runs its
   registrations (``Model(...).register_with(viscosityModel)``, ``@Node.register``,
@@ -18,6 +18,7 @@ Three groups are read:
 * ``neofoam.region_solvers`` — each entry point names a ``SolverSpec``, which
   :func:`~neofoam.framework.solver.registry.resolve_solver` finds by name. A built-in
   solver of the same name takes precedence.
+* ``neofoam.ui.steps`` — each entry point names a factory of an extra wizard step.
 
 A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.

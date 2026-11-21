@@ -56,6 +56,43 @@ def test_resolve_solver_prefers_the_built_in_solver(monkeypatch: pytest.MonkeyPa
     assert spec.name == "incompressibleFluid"
 
 
+def _install_conflicting_targets(monkeypatch: pytest.MonkeyPatch, name: str) -> None:
+    """Install two region solvers called ``name`` with different targets."""
+    installed = [
+        metadata.EntryPoint(name=name, value=PLUGIN_SPEC, group=REGION_SOLVER_GROUP),
+        metadata.EntryPoint(name=name, value="other_plugin:spec", group=REGION_SOLVER_GROUP),
+    ]
+    monkeypatch.syspath_prepend(str(PLUGIN_MODULES))
+    monkeypatch.setattr(
+        metadata, "entry_points", lambda group: installed if group == REGION_SOLVER_GROUP else []
+    )
+
+
+def test_resolve_solver_names_both_conflicting_targets(monkeypatch: pytest.MonkeyPatch) -> None:
+    _install_conflicting_targets(monkeypatch, "pluginRegionSolver")
+
+    with pytest.raises(ValueError, match=f"'{PLUGIN_SPEC}' and 'other_plugin:spec'"):
+        resolve_solver("pluginRegionSolver")
+
+
+def test_built_in_solver_wins_over_conflicting_targets(monkeypatch: pytest.MonkeyPatch) -> None:
+    _install_conflicting_targets(monkeypatch, "incompressibleFluid")
+
+    spec = resolve_solver("incompressibleFluid")
+
+    assert spec.name == "incompressibleFluid"
+
+
+def test_list_solver_names_lists_a_conflicting_built_in_solver_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_conflicting_targets(monkeypatch, "incompressibleFluid")
+
+    names = list_solver_names()
+
+    assert names.count("incompressibleFluid") == 1
+
+
 def test_resolve_unknown_solver_lists_plugin_region_solvers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

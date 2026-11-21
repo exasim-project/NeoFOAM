@@ -30,7 +30,10 @@ pytest.importorskip("pybFoam")
 jsonschema = pytest.importorskip("jsonschema")  # transitive via the `mcp` extra
 
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk  # noqa: E402
-from neofoam.mcp.registry import list_solver_names, resolve_solver  # noqa: E402
+from neofoam.framework.solver.registry import (  # built-ins only: no installed plugin  # noqa: E402
+    _discover_solver_names as builtin_solver_names,
+)
+from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui.case_spec import configs_to_form_state  # noqa: E402
 from neofoam.ui.forms import FormEntry, build_forms  # noqa: E402
 
@@ -84,7 +87,7 @@ def _assert_ledger(found: dict[tuple[str, ...], str], stage: str, solver_name: s
     assert not fixed, f"these mismatches are fixed — delete them from _OUTSTANDING: {sorted(fixed)}"
 
 
-@pytest.mark.parametrize("solver_name", list_solver_names())
+@pytest.mark.parametrize("solver_name", builtin_solver_names())
 def test_seeded_defaults_validate_against_their_form_schema(solver_name: str) -> None:
     found: dict[tuple[str, ...], str] = {}
     for entry in build_forms(resolve_solver(solver_name)):
