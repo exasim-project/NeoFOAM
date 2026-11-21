@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=6a4ff913" />
     
@@ -670,9 +670,10 @@ code inside neofoam registers directly with <a class="reference internal" href="
 <li><p><code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> — each entry point names a <strong>module</strong>. Importing it runs its
 registrations (<code class="docutils literal notranslate"><span class="pre">Model(...).register_with(viscosityModel)</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;Node.register</span></code>,
 …), so a plugin can add to <em>any</em> PluginSystem family. <a class="reference internal" href="#neofoam.core.entry_points.load_plugins" title="neofoam.core.entry_points.load_plugins"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_plugins()</span></code></a>
-imports them once per process; the <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> CLI calls it before every command.</p></li>
+imports them all; every <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> process entry point calls it before building
+models or schemas.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">neofoam.solvers</span></code> — each entry point names a <code class="docutils literal notranslate"><span class="pre">run(argv:</span> <span class="pre">list[str])</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>
-callable, exposed as <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">&lt;entry</span> <span class="pre">point</span> <span class="pre">name&gt;</span></code>.</p></li>
+callable, exposed as <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">&lt;lower-cased</span> <span class="pre">entry</span> <span class="pre">point</span> <span class="pre">name&gt;</span></code>.</p></li>
 </ul>
 <p>A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.</p>
@@ -686,8 +687,20 @@ change which models a case resolves to.</p>
 </div>
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.core.entry_points.load_plugins">
-<span class="sig-prename descclassname"><span class="pre">neofoam.core.entry_points.</span></span><span class="sig-name descname"><span class="pre">load_plugins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/core/entry_points.html#load_plugins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.core.entry_points.load_plugins" title="Link to this definition">¶</a></dt>
-<dd><p>Import every <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module not imported yet and return their names.</p>
+<span class="sig-prename descclassname"><span class="pre">neofoam.core.entry_points.</span></span><span class="sig-name descname"><span class="pre">load_plugins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/core/entry_points.html#load_plugins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.core.entry_points.load_plugins" title="Link to this definition">¶</a></dt>
+<dd><p>Import every installed <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module.</p>
+<p>Call it at a process entry point, before models or schemas are built. Code inside
+neofoam registers directly with <a class="reference internal" href="neofoam.core.plugin_system.html#neofoam.core.plugin_system.PluginSystem" title="neofoam.core.plugin_system.PluginSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">PluginSystem</span></code></a>
+and does not need it.</p>
+<p>Repeat calls are cheap and run no module body twice, because Python’s import cache
+holds each module; a module that failed to import is not cached, so a retry raises
+again. Concurrent calls are safe for the same reason: the import system locks each
+module while it runs.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">load_plugins</span><span class="p">()</span>
+<span class="n">spec</span> <span class="o">=</span> <span class="n">resolve_solver</span><span class="p">(</span><span class="s2">"incompressibleFluid"</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -772,6 +785,6 @@ change which models a case resolves to.</p>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../_static/design-tabs.js?v=fcb327ea"></script>
     </body>
 </html>

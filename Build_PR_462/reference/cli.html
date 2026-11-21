@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6a4ff913" />
     
@@ -689,8 +689,11 @@ neofoam<span class="w"> </span>solver<span class="w"> </span>incompressiblefluid
 </div>
 <p>The CLI imports every <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module before running a command, so a
 plugin can add to any <code class="docutils literal notranslate"><span class="pre">PluginSystem</span></code> family (viscosity models, post-processing
-nodes, …). A plugin that fails to import aborts the command; a plugin solver
-whose name matches a built-in one is refused.</p>
+nodes, …). The sweep runner, MCP server and UI module entry points load them too.
+A plugin that fails to import aborts the command.</p>
+<p>Solver commands are lower-case: an entry point <code class="docutils literal notranslate"><span class="pre">myFluid</span></code> runs as
+<code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">myfluid</span></code>, like the built-in solvers. A plugin solver whose
+lower-cased name matches another solver command is refused.</p>
 </section>
 </section>
 <section id="executor-selection-and-gpu-initialization">
@@ -835,6 +838,6 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
     </body>
 </html>
