@@ -237,6 +237,20 @@ plus ``operation_number=2.5``; the turbulence update lands after
 ``continuity`` because of its ``depends_on=continuity``. The solver
 itself never named the model operations.
 
+Contributed loops: ``wraps``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A model can contribute a loop known only once the case is read (e.g. a
+region's coupling op): a loop operation that declares where it goes,
+``OperationMetadata(wraps=Placement(...))``, resolved with the solver's graph.
+``Placement()`` wraps the whole body of the top scope (the time loop, or the
+innermost loop placed there before). ``Placement(operations=("solve_T",))``
+moves those operations and everything downstream of them over ``depends_on`` /
+``before`` into the loop, which takes the place of the last of them; the other
+operations of the scope stay outside. Loops are placed outer first; unknown
+names, operations in more than one scope, or a loop that would hold one placed
+before it raise ``ValueError``. See :doc:`region-coupling`.
+
 Trade-offs
 ----------
 

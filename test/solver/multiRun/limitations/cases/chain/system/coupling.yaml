@@ -1,0 +1,10 @@
+# Two exchanges that share region b: one coupling loop over a, b and c.
+exchanges:
+  - ports: {a: to_b, b: to_a}
+  - ports: {b: to_c, c: to_b}
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [a-b, b-c]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}

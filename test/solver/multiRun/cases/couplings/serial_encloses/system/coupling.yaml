@@ -1,0 +1,14 @@
+# The serial loop fsi encloses cht, which couples its regions a and b as well.
+exchanges:
+  - {name: fsi-ab, ports: {a: to_b, b: to_a}}
+  - {name: cht-ab, ports: {a: wall, b: wall}}
+couplings:
+  - name: fsi
+    scheme: serial
+    exchanges: [fsi-ab]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
+  - name: cht
+    exchanges: [cht-ab]
+    convergence:
+      - {type: relative, data: y, limit: 1.0e-6}

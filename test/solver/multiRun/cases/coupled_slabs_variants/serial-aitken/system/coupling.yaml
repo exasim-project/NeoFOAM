@@ -1,0 +1,15 @@
+# Laid over cases/coupled_slabs: a serial loop around each region's solve_T.
+exchanges:
+  - name: interface
+    ports: {left: right, right: left}
+couplings:
+  - name: coupling
+    scheme: serial
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T_sink, limit: 1.0e-12}
+      - {type: relative, data: h, limit: 1.0e-12}
+    wraps:
+      left: {operations: [solve_T]}
+      right: {operations: [solve_T]}

@@ -11,12 +11,13 @@ time step: both need the partner back inside the iteration.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal, Mapping, Sequence
+from typing import Literal, Mapping, Optional, Sequence
 
 from neofoam.framework.types import Placement
 
 from .comm.channel import CommChannel
 from .data import End
+from .field_port import FieldPort, check_field_ports
 from .strategies.acceleration import CouplingAcceleration
 from .strategies.convergence import CouplingConvergence
 from .strategies.mapping import CouplingMapping, default_mapping
@@ -84,6 +85,7 @@ class ParticipantExchanges:
     exchanges: tuple[Exchange, ...]
     comm_channel: CommChannel
     loops: tuple[CouplingLoop, ...] = ()
+    field_ports: tuple[FieldPort, ...] = ()
 
     @property
     def leader(self) -> str:
@@ -126,12 +128,25 @@ def participant_exchanges(
     exchanges: Sequence[Exchange],
     comm_channel: CommChannel,
     loops: Sequence[CouplingLoop],
+    field_ports: Optional[Mapping[str, Sequence[FieldPort]]] = None,
 ) -> dict[str, ParticipantExchanges]:
     """The coupling of every region ``exchanges`` connect, by region.
 
-    ``regions`` are in stepping order, ``loops`` outer to inner.
+    ``regions`` are in stepping order, ``loops`` outer to inner; ``field_ports``:
+    each region's field ports of the yaml.
     """
-    check_exchanges(regions, exchanges, loops)
+    check_exchanges(regions, exchanges, loops, field_ports)
+    return build_participant_exchanges(regions, exchanges, comm_channel, loops, field_ports)
+
+
+def build_participant_exchanges(
+    regions: Sequence[str],
+    exchanges: Sequence[Exchange],
+    comm_channel: CommChannel,
+    loops: Sequence[CouplingLoop],
+    field_ports: Optional[Mapping[str, Sequence[FieldPort]]] = None,
+) -> dict[str, ParticipantExchanges]:
+    """:func:`participant_exchanges` of a coupling :func:`check_exchanges` passed already."""
     couplings: dict[str, ParticipantExchanges] = {}
     for region in regions:
         group = _group(region, regions, exchanges)
@@ -144,19 +159,29 @@ def participant_exchanges(
             }
             member_loops = tuple(loop for loop in loops if touching & set(loop.exchanges))
             couplings[member] = ParticipantExchanges(
-                member, group, group_exchanges, comm_channel, member_loops
+                member,
+                group,
+                group_exchanges,
+                comm_channel,
+                member_loops,
+                tuple((field_ports or {}).get(member, ())),
             )
     return couplings
 
 
 def check_exchanges(
-    regions: Sequence[str], exchanges: Sequence[Exchange], loops: Sequence[CouplingLoop]
+    regions: Sequence[str],
+    exchanges: Sequence[Exchange],
+    loops: Sequence[CouplingLoop],
+    field_ports: Optional[Mapping[str, Sequence[FieldPort]]] = None,
 ) -> None:
-    """Raise ``ValueError`` unless ``exchanges`` and ``loops`` couple ``regions`` consistently.
+    """Raise ``ValueError`` unless ``exchanges``, ``loops`` and ``field_ports`` fit ``regions``.
 
     The one check of a case's coupling, for the Python API and the case's config.
     """
-    _check_ends(regions, exchanges)
+    check_regions(regions, exchanges)
+    _check_ends(exchanges)
+    check_field_ports(exchanges, field_ports or {})
     names = [exchange.name for exchange in exchanges]
     in_loop: dict[str, str] = {}
     for loop in loops:
@@ -182,7 +207,8 @@ def check_exchanges(
     _check_serial_nesting(loops, exchanges)
 
 
-def _check_ends(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
+def check_regions(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
+    """Raise ``ValueError`` unless ``exchanges`` couple only regions of ``regions``."""
     named = sorted(
         {region for exchange in exchanges for region, _port in exchange.ends} - set(regions)
     )
@@ -190,6 +216,9 @@ def _check_ends(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
         raise ValueError(
             f"the exchanges couple the regions {named}, which are not in {list(regions)}"
         )
+
+
+def _check_ends(exchanges: Sequence[Exchange]) -> None:
     names = [exchange.name for exchange in exchanges]
     owner: dict[End, str] = {}
     for exchange in exchanges:

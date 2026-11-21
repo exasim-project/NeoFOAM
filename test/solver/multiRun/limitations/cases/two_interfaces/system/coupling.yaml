@@ -1,0 +1,10 @@
+# Two exchanges between a and b: patch p1 of a meets q1 of b, p2 meets q2.
+exchanges:
+  - ports: {a: p1, b: q1}
+  - ports: {a: p2, b: q2}
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [a-b, a-b-2]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}

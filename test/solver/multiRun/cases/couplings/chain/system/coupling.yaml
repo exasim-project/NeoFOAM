@@ -1,0 +1,20 @@
+# The chain a - b - c: the exchange a-b joins a.to_b and b.to_a, b-c b.to_c and c.to_b.
+exchanges:
+  - ports: {a: to_b, b: to_a}
+  - ports: {b: to_c, c: to_b}
+couplings:
+  - name: outer
+    scheme: parallel
+    maxIterations: 7
+    exchanges:
+      - {name: b-c, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
+      - {type: relative, data: y, limit: 1.0e-3}
+  - name: inner
+    scheme: parallel
+    exchanges: [a-b]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-8}
+    wraps:
+      b: {operations: [solve_x]}

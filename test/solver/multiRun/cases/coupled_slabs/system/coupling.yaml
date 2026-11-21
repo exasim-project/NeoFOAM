@@ -1,0 +1,13 @@
+exchanges:
+  - name: interface
+    ports: {left: right, right: left}
+    mapping: nearest-neighbor
+couplings:
+  - name: coupling
+    scheme: parallel
+    maxIterations: 100
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T_sink, limit: 1.0e-12}
+      - {type: relative, data: h, limit: 1.0e-12}

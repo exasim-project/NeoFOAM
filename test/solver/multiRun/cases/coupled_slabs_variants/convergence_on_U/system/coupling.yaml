@@ -1,0 +1,12 @@
+# Laid over cases/coupled_slabs: a convergence measure on U, which no port sends.
+exchanges:
+  - name: interface
+    ports: {left: right, right: left}
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [interface]
+    convergence:
+      - {type: relative, data: T_sink, limit: 1.0e-12}
+      - {type: relative, data: h, limit: 1.0e-12}
+      - {type: relative, data: U, limit: 1.0e-12}

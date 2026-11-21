@@ -1,0 +1,13 @@
+# An inout field port cannot pair with an in port: inout pairs with inout only.
+ports:
+  plant:
+    - {name: T_cells, field: T, direction: inout}
+  controller:
+    - {name: T_in, field: T, patch: inlet, direction: in}
+exchanges:
+  - {name: sensor, ports: {plant: T_cells, controller: T_in}, mapping: identity}
+couplings:
+  - name: control
+    exchanges: [sensor]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}

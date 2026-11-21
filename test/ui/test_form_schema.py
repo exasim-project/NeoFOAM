@@ -202,6 +202,7 @@ def test_every_add_a_key_row_of_the_wizard_is_labelled(solver_name):
         ("nf.zone", "Add zone"),
         ("nf.source", "Add source"),
         ("nf.keyword", "Add keyword"),
+        ("nf.region", "Add region"),
     ],
 )
 def test_adder_button_names_what_it_adds(prefix, text):
@@ -262,6 +263,7 @@ _SCALAR_GRIDS = {
         "dict:VofPimpleAlgorithmConfig": [""],
         "dict:DynamicMeshControls": [""],
     },
+    "multiRun": {},
 }
 
 

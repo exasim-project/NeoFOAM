@@ -1,0 +1,10 @@
+# Steady: no time step, so the serial loop may wrap the whole outer loop.
+exchanges:
+  - ports: {a: interface, b: interface}
+    mapping: identity
+couplings:
+  - name: coupling
+    scheme: serial
+    exchanges: [a-b]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
