@@ -14,15 +14,20 @@ Importing a solver spec pulls ``pybFoam`` (the native bindings), so discovery is
 (pulling ``pybFoam``) only when actually called. This lives in ``framework`` rather than
 in a frontend package so both the MCP host (``neofoam.mcp.registry`` re-exports it) and
 the tooling/sweep runners depend on the framework, not on each other.
+
+Separately installed packages add solvers through the ``neofoam.region_solvers`` entry
+point group (:mod:`neofoam.core.entry_points`). A built-in solver of the same name wins.
 """
 
 from __future__ import annotations
 
 import importlib
+from importlib import metadata
 from pathlib import Path
 from typing import Any
 
 import neofoam.solver  # empty package __init__ — imports no pybFoam
+from neofoam.core.entry_points import region_solver_entry_points
 
 
 def _discover_solver_names() -> list[str]:
@@ -42,15 +47,25 @@ def _discover_solver_names() -> list[str]:
     return names
 
 
+def _plugin_solvers() -> dict[str, metadata.EntryPoint]:
+    """Region solvers of installed packages by name, unloaded."""
+    return {entry_point.name: entry_point for entry_point in region_solver_entry_points()}
+
+
 def list_solver_names() -> list[str]:
-    """Registered solver names (discovered from disk — pulls no pybFoam)."""
-    return _discover_solver_names()
+    """Registered solver names, built-in and from plugins; loads no spec (no pybFoam)."""
+    return sorted({*_discover_solver_names(), *_plugin_solvers()})
 
 
 def resolve_solver(name: str) -> Any:
-    """Resolve a registered solver spec by name; unknown name fails fast."""
+    """Resolve a registered solver spec by name; built-in names win, unknown names fail fast."""
     known = _discover_solver_names()
-    if name not in known:
-        raise ValueError(f"unknown solver {name!r}; known solvers: {', '.join(known)}")
-    module = importlib.import_module(f"neofoam.solver.{name}.{name}")
-    return getattr(module, name)
+    if name in known:
+        module = importlib.import_module(f"neofoam.solver.{name}.{name}")
+        return getattr(module, name)
+    plugins = _plugin_solvers()
+    if name in plugins:
+        return plugins[name].load()
+    raise ValueError(
+        f"unknown solver {name!r}; known solvers: {', '.join(sorted({*known, *plugins}))}"
+    )

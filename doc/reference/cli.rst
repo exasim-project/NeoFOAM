@@ -23,7 +23,7 @@ Available solvers: ``icofoam``, ``pimplefoam``, ``incompressiblefluid``,
 Plugin packages
 ~~~~~~~~~~~~~~~
 
-A separately installed package extends neofoam through two entry-point groups
+A separately installed package extends neofoam through three entry-point groups
 (``src/neofoam/core/entry_points.py``):
 
 .. code-block:: toml
@@ -34,6 +34,9 @@ A separately installed package extends neofoam through two entry-point groups
     [project.entry-points."neofoam.solvers"]
     mdaofluid = "neofoam_mdao.solver:run"   # run(argv) -> neofoam solver mdaofluid
 
+    [project.entry-points."neofoam.region_solvers"]
+    mdaosolid = "neofoam_mdao.region:mdaosolid"   # SolverSpec, found by name
+
 The CLI imports every ``neofoam.plugins`` module before running a command, so a
 plugin can add to any ``PluginSystem`` family (viscosity models, post-processing
 nodes, …). The sweep runner, MCP server and UI module entry points load them too.
@@ -42,6 +45,9 @@ A plugin that fails to import aborts the command.
 Solver commands are lower-case: an entry point ``myFluid`` runs as
 ``neofoam solver myfluid``, like the built-in solvers. A plugin solver whose
 lower-cased name matches another solver command is refused.
+
+A ``neofoam.region_solvers`` spec is found by the solver registry; a built-in
+solver of the same name takes precedence.
 
 Executor selection and GPU initialization
 -----------------------------------------
