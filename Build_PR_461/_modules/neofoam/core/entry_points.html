@@ -667,9 +667,10 @@
 <span class="sd">* ``neofoam.plugins`` — each entry point names a **module**. Importing it runs its</span>
 <span class="sd">  registrations (``Model(...).register_with(viscosityModel)``, ``@Node.register``,</span>
 <span class="sd">  …), so a plugin can add to *any* PluginSystem family. :func:`load_plugins`</span>
-<span class="sd">  imports them once per process; the ``neofoam`` CLI calls it before every command.</span>
+<span class="sd">  imports them all; every ``neofoam`` process entry point calls it before building</span>
+<span class="sd">  models or schemas.</span>
 <span class="sd">* ``neofoam.solvers`` — each entry point names a ``run(argv: list[str]) -&gt; None``</span>
-<span class="sd">  callable, exposed as ``neofoam solver &lt;entry point name&gt;``.</span>
+<span class="sd">  callable, exposed as ``neofoam solver &lt;lower-cased entry point name&gt;``.</span>
 
 <span class="sd">A plugin that fails to import raises: a half-loaded extension would silently</span>
 <span class="sd">change which models a case resolves to.</span>
@@ -690,28 +691,33 @@
 <span class="n">PLUGIN_GROUP</span> <span class="o">=</span> <span class="s2">"neofoam.plugins"</span>
 <span class="n">SOLVER_GROUP</span> <span class="o">=</span> <span class="s2">"neofoam.solvers"</span>
 
-<span class="n">_loaded</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
 
 <div class="viewcode-block" id="load_plugins">
 <a class="viewcode-back" href="../../../reference/api/neofoam.core.entry_points.html#neofoam.core.entry_points.load_plugins">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_plugins</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Import every ``neofoam.plugins`` module not imported yet and return their names."""</span>
-    <span class="n">newly_loaded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_plugins</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Import every installed ``neofoam.plugins`` module.</span>
+
+<span class="sd">    Call it at a process entry point, before models or schemas are built. Code inside</span>
+<span class="sd">    neofoam registers directly with :class:`~neofoam.core.plugin_system.PluginSystem`</span>
+<span class="sd">    and does not need it.</span>
+
+<span class="sd">    Repeat calls are cheap and run no module body twice, because Python's import cache</span>
+<span class="sd">    holds each module; a module that failed to import is not cached, so a retry raises</span>
+<span class="sd">    again. Concurrent calls are safe for the same reason: the import system locks each</span>
+<span class="sd">    module while it runs.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        load_plugins()</span>
+<span class="sd">        spec = resolve_solver("incompressibleFluid")</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">entry_points</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">PLUGIN_GROUP</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">entry_point</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_loaded</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="c1"># Marked before the import so a plugin that itself calls load_plugins() cannot recurse.</span>
-        <span class="n">_loaded</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">entry_point</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">_loaded</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>  <span class="c1"># a retry must fail again, not skip it</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"neofoam plugin </span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> (</span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">) failed to load: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
-        <span class="n">newly_loaded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">newly_loaded</span></div>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 

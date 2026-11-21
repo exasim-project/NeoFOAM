@@ -36,8 +36,12 @@ A separately installed package extends neofoam through two entry-point groups
 
 The CLI imports every ``neofoam.plugins`` module before running a command, so a
 plugin can add to any ``PluginSystem`` family (viscosity models, post-processing
-nodes, …). A plugin that fails to import aborts the command; a plugin solver
-whose name matches a built-in one is refused.
+nodes, …). The sweep runner, MCP server and UI module entry points load them too.
+A plugin that fails to import aborts the command.
+
+Solver commands are lower-case: an entry point ``myFluid`` runs as
+``neofoam solver myfluid``, like the built-in solvers. A plugin solver whose
+lower-cased name matches another solver command is refused.
 
 Executor selection and GPU initialization
 -----------------------------------------
