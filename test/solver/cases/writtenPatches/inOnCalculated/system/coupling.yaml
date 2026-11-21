@@ -1,0 +1,13 @@
+# The in port T_in writes plant's calculated patch interface.
+ports:
+  plant:
+    - {name: T_in, field: T, patch: interface, direction: in}
+  controller:
+    - {name: T_set, field: T, direction: out}
+exchanges:
+  - {name: actuator, ports: {controller: T_set, plant: T_in}, mapping: identity}
+couplings:
+  - name: control
+    exchanges: [actuator]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}

@@ -30,6 +30,7 @@ from neofoam.framework.operations import IterativeOp, Operation, Operations, Ste
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 from neofoam.io import YAML, BaseConfig, IOStrategy
+from neofoam.solver.regions import WallHeatFlux, WallTemperature
 
 
 @IOStrategy(YAML("system/controlDict.yaml"))
@@ -164,18 +165,6 @@ class CoupledConduction(SlabPatch):
     @coupled.receives
     def receive(self, data: Conduction) -> None:
         self.set_mixed(ref_value=data.T_sink, value_fraction=data.h / (data.h + self.h_own()))
-
-
-class WallTemperature(FaceData):
-    """What the Neumann side sends."""
-
-    T: Array
-
-
-class WallHeatFlux(FaceData):
-    """What the Dirichlet side sends: the heat flux through the wall into its slab."""
-
-    q: Array
 
 
 @coupled

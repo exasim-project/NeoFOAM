@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Process-wide NeoN (Kokkos) runtime initialization.
+"""Process-wide NeoN (Kokkos) runtime initialization, and a NeoN run's mesh geometry and fields.
 
 Kokkos may only be initialized/finalized once per process. Every NeoN-backed
 solver calls :func:`ensure_neon_initialized` before touching NeoN so repeated
@@ -20,9 +20,15 @@ import atexit
 import gc
 import os
 import sys
+from pathlib import Path
+from typing import Any, Iterable, Mapping
 
 import neon._neon as nn  # NeoN Python bindings
+import numpy as np
+import pybFoam as pyf
 
+from neofoam import neofoam_bindings as nfb
+from neofoam.framework.coupling import FieldPort, Patch
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 _neon_initialized = False
@@ -125,3 +131,94 @@ def ensure_neon_initialized(argv: list[str]) -> None:
         raise RuntimeError(_gpu_init_report(error)) from error
     _neon_initialized = True
     atexit.register(_finalize_neon)
+
+
+def _host(vector: Any) -> Any:
+    """A NeoN vector as a numpy array on the host."""
+    return np.asarray(vector.copy_to_host())
+
+
+class NeoNGeometry:
+    """The :class:`~neofoam.framework.coupling.MeshGeometry` of a NeoN run, from its mesh.
+
+    A patch's faces are its slice of NeoN's boundary faces, flat in patch order.
+
+    Example::
+
+        ctx.models["coupling"] = Participant(coupling, NeoNGeometry(rt), NeoNFields(rt, ctx.fields))
+    """
+
+    def __init__(self, runtime: Any) -> None:
+        self.runtime = runtime
+
+    def faces(self, patch: str) -> slice:
+        """The slice of NeoN's boundary faces that are ``patch``'s."""
+        index = int(self.runtime.mesh.boundary().findPatchID(patch))
+        offset = self.runtime.nf_mesh.boundary_mesh().offset()
+        return slice(offset[index], offset[index + 1])
+
+    def face_centres(self, patch: str) -> Any:
+        return _host(self.runtime.nf_mesh.boundary_mesh().face_centers())[self.faces(patch)]
+
+    def face_areas(self, patch: str) -> Any:
+        return _host(self.runtime.nf_mesh.boundary_mesh().face_areas())[self.faces(patch)]
+
+    def cell_centres(self) -> Any:
+        return _host(self.runtime.nf_mesh.cell_centers)
+
+    def cell_volumes(self) -> Any:
+        return _host(self.runtime.nf_mesh.cell_volumes)
+
+
+class NeoNFields:
+    """The :class:`~neofoam.framework.coupling.FieldAccess` of a NeoN run's volume fields.
+
+    A patch reads its boundary values and is written as fixed values; the cells
+    read and write the internal values. A patch it writes is ``calculated`` in
+    ``0/<field>``, as :func:`check_written_patches` checks: a boundary correction
+    re-applies any other condition.
+    """
+
+    def __init__(self, runtime: Any, fields: Mapping[str, Any]) -> None:
+        self.geometry = NeoNGeometry(runtime)
+        self.fields = fields
+
+    def read(self, field: str, location: Any) -> Any:
+        if isinstance(location, Patch):
+            values = self.fields[field].boundary_data_value()
+            return _host(values)[self.geometry.faces(location.name)]
+        return _host(self.fields[field].internal_vector())
+
+    def write(self, field: str, location: Any, values: Any) -> None:
+        values = np.ascontiguousarray(values, dtype=float)
+        if isinstance(location, Patch):
+            index = int(self.geometry.runtime.mesh.boundary().findPatchID(location.name))
+            self.fields[field].set_patch_fixed_values(index, values)
+        else:
+            nfb.copy_from_host(self.fields[field], values)
+
+
+def check_written_patches(ports: Iterable[FieldPort], time_dir: Path) -> None:
+    """Raise ``ValueError`` unless every patch a field port writes is ``calculated``.
+
+    Call it at start-up, before the ports are bound to :class:`NeoNFields`: NeoN
+    reapplies a patch's own condition when it corrects the boundary, which would
+    silently overwrite the written values. ``time_dir`` holds the field files the
+    NeoN fields were read from, the start time of the region's case.
+
+    Example::
+
+        check_written_patches(coupling.field_ports, Path("0"))
+    """
+    for port in ports:
+        if not port.receives or port.patch is None:
+            continue
+        path = time_dir / port.field
+        boundary = pyf.dictionary.read(str(path)).subDict("boundaryField")
+        patch_type = str(boundary.subDict(port.patch).get_word("type"))
+        if patch_type != "calculated":
+            raise ValueError(
+                f"{path}: field port '{port.name}' writes patch '{port.patch}' of the NeoN field "
+                f"{port.field}, whose type is {patch_type}; NeoN reapplies a patch's own "
+                "condition, so a written patch must be calculated"
+            )

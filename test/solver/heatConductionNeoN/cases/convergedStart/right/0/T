@@ -1,0 +1,79 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 1 0 0 0];
+
+// the steady profile at the mesh's cell centres: the discrete solution to round-off
+internalField   nonuniform List<scalar>
+30
+(
+322.916666666625
+318.75
+314.583333333375
+310.416666666625
+306.25
+302.083333333375
+322.916666666625
+318.75
+314.583333333375
+310.416666666625
+306.25
+302.083333333375
+322.916666666625
+318.75
+314.583333333375
+310.416666666625
+306.25
+302.083333333375
+322.916666666625
+318.75
+314.583333333375
+310.416666666625
+306.25
+302.083333333375
+322.916666666625
+318.75
+314.583333333375
+310.416666666625
+306.25
+302.083333333375
+);
+
+boundaryField
+{
+    outer
+    {
+        type            fixedValue;
+        value           uniform 300;
+    }
+    interface
+    {
+        type            calculated;
+        coupled         coupledTemperature;
+        value           uniform 325;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

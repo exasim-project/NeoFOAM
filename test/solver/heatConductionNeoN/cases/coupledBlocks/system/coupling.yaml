@@ -1,0 +1,20 @@
+# Dirichlet-Neumann at x = 1: left (coupledHeatFlux) sends its wall temperature,
+# right (coupledTemperature) the heat flux into it. The interface faces do not
+# match (3 against 5): nearest-neighbor maps them. Serial (Gauss-Seidel): the
+# loop wraps each region's solve_T, so the time step stays outside it.
+exchanges:
+  - name: interface
+    ports: {left: interface, right: interface}
+    mapping: nearest-neighbor
+couplings:
+  - name: coupling
+    scheme: serial
+    maxIterations: 100
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-10}
+      - {type: relative, data: q, limit: 1.0e-10}
+    wraps:
+      left: {operations: [solve_T]}
+      right: {operations: [solve_T]}

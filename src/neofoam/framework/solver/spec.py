@@ -60,6 +60,9 @@ class SolverSpec:
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
+        # called with the argv on the instantiating (main) thread before the runtime exists:
+        # process-wide setup that must not happen on a region's thread
+        self.on_instantiate: Optional[Callable[[list[str]], None]] = None
 
     @property
     def _config_class(self) -> Optional[type]:
@@ -253,10 +256,13 @@ class SolverSpec:
 
         An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.
         """
+        argv = argv or ["neofoam"]
+        if self.on_instantiate is not None:
+            self.on_instantiate([str(arg) for arg in argv])
         return SolverRuntime(
             spec=self,
             name=self.name,
-            argv=argv or ["neofoam"],
+            argv=argv,
             region=region,
             coupling=coupling,
         )
