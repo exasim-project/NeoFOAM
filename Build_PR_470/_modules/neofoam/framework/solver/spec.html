@@ -924,7 +924,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.</span>
 
-<span class="sd">        An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.</span>
+<span class="sd">        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads</span>
+<span class="sd">        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.</span>
+<span class="sd">        ``run()`` called from Python without arguments).</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">SolverRuntime</span><span class="p">(</span>
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
