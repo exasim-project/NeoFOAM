@@ -37,8 +37,8 @@
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00043}00043\ \ \ \ \ NeoN::scalar\ localAbsVolSum\ =\ 0.0;}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00044}00044\ \ \ \ \ NeoN::parallelReduce(}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<size\_t>(nCells)\},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i,\ NeoN::scalar\&\ s)\ \{}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<NeoN::sizeType>(nCells)\},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ NeoN::sizeType\ i,\ NeoN::scalar\&\ s)\ \{}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \ \ \ \ s\ +=\ Kokkos::abs(divPhiView[i])\ *\ volView[i];}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \},}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ localAbsVolSum}
@@ -47,16 +47,16 @@
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00053}00053\ \ \ \ \ NeoN::scalar\ localSignedVolSum\ =\ 0.0;}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00054}00054\ \ \ \ \ NeoN::parallelReduce(}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<size\_t>(nCells)\},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i,\ NeoN::scalar\&\ s)\ \{\ s\ +=\ divPhiView[i]\ *\ volView[i];\ \},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<NeoN::sizeType>(nCells)\},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ NeoN::sizeType\ i,\ NeoN::scalar\&\ s)\ \{\ s\ +=\ divPhiView[i]\ *\ volView[i];\ \},}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ localSignedVolSum}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00059}00059\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00060}00060\ }
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00061}00061\ \ \ \ \ NeoN::scalar\ localTotalVol\ =\ 0.0;}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00062}00062\ \ \ \ \ NeoN::parallelReduce(}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<size\_t>(nCells)\},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i,\ NeoN::scalar\&\ s)\ \{\ s\ +=\ volView[i];\ \},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<NeoN::sizeType>(nCells)\},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ NeoN::sizeType\ i,\ NeoN::scalar\&\ s)\ \{\ s\ +=\ volView[i];\ \},}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ localTotalVol}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00067}00067\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00068}00068\ }
