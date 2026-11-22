@@ -34,6 +34,7 @@ TAIL_LINES = 400
 
 #: How often the logs are re-read and the window repainted.
 _POLL_S = 0.4
+_DRAIN_S = 1.0  # longest wait for the last output once the script has exited
 
 #: A log that predates the run is a previous run's leftover, not this one's output.
 _STALE_S = 2.0
@@ -150,6 +151,8 @@ class RunPanel:
         try:
             await self._poll(case, started)
         finally:
+            # A background child can hold stdout open, so the wait for its end is bounded.
+            await asyncio.wait({pipe}, timeout=_DRAIN_S)
             pipe.cancel()
             code = self._proc.returncode
             self._pump(case, started)  # whatever landed after the last poll
