@@ -27,7 +27,6 @@ as a real 1e-6 change to the algorithm. At five it is at most 1.5e-11, while a
 1e-6 relative change to the U relaxation factor or ``nu`` gives 6.9e-7 or more.
 """
 
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -64,59 +63,52 @@ run(["incompressibleFluid"])
 """
 
 
-def test_framework_matches_native_simpleFoam() -> None:
+def test_framework_matches_native_simpleFoam(tmp_path: Path) -> None:
     """incompressibleFluid (SIMPLE) matches native simpleFoam after five iterations."""
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / "pitzDaily_steady"
 
-    case_framework = repo_root / "test_cases" / "pitzDaily_steady_framework"
-    case_native = repo_root / "test_cases" / "pitzDaily_steady_native"
+    case_framework = tmp_path / "pitzDaily_steady_framework"
+    case_native = tmp_path / "pitzDaily_steady_native"
 
-    try:
-        for case in (case_framework, case_native):
-            setup_case(
-                source_case, case, _END_TIME, _WRITE_INTERVAL, write_precision=_WRITE_PRECISION
-            )
+    for case in (case_framework, case_native):
+        setup_case(source_case, case, _END_TIME, _WRITE_INTERVAL, write_precision=_WRITE_PRECISION)
 
-        framework = subprocess.run(
-            [sys.executable, "-c", _FRAMEWORK_DRIVER],
-            cwd=case_framework,
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
-        assert framework.returncode == 0, (
-            "incompressibleFluid aborted on the steady SIMPLE case:\n"
-            f"{framework.stdout[-1500:]}\n{framework.stderr[-1500:]}"
-        )
+    framework = subprocess.run(
+        [sys.executable, "-c", _FRAMEWORK_DRIVER],
+        cwd=case_framework,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert framework.returncode == 0, (
+        "incompressibleFluid aborted on the steady SIMPLE case:\n"
+        f"{framework.stdout[-1500:]}\n{framework.stderr[-1500:]}"
+    )
 
-        native = subprocess.run(
-            ["simpleFoam", "-case", str(case_native)],
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
-        assert native.returncode == 0, f"simpleFoam failed: {native.stderr}"
+    native = subprocess.run(
+        ["simpleFoam", "-case", str(case_native)],
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert native.returncode == 0, f"simpleFoam failed: {native.stderr}"
 
-        final_framework = get_time_directories(case_framework)[-1]
-        final_native = get_time_directories(case_native)[-1]
-        assert final_framework.name == final_native.name == "5", (
-            f"final times {final_framework.name} / {final_native.name}, expected 5"
-        )
-        names = [name for name, _ in FIELDS_TO_COMPARE]
-        framework_fields = read_internal_fields(case_framework, final_framework, names)
-        native_fields = read_internal_fields(case_native, final_native, names)
-        errors = {
-            name: relative_l2_error(framework_fields[name], native_fields[name]) for name in names
-        }
-        for name, error in errors.items():
-            print(f"[pitzDaily_steady] {name}: relative L2 = {error:.3e}")
-        failures = [f"{n}={e:.3e}" for n, e in errors.items() if not e <= _REL_L2_TOL]
-        assert not failures, (
-            f"pitzDaily_steady: incompressibleFluid vs simpleFoam relative L2 above "
-            f"{_REL_L2_TOL:.0e} for " + ", ".join(failures)
-        )
-    finally:
-        for tc in [case_framework, case_native]:
-            if tc.exists():
-                shutil.rmtree(tc)
+    final_framework = get_time_directories(case_framework)[-1]
+    final_native = get_time_directories(case_native)[-1]
+    assert final_framework.name == final_native.name == "5", (
+        f"final times {final_framework.name} / {final_native.name}, expected 5"
+    )
+    names = [name for name, _ in FIELDS_TO_COMPARE]
+    framework_fields = read_internal_fields(case_framework, final_framework, names)
+    native_fields = read_internal_fields(case_native, final_native, names)
+    errors = {
+        name: relative_l2_error(framework_fields[name], native_fields[name]) for name in names
+    }
+    for name, error in errors.items():
+        print(f"[pitzDaily_steady] {name}: relative L2 = {error:.3e}")
+    failures = [f"{n}={e:.3e}" for n, e in errors.items() if not e <= _REL_L2_TOL]
+    assert not failures, (
+        f"pitzDaily_steady: incompressibleFluid vs simpleFoam relative L2 above "
+        f"{_REL_L2_TOL:.0e} for " + ", ".join(failures)
+    )

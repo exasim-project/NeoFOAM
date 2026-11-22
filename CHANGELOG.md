@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Write the solver comparison test cases into `tmp_path` instead of the repository [#429](https://github.com/exasim-project/NeoFOAM/pull/429)
 - Make the steady `simpleFoam` parity tests tolerant of FMA round-off between pybFoam and prebuilt OpenFOAM [#495](https://github.com/exasim-project/NeoFOAM/pull/495)
 - Add a C++ test of the `slip` boundary reader against OpenFOAM [#481](https://github.com/exasim-project/NeoFOAM/pull/481)
 - Apply the fvOptions `velocityDampingConstraint` in neoSimpleFoam (diagonal-only damping of cells above `UMax`, as in OpenFOAM) via a new post-relaxation `PDE::setPostRelaxConstraint` hook; other fvOptions entries are now reported as unsupported instead of silently ignored [#479](https://github.com/exasim-project/NeoFOAM/pull/479)
