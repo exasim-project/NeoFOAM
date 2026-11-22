@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// A single uniform hex block on the unit cube with six generic ``patch``
+// boundaries (no walls, hence no wall functions). Uniform spacing keeps
+// linear interpolation exactly midpoint, so createPhi of a uniform velocity is
+// divergence-free to machine precision.
+
+scale   1;
+
+vertices
+(
+    (0 0 0)
+    (1 0 0)
+    (1 1 0)
+    (0 1 0)
+    (0 0 1)
+    (1 0 1)
+    (1 1 1)
+    (0 1 1)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (8 8 8) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+// zMin is a ``wall`` so a wall-distance field is defined (needed by
+// Spalart-Allmaras / kOmegaSST). It carries only zeroGradient/calculated field
+// BCs (no wall functions), so kEpsilon — which ignores wall distance — is
+// unaffected, and a divergence-free seeded U still gives a divergence-free flux.
+boundary
+(
+    xMin { type patch; faces ( (0 4 7 3) ); }
+    xMax { type patch; faces ( (1 2 6 5) ); }
+    yMin { type patch; faces ( (0 1 5 4) ); }
+    yMax { type patch; faces ( (3 7 6 2) ); }
+    zMin { type wall;  faces ( (0 3 2 1) ); }
+    zMax { type patch; faces ( (4 5 6 7) ); }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

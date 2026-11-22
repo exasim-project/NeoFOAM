@@ -1,0 +1,28 @@
+// -*- C++ -*-
+
+// Demonstrate runTimePostProcessing
+
+// Timing
+_visualization
+{
+    writeControl    writeTime;
+
+    // enabled         true;
+
+    // Debug: writeControl    timeStep;
+    // Debug: writeInterval   10;
+}
+
+
+// streamLines (streamLines) and runTimePostProcessing (postPro1) are disabled: neoSimpleFoam's
+// fields are not visible to the OpenFOAM function-object registry, so streamLine aborts every
+// rank at the first write with "Cannot find scalar/vector field p", and postPro1 additionally
+// needs librunTimePostProcessing, which is not built here. sampling works and is kept.
+// #include "streamLines"
+#include "sampling"
+// #include "runTimePostProcessing"
+
+#remove _visualization
+
+
+// ************************************************************************* //

@@ -1,0 +1,15 @@
+# The mean speed on a mid-plane and on an iso-surface. The plane names no
+# field, so the `sample` step puts one on it; the iso-surface names `U` on the
+# source instead — the two spellings of the same thing.
+tables:
+  - name: mean_speed_on_a_plane
+    source: {type: plane, point: [0.05, 0.0, 0.0], normal: [1.0, 0.0, 0.0]}
+    pipeline:
+      - {type: sample, field: U}
+      - {type: mag}
+      - {type: mean, name: mean_speed}
+  - name: mean_speed_on_an_iso_surface
+    source: {type: isoSurface, iso_field: p, iso_value: 0.05, field: U, scheme: cell}
+    pipeline:
+      - {type: mag}
+      - {type: mean, name: mean_speed}

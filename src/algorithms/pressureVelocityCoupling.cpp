@@ -29,7 +29,7 @@ void constrainHbyA(
             parallelFor(
                 hByA.exec(),
                 hByA.boundaryData().range(patchi),
-                NEON_LAMBDA(const size_t bfacei) { hByABcValue[bfacei] = uBcValue[bfacei]; }
+                NEON_LAMBDA(const NeoN::sizeType bfacei) { hByABcValue[bfacei] = uBcValue[bfacei]; }
             );
         }
     }
@@ -214,11 +214,41 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 }
 
 
+namespace
+{
+
+/* @brief The snGradSchemes entry for fieldName, mirroring fvc::snGrad's lookup. */
+NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::string& fieldName)
+{
+    if (fvSchemes.contains("snGradSchemes"))
+    {
+        const NeoN::Dictionary& snGradSchemes = fvSchemes.subDict("snGradSchemes");
+        // Unlike gradSchemes, snGradSchemes falls through to "default" in OpenFOAM, and
+        // cases usually only set that. A multi-word scheme ("limited corrected 0.33")
+        // converts to a TokenList, a single-word one ("corrected") to a plain string.
+        for (const std::string& key : {"snGrad(" + fieldName + ")", std::string("default")})
+        {
+            if (snGradSchemes.isType<NeoN::TokenList>(key))
+            {
+                return snGradSchemes.get<NeoN::TokenList>(key);
+            }
+            if (snGradSchemes.isType<std::string>(key))
+            {
+                return NeoN::TokenList({snGradSchemes.get<std::string>(key)});
+            }
+        }
+    }
+    return NeoN::TokenList({std::string("corrected")});
+}
+
+} // namespace
+
 void addConsistentFluxCorrection(
     nnfvcc::SurfaceField<scalar>& phiHbyA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& rAtU,
-    const nnfvcc::VolumeField<scalar>& p
+    const nnfvcc::VolumeField<scalar>& p,
+    const NeoN::Dictionary& fvSchemes
 )
 {
     const auto exec = phiHbyA.exec();
@@ -238,8 +268,7 @@ void addConsistentFluxCorrection(
         nnfvcc::SurfaceInterpolation<scalar>(exec, mesh, NeoN::TokenList({std::string("linear")}));
     auto drAUf = linear.interpolate(drAU);
 
-    auto sng =
-        nnfvcc::FaceNormalGradient<scalar>(exec, mesh, NeoN::TokenList({std::string("corrected")}));
+    auto sng = nnfvcc::FaceNormalGradient<scalar>(exec, mesh, readSnGradScheme(fvSchemes, p.name));
     auto snGradP = sng.faceNormalGrad(p);
 
     const auto nInternalFaces = mesh.nInternalFaces();
@@ -335,7 +364,7 @@ void updateFaceVelocity(
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        NEON_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const NeoN::sizeType facei) {
             auto own = static_cast<NeoN::localIdx>(owner[facei]);
             auto nei = static_cast<NeoN::localIdx>(neighbour[facei]);
 
@@ -359,8 +388,8 @@ void updateFaceVelocity(
 
     NeoN::parallelFor(
         exec,
-        {0, static_cast<size_t>(mesh.nBoundaryFaces())},
-        NEON_LAMBDA(const size_t bfacei) {
+        {0, static_cast<NeoN::sizeType>(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(const NeoN::sizeType bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
@@ -380,7 +409,7 @@ void updateFaceVelocity(
         NeoN::parallelFor(
             exec,
             {0, nProcFaces},
-            NEON_LAMBDA(const size_t procFacei) {
+            NEON_LAMBDA(const NeoN::sizeType procFacei) {
                 auto bfacei = nBoundaryFaces + procFacei;
                 auto own = static_cast<std::size_t>(faceCells[bfacei]);
                 auto coupling = nlValues[rowOrderV[procFacei]];
@@ -396,16 +425,30 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
-    nnfvcc::VolumeField<Vec3>& u
+    nnfvcc::VolumeField<Vec3>& u,
+    const nnfvcc::GradOperatorFactory<NeoN::Vec3>& gradPScheme
 )
 {
-    auto gradP = nnfvcc::GaussGreenGrad(p.exec(), p.mesh()).grad(p);
+    // grad(p) for the velocity reconstruction honours the configured gradSchemes
+    // entry for grad(p) (e.g. cellLimited).
+    auto gradP = gradPScheme.grad(p, NeoN::dsl::Coeff {});
     auto [iHbyA, iRAU, iGradP] =
         views(hByA.internalVector(), rAU.internalVector(), gradP.internalVector());
 
     u.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - iRAU[celli] * iGradP[celli];
     });
+}
+
+void updateVelocity(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& p,
+    nnfvcc::VolumeField<Vec3>& u,
+    RunTime& runTime
+)
+{
+    updateVelocity(hByA, rAU, p, u, gradScheme(runTime, "grad(" + p.name + ")"));
 }
 
 nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
@@ -439,7 +482,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        NEON_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const NeoN::sizeType facei) {
             auto own = static_cast<std::size_t>(owner[facei]);
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
@@ -452,7 +495,9 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nBoundaryFaces},
-        NEON_LAMBDA(const size_t faceBCI) { bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI]; }
+        NEON_LAMBDA(const NeoN::sizeType faceBCI) {
+            bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI];
+        }
     );
 
     // Processor-boundary faces.
@@ -464,8 +509,8 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nProcFaces},
-        NEON_LAMBDA(const size_t proci) {
-            auto faceBCI = static_cast<size_t>(nBoundaryFaces) + proci;
+        NEON_LAMBDA(const NeoN::sizeType proci) {
+            auto faceBCI = static_cast<NeoN::sizeType>(nBoundaryFaces) + proci;
             auto own = static_cast<std::size_t>(procFaceCells[faceBCI]);
             auto w = bndWeights[faceBCI];
             auto faceVal = w * (volFieldIn[own] - volFieldBc[faceBCI]) + volFieldBc[faceBCI];

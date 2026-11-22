@@ -11,6 +11,7 @@ if(${NEOFOAM_WITH_MPI})
   neofoam_unit_test(distributedResidual setup_pressureVelocityCoupling MPI_SIZE 3 SOURCE
                     residual.cpp)
   neofoam_unit_test(distributedSnGrad setup_snGrad MPI_SIZE 3 SOURCE snGrad.cpp)
+  neofoam_unit_test(distributedBound setup_pressureVelocityCoupling MPI_SIZE 3 SOURCE bound.cpp)
 else()
   message(WARNING "Test skip building MPI based tests")
 endif()

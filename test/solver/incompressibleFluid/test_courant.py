@@ -1,0 +1,157 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Spec for the CFL timeStepConstraint contribution (solver-side, pybFoam)."""
+
+# NOTE: no `from __future__ import annotations` — keep annotations live.
+
+import importlib
+from pathlib import Path
+
+import pytest
+
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    initialTimeStepConstraint,
+    timeStepConstraint,
+)
+from neofoam.framework.context import Context
+from neofoam.framework.model import ModelRuntime
+from neofoam.solver.incompressibleFluid.models.courant import (
+    CourantConfig,
+    courant,
+    courant_limit,
+)
+from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
+    incompressibleFluidModel,
+)
+from neofoam.tooling.casebuild import from_template, patch
+
+courant_mod = importlib.import_module("neofoam.solver.incompressibleFluid.models.courant")
+
+_CASES = Path(__file__).parent / "cases"
+_BASE = _CASES / "controldict_base"
+
+
+def _courant_runtime(max_co: float = 1.0) -> ModelRuntime:
+    return ModelRuntime(spec=courant, name="courant", config=CourantConfig(maxCo=max_co))
+
+
+def _bound(interface, runtimes, ctx):  # type: ignore[no-untyped-def]
+    """*interface* resolved against *ctx* with exactly *runtimes* active — the
+    injected form ``set_time_step`` receives and calls."""
+    live = Context(fields=ctx.fields, models={**ctx.models, **{rt.name: rt for rt in runtimes}})
+    return interface.resolve(live)
+
+
+def test_model_and_contribution_are_solver_owned_and_discoverable_without_a_case() -> None:
+    # Registration != activation: no case dir needed to list the model + its config.
+    assert courant_limit.__module__.startswith("neofoam.solver.incompressibleFluid")
+    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
+    assert "courant" in names
+    assert courant._config_class is CourantConfig
+
+
+@pytest.mark.parametrize(
+    ("interface", "co_num", "expected"),
+    [
+        (timeStepConstraint, 2.0, 0.05),  # 0.1 * 1.0 / 2.0
+        # setDeltaT.H's SMALL is a denominator epsilon, not a cut-off: Co = 0 yields a
+        # huge factor (which the loop's 1.2 growth cap then binds), NOT "no opinion" —
+        # reporting VGREAT here would freeze the first step of every quiescent start.
+        (timeStepConstraint, 0.0, 0.1 * 1.0 / 1e-15),
+        (initialTimeStepConstraint, 2.0, 0.05),  # 1.0 * 0.1 / 2.0, undamped
+    ],
+    ids=[
+        "per_step_cfl_rule",
+        "per_step_quiescent_still_reports_a_limit",
+        "initial_undamped_cfl_limit",
+    ],
+)
+def test_the_cfl_contribution_matches_the_openfoam_sources(
+    monkeypatch: pytest.MonkeyPatch, interface, co_num: float, expected: float
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [co_num])
+    ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
+    bound = _bound(interface, [_courant_runtime()], ctx)
+    assert bound() == pytest.approx(expected)
+
+
+def test_quiescent_flow_yields_no_initial_opinion(monkeypatch: pytest.MonkeyPatch) -> None:
+    # setInitialDeltaT.H IS gated on CoNum > SMALL: a quiescent start skips the whole
+    # pass, including the write-time snapping its setDeltaT call would trigger.
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [0.0])
+    ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
+    bound = _bound(initialTimeStepConstraint, [_courant_runtime()], ctx)
+    assert bound() == VGREAT
+
+
+def test_contribution_excluded_when_model_inactive() -> None:
+    ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
+    bound = _bound(timeStepConstraint, [], ctx)  # courant not active
+    assert bound() == VGREAT
+
+
+# The base controlDict deliberately omits adjustTimeStep, so each scenario opts in
+# explicitly — the "key absent" case is simply the row that never sets it, and no
+# line-removal (which `patch` can't express) is needed.
+@pytest.mark.parametrize(
+    ("overrides", "expect_courant"),
+    [
+        (
+            {"adjustTimeStep": True, "maxCo": 1.0},
+            True,
+        ),  # maxCo present, adjustTimeStep yes
+        ({"adjustTimeStep": True}, False),  # adjustTimeStep yes but no maxCo
+        (
+            {"adjustTimeStep": False, "maxCo": 1.0},
+            False,
+        ),  # maxCo present but adjustTimeStep no
+        ({"maxCo": 1.0}, False),  # adjustTimeStep key absent entirely
+    ],
+    ids=[
+        "maxCo_present",
+        "maxDeltaT_absent",
+        "maxCo_no_adjust",
+        "no_adjust_key",
+    ],
+)
+def test_config_presence_drives_detection(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    overrides: dict,
+    expect_courant: bool,
+) -> None:
+    case = (from_template(_BASE) | patch("system/controlDict", overrides)).build_at(
+        tmp_path / "case"
+    )
+    monkeypatch.chdir(case.path)
+
+    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
+
+    if expect_courant:
+        assert "courant" in detected
+        assert "maxDeltaT" not in detected
+    else:
+        assert "courant" not in detected
+
+
+def test_contribution_resolves_live_phi_and_config_at_call_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The hook resolves against the live ctx of the injection: phi + deltaT come
+    # from its fields at call time, while cfg comes from the contributing runtime.
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
+    rt = _courant_runtime(max_co=1.0)
+    live = Context(fields={"phi": object(), "deltaT": 0.1}, models={"courant": rt})
+    assert timeStepConstraint.resolve(live)() == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
+    with pytest.raises(ValueError, match="no provider supplies it"):
+        # a ctx without the fields cannot resolve the contribution
+        timeStepConstraint.resolve(Context(fields={}, models={"courant": rt}))()
+
+
+def test_model_inactive_when_no_control_dict_is_present(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert courant.run_detect() is False

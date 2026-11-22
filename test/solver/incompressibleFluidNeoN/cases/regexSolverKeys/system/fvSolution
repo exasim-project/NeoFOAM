@@ -1,0 +1,80 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+// Every per-field lookup below goes through an OpenFOAM regex keyword except the
+// `p` solver, which stays literal so a run shows the two are told apart: p is
+// solved with PCG+diagonal (Jacobi+Cg) and U with the regex entry's
+// PBiCGStab+DILU (Ilu+Bicgstab).
+
+solvers
+{
+    p
+    {
+        solver PCG;
+        preconditioner diagonal;
+        tolerance 1e-13;
+        relTol 1e-13;
+        maxIter 5000;
+        l1ScaledResidual true;
+    }
+    "(U|k|epsilon)"
+    {
+        solver PBiCGStab;
+        preconditioner DILU;
+        tolerance 1e-13;
+        relTol 1e-13;
+        maxIter 1000;
+        l1ScaledResidual true;
+    }
+    ".*Final"
+    {
+        solver PCG;
+        preconditioner diagonal;
+        tolerance 1e-13;
+        relTol 1e-13;
+        maxIter 5000;
+        l1ScaledResidual true;
+    }
+}
+
+relaxationFactors
+{
+    equations
+    {
+        "(U|k|epsilon)" 0.7;
+        UFinal  1;
+    }
+    fields
+    {
+        "p"     0.3;
+        pFinal  1;
+    }
+}
+
+PIMPLE
+{
+    nOuterCorrectors 3;
+    nCorrectors 2;
+    nNonOrthogonalCorrectors 0;
+    residualControl
+    {
+        "(p|U)" { tolerance 1e-6; relTol 0; }
+    }
+    pRefCell 0;
+    pRefValue 0;
+}
+
+//*************************************************************************//

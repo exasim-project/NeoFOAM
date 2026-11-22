@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "NeoFOAM/auxiliary/bound.hpp"
+
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
@@ -219,6 +221,12 @@ private:
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
 
+    // Lower bound applied to nuTilda after each solve, as OpenFOAM's bound(nuTilda_, Zero).
+    scalar nuTildaMin_ = 0.0;
+
+    // Mesh-derived scratch reused across bound() calls.
+    mutable BoundCache boundCache_;
+
     // Laminar viscosity: held by reference — must outlive this object
     const nnfvcc::VolumeField<scalar>& nu_;
     // Physics inputs owned by the model (copy-constructed from caller or computed from OF mesh)
@@ -249,8 +257,12 @@ private:
     nnfvcc::SurfaceField<scalar> nuEff_;
     nnfvcc::SurfaceField<scalar> nuTildaEff_;
 
-    // Cached operators (constructed once)
-    nnfvcc::GaussGreenGrad gradOp_;
+    // Cached gradient operators, runtime-selected from gradSchemes so grad(U) (tensor) and
+    // grad(nuTilda) honour the configured scheme (e.g. cellLimited). Shared with RunTime's
+    // gradScheme cache; the exec/mesh constructors own a Gauss-Green default instead, as
+    // no scheme dictionary is available there.
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradNuTildaOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // SA-DDES model coefficients

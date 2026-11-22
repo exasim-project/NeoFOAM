@@ -1,0 +1,49 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+// `p` carries a preconditioner beside GAMG on purpose: a loaded case is shown as it is.
+solvers
+{
+    p
+    {
+        solver GAMG;
+        smoother GaussSeidel;
+        preconditioner DIC;
+        tolerance 1e-06;
+        relTol 0.05;
+    }
+    pFinal
+    {
+        solver GAMG;
+        smoother GaussSeidel;
+        tolerance 1e-06;
+        relTol 0;
+    }
+    U
+    {
+        solver smoothSolver;
+        smoother symGaussSeidel;
+        tolerance 1e-08;
+        relTol 0.1;
+    }
+    UFinal
+    {
+        solver smoothSolver;
+        smoother symGaussSeidel;
+        tolerance 1e-08;
+        relTol 0;
+    }
+}
+
+PIMPLE
+{
+    nOuterCorrectors 1;
+    nCorrectors 2;
+    nNonOrthogonalCorrectors 0;
+}

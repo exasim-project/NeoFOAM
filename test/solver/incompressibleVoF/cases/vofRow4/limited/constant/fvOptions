@@ -1,0 +1,30 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// `limitVelocity` is a *correction*: it contributes nothing to the momentum
+// matrix and acts only through `fvOptions.correct(U)`, by scaling U down to
+// `max` in magnitude on the `source` cellZone. interFoam calls that correction
+// twice per outer iteration -- once after the momentum predictor and once after
+// the pressure corrector reconstructs U -- so it probes both hooks.
+//
+// The file lives in constant/ on purpose: fv::options searches constant/ first
+// and system/ second, and the solver must find it in either place.
+
+velocityLimit
+{
+    type            limitVelocity;
+
+    selectionMode   cellZone;
+    cellZone        source;
+
+    max             1;
+}
+
+
+// ************************************************************************* //

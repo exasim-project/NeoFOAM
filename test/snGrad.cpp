@@ -60,7 +60,7 @@ TEST_CASE("snGrad schemes")
 
         // Boundary patches
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
             REQUIRE_THAT(
@@ -91,7 +91,7 @@ TEST_CASE("snGrad schemes")
         );
 
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
             REQUIRE_THAT(
@@ -122,7 +122,7 @@ TEST_CASE("snGrad schemes")
         );
 
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
             REQUIRE_THAT(
@@ -156,7 +156,7 @@ TEST_CASE("snGrad schemes")
         );
 
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
             REQUIRE_THAT(
@@ -187,7 +187,7 @@ TEST_CASE("snGrad schemes")
         );
 
         const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradU.boundaryField())
         {
             REQUIRE_THAT(
@@ -218,7 +218,7 @@ TEST_CASE("snGrad schemes")
         );
 
         const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradU.boundaryField())
         {
             REQUIRE_THAT(
@@ -249,7 +249,7 @@ TEST_CASE("snGrad schemes")
         );
 
         const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
-        size_t patchStart = 0;
+        NeoN::sizeType patchStart = 0;
         for (const auto& patch : ofSnGradU.boundaryField())
         {
             REQUIRE_THAT(

@@ -12,7 +12,7 @@ Laminar::Laminar(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu)
     : exec_(rt.exec)
     , mesh_(rt.nfMesh)
     , nu_(nu)
-    , gradOp_(rt.exec, rt.nfMesh)
+    , gradUOp_(gradSchemePtr(rt, "grad(U)"))
     , gradU_(
           rt.exec,
           "gradU",
@@ -44,7 +44,7 @@ Laminar::Laminar(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu)
 
 void Laminar::updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U)
 {
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     gradU_.correctBoundaryConditions();
 }
 

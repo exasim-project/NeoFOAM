@@ -16,18 +16,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Requirements
-      run: |
-        sudo apt install doxygen python3-sphinx texlive-font-utils
-        pip3 install furo breathe sphinx-sitemap sphinxcontrib-mermaid
-
     - name: Checkout repo
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-    - uses: actions/setup-python@v5
-      with: { cache: 'pip' }
+    - name: System packages
+      run: sudo apt-get update && sudo apt-get install -y doxygen texlive-font-utils
 
-    - run: pip install -r doc/requirements.txt
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2412
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - uses: pyvista/setup-headless-display-action@v3
+
+    - name: Install project + docs extras
+      run: |
+        python -m pip install --upgrade pip
+        pip install ".[docs]"
 
     - name: Build docs
       run: |

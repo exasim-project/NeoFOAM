@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <optional>
 #include <string>
 
@@ -33,6 +34,21 @@ void applyFixedValueConstraints(
     NeoN::localIdx nCells
 );
 void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::scalar refValue);
+
+/* @brief Write the constrained values into the solution field itself.
+ *
+ * fvMatrix::setValuesFromList assigns `psi[celli] = value` before it touches the matrix, so a
+ * constrained cell already holds its value no matter what the linear solver then does. Pinning
+ * only the matrix leaves that cell to the iterative solver, and a solve that exits after zero
+ * iterations (its normalised residual is already under the tolerance) leaves the cell at its
+ * previous value -- an unpinned near-wall dissipation for that iteration.
+ */
+void assignFixedValues(
+    NeoN::Vector<NeoN::scalar>& psi,
+    NeoN::View<const NeoN::scalar> mask,
+    NeoN::View<const NeoN::scalar> values,
+    NeoN::localIdx nCells
+);
 } // namespace detail
 
 /*@brief extends expression by giving access to assembled matrix
@@ -61,14 +77,13 @@ public:
         : psi_(&psi)
         , expr_(expr)
         , runTime_(&runTime)
-        , ls_(readOrCreate<LinearSystem>(
+        , ls_(&readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
               // FIXME find a proper place
               [&psi, &runTime]()
               {
-                  if (runTime.fvSolutionDict.subDict("solvers")
-                          .subDict(psi.name)
+                  if (NeoFOAM::solverSettings(runTime.fvSolutionDict.subDict("solvers"), psi.name)
                           .template get<std::string>("assemblyStrategy", "face-based")
                       == "cell-based")
                   {
@@ -92,9 +107,9 @@ public:
         // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
         // NOTE OpenFOAM tokenizes a switch like 'optimize true;' as a word, so it is stored
         // as a std::string in the NeoN dictionary; reading it as bool throws bad_any_cast.
-        auto optimize = runTime_->fvSolutionDict.subDict("solvers")
-                            .subDict(psi_->name)
-                            .template get<std::string>("optimize", "false");
+        auto optimize =
+            NeoFOAM::solverSettings(runTime_->fvSolutionDict.subDict("solvers"), psi_->name)
+                .template get<std::string>("optimize", "false");
         if (optimize == "true" || optimize == "yes" || optimize == "on" || optimize == "1")
         {
             expr_ = NeoN::dsl::optimize(expr_);
@@ -109,7 +124,7 @@ public:
         : psi_(nullptr)
         , expr_(std::move(expr))
         , runTime_(nullptr)
-        , ls_(std::nullopt)
+        , ls_(nullptr)
     {}
 
     PDE(const PDE& expr)
@@ -124,9 +139,24 @@ public:
 
     const VolumeField& getField() const { return *psi_; }
 
-    [[nodiscard]] LinearSystem& linearSystem() { return *ls_; }
+    // An expression-only PDE has no linear system until its first assemble or solve.
+    [[nodiscard]] LinearSystem& linearSystem()
+    {
+        NF_ASSERT(
+            ls_ != nullptr,
+            "PDE has no linear system yet: construct it with field and RunTime"
+        );
+        return *ls_;
+    }
 
-    [[nodiscard]] const LinearSystem& linearSystem() const { return *ls_; }
+    [[nodiscard]] const LinearSystem& linearSystem() const
+    {
+        NF_ASSERT(
+            ls_ != nullptr,
+            "PDE has no linear system yet: construct it with field and RunTime"
+        );
+        return *ls_;
+    }
 
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
@@ -149,7 +179,7 @@ public:
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
         // Accept the call in serial (MPI not initialised — mpiRank is the
-        // sentinel -1, which would compare unequal to 0 if cast to size_t)
+        // sentinel -1, which would compare unequal to 0 if cast to NeoN::sizeType)
         // and on rank 0 in parallel. SetReference::operator() further guards
         // the matrix mutation against non-rank-0 in initialised MPI.
         // When runTime_ is null (1-arg constructor path), default to accepting
@@ -171,12 +201,57 @@ public:
     /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
     void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
+    /** @brief Request ``relaxationFactors.equations`` under-relaxation of this matrix.
+     *
+     * Mirrors ``Foam::fvMatrix::relax()``: OpenFOAM relaxes a matrix only where the
+     * solver explicitly asks for it — the momentum and turbulence transport equations
+     * — and never the pressure equation, whose Poisson operator would become a
+     * Helmholtz one. Relaxation is therefore opt-in and OFF by default; the flag is
+     * read after assembly, so call it any time before solve()/assembleAndRelax().
+     */
+    void relax(bool on = true) { relax_ = on; }
+
     /** @brief Hard-pin a set of cells to prescribed values after assembly (omega wall function). */
     void
     setConstraints(const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values)
     {
         constraintMask_ = &mask;
         constraintValues_ = &values;
+    }
+
+    /** @brief As setConstraints, but the PDE keeps its own copies of the mask/values so the
+     *  caller need not keep them alive until solve() — used by the Python one-shot
+     *  epsilon-wall-cell pin helper (epsilonWallFunction). */
+    void setConstraintsOwned(
+        const NeoN::Vector<NeoN::scalar>& mask,
+        const NeoN::Vector<ValueType>& values
+    )
+    {
+        ownedConstraintMask_ = mask;
+        ownedConstraintValues_ = values;
+        constraintMask_ = &ownedConstraintMask_.value();
+        constraintValues_ = &ownedConstraintValues_.value();
+    }
+
+    /** @brief Register a constraint applied to the assembled system after relaxation.
+     *
+     * NeoFOAM's analogue of OpenFOAM's `fvOptions.constrain(eqn)` (e.g. the
+     * velocityDampingConstraint, see NeoFOAM/algorithms/velocityDamping.hpp). simpleFoam's
+     * UEqn.H orders these as
+     *
+     *     UEqn.relax();
+     *     fvOptions.constrain(UEqn);
+     *     solve(UEqn == -fvc::grad(p));
+     *
+     * so the callback runs AFTER relaxation (also when no relaxation is requested) and BEFORE
+     * the rhs term is added, the reference cell is set and the system is solved. It operates on
+     * the owned linear system, hence it is also seen by computeRAUandHByA (as it is in OpenFOAM,
+     * where the constrained diagonal feeds rAU). Unlike setConstraints(), which pins cell
+     * values, this may modify the system arbitrarily.
+     */
+    void setPostRelaxConstraint(std::function<void(LinearSystem&)> constraint)
+    {
+        postRelaxConstraint_ = std::move(constraint);
     }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
@@ -199,7 +274,8 @@ public:
     /** @brief Assemble and relax the owned ls_ without solving.
      *
      * Ensures computeRAUandHByA reads the relaxed diagonal even when the momentum
-     * predictor is disabled. With no relaxation factor configured, this is a no-op.
+     * predictor is disabled. Without relax() (or with no relaxation factor
+     * configured), this is a plain assemble().
      */
     LinearSystem& assembleAndRelax()
     {
@@ -253,16 +329,22 @@ public:
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fvSolution = (finalIter_ && solverDict.isDict(finalKey))
-                            ? solverDict.subDict(finalKey)
-                            : solverDict.subDict(psi_->name);
+        const bool useFinal = finalIter_ && NeoFOAM::hasSolverSettings(solverDict, finalKey);
+        auto fvSolution = useFinal ? NeoFOAM::solverSettings(solverDict, finalKey)
+                                   : NeoFOAM::solverSettings(solverDict, psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fvSolution);
-        auto solver = NeoN::la::Solver(psi_->exec(), fvSolution);
+        // Persist the solver across iterations, as solveImpl does, so its setup and caches survive.
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fvSolution); }
+        );
         // Do some sanity checks before trying to solve
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
-        auto stats = solver.solve(*ls_, psi_->internalVector());
+        auto stats = solver->solve(*ls_, psi_->internalVector());
 
         ls_->rhs() = savedRhs;
 
@@ -279,9 +361,7 @@ public:
         ls_->reset();
         expr_.assemble(rt.t, rt.dt, *ls_, psi.mesh());
 
-        const auto alpha =
-            lookupEqnRelaxation(rt.fvSolutionDict, psi.name, finalIter_).value_or(1.0);
-        NeoN::dsl::applyMatrixRelaxation(*ls_, psi, alpha);
+        applyRelaxation(*ls_, psi, rt);
 
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
@@ -319,17 +399,23 @@ public:
 
         auto solverDict = rt.fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi.name + "Final";
-        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
-        auto fieldSolverDict =
-            useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi.name);
+        const bool useFinal = finalIter_ && NeoFOAM::hasSolverSettings(solverDict, finalKey);
+        auto fieldSolverDict = useFinal ? NeoFOAM::solverSettings(solverDict, finalKey)
+                                        : NeoFOAM::solverSettings(solverDict, psi.name);
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi.exec());
         NF_ASSERT(ls_->exec() == psi.exec(), "Executors are not the same");
         NeoN::la::SolverStats stats;
         if (useFinal)
         {
-            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
-            stats = finalSolver.solve(*ls_, psi.internalVector());
+            // The caller caches only the non-final solver; keep the final one in the RunTime like
+            // solveImpl, so it is not rebuilt in the final iteration of every time step.
+            auto& finalSolver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+                rt,
+                "solver:" + finalKey,
+                [&] { return std::make_shared<NeoN::la::Solver>(psi.exec(), fieldSolverDict); }
+            );
+            stats = finalSolver->solve(*ls_, psi.internalVector());
         }
         else
         {
@@ -354,9 +440,7 @@ public:
         ls_->reset();
         expr_.assemble(rt.t, rt.dt, *ls_, psi.mesh());
 
-        const auto alpha =
-            lookupEqnRelaxation(rt.fvSolutionDict, psi.name, finalIter_).value_or(1.0);
-        NeoN::dsl::applyMatrixRelaxation(*ls_, psi, alpha);
+        applyRelaxation(*ls_, psi, rt);
 
         // add rhs in place; save and restore so ls_ retains the H-system
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
@@ -366,17 +450,23 @@ public:
 
         auto solverDict = rt.fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi.name + "Final";
-        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
-        auto fieldSolverDict =
-            useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi.name);
+        const bool useFinal = finalIter_ && NeoFOAM::hasSolverSettings(solverDict, finalKey);
+        auto fieldSolverDict = useFinal ? NeoFOAM::solverSettings(solverDict, finalKey)
+                                        : NeoFOAM::solverSettings(solverDict, psi.name);
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi.exec());
         NF_ASSERT(ls_->exec() == psi.exec(), "Executors are not the same");
         NeoN::la::SolverStats stats;
         if (useFinal)
         {
-            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
-            stats = finalSolver.solve(*ls_, psi.internalVector());
+            // The caller caches only the non-final solver; keep the final one in the RunTime like
+            // solveImpl, so it is not rebuilt in the final iteration of every time step.
+            auto& finalSolver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+                rt,
+                "solver:" + finalKey,
+                [&] { return std::make_shared<NeoN::la::Solver>(psi.exec(), fieldSolverDict); }
+            );
+            stats = finalSolver->solve(*ls_, psi.internalVector());
         }
         else
         {
@@ -403,9 +493,7 @@ public:
 
         // Relaxation MUST precede SetReference: SetReference doubles the ref-cell diagonal,
         // and relaxing afterwards would corrupt the pin.
-        const auto alpha =
-            lookupEqnRelaxation(runTime_->fvSolutionDict, psi_->name, finalIter_).value_or(1.0);
-        NeoN::dsl::applyMatrixRelaxation(ls, *psi_, alpha);
+        applyRelaxation(ls, *psi_, *runTime_);
 
         // Apply reference-cell pinning (kernel compiled only in pde.cpp via detail helper)
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
@@ -427,22 +515,45 @@ public:
                     constraintValues_->view(),
                     nCells
                 );
+                // Assign the field too, as fvMatrix::setValuesFromList does: the decoupled row
+                // only yields the pinned value once the solver has actually worked on it.
+                detail::assignFixedValues(
+                    psi_->internalVector(),
+                    constraintMask_->view(),
+                    constraintValues_->view(),
+                    nCells
+                );
             }
         }
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
-                                 ? solverDict.subDict(finalKey)
-                                 : solverDict.subDict(psi_->name);
+        const bool useFinal = finalIter_ && NeoFOAM::hasSolverSettings(solverDict, finalKey);
+        auto fieldSolverDict = useFinal ? NeoFOAM::solverSettings(solverDict, finalKey)
+                                        : NeoFOAM::solverSettings(solverDict, psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi_->exec());
         NF_ASSERT(ls.exec() == psi_->exec(), "Executors are not the same");
 
-        auto solver = NeoN::la::Solver(psi_->exec(), fieldSolverDict);
-        auto stats = solver.solve(ls, psi_->internalVector());
+        // Persist the NeoN solver across iterations: keep the solver instance alive in the
+        // RunTime controlDict (like ls_), keyed by field and its Final variant. This lets a
+        // Ginkgo solver reuse setup it keeps across solves (e.g. the multigrid hierarchy with
+        // reuseSetup) instead of rebuilding it every time -- a fresh per-solve solver would
+        // discard it. The initializer runs once, on the first solve for this key.
+        //
+        // Stored as a shared_ptr, NOT a bare Solver: Dictionary::insert copies the std::any, and a
+        // Solver copy invokes NeoN::la::Solver's copy ctor (solverInstance_->clone(), which the
+        // Ginkgo backend does not support). Copying the shared_ptr only bumps a refcount, so the
+        // Solver itself -- and its cached setup -- is never cloned.
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fieldSolverDict); }
+        );
+        auto stats = solver->solve(ls, psi_->internalVector());
 
         reportSolverStats(stats, fieldSolverDict);
 
@@ -452,11 +563,20 @@ public:
     // Relax the owned ls_ in place. Shared by solve(rhs) and assembleAndRelax() so both
     // paths use the same alpha lookup. Must run before SetReference (see solveImpl).
     // Only calls the free function applyMatrixRelaxation — no NEON_LAMBDA in this body.
-    void relaxOwnedLs()
+    void relaxOwnedLs() { applyRelaxation(*ls_, *psi_, *runTime_); }
+
+    // The single place equation relaxation is applied. Relaxation is a no-op unless relax() was
+    // called (fvMatrix::relax() semantics — see relax()); the post-relaxation constraint, if
+    // registered, runs either way (fvOptions.constrain does not depend on relax()).
+    void applyRelaxation(LinearSystem& ls, VolumeField& psi, const RunTime& rt)
     {
-        const auto alpha =
-            lookupEqnRelaxation(runTime_->fvSolutionDict, psi_->name, finalIter_).value_or(1.0);
-        NeoN::dsl::applyMatrixRelaxation(*ls_, *psi_, alpha);
+        if (relax_)
+        {
+            const auto alpha =
+                lookupEqnRelaxation(rt.fvSolutionDict, psi.name, finalIter_).value_or(1.0);
+            NeoN::dsl::applyMatrixRelaxation(ls, psi, alpha);
+        }
+        if (postRelaxConstraint_) postRelaxConstraint_(ls);
     }
 
     // Remove NeoFOAM-specific control keys from a per-field solver dict before it
@@ -483,24 +603,20 @@ private:
         psi_ = &psi;
         runTime_ = &rt;
 
-        auto optimize =
-            rt.fvSolutionDict.subDict("solvers").subDict(psi.name).template get<std::string>(
-                "optimize",
-                "false"
-            );
+        auto optimize = NeoFOAM::solverSettings(rt.fvSolutionDict.subDict("solvers"), psi.name)
+                            .template get<std::string>("optimize", "false");
         if (optimize == "true" || optimize == "yes" || optimize == "on" || optimize == "1")
         {
             expr_ = NeoN::dsl::optimize(expr_);
         }
         expr_.read(NeoFOAM::expandSchemeDefaults(rt.fvSchemesDict, expr_, psi.name));
 
-        ls_.emplace(readOrCreate<LinearSystem>(
+        ls_ = &readOrCreate<LinearSystem>(
             rt,
             "linearSystem" + psi.name,
             [&psi, &rt]()
             {
-                if (rt.fvSolutionDict.subDict("solvers")
-                        .subDict(psi.name)
+                if (NeoFOAM::solverSettings(rt.fvSolutionDict.subDict("solvers"), psi.name)
                         .template get<std::string>("assemblyStrategy", "face-based")
                     == "cell-based")
                 {
@@ -519,7 +635,7 @@ private:
                         );
                 }
             }
-        ));
+        );
     }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
@@ -562,13 +678,23 @@ private:
     VolumeField* psi_;
     dsl::Expression<ValueType> expr_;
     RunTime* runTime_;
-    std::optional<LinearSystem> ls_;
+    // The linear system stored in the RunTime controlDict under "linearSystem<field>". Held by
+    // pointer, not copied: a PDE is typically constructed every time step, and a copy would
+    // reallocate the matrix each step, defeating the solver's caches keyed on its storage.
+    LinearSystem* ls_;
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
     bool finalIter_ = false;
+    bool relax_ = false;
     const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
     const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
+    // Optional PDE-owned storage backing constraintMask_/constraintValues_ (setConstraintsOwned).
+    std::optional<NeoN::Vector<NeoN::scalar>> ownedConstraintMask_;
+    std::optional<NeoN::Vector<ValueType>> ownedConstraintValues_;
+    // Post-relaxation constraint on the assembled system (fvOptions.constrain analogue).
+    // Empty unless setPostRelaxConstraint() was called. See applyRelaxation().
+    std::function<void(LinearSystem&)> postRelaxConstraint_ {};
 };
 
 

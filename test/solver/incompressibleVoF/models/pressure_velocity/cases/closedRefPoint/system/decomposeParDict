@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// The 4-cell row cut in half along x: rank 0 owns global cells 0 and 1, rank 1
+// owns 2 and 3. The reference point named in system/fvSolution is the centre of
+// global cell 2, so the reference cell lands on rank 1 — the *non*-master.
+// That is the arrangement the parallel test needs: on rank 0 setRefCell hands
+// back -1 even though a reference is needed, so the reduction in
+// ``need_reference`` is what stops rank 0 from silently skipping the level
+// shift, and ``get_ref_cell_value`` has to carry rank 1's value to rank 0.
+numberOfSubdomains  2;
+
+method          simple;
+
+coeffs
+{
+    n           (2 1 1);
+}
+
+
+// ************************************************************************* //

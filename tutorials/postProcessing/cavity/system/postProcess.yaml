@@ -1,0 +1,27 @@
+# In-situ post-processing tables — the declarative front door.
+#
+# Every table becomes one postProcessing/<name>.csv with ``time`` as its first
+# column. ``system/postProcess.py`` next to this file declares two more tables
+# in Python and registers the ``square`` node the second table below uses.
+tables:
+  # A vector field: three columns (one per component). ``scale`` converts to
+  # mm/s, ``print`` echoes what flows past it, and the table is evaluated only
+  # every tenth step.
+  - name: volume_U_scaled
+    source: {type: internal, field: U}
+    pipeline:
+      - {type: scale, factor: 1000.0}
+      - {type: print, label: U_in_mm_per_s}
+      - {type: volIntegrate, name: volume_U_scaled}
+    write_control: {write_control_type: timeStep, interval: 10}
+
+  # The same kinetic energy the script builds with ``|``, declared as data.
+  # ``square`` is not a NeoFOAM node: system/postProcess.py registers it, and
+  # the script is executed before this file is resolved.
+  - name: kinetic_energy_declared
+    source: {type: internal, field: U}
+    pipeline:
+      - {type: mag}
+      - {type: square}
+      - {type: scale, factor: 0.5}
+      - {type: volIntegrate, name: kinetic_energy_declared}

@@ -95,4 +95,15 @@ public:
     virtual void write(MeshAdapter& mesh) const = 0;
 };
 
+/**
+ * @brief Out-of-line wrapper around TurbulenceModel::create.
+ *
+ * Force-registers the built-in models in libNeoFOAM's runtime-selection table
+ * before dispatching, so the factory resolves the model name even when the model
+ * is only ever reached through the -fvisibility=hidden Python bindings (where the
+ * automatic static self-registration can be elided). addSubType() is idempotent.
+ */
+std::unique_ptr<TurbulenceModel>
+createTurbulenceModel(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu);
+
 } // namespace NeoFOAM

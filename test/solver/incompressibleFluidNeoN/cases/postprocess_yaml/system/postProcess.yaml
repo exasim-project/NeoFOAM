@@ -1,0 +1,13 @@
+# Two tables over NeoN volume fields: a scalar one and a vector one reduced by
+# ``mag`` first. The same ``volume_p`` table runs on incompressibleFluid
+# (../../../incompressibleFluid/cases/postprocess_yaml).
+tables:
+  - name: volume_p
+    source: {type: internal, field: p}
+    pipeline: [{type: volIntegrate, name: volume_p}]
+
+  - name: volume_mag_U
+    source: {type: internal, field: U}
+    pipeline:
+      - {type: mag}
+      - {type: volIntegrate, name: volume_mag_U}

@@ -1,0 +1,98 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Runtime-switchable alpha-advection scheme (NeoFOAM incompressibleVoF):
+//   MULES       -- interFoam-style algebraic VoF (default)
+//   isoAdvector -- geometric VoF (interIsoFoam). Requires the isoAdvector
+//                  controls in the "alpha.water.*" solver sub-dict below.
+advectionScheme isoAdvector;
+
+solvers
+{
+    "alpha.water.*"
+    {
+        // isoAdvector (geometric) controls, read by Foam::isoAdvection at
+        // construction via mesh.solverDict("alpha.water").
+        isoFaceTol      1e-6;
+        surfCellTol     1e-6;
+        nAlphaBounds    3;
+        snapTol         1e-12;
+        clip            true;
+        reconstructionScheme isoAlpha;
+
+        nAlphaSubCycles 1;
+        // cAlpha is unused by isoAdvector but interfaceProperties reads it at
+        // mixture construction, so it must be present.
+        cAlpha          1;
+    }
+
+    "pcorr.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-5;
+        relTol          0;
+    }
+
+    p_rgh
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-07;
+        relTol          0.05;
+        // NeoN/Ginkgo Ic+Cg needs ~2300-2600 iterations to reach this
+        // tolerance on the density-jump VoF pressure system (OpenFOAM's
+        // DIC-PCG converges in ~100). The default 1000-iteration cap
+        // silently under-converges p_rgh (stops at residual ~1e-3), which
+        // is the dominant source of the incompressibleVoFNeon-vs-interFoam
+        // divergence; raise the cap so the solve meets the requested
+        // tolerance. (No effect on OpenFOAM, which never hits it.)
+        maxIter         20000;
+    }
+
+    p_rghFinal
+    {
+        $p_rgh;
+        relTol          0;
+    }
+
+    U
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-06;
+        relTol          0;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor   no;
+    nOuterCorrectors    1;
+    nCorrectors         3;
+    nNonOrthogonalCorrectors 0;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        ".*" 1;
+    }
+}
+
+
+// ************************************************************************* //

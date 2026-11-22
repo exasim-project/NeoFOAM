@@ -1,0 +1,7 @@
+# The same volume integral as ../postprocess_yaml, on a simulated-time cadence:
+# twice the run's deltaT of 0.001, so only every second step is written.
+tables:
+  - name: volume_p_run_time
+    source: {type: internal, field: p}
+    pipeline: [{type: volIntegrate, name: volume_p}]
+    write_control: {write_control_type: runTime, interval: 0.002}

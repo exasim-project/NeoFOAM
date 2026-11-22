@@ -1,0 +1,7 @@
+# ``clip`` is not a NeoFOAM node: this case's postProcess.py registers it.
+tables:
+  - name: clipped_p_declared
+    source: {type: internal, field: p}
+    pipeline:
+      - {type: clip, threshold: 1.5}
+      - {type: volIntegrate, name: clipped_p_declared}

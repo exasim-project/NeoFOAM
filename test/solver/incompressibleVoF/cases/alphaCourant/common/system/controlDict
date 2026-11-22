@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     none;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1;
+
+// deltaT enters the alpha-Courant number linearly; 0.25 makes the hand
+// computed expectations on the row4 mesh come out at exactly 1.0 / 0.5.
+deltaT          0.25;
+
+writeControl    runTime;
+
+writeInterval   1;
+
+writeFormat     ascii;
+
+writePrecision  17;
+
+timeFormat      general;
+
+timePrecision   16;
+
+// ************************************************************************* //

@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "NeoFOAM/auxiliary/bound.hpp"
+
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
@@ -168,6 +170,14 @@ public:
      */
     void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
 
+    /** @brief Replace the default Gauss-Green tensor-gradient operator with the
+     *  gradSchemes-configured one, so grad(U) honours e.g. cellLimited. Used by the
+     *  RunTime-constructed wrapper, which alone can reach the schemes dictionary. */
+    void setGradUOperator(std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> op)
+    {
+        gradUOp_ = std::move(op);
+    }
+
 private:
 
     void reserveScratch();
@@ -219,7 +229,11 @@ private:
     nnfvcc::SurfaceField<scalar> domegaEffFTmp_;
 
     // Cached operators (constructed once)
+    // Scalar grad(k)/grad(omega): the factory interface exposes only a Vector<Vec3> output
+    // overload, so these stay on GaussGreenGrad until NeoN offers a VolumeField one.
     nnfvcc::GaussGreenGrad gradOp_;
+    // gradSchemes-configured tensor-gradient operator, shared with RunTime's gradScheme cache
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // Model coefficients
@@ -233,10 +247,11 @@ private:
     NeoN::Vector<scalar> cornerWeightTmp_;
     bool cornerWeightsBuilt_ = false;
 
-    nnfvcc::VolumeField<scalar> boundFlooredTmp_;
-    nnfvcc::SurfaceField<scalar> surfBoundFlooredTmp_;
-    NeoN::Vector<scalar> sumFaceAreaTmp_;
-    bool sumFaceAreaBuilt_ = false;
+    // Lower bound applied to k after each solve, as OpenFOAM's kMin_.
+    scalar kMin_ = 0.0;
+
+    // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
+    mutable BoundCache boundCache_;
 };
 
 /**

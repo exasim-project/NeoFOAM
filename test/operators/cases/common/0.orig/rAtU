@@ -1,0 +1,33 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      rAtU;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// rAtU = 1/(1/rAU - UEqn.H1()): the SIMPLEC consistent reciprocal diagonal,
+// same dimensions as rAU (seconds) so that rAtU - rAU is well formed. Inert
+// here — see the note in 0.orig/rAU.
+dimensions      [0 0 1 0 0 0 0];
+
+// placeholder — the tests seed the values (test_simplec_flux_correction)
+internalField   uniform 1;
+
+boundaryField
+{
+    walls
+    {
+        type            zeroGradient;
+    }
+}
+
+// ************************************************************************* //

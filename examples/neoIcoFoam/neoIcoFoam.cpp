@@ -114,7 +114,9 @@ void runCase(
             {
                 // Pressure corrector
                 nf::PDE<NeoN::scalar, NeoN::scalar, NeoN::localIdx, PMatrixType> pEqn(
-                    NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
+                    NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
+                    p,
+                    rt
                 );
 
                 // updateFaceVelocity reconstructs phi from this pressure system; keep the
@@ -137,7 +139,7 @@ void runCase(
             }
             nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-            nf::updateVelocity(hByA, crAU, p, U);
+            nf::updateVelocity(hByA, crAU, p, U, rt);
             U.correctBoundaryConditions();
         }
 
@@ -266,7 +268,6 @@ int main(int argc, char* argv[])
         Foam::pisoControl piso(mesh);
 
 #include "createFields.H"
-
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));

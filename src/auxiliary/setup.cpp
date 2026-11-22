@@ -85,6 +85,35 @@ createExecutor(const std::string execName, std::unique_ptr<NeoN::AllocatorStrate
     return NeoN::SerialExecutor();
 }
 
+NeoN::Executor createExecutor(const Foam::word& execName)
+{
+    // Declared in setup.hpp; create the named executor with the default allocator.
+    // Lets callers select an executor by name without a controlDict round-trip
+    // (used by the create_adapter_run_time Python binding to default to Serial).
+    return createExecutor(std::string(execName), std::make_unique<NeoN::DefaultAllocator>());
+}
+
+NeoN::Executor createExecutor(const Foam::word& execName, const Foam::dictionary& dict)
+{
+    const auto allocator = dict.getOrDefault<Foam::word>("allocator", "Default");
+    if (allocator == "Umpire")
+    {
+        return createExecutor(std::string(execName), std::make_unique<NeoN::UmpireAllocator>());
+    }
+    if (allocator != "UmpirePool")
+    {
+        return createExecutor(execName);
+    }
+    auto exec =
+        createExecutor(std::string(execName), std::make_unique<NeoN::UmpirePoolAllocator>());
+    // The pool must live in the memory space the executor allocates from.
+    const auto memSpace = std::holds_alternative<NeoN::GPUExecutor>(exec) ? NeoN::MemorySpace::GPU
+                                                                          : NeoN::MemorySpace::CPU;
+    const auto poolSizeGB = dict.get<Foam::scalar>("memPoolSize");
+    NeoN::UmpireMempoolHandler::setupUmpirePool(memSpace, poolSizeGB * 1e9);
+    return exec;
+}
+
 NeoN::Executor createExecutor(const Foam::dictionary& dict)
 {
     auto execName = std::string(dict.get<Foam::word>("executor"));

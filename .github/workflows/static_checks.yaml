@@ -153,12 +153,22 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true # Recursively clone submodules
-    - name: Install dependencies
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: Install Python dependencies
       run: |
-        sudo apt update
-        sudo apt install \
-           pre-commit python3-identify
-        pre-commit install
+        pip install .[all] -v
+
     - name: Run pre-commit on all files
       run: pre-commit run --all --color always --verbose
     - name: check for todo fixme note

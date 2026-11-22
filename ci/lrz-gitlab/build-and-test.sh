@@ -5,6 +5,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fail fast on a bad/expired credential instead of letting git block on a terminal
+# prompt: a stale github.com entry turns an anonymous-OK public clone into a 401,
+# which otherwise surfaces as three silent retries that read like a network fault.
+export GIT_TERMINAL_PROMPT=0
+
+# Dependency clones (Kokkos, libdwarf via cpptrace, ...) are public and need no
+# credentials. A stale credential in the runner's git config makes GitHub answer
+# 401 to them, so disable any configured helper for every git call in this job.
+# GIT_CONFIG_* is applied last, overriding the system and global config.
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0=credential.helper
+export GIT_CONFIG_VALUE_0=
+
+# Report where credential/insteadOf config comes from should the above not be
+# enough (an insteadOf URL rewrite carries its own token). --name-only drops
+# values, but a rewrite embeds its token in the key itself
+# (url.https://<token>@github.com/.insteadOf), so strip any URL userinfo too.
+echo "=== git credential configuration ==="
+git config --list --show-origin --name-only \
+    | grep -Ei 'credential|insteadof' \
+    | sed -E 's#//[^/@[:space:]]*@#//***@#g' \
+    || echo "none"
+
 # Check required environment variables
 GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
 NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
@@ -14,10 +37,28 @@ echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
 # Step 0: GPU/Compiler/Tool Info
 # -------------------------
+# The runner sets its own PATH, so the PATH entries of the image are lost: add the
+# GPU-aware MPICH of the Ginkgo images and the CUDA toolkit back (missing dirs are harmless).
+export PATH="/opt/mpich/bin:/usr/local/cuda/bin:${PATH}"
+
+# Launch everything with MPICH's own mpiexec, matching the libmpi that NeoN, NeoFOAM and
+# OpenFOAM link, and start the ranks locally: inside the Slurm allocation hydra would
+# otherwise bootstrap through srun, and every rank comes up as a singleton.
+export HYDRA_BOOTSTRAP=fork
+export MPIEXEC="$(command -v mpiexec.mpich || command -v mpiexec || true)"
+
 echo "=== Tool versions ==="
 cmake --version
-mpirun --version
+echo "MPI launcher: ${MPIEXEC}"
+[ -n "${MPIEXEC}" ] && { "${MPIEXEC}" --version | head -4 || true; }
 g++ --version || clang++ --version
+
+# Benchmark generation (benchmarks/benchmarkSuite/createStudies.py) needs pandas and
+# foamlib; the images only provide python3, pip and venv. Install them into a venv in
+# the job directory on /scratch: $HOME on the runners is small and full.
+python3 -m venv .venv-ci
+source .venv-ci/bin/activate
+pip install --no-cache-dir --quiet pandas "foamlib[preprocessing,postprocessing]"
 
 # use host buffer since no gpu aware mpi is available
 export NEON_FORCE_HOST_BUFFER=1
@@ -51,6 +92,8 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
     # COMPOSITE hierarchy exposes each tile as a separate L0 device so Kokkos
     # selects a single tile — all work and synchronisation stay on one tile.
     export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+    # Single node: use shared memory, verbs fails MPI_Init on the low memlock limit
+    export I_MPI_FABRICS=shm
 
 else
     echo "Unsupported GPU vendor: $GPU_VENDOR"
@@ -60,9 +103,19 @@ fi
 # -------------------------
 # Step 1: Prepare NeoN
 # -------------------------
+NEON_URL=https://gitlab-ce.lrz.de/greole/neon.git
+
+# A coordinated NeoN branch only lives as long as its PR: once that is merged the
+# branch is deleted, but NEON_BRANCH still names it. Fall back to develop instead of
+# failing the clone -- develop is what the submodule pin tracks anyway.
+if ! git ls-remote --exit-code --heads "$NEON_URL" "$NEON_BRANCH" >/dev/null 2>&1; then
+    echo "NeoN branch '$NEON_BRANCH' does not exist; falling back to develop"
+    NEON_BRANCH=develop
+fi
+
 echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
 git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
-    https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
+    "$NEON_URL" ../NeoN
 
 # -------------------------
 # Step 2: Configure and build NeoFOAM
@@ -75,6 +128,7 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_WITH_MPI=ON \
+        -DMPIEXEC_EXECUTABLE="${MPIEXEC}" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
@@ -88,6 +142,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_WITH_MPI=ON \
+        -DMPIEXEC_EXECUTABLE="${MPIEXEC}" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
@@ -98,6 +153,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DKokkos_ARCH_INTEL_PVC=ON \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_WITH_MPI=ON \
+        -DMPIEXEC_EXECUTABLE="${MPIEXEC}" \
         -DCMAKE_BUILD_TYPE="release" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
@@ -148,7 +204,7 @@ fi
 # -----------------------------
 SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
-    pushd tutorials/cavity >/dev/null
+    pushd tutorials/neoIcoFoam/cavity >/dev/null
     python3 cleanRunValidate.py --preset "$PRESET" --mode serial
     # currently intel is too slow and nvidia hangs
     if [[ "$GPU_VENDOR" != "intel" ]]; then
@@ -174,11 +230,11 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
     blockMesh > log.blockMesh 2>&1
     decomposePar -decomposeParDict system/decomposeParDict.6 > log.decomposePar 2>&1
     for proc in processor*/; do rm -rf "${proc}0" && cp -r 0.orig "${proc}0"; done
-    mpirun -np 6 snappyHexMesh -parallel -overwrite \
+    "${MPIEXEC}" -np 6 snappyHexMesh -parallel -overwrite \
         -decomposeParDict system/decomposeParDict.6 > log.snappyHexMesh 2>&1
-    mpirun -np 6 topoSet -parallel \
+    "${MPIEXEC}" -np 6 topoSet -parallel \
         -decomposeParDict system/decomposeParDict.6 > log.topoSet 2>&1
-    mpirun -np 6 potentialFoam -parallel -writephi \
+    "${MPIEXEC}" -np 6 potentialFoam -parallel -writephi \
         -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
     foamDictionary -entry endTime -set 5 system/controlDict
     # Ginkgo DPC++ backend lacks build_mapping for distributed solvers; run serial on Intel PVC
@@ -189,7 +245,7 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
             cat log.neoSimpleFoam; exit 1
         fi
     else
-        if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+        if ! "${MPIEXEC}" -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
                 -executor GPU \
                 -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
             cat log.neoSimpleFoam; exit 1
