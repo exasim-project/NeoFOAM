@@ -97,8 +97,7 @@ include(cmake/CxxThirdParty.cmake)
 # shared internals, which are keyed by its ABI version. Building both in one tree makes that key
 # match by construction instead of by a version pin kept in step by hand.
 if(DEFINED SKBUILD)
-  cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG
-                907ba0f4d4a199e62cea35876c00132595fc0948)
+  cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG v0.7.0)
 
   # pybFoam's own CMake installs only __init__.py and _version.py. Everything else in its wheel —
   # examples.py, the io/ subpackage, py.typed and the .pyi stubs — comes from its scikit-build-core
