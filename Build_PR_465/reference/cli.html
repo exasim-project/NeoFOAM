@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6a4ff913" />
     
@@ -264,7 +264,6 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -299,7 +298,6 @@
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/neofoam.framework.execution_observer.html">neofoam.framework.execution_observer</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="api/neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="api/neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
 <li class="toctree-l5"><a class="reference internal" href="api/neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
@@ -677,22 +675,6 @@ neofoam<span class="w"> </span>solver<span class="w"> </span>incompressiblefluid
 <p>Available solvers: <code class="docutils literal notranslate"><span class="pre">icofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">pimplefoam</span></code>, <code class="docutils literal notranslate"><span class="pre">incompressiblefluid</span></code>,
 <code class="docutils literal notranslate"><span class="pre">incompressiblevof</span></code> (pybFoam backend); <code class="docutils literal notranslate"><span class="pre">neoicofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">neopimplefoam</span></code>,
 <code class="docutils literal notranslate"><span class="pre">incompressiblefluidneon</span></code> (NeoN backend).</p>
-<section id="plugin-packages">
-<h3>Plugin packages<a class="headerlink" href="#plugin-packages" title="Link to this heading">¶</a></h3>
-<p>A separately installed package extends neofoam through two entry-point groups
-(<code class="docutils literal notranslate"><span class="pre">src/neofoam/core/entry_points.py</span></code>):</p>
-<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"neofoam.plugins"</span><span class="k">]</span>
-<span class="n">mdao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.models"</span><span class="w">        </span><span class="c1"># module; importing it registers models</span>
-
-<span class="k">[project.entry-points.</span><span class="s2">"neofoam.solvers"</span><span class="k">]</span>
-<span class="n">mdaofluid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.solver:run"</span><span class="w">   </span><span class="c1"># run(argv) -&gt; neofoam solver mdaofluid</span>
-</pre></div>
-</div>
-<p>The CLI imports every <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module before running a command, so a
-plugin can add to any <code class="docutils literal notranslate"><span class="pre">PluginSystem</span></code> family (viscosity models, post-processing
-nodes, …). A plugin that fails to import aborts the command; a plugin solver
-whose name matches a built-in one is refused.</p>
-</section>
 </section>
 <section id="executor-selection-and-gpu-initialization">
 <h2>Executor selection and GPU initialization<a class="headerlink" href="#executor-selection-and-gpu-initialization" title="Link to this heading">¶</a></h2>
@@ -811,10 +793,7 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a><ul>
-<li><a class="reference internal" href="#solvers-neofoam-solver">Solvers — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span></code></a><ul>
-<li><a class="reference internal" href="#plugin-packages">Plugin packages</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#solvers-neofoam-solver">Solvers — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span></code></a></li>
 <li><a class="reference internal" href="#executor-selection-and-gpu-initialization">Executor selection and GPU initialization</a></li>
 <li><a class="reference internal" href="#preprocessing-neofoam-preprocess">Preprocessing — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">preprocess</span></code></a></li>
 <li><a class="reference internal" href="#mcp-server-neofoam-mcp">MCP server — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">mcp</span></code></a></li>
@@ -836,6 +815,6 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
     </body>
 </html>
