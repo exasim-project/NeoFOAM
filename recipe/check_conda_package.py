@@ -24,7 +24,7 @@ import pybFoam  # bundled in this package, not a separate dependency
 import neofoam
 
 # Imported at module scope rather than inside main() because ruff PLC0415 forbids the latter.
-# It still carries the assertion: a load failure the guarded import in neofoam/__init__ would
+# It still carries the assertion: a load failure that the guarded import in neofoam/__init__ would
 # have hidden — an unresolved native library, say — raises here.
 import neofoam.neofoam_bindings as bindings
 
