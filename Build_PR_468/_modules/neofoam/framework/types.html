@@ -746,6 +746,26 @@
 
 
 
+<div class="viewcode-block" id="Schedule">
+<a class="viewcode-back" href="../../../reference/api/neofoam.framework.types.html#neofoam.framework.types.Schedule">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Schedule</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""In which pass of its wrapping loops a decorated operation runs.</span>
+
+<span class="sd">    By default it runs in every pass; ``first`` (``final``) limits it to the first</span>
+<span class="sd">    (final) pass. Use it with the ``operation`` decorators of solvers and models.</span>
+<span class="sd">    Marking both is rejected when the operation is built. Frozen.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        @solver.operation(depends_on=["p"], schedule=Schedule(first=True))</span>
+<span class="sd">    """</span>
+
+    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
 <div class="viewcode-block" id="OperationMetadata">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.types.html#neofoam.framework.types.OperationMetadata">[docs]</a>
 <span class="nd">@dataclass</span>
