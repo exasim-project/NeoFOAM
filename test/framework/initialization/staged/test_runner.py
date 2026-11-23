@@ -134,7 +134,7 @@ def test_run_without_resolve():
     assert ctx.mesh == "m"
 
 
-def test_run_hands_the_region_to_its_init_steps():
+def test_run_hands_the_region_to_its_init_steps() -> None:
     builder = StagedInitSpec.build("X")
     steps = [lazy("mesh", create=lambda _ctx: "m")]
     builder.load(lambda: LoadResult(core_models=[], optional_models=[]))

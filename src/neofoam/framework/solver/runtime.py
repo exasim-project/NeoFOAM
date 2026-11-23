@@ -39,12 +39,12 @@ class SolverRuntime:
     Owns per-instance state (models, configs, argv). All decorator-
     registered callables live on the spec; this object provides the
     public execution API (initialize, execution_graph, operations).
+    ``region`` is ``None`` for a single-region case.
     """
 
     spec: "SolverSpec"
     name: str
     argv: list[Any] = field(default_factory=list)
-    # None for a single-region case
     region: Optional[str] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
