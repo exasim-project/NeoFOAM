@@ -673,7 +673,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseModel</span><span class="p">,</span>
@@ -681,6 +681,7 @@
     <span class="n">Field</span><span class="p">,</span>
     <span class="n">PrivateAttr</span><span class="p">,</span>
     <span class="n">SerializationInfo</span><span class="p">,</span>
+    <span class="n">WithJsonSchema</span><span class="p">,</span>
     <span class="n">field_validator</span><span class="p">,</span>
     <span class="n">model_serializer</span><span class="p">,</span>
     <span class="n">model_validator</span><span class="p">,</span>
@@ -1087,6 +1088,14 @@
 
 
 
+<span class="c1"># A coupled solver sets a control per component, as ``(1e-05 1e-05 1e-05)``.</span>
+<span class="n">_ScalarOrComponents</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">Field</span><span class="p">(</span><span class="n">union_mode</span><span class="o">=</span><span class="s2">"left_to_right"</span><span class="p">),</span>
+    <span class="n">WithJsonSchema</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"number"</span><span class="p">,</span> <span class="s2">"string"</span><span class="p">]}),</span>
+<span class="p">]</span>
+
+
 <div class="viewcode-block" id="FoamOtherBlock">
 <a class="viewcode-back" href="../../../reference/api/neofoam.linear_solvers.openfoam.html#neofoam.linear_solvers.openfoam.FoamOtherBlock">[docs]</a>
 <span class="nd">@LinearSolver</span><span class="o">.</span><span class="n">register</span>
@@ -1105,9 +1114,8 @@
 
     <span class="n">solver</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"Other"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Other"</span>
     <span class="n">solverName</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="c1"># A coupled solver sets these per component, as ``(1e-05 1e-05 1e-05)``.</span>
-    <span class="n">tolerance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">union_mode</span><span class="o">=</span><span class="s2">"left_to_right"</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-    <span class="n">relTol</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">union_mode</span><span class="o">=</span><span class="s2">"left_to_right"</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">tolerance</span><span class="p">:</span> <span class="n">_ScalarOrComponents</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">relTol</span><span class="p">:</span> <span class="n">_ScalarOrComponents</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_file_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">info</span><span class="p">:</span> <span class="n">SerializationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Put the file's own solver word back."""</span>
