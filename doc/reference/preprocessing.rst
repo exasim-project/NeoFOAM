@@ -16,7 +16,8 @@ receives that dependency's mesh:
 
 The tools shipped with NeoFOAM are ``blockMesh`` and ``snappyHexMesh`` (build the
 mesh from ``system/blockMeshDict`` / ``system/snappyHexMeshDict``), ``checkMesh``
-(validate it, optionally failing the run) and ``setFields`` below.
+(validate it, optionally failing the run), and ``setFields`` and
+``setAlphaField`` below.
 
 Over MCP, the pipeline is authored with
 ``save_preprocess(case_dir, preprocess, set_fields=None)``: it validates every
@@ -140,3 +141,40 @@ a writable, zero-copy numpy view of the OpenFOAM memory, which is what makes the
 write-back a few lines of numpy; a NeoN field keeps its values on an executor
 that may be a device and offers no such view, so a NeoN case has no write path —
 run ``neofoam preprocess`` on it with the pybFoam bindings, then solve.
+
+Sharp interfaces — ``setAlphaField``
+------------------------------------
+
+``setAlphaField`` initialises a volume fraction from a level set, with the
+geometric cut of OpenFOAM's ``setAlphaField`` utility. A case lists the tool after
+the mesh and defines a plain ``set_alpha(mesh)`` function:
+
+.. code-block:: yaml
+
+    # system/preprocess.yaml
+    tools:
+      - tool: blockMesh
+      - tool: setAlphaField
+        depends_on: [blockMesh]
+
+.. code-block:: python
+
+    # system/setAlphaField.py
+    import numpy as np
+    from neofoam.preprocess import iso_volume_fractions
+
+    def set_alpha(mesh):
+        points = np.asarray(mesh.points())
+        level_set = 0.15 - np.linalg.norm(points[:, :2] - (0.3, 0.35), axis=1)
+        return {"alpha.water": iso_volume_fractions(mesh, level_set)}
+
+The level set is given at the mesh points and is **positive inside the phase**.
+``iso_volume_fractions(mesh, point_values, iso_value=0.0)`` returns ``.cells``, the
+cell volume fractions clamped to [0, 1], and ``.patches``, the wetted area fraction
+of every boundary face by patch name. The tool writes each returned field into the
+start time directory; the field file must already exist, and its boundary condition
+types are kept. A patch type that stores no ``value`` entry, such as
+``zeroGradient``, does not keep its wetted fractions in the written file.
+
+Like ``setFields``, the tool skips a restart and is pybFoam-only. A missing
+``system/setAlphaField.py`` or a script without ``set_alpha`` is an error.

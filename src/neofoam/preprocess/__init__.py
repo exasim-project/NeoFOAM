@@ -19,7 +19,11 @@ its docstring. The case loaders behind the front doors are the tool's, and are
 imported from their own modules.
 """
 
-from neofoam.preprocess.apply import apply_set_fields
+from neofoam.preprocess.apply import (
+    IsoVolumeFractions,
+    apply_set_fields,
+    iso_volume_fractions,
+)
 from neofoam.preprocess.config import SetFieldsConfig, resolve_regions
 from neofoam.preprocess.script import SetFields
 
@@ -30,4 +34,7 @@ __all__ = [
     # Resolve and apply
     "resolve_regions",
     "apply_set_fields",
+    # Sharp interfaces for system/setAlphaField.py
+    "IsoVolumeFractions",
+    "iso_volume_fractions",
 ]

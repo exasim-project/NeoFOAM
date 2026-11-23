@@ -9,6 +9,7 @@ Importing this package self-registers every built-in tool into the shared regist
 from . import (  # noqa: F401  (populate registry)
     block_mesh,
     check_mesh,
+    set_alpha_field,
     set_fields,
     snappy_hex_mesh,
 )
@@ -21,6 +22,7 @@ from .block_mesh import (
 )
 from .check_mesh import CheckMeshStep, checkMeshTool
 from .registry import available_tools, register_tool
+from .set_alpha_field import SetAlphaFieldStep, setAlphaFieldTool
 from .set_fields import SetFieldsStep, setFieldsTool
 from .snappy_hex_mesh import (
     SnappyHexMeshDictConfig,
@@ -36,10 +38,12 @@ __all__ = [
     "snappyHexMeshTool",
     "checkMeshTool",
     "setFieldsTool",
+    "setAlphaFieldTool",
     "BlockMeshStep",
     "SnappyHexMeshStep",
     "CheckMeshStep",
     "SetFieldsStep",
+    "SetAlphaFieldStep",
     "BlockMeshDictConfig",
     "SnappyHexMeshDictConfig",
     "Block",

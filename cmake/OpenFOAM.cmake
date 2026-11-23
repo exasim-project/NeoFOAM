@@ -98,6 +98,8 @@ importoflibrary(
   EXTRA_LINK_TARGET
   ${_NF_PSTREAM_EXTRA})
 importoflibrary(forces INCLUDE_LN functionObjects/forces)
+# cutCellIso / cutFaceIso: the iso-surface cut behind the setAlphaField tool.
+importoflibrary(geometricVoF INCLUDE_LN transportModels/geometricVoF)
 
 # pybFoam compatibility.
 #

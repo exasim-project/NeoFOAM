@@ -114,7 +114,10 @@ the linked reference pages for the full API.
     regions are the post-processing selectors, imported from ``postprocess/``.
     The two front doors (``config.py``, ``script.py``) are pure numpy;
     ``apply.py`` is the one module that touches pybFoam, which is what makes the
-    tool pybFoam-only. See :doc:`preprocessing`.
+    tool pybFoam-only. The ``setAlphaField`` tool runs a case's
+    ``system/setAlphaField.py``, whose ``iso_volume_fractions`` (also in ``apply.py``)
+    cuts cells and boundary faces at an iso-surface through OpenFOAM's
+    ``cutCellIso`` and ``cutFaceIso``. See :doc:`preprocessing`.
 
 ``tooling/``
     The "above the library" layer: the stdlib-only ``Workspace`` path sandbox and

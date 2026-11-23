@@ -20,12 +20,15 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pybFoam as pyf
 
+from neofoam import neofoam_bindings as nfb
 from neofoam.postprocess.nodes.selectors import Selector
 from neofoam.postprocess.sources.geometry import CellGeometry
 from neofoam.preprocess.config import RegionValue
@@ -81,6 +84,54 @@ def apply_set_fields(
         pyf.write(field)
         written.append(name)
     return written
+
+
+@dataclass(frozen=True)
+class IsoVolumeFractions:
+    """The volume fractions of one iso-surface cut, as ``setAlphaField`` writes them.
+
+    ``cells`` holds one value in [0, 1] per cell; ``patches`` holds the wetted
+    area fraction of every patch face, by patch name. Build one with
+    :func:`iso_volume_fractions` and return it from a case's ``set_alpha``::
+
+        return {"alpha.water": iso_volume_fractions(mesh, level_set)}
+    """
+
+    cells: npt.NDArray[np.float64]
+    patches: dict[str, npt.NDArray[np.float64]]
+
+
+def iso_volume_fractions(
+    mesh: Any, point_values: npt.ArrayLike, iso_value: float = 0.0
+) -> IsoVolumeFractions:
+    """Cut every cell and boundary face at the iso-surface of a point field.
+
+    The region where ``point_values > iso_value`` is the phase, so a level set is
+    positive inside it. Use this in ``system/setAlphaField.py`` for a sharp
+    interface; use :class:`SetFields` for a region of constant values. Reads the
+    mesh only and writes nothing::
+
+        points = np.asarray(mesh.points())
+        level_set = 0.15 - np.linalg.norm(points[:, :2] - (0.3, 0.35), axis=1)
+        fractions = iso_volume_fractions(mesh, level_set)
+    """
+    values = np.asarray(point_values, dtype=np.float64)
+    cells, patches = nfb.iso_volume_fractions(mesh, values, iso_value)
+    return IsoVolumeFractions(cells=cells, patches=patches)
+
+
+def apply_volume_fractions(mesh: Any, fields: Mapping[str, IsoVolumeFractions]) -> list[str]:
+    """Write each field's cell and patch fractions to the mesh's current time directory.
+
+    The field must already exist as a ``volScalarField``; its boundary condition
+    types are kept. Returns the names written::
+
+        apply_volume_fractions(mesh, {"alpha.water": fractions})
+    """
+    for name, fractions in fields.items():
+        field = _read_field(mesh, name, components=1)
+        nfb.write_volume_fractions(field, fractions.cells, fractions.patches)
+    return list(fields)
 
 
 def _field_names(defaults: Mapping[str, RegionValue], regions: Sequence[Region]) -> list[str]:
