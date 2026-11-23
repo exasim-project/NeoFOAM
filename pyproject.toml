@@ -31,6 +31,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# the VTKHDF writer (neofoam.postprocess.writers.vtkhdf)
+h5py = ["h5py>=3"]
 dev = [
     "pytest>=6.0",
     "pytest-cov",
@@ -216,6 +218,12 @@ follow_imports = "skip"
 # opentelemetry is the optional [telemetry] extra — absent in most envs.
 [[tool.mypy.overrides]]
 module = ["opentelemetry", "opentelemetry.*"]
+ignore_missing_imports = true
+
+# h5py: the VTKHDF writer (neofoam.postprocess.writers.vtkhdf, the [h5py] extra) imports it
+# on first use.
+[[tool.mypy.overrides]]
+module = ["h5py", "h5py.*"]
 ignore_missing_imports = true
 
 [tool.poe.executor]

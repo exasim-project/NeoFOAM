@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The writers shipped with NeoFOAM: the CSV table output.
+"""The writers shipped with NeoFOAM: the CSV table output and the VTKHDF field output.
 
 Importing this subpackage registers every one of them, so a case file can select
 one by its ``type`` string. A writer is the only part of the package besides the
@@ -10,6 +10,7 @@ output files.
 """
 
 from neofoam.postprocess.writers.csv import CsvWriter
+from neofoam.postprocess.writers.vtkhdf import MeshExport, UnstructuredMesh, VtkHdfWriter
 from neofoam.postprocess.writers.writer import TableWriter, table_headers, table_rows
 
 __all__ = [
@@ -17,4 +18,7 @@ __all__ = [
     "CsvWriter",
     "table_headers",
     "table_rows",
+    "MeshExport",
+    "UnstructuredMesh",
+    "VtkHdfWriter",
 ]
