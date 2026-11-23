@@ -664,10 +664,11 @@
           <section id="module-neofoam.postprocess.writers">
 <span id="neofoam-postprocess-writers"></span><h1>neofoam.postprocess.writers<a class="headerlink" href="#module-neofoam.postprocess.writers" title="Link to this heading">¶</a></h1>
 <p>The writers shipped with NeoFOAM: the CSV table output and the VTKHDF field output.</p>
-<p>Importing this subpackage registers every one of them, so a case file can select
-one by its <code class="docutils literal notranslate"><span class="pre">type</span></code> string. A writer is the only part of the package besides the
-sources and the reductions that touches pybFoam — to ask which rank owns the
-output files.</p>
+<p>Importing this subpackage registers the table writers, so a case file can select
+one by its <code class="docutils literal notranslate"><span class="pre">type</span></code> string. A table writer is the only part of the package besides
+the sources and the reductions that touches pybFoam — to ask which rank owns the
+output files. <code class="xref py py-class docutils literal notranslate"><span class="pre">VtkHdfWriter</span></code> is not a table writer: a backend constructs it
+directly, without pybFoam, and passes an mpi4py communicator when decomposed.</p>
 <p class="rubric">Modules</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">

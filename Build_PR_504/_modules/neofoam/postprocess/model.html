@@ -833,9 +833,9 @@
 <span class="nd">@postProcess</span><span class="o">.</span><span class="n">operation_collection</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""``post_process``, and ``insitu`` when the case declares in-situ entries."""</span>
-    <span class="n">funcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">post_process</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">"insitu"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="n">funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">insitu</span><span class="p">)</span>
+    <span class="n">functions</span> <span class="o">=</span> <span class="p">[</span><span class="n">post_process</span><span class="p">]</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">insitu</span><span class="p">:</span>
+        <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">insitu</span><span class="p">)</span>
     <span class="n">resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">Operations</span><span class="p">(</span>
         <span class="p">[</span>
@@ -843,7 +843,7 @@
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">resolver</span><span class="p">)),</span>
                 <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">funcs</span>
+            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">functions</span>
         <span class="p">]</span>
     <span class="p">)</span></div>
 

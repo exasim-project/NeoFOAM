@@ -681,7 +681,16 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.Finalizer">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Finalizer</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A model of ``ctx.models`` that releases what it holds once the time loop has ended."""</span>
+<span class="w">    </span><span class="sd">"""A model of ``ctx.models`` that releases what it holds once the time loop has ended.</span>
+
+<span class="sd">    Implement it on a model that keeps a resource across steps (a session, an open</span>
+<span class="sd">    file); a model with nothing to release needs nothing. ``SolverRuntime.finalize``</span>
+<span class="sd">    calls it once per run, on every rank. Example::</span>
+
+<span class="sd">        class Session:</span>
+<span class="sd">            def finalize(self) -&gt; None:</span>
+<span class="sd">                self.connection.close()</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="Finalizer.finalize">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.Finalizer.finalize">[docs]</a>

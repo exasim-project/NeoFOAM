@@ -678,7 +678,20 @@ are 0. A backend hands its mesh over as a <a class="reference internal" href="#n
 <p>Cell <code class="docutils literal notranslate"><span class="pre">c</span></code> is the point indices <code class="docutils literal notranslate"><span class="pre">connectivity[offsets[c]:offsets[c</span> <span class="pre">+</span> <span class="pre">1]]</span></code>, of
 the VTK cell type <code class="docutils literal notranslate"><span class="pre">cell_types[c]</span></code> (e.g. 10 tetra, 12 hexahedron); cells of
 different types mix. Under MPI, the arrays of a rank are its piece, the point
-indices local to it. <a class="reference internal" href="#neofoam.postprocess.writers.vtkhdf.UnstructuredMesh" title="neofoam.postprocess.writers.vtkhdf.UnstructuredMesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnstructuredMesh</span></code></a> is one from plain arrays.</p>
+indices local to it. <a class="reference internal" href="#neofoam.postprocess.writers.vtkhdf.UnstructuredMesh" title="neofoam.postprocess.writers.vtkhdf.UnstructuredMesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnstructuredMesh</span></code></a> is one from plain arrays; implement
+this protocol instead to adapt a backend’s mesh. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BackendMesh</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span> <span class="o">=</span> <span class="n">mesh</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span><span class="o">.</span><span class="n">vertices</span>
+
+    <span class="o">...</span>  <span class="c1"># connectivity, offsets and cell_types alike</span>
+
+<span class="n">VtkHdfWriter</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">BackendMesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">))</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">cell_data</span><span class="o">=</span><span class="p">{</span><span class="s2">"p"</span><span class="p">:</span> <span class="n">p</span><span class="p">})</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.postprocess.writers.vtkhdf.MeshExport.cell_types">
 <span class="sig-name descname"><span class="pre">cell_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/writers/vtkhdf.html#MeshExport.cell_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.writers.vtkhdf.MeshExport.cell_types" title="Link to this definition">¶</a></dt>
@@ -709,13 +722,14 @@ indices local to it. <a class="reference internal" href="#neofoam.postprocess.wr
 <dt class="sig sig-object py" id="neofoam.postprocess.writers.vtkhdf.UnstructuredMesh">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.writers.vtkhdf.</span></span><span class="sig-name descname"><span class="pre">UnstructuredMesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connectivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offsets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/writers/vtkhdf.html#UnstructuredMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.writers.vtkhdf.UnstructuredMesh" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A <a class="reference internal" href="#neofoam.postprocess.writers.vtkhdf.MeshExport" title="neofoam.postprocess.writers.vtkhdf.MeshExport"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeshExport</span></code></a> from arrays; it holds them, not copies. Example:</p>
-<dl class="simple">
-<dt>hex_and_tet = UnstructuredMesh(</dt><dd><p>points, connectivity=np.r_[0:8, 4, 5, 6, 8], offsets=np.array([0, 8, 12]),
-cell_types=np.array([12, 10]),</p>
-</dd>
-</dl>
-<p>)</p>
+<p>A <a class="reference internal" href="#neofoam.postprocess.writers.vtkhdf.MeshExport" title="neofoam.postprocess.writers.vtkhdf.MeshExport"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeshExport</span></code></a> from arrays; it holds them, not copies.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hex_and_tet</span> <span class="o">=</span> <span class="n">UnstructuredMesh</span><span class="p">(</span>
+    <span class="n">points</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">offsets</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">]),</span>
+    <span class="n">cell_types</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">]),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py class">
