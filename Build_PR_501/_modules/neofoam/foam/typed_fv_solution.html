@@ -684,6 +684,7 @@
 <span class="n">_VECTOR_FIELDS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"U"</span><span class="p">,</span> <span class="s2">"UFinal"</span><span class="p">})</span>
 <span class="n">_PRESSURE_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="s2">"pFinal"</span><span class="p">)</span>
 <span class="n">_FIELD_ROLES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"p"</span><span class="p">:</span> <span class="s2">"pressure"</span><span class="p">,</span> <span class="s2">"pFinal"</span><span class="p">:</span> <span class="s2">"pressure"</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">:</span> <span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"UFinal"</span><span class="p">:</span> <span class="s2">"momentum"</span><span class="p">}</span>
+<span class="n">_BASE_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"neonFvSolution"</span><span class="p">,</span> <span class="s2">"openfoamFvSolution"</span><span class="p">,</span> <span class="s2">"transportFvSolution"</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TypedFvSolution</span><span class="p">(</span><span class="n">fvSolution</span><span class="p">):</span>
@@ -694,9 +695,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Keep the per-spec name ``&lt;spec&gt;_fvSolution`` that configs are looked up by."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"neonFvSolution"</span><span class="p">,</span> <span class="s2">"openfoamFvSolution"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">_BASE_NAMES</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="k">for</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"neonFvSolution"</span><span class="p">,</span> <span class="s2">"openfoamFvSolution"</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">base_name</span> <span class="ow">in</span> <span class="n">_BASE_NAMES</span><span class="p">:</span>
             <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">base_name</span><span class="p">,</span> <span class="s2">"fvSolution"</span><span class="p">)</span>
         <span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
 
@@ -709,9 +710,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_solver_schema_extra</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""The wizard's field group of a typed entry, and the entry a ``Final`` one mirrors."""</span>
-        <span class="k">if</span> <span class="n">alias</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TYPED_FIELDS</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+<span class="w">        </span><span class="sd">"""The wizard's field group of an entry, and the entry a ``Final`` one mirrors."""</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">"Final"</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">"nfField"</span><span class="p">:</span> <span class="n">base</span><span class="p">}</span> <span class="k">if</span> <span class="n">alias</span> <span class="o">==</span> <span class="n">base</span> <span class="k">else</span> <span class="p">{</span><span class="s2">"nfField"</span><span class="p">:</span> <span class="n">base</span><span class="p">,</span> <span class="s2">"nfFinalOf"</span><span class="p">:</span> <span class="n">base</span><span class="p">}</span>
 
@@ -777,6 +776,32 @@
         <span class="k">if</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">_TYPED_FIELDS</span> <span class="ow">and</span> <span class="s2">"preconditioner"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">block</span><span class="p">,</span> <span class="s2">"preconditioner"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"preconditioner"</span><span class="p">]}}</span>
         <span class="k">return</span> <span class="n">block</span></div>
+
+
+
+<div class="viewcode-block" id="transportFvSolution">
+<a class="viewcode-back" href="../../../reference/api/neofoam.foam.typed_fv_solution.html#neofoam.foam.typed_fv_solution.transportFvSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">transportFvSolution</span><span class="p">(</span><span class="n">_TypedFvSolution</span><span class="p">):</span>  <span class="c1"># noqa: N801</span>
+<span class="w">    </span><span class="sd">"""``system/fvSolution`` of a model shared by backends, its blocks open and in field rows.</span>
+
+<span class="sd">    Use it for a closure's transported fields, with ``final_required=False``: the closure</span>
+<span class="sd">    does not know whether the algorithm is steady. The starter still holds the ``Final``</span>
+<span class="sd">    blocks, which a transient run needs and a steady one ignores.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        Slice = spec.config(transportFvSolution)</span>
+<span class="sd">        Slice.add("k", final_required=False)</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="transportFvSolution.form_defaults">
+<a class="viewcode-back" href="../../../reference/api/neofoam.foam.typed_fv_solution.html#neofoam.foam.typed_fv_solution.transportFvSolution.form_defaults">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">form_defaults</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""A runnable block for every declared entry, ``Final`` ones included."""</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="p">[</span><span class="s2">"solvers"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"solvers"</span><span class="p">:</span> <span class="p">{</span><span class="n">alias</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_starter_solver</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">}}</span></div>
+</div>
 
 
 

@@ -686,13 +686,21 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootModel</span><span class="p">,</span> <span class="n">ValidationError</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">case_spec_to_configs</span><span class="p">,</span> <span class="n">load_case_from_disk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_file_keys</span><span class="p">,</span>
+    <span class="n">_holds_any</span><span class="p">,</span>
+    <span class="n">_own_keys</span><span class="p">,</span>
+    <span class="n">case_spec_to_configs</span><span class="p">,</span>
+    <span class="n">load_case_from_disk</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_scheme_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearSolverConversionWarning</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">foam_case</span><span class="p">,</span> <span class="n">read_keys</span><span class="p">,</span> <span class="n">read_section</span><span class="p">,</span> <span class="n">read_toplevel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.strategies.openfoam_strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">_read_fields</span><span class="p">,</span> <span class="n">_to_python</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">configs_to_form_state</span><span class="p">,</span> <span class="n">models_filled_by</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.form_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">NF_FIELD</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.steps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ModelFamily</span><span class="p">,</span>
@@ -708,6 +716,7 @@
     <span class="s2">"remember_rejected_slices"</span><span class="p">,</span>
     <span class="s2">"rejected_slices"</span><span class="p">,</span>
     <span class="s2">"without_rejected_files"</span><span class="p">,</span>
+    <span class="s2">"undeclared_entries_note"</span><span class="p">,</span>
     <span class="s2">"case_algorithm"</span><span class="p">,</span>
     <span class="s2">"case_advection_model"</span><span class="p">,</span>
     <span class="s2">"models_to_select"</span><span class="p">,</span>
@@ -863,6 +872,8 @@
         <span class="k">if</span> <span class="n">rejected</span><span class="p">[</span><span class="s2">"case_dir"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">where</span> <span class="ow">or</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">target</span> <span class="o">/</span> <span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">continue</span>
         <span class="n">regex</span> <span class="o">=</span> <span class="n">rejected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cause"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"regex"</span>
+        <span class="k">if</span> <span class="n">rejected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cause"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"partial"</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">owner_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
         <span class="k">if</span> <span class="n">regex</span> <span class="ow">or</span> <span class="n">entry</span><span class="o">.</span><span class="n">owner_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">state</span><span class="p">[</span><span class="n">selection_key</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">owner_model</span><span class="p">)]:</span>
             <span class="n">refused</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rejected</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">refused</span></div>
@@ -890,10 +901,21 @@
             <span class="k">continue</span>
         <span class="n">reason</span> <span class="o">=</span> <span class="n">_missing_keys_reason</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
         <span class="n">cause</span> <span class="o">=</span> <span class="n">_regex_cause</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span> <span class="k">if</span> <span class="n">reason</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">noted</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"file"</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s2">"config"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">reason</span> <span class="ow">and</span> <span class="n">cause</span><span class="p">:</span>
-            <span class="n">noted</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"file"</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s2">"config"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">}</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="o">**</span><span class="n">noted</span><span class="p">,</span> <span class="s2">"cause"</span><span class="p">:</span> <span class="s2">"regex"</span><span class="p">}</span> <span class="k">if</span> <span class="n">cause</span> <span class="o">==</span> <span class="s2">"regex"</span> <span class="k">else</span> <span class="n">noted</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">reason</span> <span class="ow">and</span> <span class="n">_is_unjudged_partial</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">classes</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="o">**</span><span class="n">noted</span><span class="p">,</span> <span class="s2">"cause"</span><span class="p">:</span> <span class="s2">"partial"</span><span class="p">})</span>
     <span class="n">_note_loaded_regex_files</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">configs</span><span class="p">,</span> <span class="n">warnings</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_unjudged_partial</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True for a slice holding some keys that rivals with the same keys hide from the load.</span>
+
+<span class="sd">    ``kEpsilon`` and ``realizableKE`` require the same entries, so neither has a key of its</span>
+<span class="sd">    own. Only the selected one matters, which :func:`rejected_slices` decides at save.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">_own_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_holds_any</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_file_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_note_loaded_regex_files</span><span class="p">(</span>
@@ -996,6 +1018,56 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_field_sections</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The sections of a per-field form holding field entries, with their declared keys."""</span>
+    <span class="n">sections</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">form_schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">section</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">sections</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">NF_FIELD</span> <span class="ow">in</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">section</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="undeclared_entries_note">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.undeclared_entries_note">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">undeclared_entries_note</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">],</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""One line per file naming the loaded entries no selected model declares.</span>
+
+<span class="sd">    The per-field forms draw declared entries only; these stay in the data and are</span>
+<span class="sd">    written back unchanged. ``default`` is left out: it backs the declared entries.</span>
+<span class="sd">    Call it after :func:`apply_configs_to_forms`, which settles the selection::</span>
+
+<span class="sd">        notes = undeclared_entries_note(state, entries, configs)</span>
+<span class="sd">    """</span>
+    <span class="n">active</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">cls_name</span><span class="p">:</span> <span class="n">e</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">field_schema</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">state</span><span class="p">[</span><span class="n">selection_key</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">owner_model</span><span class="p">)])</span>
+    <span class="p">}</span>
+    <span class="n">declared</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">active</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="p">{(</span><span class="n">s</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">_field_sections</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
+        <span class="n">declared</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+    <span class="n">hidden</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">active</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span>
+        <span class="n">dump</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">_field_sections</span><span class="p">(</span><span class="n">form</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dump</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="p">{}):</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"default"</span> <span class="ow">and</span> <span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">declared</span><span class="p">[</span><span class="n">file</span><span class="p">]:</span>
+                    <span class="n">hidden</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="p">{})[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">: not used by the selected models, hidden and kept as written: "</span>
+        <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">`"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span>
+        <span class="o">+</span> <span class="s2">"."</span>
+        <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">hidden</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">]</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_has_file</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""True when ``entry``'s config is bound to a file."""</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1075,6 +1147,7 @@
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">],</span>
     <span class="n">families</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelFamily</span><span class="p">],</span>
     <span class="n">filled</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">evidenced</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Reset the forms and switch off the optional models a loaded case does not fill.</span>
 
@@ -1086,14 +1159,29 @@
 <span class="sd">    which one is :func:`models_to_select`'s decision.</span>
 <span class="sd">    """</span>
     <span class="n">family_members</span> <span class="o">=</span> <span class="p">{</span><span class="n">choice</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">families</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">}</span>
-    <span class="n">filled_owners</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">filled</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">filled</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">state</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">state_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
         <span class="n">owner</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">owner_model</span>
-        <span class="k">if</span> <span class="n">owner</span> <span class="ow">and</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filled_owners</span> <span class="ow">and</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">family_members</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">owner</span> <span class="ow">and</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">evidenced</span> <span class="ow">and</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">family_members</span><span class="p">:</span>
             <span class="n">state</span><span class="p">[</span><span class="n">selection_key</span><span class="p">(</span><span class="n">owner</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_models_in_case</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">],</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The models the case's files show, not counting a slice only ``default`` completes.</span>
+
+<span class="sd">    Every operator of an all-``default`` ``fvSchemes`` validates, so that slice is valid</span>
+<span class="sd">    for any model. It keeps its values for the form, but selects nothing.</span>
+<span class="sd">    """</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">cls</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">_has_file</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
+    <span class="n">shown</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">own</span> <span class="o">=</span> <span class="n">_own_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_scheme_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">own</span> <span class="ow">or</span> <span class="n">_holds_any</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">own</span><span class="p">):</span>
+            <span class="n">shown</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">models_filled_by</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">shown</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="apply_configs_to_forms">
@@ -1122,13 +1210,18 @@
     <span class="n">filled</span> <span class="o">=</span> <span class="n">configs_to_form_state</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">filled</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">state</span><span class="p">[</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">state_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="n">filled_models</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">models_filled_by</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">case_dir</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="n">_models_in_case</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">case_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">_clear_absent</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">families</span><span class="p">,</span> <span class="n">filled</span><span class="p">)</span>
+        <span class="n">_clear_absent</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">families</span><span class="p">,</span> <span class="n">filled</span><span class="p">,</span> <span class="n">filled_models</span><span class="p">)</span>
     <span class="c1"># JSONForms keeps a combinator's selected arm across a data replace, so a loaded</span>
     <span class="c1"># block would show the previous arm over the new data until the form remounts.</span>
     <span class="n">state</span><span class="o">.</span><span class="n">form_epoch</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">form_epoch</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="n">algorithm</span> <span class="o">=</span> <span class="n">case_algorithm</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span> <span class="k">if</span> <span class="n">case_dir</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">selected</span> <span class="o">=</span> <span class="n">models_to_select</span><span class="p">(</span><span class="n">models_filled_by</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">),</span> <span class="n">families</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">models_to_select</span><span class="p">(</span><span class="n">filled_models</span><span class="p">,</span> <span class="n">families</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
         <span class="c1"># A member of a pick-one family (a loaded SIMPLE case) deselects its</span>
         <span class="c1"># siblings rather than joining them.</span>

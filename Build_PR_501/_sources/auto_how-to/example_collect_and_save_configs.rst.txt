@@ -117,7 +117,7 @@ works for any solver, because the classes are declared on its spec.
 
  .. code-block:: none
 
-    config classes: ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'PostProcessConfig', 'SetFieldsConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'SimpleAlgorithmConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'KEpsilonCoeffs', 'KOmegaSSTCoeffs', 'SpalartAllmarasCoeffs', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig', 'MRFPropertiesConfig', 'FvOptionsConfig']
+    config classes: ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'PostProcessConfig', 'SetFieldsConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'SimpleAlgorithmConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'KEpsilonCoeffs', 'kEpsilon_fvSchemes', 'kEpsilon_fvSolution', 'KOmegaSSTCoeffs', 'kOmegaSST_fvSchemes', 'kOmegaSST_fvSolution', 'kOmegaSST_wallDist', 'realizableKE_fvSchemes', 'realizableKE_fvSolution', 'SpalartAllmarasCoeffs', 'SpalartAllmaras_fvSchemes', 'SpalartAllmaras_fvSolution', 'SpalartAllmaras_wallDist', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig', 'MRFPropertiesConfig', 'FvOptionsConfig']
     ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     PreprocessConfig             fields: ['tools']
     BlockMeshDictConfig          fields: ['blocks', 'boundary', 'edges', 'merge_patch_pairs', 'scale', 'vertices']
@@ -137,11 +137,21 @@ works for any solver, because the classes are declared on its spec.
     TransportPropertiesConfig    fields: ['nu', 'transportModel']
     TurbulencePropertiesConfig   fields: ['LES', 'RAS', 'simulationType']
     KEpsilonCoeffs               fields: ['C1', 'C2', 'C3', 'Cmu', 'sigmaEps', 'sigmak']
+    kEpsilon_fvSchemes           fields: ['ddtSchemes', 'divSchemes', 'laplacianSchemes']
+    kEpsilon_fvSolution          fields: ['solvers']
     KOmegaSSTCoeffs              fields: ['a1', 'alphaK1', 'alphaK2', 'alphaOmega1', 'alphaOmega2', 'b1', 'beta1', 'beta2', 'betaStar', 'c1', 'gamma1', 'gamma2']
+    kOmegaSST_fvSchemes          fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'laplacianSchemes']
+    kOmegaSST_fvSolution         fields: ['solvers']
+    kOmegaSST_wallDist           fields: ['method']
+    realizableKE_fvSchemes       fields: ['ddtSchemes', 'divSchemes', 'laplacianSchemes']
+    realizableKE_fvSolution      fields: ['solvers']
     SpalartAllmarasCoeffs        fields: ['Cb1', 'Cb2', 'Cs', 'Cv1', 'Cw2', 'Cw3', 'kappa', 'sigmaNut']
+    SpalartAllmaras_fvSchemes    fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'laplacianSchemes']
+    SpalartAllmaras_fvSolution   fields: ['solvers']
+    SpalartAllmaras_wallDist     fields: ['method']
     BoussinesqConfig             fields: ['Pr', 'Prt', 'TRef', 'beta', 'hRef']
     GravityConfig                fields: ['FoamFile', 'dimensions', 'value']
-    boussinesq_fvSchemes         fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
+    boussinesq_fvSchemes         fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'laplacianSchemes', 'snGradSchemes']
     boussinesq_fvSolution        fields: ['solvers']
     p_rghFieldConfig             fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     TFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
@@ -185,7 +195,7 @@ carry no ``io_config``.
 
  .. code-block:: none
 
-    dict files: ['constant/MRFProperties', 'constant/fvOptions', 'constant/g', 'constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/blockMeshDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/postProcess.yaml', 'system/preprocess.yaml', 'system/setFields.yaml', 'system/snappyHexMeshDict']
+    dict files: ['constant/MRFProperties', 'constant/fvOptions', 'constant/g', 'constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/blockMeshDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/postProcess.yaml', 'system/preprocess.yaml', 'system/setFields.yaml', 'system/snappyHexMeshDict']
     0/* fields: ['0/T', '0/U', '0/alphat', '0/p', '0/p_rgh']
 
 
@@ -233,7 +243,7 @@ JSON Schema of every class — the form most agent / UI tooling consumes.
  .. code-block:: none
 
     ControlDictConfig fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
-    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'PostProcessConfig', 'SetFieldsConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'SimpleAlgorithmConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'KEpsilonCoeffs', 'KOmegaSSTCoeffs', 'SpalartAllmarasCoeffs', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig', 'MRFPropertiesConfig', 'FvOptionsConfig']
+    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'PostProcessConfig', 'SetFieldsConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'SimpleAlgorithmConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'KEpsilonCoeffs', 'kEpsilon_fvSchemes', 'kEpsilon_fvSolution', 'KOmegaSSTCoeffs', 'kOmegaSST_fvSchemes', 'kOmegaSST_fvSolution', 'kOmegaSST_wallDist', 'realizableKE_fvSchemes', 'realizableKE_fvSolution', 'SpalartAllmarasCoeffs', 'SpalartAllmaras_fvSchemes', 'SpalartAllmaras_fvSolution', 'SpalartAllmaras_wallDist', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig', 'MRFPropertiesConfig', 'FvOptionsConfig']
 
 
 
@@ -602,7 +612,7 @@ See also
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.068 seconds)
+   **Total running time of the script:** (0 minutes 0.142 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_collect_and_save_configs.py:

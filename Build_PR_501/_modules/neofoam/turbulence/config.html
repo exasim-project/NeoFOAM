@@ -692,6 +692,7 @@
     <span class="s2">"RASProperties"</span><span class="p">,</span>
     <span class="s2">"LESProperties"</span><span class="p">,</span>
     <span class="s2">"TurbulencePropertiesConfig"</span><span class="p">,</span>
+    <span class="s2">"WallDistConfig"</span><span class="p">,</span>
     <span class="s2">"model_coefficients"</span><span class="p">,</span>
     <span class="s2">"load_with_coefficients"</span><span class="p">,</span>
 <span class="p">]</span>
@@ -725,6 +726,28 @@
     <span class="n">LESModel</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">turbulence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">delta</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubeRootVol"</span></div>
+
+
+
+<div class="viewcode-block" id="WallDistConfig">
+<a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.config.html#neofoam.solver.incompressibleVoF.configs.WallDistConfig">[docs]</a>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSchemes"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"wallDist"</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WallDistConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The ``wallDist`` block of ``system/fvSchemes``, for a closure reading ``y``.</span>
+
+<span class="sd">    Use one subclass per closure: a config two models share is not hidden with either,</span>
+<span class="sd">    so a case without those models would get the block too. Other keys stay as read.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        class kOmegaSST_wallDist(WallDistConfig): ...</span>
+
+<span class="sd">        kOmegaSST.config(kOmegaSST_wallDist)</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span>
+
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"meshWave"</span></div>
 
 
 

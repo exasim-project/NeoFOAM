@@ -728,6 +728,27 @@ dispatcher (<code class="docutils literal notranslate"><span class="pre">selecti
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.turbulence.config.WallDistConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.turbulence.config.</span></span><span class="sig-name descname"><span class="pre">WallDistConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'meshWave'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/turbulence/config.html#WallDistConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.turbulence.config.WallDistConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.base.BaseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code></a></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">wallDist</span></code> block of <code class="docutils literal notranslate"><span class="pre">system/fvSchemes</span></code>, for a closure reading <code class="docutils literal notranslate"><span class="pre">y</span></code>.</p>
+<p>Use one subclass per closure: a config two models share is not hidden with either,
+so a case without those models would get the block too. Other keys stay as read.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">kOmegaSST_wallDist</span><span class="p">(</span><span class="n">WallDistConfig</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="n">kOmegaSST</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">kOmegaSST_wallDist</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.turbulence.config.WallDistConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow'}</span></span><a class="headerlink" href="#neofoam.turbulence.config.WallDistConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.turbulence.config.load_with_coefficients">
 <span class="sig-prename descclassname"><span class="pre">neofoam.turbulence.config.</span></span><span class="sig-name descname"><span class="pre">load_with_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeffs_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">CoeffsT</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SimpleNamespace</span></span></span><a class="reference internal" href="../../_modules/neofoam/turbulence/config.html#load_with_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.turbulence.config.load_with_coefficients" title="Link to this definition">¶</a></dt>
@@ -819,6 +840,10 @@ multi-config spec, so <code class="docutils literal notranslate"><span class="pr
 </li>
 <li><a class="reference internal" href="#neofoam.turbulence.config.TurbulencePropertiesConfig"><code class="docutils literal notranslate"><span class="pre">TurbulencePropertiesConfig</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.turbulence.config.TurbulencePropertiesConfig.model_config"><code class="docutils literal notranslate"><span class="pre">TurbulencePropertiesConfig.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.turbulence.config.WallDistConfig"><code class="docutils literal notranslate"><span class="pre">WallDistConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.turbulence.config.WallDistConfig.model_config"><code class="docutils literal notranslate"><span class="pre">WallDistConfig.model_config</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.turbulence.config.load_with_coefficients"><code class="docutils literal notranslate"><span class="pre">load_with_coefficients()</span></code></a></li>

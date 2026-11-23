@@ -679,13 +679,15 @@
 <span class="sd">instances by their target file and deep-merges each group's</span>
 <span class="sd">``model_dump(by_alias=True, exclude_none=True)`` into one payload, then writes</span>
 <span class="sd">that payload once. Within a file, keys are last-wins in iteration order, so</span>
-<span class="sd">callers control precedence by ordering the instances they pass in. A co-owner</span>
-<span class="sd">that declares a ``subdict`` contributes its payload nested under that block.</span>
+<span class="sd">callers control precedence by ordering the instances they pass in, except that a</span>
+<span class="sd">key a co-owner declares beats the copy another holds as an undeclared extra. A</span>
+<span class="sd">co-owner that declares a ``subdict`` contributes its payload nested under that block.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -721,6 +723,23 @@
     <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">subdict</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)):</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="n">part</span><span class="p">:</span> <span class="n">payload</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">payload</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_declared_payload</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``payload`` without the keys ``instance`` only carries as undeclared extras."""</span>
+    <span class="n">declared</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">alias</span> <span class="ow">or</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">extras</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="s2">"model_extra"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">section</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">declared</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">section</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extras</span><span class="p">}</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">section</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">declared</span>
 
 
 <div class="viewcode-block" id="write_configs">
@@ -760,21 +779,29 @@
     <span class="n">report</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">contribs</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">merged</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">declared</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="n">contribs</span><span class="p">:</span>
-            <span class="n">_deep_merge</span><span class="p">(</span>
-                <span class="n">merged</span><span class="p">,</span>
-                <span class="n">_under_subdict</span><span class="p">(</span>
-                    <span class="n">inst</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
-                        <span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span>
-                        <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="c1"># OpenFOAM literal mapping for FieldValue types (write_configs</span>
-                        <span class="c1"># only writes OpenFOAM strategies — see _write_merged_payload).</span>
-                        <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"openfoam"</span><span class="p">},</span>
-                    <span class="p">),</span>
-                    <span class="nb">type</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">subdict</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="p">),</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span>
+                <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="c1"># OpenFOAM literal mapping for FieldValue types (write_configs</span>
+                <span class="c1"># only writes OpenFOAM strategies — see _write_merged_payload).</span>
+                <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"openfoam"</span><span class="p">},</span>
             <span class="p">)</span>
+            <span class="n">subdict</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">subdict</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">_deep_merge</span><span class="p">(</span><span class="n">merged</span><span class="p">,</span> <span class="n">_under_subdict</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">subdict</span><span class="p">))</span>
+            <span class="c1"># A copy: the merge above shares ``payload``'s blocks and mutates them.</span>
+            <span class="n">own</span> <span class="o">=</span> <span class="n">_declared_payload</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
+            <span class="n">_deep_merge</span><span class="p">(</span><span class="n">declared</span><span class="p">,</span> <span class="n">_under_subdict</span><span class="p">(</span><span class="n">own</span><span class="p">,</span> <span class="n">subdict</span><span class="p">))</span>
+        <span class="c1"># Each slice of a loaded file holds the others' keys as extras, so a stale copy</span>
+        <span class="c1"># must not undo an edit made to the slice that declares the key. Whole entries are</span>
+        <span class="c1"># replaced: merged into a stale block, a changed solver would keep its old keys.</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">declared</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">merged</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">merged</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">merged</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
         <span class="n">writers</span> <span class="o">=</span> <span class="p">{</span>
             <span class="nb">type</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">writer</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>

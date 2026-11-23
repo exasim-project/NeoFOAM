@@ -715,6 +715,33 @@ the plugins cannot represent loads as the <code class="docutils literal notransl
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.foam.typed_fv_solution.transportFvSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.foam.typed_fv_solution.</span></span><span class="sig-name descname"><span class="pre">transportFvSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/foam/typed_fv_solution.html#transportFvSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.foam.typed_fv_solution.transportFvSolution" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_TypedFvSolution</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> of a model shared by backends, its blocks open and in field rows.</p>
+<p>Use it for a closure’s transported fields, with <code class="docutils literal notranslate"><span class="pre">final_required=False</span></code>: the closure
+does not know whether the algorithm is steady. The starter still holds the <code class="docutils literal notranslate"><span class="pre">Final</span></code>
+blocks, which a transient run needs and a steady one ignores.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Slice</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">transportFvSolution</span><span class="p">)</span>
+<span class="n">Slice</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="n">final_required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.foam.typed_fv_solution.transportFvSolution.form_defaults">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">form_defaults</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/foam/typed_fv_solution.html#transportFvSolution.form_defaults"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.foam.typed_fv_solution.transportFvSolution.form_defaults" title="Link to this definition">¶</a></dt>
+<dd><p>A runnable block for every declared entry, <code class="docutils literal notranslate"><span class="pre">Final</span></code> ones included.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.foam.typed_fv_solution.transportFvSolution.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow',</span> <span class="pre">'populate_by_name':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.foam.typed_fv_solution.transportFvSolution.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -779,6 +806,11 @@ the plugins cannot represent loads as the <code class="docutils literal notransl
 </li>
 <li><a class="reference internal" href="#neofoam.foam.typed_fv_solution.openfoamFvSolution"><code class="docutils literal notranslate"><span class="pre">openfoamFvSolution</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.foam.typed_fv_solution.openfoamFvSolution.model_config"><code class="docutils literal notranslate"><span class="pre">openfoamFvSolution.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.foam.typed_fv_solution.transportFvSolution"><code class="docutils literal notranslate"><span class="pre">transportFvSolution</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.foam.typed_fv_solution.transportFvSolution.form_defaults"><code class="docutils literal notranslate"><span class="pre">transportFvSolution.form_defaults()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.foam.typed_fv_solution.transportFvSolution.model_config"><code class="docutils literal notranslate"><span class="pre">transportFvSolution.model_config</span></code></a></li>
 </ul>
 </li>
 </ul>
