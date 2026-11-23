@@ -675,6 +675,9 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>collection of the metadata for operations - describes both decorated
 functions and DAG nodes.</p>
+<p><code class="docutils literal notranslate"><span class="pre">wraps</span></code> makes the operation a wrapping loop and says where the resolver places
+it; <code class="docutils literal notranslate"><span class="pre">first</span></code> (<code class="docutils literal notranslate"><span class="pre">final</span></code>) runs it only in the first (final) pass of the wrapping
+loops around it.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neofoam.framework.types.OperationMetadata.name">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#neofoam.framework.types.OperationMetadata.name" title="Link to this definition">¶</a></dt>
@@ -704,7 +707,12 @@ Later another operation is added between 1 and 1.1, which is assigned the number
 <p>Where the resolver places a wrapping loop (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>).</p>
 <p>Without <code class="docutils literal notranslate"><span class="pre">operations</span></code> the loop wraps the whole time-step body; with them, the
 named operations and everything downstream of them in their scope
-(<a class="reference internal" href="neofoam.framework.graph.wrapping.html#module-neofoam.framework.graph.wrapping" title="neofoam.framework.graph.wrapping"><code class="xref py py-mod docutils literal notranslate"><span class="pre">wrapping</span></code></a>).</p>
+(<a class="reference internal" href="neofoam.framework.graph.wrapping.html#module-neofoam.framework.graph.wrapping" title="neofoam.framework.graph.wrapping"><code class="xref py py-mod docutils literal notranslate"><span class="pre">wrapping</span></code></a>). Use it for a loop contributed from
+outside the solver; a solver’s own loop belongs in its <code class="docutils literal notranslate"><span class="pre">StepBuilder</span></code>. Frozen.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">"couple"</span><span class="p">,</span> <span class="n">wraps</span><span class="o">=</span><span class="n">Placement</span><span class="p">(</span><span class="n">operations</span><span class="o">=</span><span class="p">(</span><span class="s2">"solve_T"</span><span class="p">,)))</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>

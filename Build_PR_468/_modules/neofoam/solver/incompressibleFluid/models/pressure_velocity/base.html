@@ -680,10 +680,19 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureVelocitySettings</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One run's settings, kept off the spec that regions and runs share."""</span>
+<span class="w">    </span><span class="sd">"""One run's settings, kept off the spec that regions and runs share.</span>
+
+<span class="sd">    Use it as the ``config`` of a pressure-velocity runtime; obtain it through</span>
+<span class="sd">    :meth:`PressureVelocityAlgorithm.create` or ``detect_and_create`` instead of</span>
+<span class="sd">    building one. Belongs to one run and is not thread-safe: the boussinesq model's</span>
+<span class="sd">    resolve sets ``use_boussinesq``, which dispatches the buoyant variants.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        settings = PressureVelocityAlgorithm.create(algorithm_type="PIMPLE").config</span>
+<span class="sd">    """</span>
 
     <span class="n">algorithm_type</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="c1">#: Set by the boussinesq model's resolve: dispatches the buoyant variants.</span>
     <span class="n">use_boussinesq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 
