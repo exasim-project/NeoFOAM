@@ -6,7 +6,7 @@ The minimum-viable path for using ``incompressibleFluid``.
 Prerequisites
 -------------
 
-- Python 3.10+
+- Python 3.11+
 - An OpenFOAM install on ``PATH`` (NeoFOAM links against ``pybFoam``)
 - ``uv`` (https://github.com/astral-sh/uv) — used to create the virtualenv
 

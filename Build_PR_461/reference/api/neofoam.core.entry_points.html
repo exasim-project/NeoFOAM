@@ -706,7 +706,14 @@ module while it runs.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.core.entry_points.solver_entry_points">
 <span class="sig-prename descclassname"><span class="pre">neofoam.core.entry_points.</span></span><span class="sig-name descname"><span class="pre">solver_entry_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">EntryPoint</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/core/entry_points.html#solver_entry_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.core.entry_points.solver_entry_points" title="Link to this definition">¶</a></dt>
-<dd><p>Return the <code class="docutils literal notranslate"><span class="pre">neofoam.solvers</span></code> entry points, unloaded.</p>
+<dd><p>Return the installed <code class="docutils literal notranslate"><span class="pre">neofoam.solvers</span></code> entry points without loading them.</p>
+<p>Use it to find plugin solver commands; use <a class="reference internal" href="#neofoam.core.entry_points.load_plugins" title="neofoam.core.entry_points.load_plugins"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_plugins()</span></code></a> for modules that
+register models.</p>
+<p>Imports no plugin code, so it is safe to call before a command is chosen.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="n">solver_entry_points</span><span class="p">()]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
