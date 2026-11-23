@@ -46,6 +46,7 @@ import neon._neon as nn
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
+from neofoam.foam import fvSchemes, transportFvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
@@ -79,6 +80,8 @@ kEpsilon.config(TurbulencePropertiesConfig)
 # out of the ``RAS`` block, but declaring the class here is what exports its
 # schema through ``configurations(solver)`` / the MCP.
 kEpsilon.config(KEpsilonCoeffs)
+KEpsilonFvSchemes = kEpsilon.config(fvSchemes)
+KEpsilonFvSolution = kEpsilon.config(transportFvSolution)
 
 
 @kEpsilon.load
@@ -223,6 +226,13 @@ def production(
 
 
 @kEpsilon.operation(name="kEpsilonCorrectEpsilon")
+@KEpsilonFvSchemes.add(
+    field="epsilon",
+    ddt="ddt(epsilon)",
+    div="div(phi,epsilon)",
+    laplacian="laplacian(DepsilonEff,epsilon)",
+)
+@KEpsilonFvSolution.add("epsilon", final_required=False)
 def correct_epsilon(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -275,6 +285,8 @@ def correct_epsilon(
 
 
 @kEpsilon.operation(name="kEpsilonCorrectK")
+@KEpsilonFvSchemes.add(field="k", ddt="ddt(k)", div="div(phi,k)", laplacian="laplacian(DkEff,k)")
+@KEpsilonFvSolution.add("k", final_required=False)
 def correct_k(
     self: Any,
     neon_runtime: Annotated[Any, "models"],

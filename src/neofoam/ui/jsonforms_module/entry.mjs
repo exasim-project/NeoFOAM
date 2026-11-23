@@ -284,8 +284,7 @@ const NfCompactSection = defineComponent({
     nameError() {
       const name = this.newName
       if (!name) return null
-      const taken = [...this.keys, ...(this.control.schema.reservedKeys ?? [])]
-      return taken.includes(name) ? `'${name}' already defined` : null
+      return this.keys.includes(name) ? `'${name}' already defined` : null
     },
   },
   methods: {

@@ -13,13 +13,15 @@ per-config writes clobber each other, so :func:`write_configs` first groups
 instances by their target file and deep-merges each group's
 ``model_dump(by_alias=True, exclude_none=True)`` into one payload, then writes
 that payload once. Within a file, keys are last-wins in iteration order, so
-callers control precedence by ordering the instances they pass in. A co-owner
-that declares a ``subdict`` contributes its payload nested under that block.
+callers control precedence by ordering the instances they pass in, except that a
+key a co-owner declares beats the copy another holds as an undeclared extra. A
+co-owner that declares a ``subdict`` contributes its payload nested under that block.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
@@ -57,6 +59,23 @@ def _under_subdict(payload: dict[str, Any], subdict: Optional[str]) -> dict[str,
     return payload
 
 
+def _declared_payload(instance: BaseModel, payload: dict[str, Any]) -> dict[str, Any]:
+    """``payload`` without the keys ``instance`` only carries as undeclared extras."""
+    declared: dict[str, Any] = {}
+    for name, info in type(instance).model_fields.items():
+        key = info.alias or name
+        if key not in payload:
+            continue
+        extras = getattr(getattr(instance, name), "model_extra", None) or {}
+        section = payload[key]
+        declared[key] = (
+            {k: v for k, v in section.items() if k not in extras}
+            if isinstance(section, dict)
+            else section
+        )
+    return declared
+
+
 def write_configs(
     instances: Iterable[BaseModel],
     case_dir: Union[Path, str],
@@ -92,21 +111,29 @@ def write_configs(
     report: dict[str, list[str]] = {}
     for file, contribs in groups.items():
         merged: dict[str, Any] = {}
+        declared: dict[str, Any] = {}
         for inst in contribs:
-            _deep_merge(
-                merged,
-                _under_subdict(
-                    inst.model_dump(
-                        mode="python",
-                        exclude_none=True,
-                        by_alias=True,
-                        # OpenFOAM literal mapping for FieldValue types (write_configs
-                        # only writes OpenFOAM strategies — see _write_merged_payload).
-                        context={"format": "openfoam"},
-                    ),
-                    type(inst).io_config.subdict,  # type: ignore[attr-defined]
-                ),
+            payload = inst.model_dump(
+                mode="python",
+                exclude_none=True,
+                by_alias=True,
+                # OpenFOAM literal mapping for FieldValue types (write_configs
+                # only writes OpenFOAM strategies — see _write_merged_payload).
+                context={"format": "openfoam"},
             )
+            subdict = type(inst).io_config.subdict  # type: ignore[attr-defined]
+            _deep_merge(merged, _under_subdict(payload, subdict))
+            # A copy: the merge above shares ``payload``'s blocks and mutates them.
+            own = _declared_payload(inst, deepcopy(payload))
+            _deep_merge(declared, _under_subdict(own, subdict))
+        # Each slice of a loaded file holds the others' keys as extras, so a stale copy
+        # must not undo an edit made to the slice that declares the key. Whole entries are
+        # replaced: merged into a stale block, a changed solver would keep its old keys.
+        for key, value in declared.items():
+            if isinstance(value, dict) and isinstance(merged.get(key), dict):
+                merged[key].update(value)
+            else:
+                merged[key] = value
 
         writers = {
             type(type(c).io_config.writer)  # type: ignore[attr-defined]

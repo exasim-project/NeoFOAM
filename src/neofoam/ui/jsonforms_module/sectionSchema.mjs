@@ -42,7 +42,7 @@ export const layoutOf = (schema) =>
 export const entryShape = (schema) => {
   const open = schema.additionalProperties
   if (schema.entryLike === 'self') return { ...schema, title: undefined }
-  return schema.entryLike ?? Object.values(schema.properties ?? {})[0] ?? (isDict(open) ? open : undefined)
+  return Object.values(schema.properties ?? {})[0] ?? (isDict(open) ? open : undefined)
 }
 
 // The property a union names its arm by. Python sends `nfDiscriminator` only when it is
@@ -247,34 +247,6 @@ export const fieldRows = (schema) => {
   )
   return [...controls, ...schemeRows(sections), ...solvers]
 }
-
-// The sections holding field entries, as forms of the entries no field claims. Their adder
-// starts a new entry from the claimed entries' shape.
-export const otherSections = (schema) =>
-  Object.entries(schema.properties ?? {})
-    .filter(([, section]) => claimed(section).length > 0)
-    .map(([name, section]) => {
-      const { nfFieldGroups: _groups, nfFinalOf: _finals, ...rest } = section
-      const {
-        nfField: _field,
-        nfLevel: _level,
-        nfFinalOf: _final,
-        nfRefusedChoices: _refused,
-        nfDefaultChoices: _preferred,
-        ...like
-      } = claimed(section)[0][1]
-      return {
-        name,
-        claimed: claimed(section).map(([key]) => key),
-        schema: {
-          ...rest,
-          properties: {},
-          required: [],
-          entryLike: like,
-          reservedKeys: claimed(section).map(([key]) => key),
-        },
-      }
-    })
 
 export const deepEqual = (a, b) => {
   if (a === b) return true

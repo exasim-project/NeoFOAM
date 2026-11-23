@@ -18,6 +18,7 @@ _TYPED_FIELDS = ("p", "U", "pFinal", "UFinal")
 _VECTOR_FIELDS = frozenset({"U", "UFinal"})
 _PRESSURE_FIELDS = ("p", "pFinal")
 _FIELD_ROLES = {"p": "pressure", "pFinal": "pressure", "U": "momentum", "UFinal": "momentum"}
+_BASE_NAMES = ("neonFvSolution", "openfoamFvSolution", "transportFvSolution")
 
 
 class _TypedFvSolution(fvSolution):
@@ -28,9 +29,9 @@ class _TypedFvSolution(fvSolution):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Keep the per-spec name ``<spec>_fvSolution`` that configs are looked up by."""
         super().__init_subclass__(**kwargs)
-        if cls.__name__ in ("neonFvSolution", "openfoamFvSolution"):
+        if cls.__name__ in _BASE_NAMES:
             return
-        for base_name in ("neonFvSolution", "openfoamFvSolution"):
+        for base_name in _BASE_NAMES:
             cls.__name__ = cls.__name__.replace(base_name, "fvSolution")
         cls.__qualname__ = cls.__name__
 
@@ -43,9 +44,7 @@ class _TypedFvSolution(fvSolution):
 
     @classmethod
     def _solver_schema_extra(cls, alias: str) -> Optional[dict[str, Any]]:
-        """The wizard's field group of a typed entry, and the entry a ``Final`` one mirrors."""
-        if alias not in _TYPED_FIELDS:
-            return None
+        """The wizard's field group of an entry, and the entry a ``Final`` one mirrors."""
         base = alias.removesuffix("Final")
         return {"nfField": base} if alias == base else {"nfField": base, "nfFinalOf": base}
 
@@ -106,6 +105,26 @@ class openfoamFvSolution(_TypedFvSolution):  # noqa: N801
         if alias in _TYPED_FIELDS and "preconditioner" in block:
             return {**block, "preconditioner": {"type": block["preconditioner"]}}
         return block
+
+
+class transportFvSolution(_TypedFvSolution):  # noqa: N801
+    """``system/fvSolution`` of a model shared by backends, its blocks open and in field rows.
+
+    Use it for a closure's transported fields, with ``final_required=False``: the closure
+    does not know whether the algorithm is steady. The starter still holds the ``Final``
+    blocks, which a transient run needs and a steady one ignores.
+
+    Example::
+
+        Slice = spec.config(transportFvSolution)
+        Slice.add("k", final_required=False)
+    """
+
+    @classmethod
+    def form_defaults(cls) -> Optional[dict[str, object]]:
+        """A runnable block for every declared entry, ``Final`` ones included."""
+        entries = cls._pending_sections["solvers"].values()
+        return {"solvers": {alias: cls._starter_solver(alias) for _, alias, _, _ in entries}}
 
 
 def _slices(cls: type[_TypedFvSolution]) -> Iterator[type[_TypedFvSolution]]:

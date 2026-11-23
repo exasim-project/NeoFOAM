@@ -37,6 +37,7 @@ from neofoam.ui.case_load import (
     read_case_configs,
     rejected_slices,
     remember_rejected_slices,
+    undeclared_entries_note,
 )
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.geometry_agent import (
@@ -210,7 +211,8 @@ class AgentPanel:
         remember_rejected_slices(self._state, path, warnings)
         self._loaded["dir"] = str(path)
         self._loaded["configs"] = configs
-        rejected = [w for w in warnings if w.get("cause") != "regex"]
+        # A "partial" slice matters only if its model is selected: Save reports that one.
+        rejected = [w for w in warnings if w.get("cause") not in ("regex", "partial")]
         invalid = [_invalid_note(rejected)] if rejected else []
         converted = [f"Converted: {note}." for note in conversion_notes(path, configs)]
         self._loaded["invalid"] = (
@@ -244,7 +246,8 @@ class AgentPanel:
             models = apply_configs_to_forms(
                 state, self._entries, self._families, configs, Path(loaded_dir)
             )
-            reply = _summary(configs, models, loaded_dir, self._loaded["invalid"])
+            notes = undeclared_entries_note(state, self._entries, configs)
+            reply = _summary(configs, models, loaded_dir, [*self._loaded["invalid"], *notes])
         self._loaded.clear()
         self._say("assistant", reply)
         state.ai_panel = state.ai_panel_mobile = True
@@ -316,6 +319,8 @@ class AgentPanel:
                 Path(loaded_dir) if loaded_dir else None,
             )
             saved = self._autosave(configs)
+            if loaded_dir:
+                saved += undeclared_entries_note(self._state, self._entries, configs)
             self._say("assistant", _summary(configs, filled_models, self._loaded.get("dir"), saved))
         except Exception as exc:  # noqa: BLE001
             self._say("assistant", f"**Fill failed:** {exc}")

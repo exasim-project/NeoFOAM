@@ -18,7 +18,7 @@ from typing import Any
 import pytest
 
 sync_api = pytest.importorskip("playwright.sync_api")
-from .test_browser_forms import _launch_chromium  # noqa: E402
+from .test_browser_forms import _launch_chromium, _wizard  # noqa: E402
 
 expect = sync_api.expect
 
@@ -74,6 +74,19 @@ def page(wizard_url: str) -> Iterator[Any]:
         opened = browser.new_page(viewport={"width": 1600, "height": 1200})
         opened.set_default_timeout(15_000)
         opened.goto(wizard_url)
+        opened.wait_for_function("window.trame?.state?.get('current_step') !== undefined")
+        yield opened
+        browser.close()
+
+
+@pytest.fixture
+def vof_page(tmp_path: Path) -> Iterator[Any]:
+    """The VoF wizard: its schemes form keeps the section adders."""
+    with _wizard("incompressibleVoF", tmp_path) as url, sync_api.sync_playwright() as playwright:
+        browser = _launch_chromium(playwright)
+        opened = browser.new_page(viewport={"width": 1600, "height": 1200})
+        opened.set_default_timeout(15_000)
+        opened.goto(url)
         opened.wait_for_function("window.trame?.state?.get('current_step') !== undefined")
         yield opened
         browser.close()
@@ -339,10 +352,11 @@ def test_scheme_variant_switch_in_a_field_row_seeds_the_new_arm(page):
     _await_scheme(page, "div(phi,U)", want)
 
 
-def test_added_scheme_entry_returns_focus_and_can_be_deleted(page):
+def test_added_scheme_entry_returns_focus_and_can_be_deleted(vof_page):
+    page = vof_page
     _open_schemes(page)
     before = _schemes(page)["divSchemes"]
-    section = _field(page, "Other entries").locator(".nf-compact", has_text="divSchemes").first
+    section = page.locator(".nf-compact:visible", has_text="divSchemes").first
 
     _add_entry(section, "div(phi,k)")
 
@@ -357,23 +371,25 @@ def test_added_scheme_entry_returns_focus_and_can_be_deleted(page):
     assert _schemes(page)["divSchemes"] == before
 
 
-def test_name_of_a_field_entry_cannot_be_added_over_it(page):
+def test_name_of_a_field_entry_cannot_be_added_over_it(vof_page):
+    page = vof_page
     _open_schemes(page)
     before = _schemes(page)["divSchemes"]
-    section = _field(page, "Other entries").locator(".nf-compact", has_text="divSchemes").first
+    section = page.locator(".nf-compact:visible", has_text="divSchemes").first
 
-    _add_entry(section, "div(phi,U)")
+    _add_entry(section, "div(rhoPhi,U)")
 
     adder = section.locator(".nf-compact-adder")
-    expect(adder.get_by_role("alert")).to_contain_text("'div(phi,U)' already defined")
+    expect(adder.get_by_role("alert")).to_contain_text("'div(rhoPhi,U)' already defined")
     expect(adder.get_by_role("button", name="Add", exact=True)).to_be_disabled()
     assert _schemes(page)["divSchemes"] == before
 
 
-def test_dotted_scheme_key_is_stored_as_a_literal_key(page):
+def test_dotted_scheme_key_is_stored_as_a_literal_key(vof_page):
+    page = vof_page
     _open_schemes(page)
     key = "div(phi,alpha.water)"
-    section = _field(page, "Other entries").locator(".nf-compact", has_text="divSchemes").first
+    section = page.locator(".nf-compact:visible", has_text="divSchemes").first
 
     _add_entry(section, key)
     row = section.locator(".nf-compact-row", has_text=key).first
@@ -382,3 +398,32 @@ def test_dotted_scheme_key_is_stored_as_a_literal_key(page):
 
     _await_scheme(page, key, {"type": "Gauss", "interpolation": {"type": "vanLeer"}})
     assert "div(phi,alpha" not in _schemes(page)["divSchemes"]
+
+
+def test_numerics_page_has_one_row_per_declared_field_and_no_other_entries(page):
+    _open_schemes(page)
+
+    names = page.locator(".nf-field-name:visible").all_inner_texts()
+
+    assert sorted(names) == ["U", "p"]
+
+
+def _select_model(page: Any, name: str) -> None:
+    page.locator("nav.v-navigation-drawer").first.get_by_text("Models", exact=True).click()
+    page.get_by_role("radio", name=name, exact=True).check(force=True)
+    page.wait_for_function("key => window.trame.state.get(key) === true", arg=f"sel_{name}")
+    page.locator("nav.v-navigation-drawer").first.get_by_text("Numerics", exact=True).click()
+
+
+def test_selecting_a_turbulence_model_adds_its_field_rows(page):
+    _select_model(page, "laminar")
+    title = page.get_by_text("fvSchemes · kEpsilon", exact=True).first
+    expect(title).to_be_hidden()
+
+    _select_model(page, "kEpsilon")
+
+    expect(title).to_be_visible()
+    title.click()
+    panel = page.locator(".v-expansion-panel--active:visible", has_text="fvSchemes · kEpsilon")
+    expect(panel.locator(".nf-field-name").get_by_text("k", exact=True)).to_be_visible()
+    expect(panel.locator(".nf-field-name").get_by_text("epsilon", exact=True)).to_be_visible()

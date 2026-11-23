@@ -20,13 +20,21 @@ from typing import Any
 import pybFoam as pyf
 from pydantic import RootModel, ValidationError
 
-from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
+from neofoam.agent.case_fill import (
+    _file_keys,
+    _holds_any,
+    _own_keys,
+    case_spec_to_configs,
+    load_case_from_disk,
+)
+from neofoam.agent.case_forms import is_scheme_config
 from neofoam.foam import LinearSolverConversionWarning
 from neofoam.framework.solver.configurations import configurations
 from neofoam.io import OpenFOAMStrategy
 from neofoam.io.dictread import Value, foam_case, read_keys, read_section, read_toplevel
 from neofoam.io.strategies.openfoam_strategy import _read_fields, _to_python
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
+from neofoam.ui.form_schema import NF_FIELD
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.steps import (
     ModelFamily,
@@ -42,6 +50,7 @@ __all__ = [
     "remember_rejected_slices",
     "rejected_slices",
     "without_rejected_files",
+    "undeclared_entries_note",
     "case_algorithm",
     "case_advection_model",
     "models_to_select",
@@ -186,6 +195,8 @@ def rejected_slices(
         if rejected["case_dir"] != where or entry is None or not (target / file).exists():
             continue
         regex = rejected.get("cause") == "regex"
+        if rejected.get("cause") == "partial" and entry.owner_model is None:
+            continue
         if regex or entry.owner_model is None or state[selection_key(entry.owner_model)]:
             refused.setdefault(file, []).append(rejected)
     return refused
@@ -212,10 +223,21 @@ def _note_regex_slices(
             continue
         reason = _missing_keys_reason(cls, case_dir)
         cause = _regex_cause(cls, case_dir / io.file, reason) if reason else None
+        noted = {"file": io.file, "config": name, "reason": reason or ""}
         if reason and cause:
-            noted = {"file": io.file, "config": name, "reason": reason}
             warnings.append({**noted, "cause": "regex"} if cause == "regex" else noted)
+        elif reason and _is_unjudged_partial(cls, list(classes.values()), case_dir / io.file):
+            warnings.append({**noted, "cause": "partial"})
     _note_loaded_regex_files(case_dir, configs, warnings)
+
+
+def _is_unjudged_partial(cls: Any, classes: list[Any], path: Path) -> bool:
+    """True for a slice holding some keys that rivals with the same keys hide from the load.
+
+    ``kEpsilon`` and ``realizableKE`` require the same entries, so neither has a key of its
+    own. Only the selected one matters, which :func:`rejected_slices` decides at save.
+    """
+    return not _own_keys(cls, classes) and _holds_any(path, _file_keys(cls))
 
 
 def _note_loaded_regex_files(
@@ -315,6 +337,53 @@ def without_rejected_files(
     return {name: data for name, data in spec.items() if file_of.get(name) not in refused}
 
 
+def _field_sections(entry: FormEntry) -> dict[str, set[str]]:
+    """The sections of a per-field form holding field entries, with their declared keys."""
+    sections = entry.form_schema.get("properties", {}).items()
+    return {
+        name: set(section["properties"])
+        for name, section in sections
+        if any(NF_FIELD in item for item in section.get("properties", {}).values())
+    }
+
+
+def undeclared_entries_note(state: Any, entries: list[FormEntry], configs: list[Any]) -> list[str]:
+    """One line per file naming the loaded entries no selected model declares.
+
+    The per-field forms draw declared entries only; these stay in the data and are
+    written back unchanged. ``default`` is left out: it backs the declared entries.
+    Call it after :func:`apply_configs_to_forms`, which settles the selection::
+
+        notes = undeclared_entries_note(state, entries, configs)
+    """
+    active = {
+        e.cls_name: e
+        for e in entries
+        if e.field_schema and (e.owner_model is None or state[selection_key(e.owner_model)])
+    }
+    declared: dict[str, set[tuple[str, str]]] = {}
+    for entry in active.values():
+        pairs = {(s, key) for s, keys in _field_sections(entry).items() for key in keys}
+        declared.setdefault(entry.cls.io_config.file, set()).update(pairs)
+    hidden: dict[str, dict[str, None]] = {}
+    for config in configs:
+        form = active.get(type(config).__name__)
+        if form is None:
+            continue
+        file = form.cls.io_config.file
+        dump = config.model_dump(by_alias=True, exclude_none=True)
+        for section in _field_sections(form):
+            for key in dump.get(section, {}):
+                if key != "default" and (section, key) not in declared[file]:
+                    hidden.setdefault(file, {})[f"{section}.{key}"] = None
+    return [
+        f"{file}: not used by the selected models, hidden and kept as written: "
+        + ", ".join(f"`{name}`" for name in names)
+        + "."
+        for file, names in hidden.items()
+    ]
+
+
 def _has_file(entry: FormEntry) -> bool:
     """True when ``entry``'s config is bound to a file."""
     return getattr(entry.cls, "io_config", None) is not None
@@ -385,6 +454,7 @@ def _clear_absent(
     entries: list[FormEntry],
     families: list[ModelFamily],
     filled: dict[str, dict[str, Any]],
+    evidenced: set[str],
 ) -> None:
     """Reset the forms and switch off the optional models a loaded case does not fill.
 
@@ -396,14 +466,29 @@ def _clear_absent(
     which one is :func:`models_to_select`'s decision.
     """
     family_members = {choice.name for family in families for choice in family.members}
-    filled_owners = {e.owner_model for e in entries if e.key in filled}
     for entry in entries:
         if entry.key in filled:
             continue
         state[entry.state_key] = dict(entry.defaults)
         owner = entry.owner_model
-        if owner and owner not in filled_owners and owner not in family_members:
+        if owner and owner not in evidenced and owner not in family_members:
             state[selection_key(owner)] = False
+
+
+def _models_in_case(entries: list[FormEntry], configs: list[Any], case_dir: Path) -> set[str]:
+    """The models the case's files show, not counting a slice only ``default`` completes.
+
+    Every operator of an all-``default`` ``fvSchemes`` validates, so that slice is valid
+    for any model. It keeps its values for the form, but selects nothing.
+    """
+    classes = list(dict.fromkeys(e.cls for e in entries if _has_file(e)))
+    shown = []
+    for config in configs:
+        cls = type(config)
+        own = _own_keys(cls, classes) if is_scheme_config(cls) else set()
+        if not own or _holds_any(case_dir / cls.io_config.file, own):
+            shown.append(config)
+    return models_filled_by(entries, shown)
 
 
 def apply_configs_to_forms(
@@ -430,13 +515,18 @@ def apply_configs_to_forms(
     filled = configs_to_form_state(entries, configs)
     for key, data in filled.items():
         state[by_key[key].state_key] = data
+    filled_models = (
+        models_filled_by(entries, configs)
+        if case_dir is None
+        else _models_in_case(entries, configs, case_dir)
+    )
     if case_dir is not None:
-        _clear_absent(state, entries, families, filled)
+        _clear_absent(state, entries, families, filled, filled_models)
     # JSONForms keeps a combinator's selected arm across a data replace, so a loaded
     # block would show the previous arm over the new data until the form remounts.
     state.form_epoch = (state.form_epoch or 0) + 1
     algorithm = case_algorithm(case_dir, entries) if case_dir else None
-    selected = models_to_select(models_filled_by(entries, configs), families, algorithm)
+    selected = models_to_select(filled_models, families, algorithm)
     for model in selected:
         # A member of a pick-one family (a loaded SIMPLE case) deselects its
         # siblings rather than joining them.

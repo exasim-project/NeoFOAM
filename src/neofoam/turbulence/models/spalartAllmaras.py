@@ -38,13 +38,14 @@ import neon._neon as nn
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
+from neofoam.foam import fvSchemes, transportFvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
 from neofoam.io import BaseConfig
 
-from ..config import TurbulencePropertiesConfig, load_with_coefficients
+from ..config import TurbulencePropertiesConfig, WallDistConfig, load_with_coefficients
 from ..momentumTransport import Model, register_momentum_transport
 
 __all__ = ["spalartAllmaras", "SpalartAllmarasCoeffs"]
@@ -88,6 +89,15 @@ spalartAllmaras.config(TurbulencePropertiesConfig)
 # resolves the instance out of the ``RAS`` block, but declaring the class here is
 # what exports its schema through ``configurations(solver)`` / the MCP.
 spalartAllmaras.config(SpalartAllmarasCoeffs)
+SpalartAllmarasFvSchemes = spalartAllmaras.config(fvSchemes)
+SpalartAllmarasFvSolution = spalartAllmaras.config(transportFvSolution)
+
+
+class SpalartAllmaras_wallDist(WallDistConfig):  # noqa: N801
+    """The wall distance SpalartAllmaras reads."""
+
+
+spalartAllmaras.config(SpalartAllmaras_wallDist)
 
 
 @spalartAllmaras.load
@@ -177,6 +187,14 @@ def build(config: SimpleNamespace) -> list[InitStep]:
 
 
 @spalartAllmaras.operation(name="spalartAllmarasCorrectNuTilda")
+@SpalartAllmarasFvSchemes.add(
+    field="nuTilda",
+    ddt="ddt(nuTilda)",
+    div="div(phi,nuTilda)",
+    grad="grad(nuTilda)",
+    laplacian="laplacian(DnuTildaEff,nuTilda)",
+)
+@SpalartAllmarasFvSolution.add("nuTilda", final_required=False)
 def correct_nutilda(
     self: Any,
     neon_runtime: Annotated[Any, "models"],

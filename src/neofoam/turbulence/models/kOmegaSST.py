@@ -46,13 +46,14 @@ import neon._neon as nn
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
+from neofoam.foam import fvSchemes, transportFvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
 from neofoam.io import BaseConfig
 
-from ..config import TurbulencePropertiesConfig, load_with_coefficients
+from ..config import TurbulencePropertiesConfig, WallDistConfig, load_with_coefficients
 from ..momentumTransport import Model, register_momentum_transport
 
 __all__ = ["kOmegaSST", "KOmegaSSTCoeffs"]
@@ -123,6 +124,15 @@ kOmegaSST.config(TurbulencePropertiesConfig)
 # the instance out of the ``RAS`` block, but declaring the class here is what
 # exports its schema through ``configurations(solver)`` / the MCP.
 kOmegaSST.config(KOmegaSSTCoeffs)
+KOmegaSSTFvSchemes = kOmegaSST.config(fvSchemes)
+KOmegaSSTFvSolution = kOmegaSST.config(transportFvSolution)
+
+
+class kOmegaSST_wallDist(WallDistConfig):  # noqa: N801
+    """The wall distance kOmegaSST reads."""
+
+
+kOmegaSST.config(kOmegaSST_wallDist)
 
 
 @kOmegaSST.load
@@ -308,6 +318,14 @@ def blend(
 
 
 @kOmegaSST.operation(name="kOmegaSSTCorrectOmega")
+@KOmegaSSTFvSchemes.add(
+    field="omega",
+    ddt="ddt(omega)",
+    div="div(phi,omega)",
+    grad="grad(omega)",
+    laplacian="laplacian(DomegaEff,omega)",
+)
+@KOmegaSSTFvSolution.add("omega", final_required=False)
 def correct_omega(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -357,6 +375,10 @@ def correct_omega(
 
 
 @kOmegaSST.operation(name="kOmegaSSTCorrectK")
+@KOmegaSSTFvSchemes.add(
+    field="k", ddt="ddt(k)", div="div(phi,k)", grad="grad(k)", laplacian="laplacian(DkEff,k)"
+)
+@KOmegaSSTFvSolution.add("k", final_required=False)
 def correct_k(
     self: Any,
     neon_runtime: Annotated[Any, "models"],

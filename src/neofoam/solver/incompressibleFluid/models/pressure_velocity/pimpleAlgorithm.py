@@ -478,10 +478,11 @@ def continuity(
 # The buoyancy-only entries go on the Boussinesq slices, so a case without the
 # model is neither asked for them nor written with them.
 @BoussinesqFvSchemes.add(
+    field="p_rgh",
     # ``grad(rhok)`` is needed by the ``corrected`` ``snGrad(rhok)`` below: the
     # non-orthogonal correction of ``fvc::snGrad(rhok)`` looks up the cell gradient.
-    grad="grad(rhok)",
-    snGrad="snGrad(rhok)",
+    grad=advanced("grad(rhok)"),
+    snGrad=advanced("snGrad(rhok)"),
 )
 @PimpleFvSolution.add("U")
 def momentum_boussinesq(
@@ -516,10 +517,10 @@ def momentum_boussinesq(
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum_boussinesq"])
 @BoussinesqFvSchemes.add(
+    field="p_rgh",
     grad="grad(p_rgh)",
     laplacian="laplacian(rAUf,p_rgh)",
-    interpolation="flux(U)",
-    snGrad="snGrad(p_rgh)",
+    snGrad=advanced("snGrad(p_rgh)"),
 )
 @BoussinesqFvSolution.add("p_rgh")
 def continuity_boussinesq(

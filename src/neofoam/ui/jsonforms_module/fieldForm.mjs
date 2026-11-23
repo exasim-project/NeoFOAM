@@ -19,7 +19,6 @@ import {
   hintText,
   isAdvanced,
   openKeyGroups,
-  otherSections,
   parseNumberInput,
   plainCopy,
   sameFinals,
@@ -124,7 +123,6 @@ export const NfFieldForm = defineComponent({
   setup(props) {
     const { control, handleChange } = useJsonFormsControl(props)
     const rows = computed(() => fieldRows(control.value.schema))
-    const others = computed(() => otherSections(control.value.schema))
     const same = reactive(sameFinals(rows.value, control.value.data?.solvers))
     // A block changed from outside no longer repeats its base, so its switch must not
     // overwrite it on the next edit of the base.
@@ -145,7 +143,7 @@ export const NfFieldForm = defineComponent({
     const keep = (key, build) => (kept[key] ??= build())
     const open = reactive({})
     const allOpen = reactive({})
-    return { control, handleChange, rows, others, same, open, allOpen, i18n, keep }
+    return { control, handleChange, rows, same, open, allOpen, i18n, keep }
   },
   methods: {
     section(name) {
@@ -300,7 +298,7 @@ export const NfFieldForm = defineComponent({
         ...BLOCK_UISCHEMA,
         options: { ...INLINE_OPTIONS, nfRowKey: key },
       }))
-      return h('div', { class: 'nf-compact-row', key }, [
+      return h('div', { class: 'nf-compact-row', key: `${section}:${key}` }, [
         h('span', { class: 'nf-compact-key' }, key),
         h('div', { class: 'nf-compact-controls' }, [
           this.form(schema, uischema, this.control.data?.[section]?.[key], (value) =>
@@ -373,20 +371,6 @@ export const NfFieldForm = defineComponent({
         h('div', { class: 'nf-field-body', style: isOpen ? undefined : { display: 'none' } }, body),
       ])
     },
-    // Entries no field claims (a turbulence solver, `default`), with each section's adder.
-    otherForm({ name, claimed, schema }) {
-      const current = this.control.data?.[name] ?? {}
-      const pick = (keep) =>
-        Object.fromEntries(Object.entries(current).filter(([key]) => keep(claimed.includes(key))))
-      const rest = pick((isClaimed) => !isClaimed)
-      const uischema = this.keep('other:' + name, () => ({ ...BLOCK_UISCHEMA }))
-      const merge = (data) => {
-        if (deepEqual(data ?? {}, rest)) return
-        const next = { ...pick((isClaimed) => isClaimed), ...data }
-        this.handleChange(this.control.path, { ...this.control.data, [name]: next })
-      }
-      return h('div', { key: name }, [this.form(schema, uischema, rest, merge)])
-    },
     backendNote() {
       const note = this.control.schema.nfBackend
       if (!note) return null
@@ -413,7 +397,6 @@ export const NfFieldForm = defineComponent({
       ...this.rows.map((row) =>
         this.fieldRow(`${row.kind}:${row.name}`, row.name, this.rowSummary(row), this.rowBody(row)),
       ),
-      this.fieldRow('other', 'Other entries', '', this.others.map(this.otherForm)),
     ])
   },
 })

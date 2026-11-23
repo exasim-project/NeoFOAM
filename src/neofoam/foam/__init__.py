@@ -27,7 +27,11 @@ from neofoam.foam.algorithm_configs import (
     SimpleAlgorithmConfig,
 )
 from neofoam.foam.fv_configs import fvSchemes, fvSolution
-from neofoam.foam.typed_fv_solution import neonFvSolution, openfoamFvSolution
+from neofoam.foam.typed_fv_solution import (
+    neonFvSolution,
+    openfoamFvSolution,
+    transportFvSolution,
+)
 from neofoam.linear_solvers import (
     GinkgoConfigFile,
     GinkgoPreconditioner,
@@ -57,5 +61,6 @@ __all__ = [
     "linear_solver_entry",
     "neonFvSolution",
     "openfoamFvSolution",
+    "transportFvSolution",
     "refresh_linear_solver_slices",
 ]

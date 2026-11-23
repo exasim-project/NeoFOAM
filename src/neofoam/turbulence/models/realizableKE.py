@@ -17,8 +17,10 @@ selection time — this is the reference shape for the "pybFoam-variants only"
 model documented in the family-merge plan.
 """
 
-from typing import Annotated, Any
+from pathlib import Path
+from typing import Annotated, Any, Optional
 
+from neofoam.foam import fvSchemes, transportFvSolution
 from neofoam.framework.context import FieldUpdates
 
 from ..config import TurbulencePropertiesConfig
@@ -28,10 +30,28 @@ __all__ = ["realizableKE"]
 
 realizableKE = register_momentum_transport(Model("realizableKE"), family="RAS")
 realizableKE.config(TurbulencePropertiesConfig)
+RealizableKEFvSchemes = realizableKE.config(fvSchemes)
+RealizableKEFvSolution = realizableKE.config(transportFvSolution)
 # no @build, no native @operation — fallback-only
 
 
+@realizableKE.load
+def load(case_dir: Path, _instance_id: Optional[str]) -> TurbulencePropertiesConfig:
+    """The dictionary alone: the numerics slices above only declare the form's entries."""
+    return TurbulencePropertiesConfig.load(case_dir=case_dir, validate=False)
+
+
 @realizableKE.operation(name="realizableKECorrect", fallback=True)
+@RealizableKEFvSchemes.add(
+    field="epsilon",
+    ddt="ddt(epsilon)",
+    div="div(phi,epsilon)",
+    laplacian="laplacian(DepsilonEff,epsilon)",
+)
+@RealizableKEFvSchemes.add(
+    field="k", ddt="ddt(k)", div="div(phi,k)", laplacian="laplacian(DkEff,k)"
+)
+@RealizableKEFvSolution.add("epsilon", "k", final_required=False)
 def correct(
     self: Any,
     turbulence: Annotated[Any, "models"],  # the wrapped pybFoam handle

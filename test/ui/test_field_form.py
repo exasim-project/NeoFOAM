@@ -27,6 +27,48 @@ def test_solvers_section_groups_blocks_by_field(config):
     assert section["nfFinalOf"] == {"UFinal": "U", "pFinal": "p"}
 
 
+@pytest.mark.parametrize("solver", ["incompressibleFluid", _NEON])
+@pytest.mark.parametrize(
+    ("model", "rows"),
+    [
+        ("kEpsilon", {"k", "epsilon"}),
+        ("realizableKE", {"k", "epsilon"}),
+        ("kOmegaSST", {"k", "omega"}),
+        ("SpalartAllmaras", {"nuTilda"}),
+    ],
+)
+@pytest.mark.parametrize("file", ["fvSchemes", "fvSolution"])
+def test_turbulence_model_owns_the_rows_of_its_fields(solver, model, rows, file):
+    entry = next(e for e in build_forms(resolve_solver(solver)) if e.cls_name == f"{model}_{file}")
+    sections = entry.form_schema["properties"].values()
+    declared = [item for s in sections for item in s.get("properties", {}).values()]
+
+    assert (entry.owner_model, {item["nfField"] for item in declared}) == (model, rows)
+
+
+@pytest.mark.parametrize("solver", ["incompressibleFluid", _NEON])
+def test_every_entry_of_a_field_section_has_a_row(solver):
+    forms = [e for e in build_forms(resolve_solver(solver)) if e.field_schema]
+    sections = [s for e in forms for s in e.field_schema["properties"].values()]
+    field_sections = [
+        s for s in sections if any("nfField" in p for p in s.get("properties", {}).values())
+    ]
+
+    assert [
+        key
+        for section in field_sections
+        for key, entry in section["properties"].items()
+        if "nfField" not in entry
+    ] == []
+
+
+def test_boussinesq_declares_the_rows_of_its_fields():
+    forms = {e.cls_name: e for e in build_forms(resolve_solver("incompressibleFluid"))}
+    solvers = forms["boussinesq_fvSolution"].form_schema["properties"]["solvers"]
+
+    assert solvers["nfFieldGroups"] == {"T": ["T", "TFinal"], "p_rgh": ["p_rgh", "p_rghFinal"]}
+
+
 def test_backend_note_comes_from_the_model():
     note = _entry("PimpleNeoN_fvSolution").form_schema["nfBackend"]
 

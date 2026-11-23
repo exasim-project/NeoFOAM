@@ -170,6 +170,21 @@ def phone(chromium: Any, fluid: dict[str, Any]) -> Iterator[Any]:
     yield from _fresh_page(chromium, fluid, (400, 850))
 
 
+@pytest.fixture(scope="module")
+def vof(chromium: Any, tmp_path_factory: pytest.TempPathFactory) -> Iterator[dict[str, Any]]:
+    """The shared ``incompressibleVoF`` wizard, whose schemes form keeps its adders."""
+    with _wizard("incompressibleVoF", tmp_path_factory.mktemp("vof")) as url:
+        page = _open(chromium, url, [], (1600, 1000))
+        pristine = page.evaluate(_FORM_STATE)
+        page.close()
+        yield {"url": url, "pristine": pristine}
+
+
+@pytest.fixture
+def vof_page(chromium: Any, vof: dict[str, Any]) -> Iterator[Any]:
+    yield from _fresh_page(chromium, vof, (1600, 1000))
+
+
 def _state(page: Any, key: str) -> Any:
     return page.evaluate("key => window.trame.state.get(key)", key)
 
@@ -296,11 +311,10 @@ def test_scheme_variant_switch_keeps_type_and_seeds_the_new_arm(page):
     assert _await_state(page, _SCHEMES, path, back) == back
 
 
-def test_added_scheme_entry_returns_focus_and_can_be_deleted(page):
+def test_added_scheme_entry_returns_focus_and_can_be_deleted(vof_page):
+    page = vof_page
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    section = (
-        _open_field(panel, "Other entries").locator(".nf-compact", has_text="divSchemes").first
-    )
+    section = panel.locator(".nf-compact", has_text="divSchemes").first
     before = _state(page, _SCHEMES)["divSchemes"]
 
     _add_entry(section, "Add entry", "div(phi,k)")
@@ -314,26 +328,24 @@ def test_added_scheme_entry_returns_focus_and_can_be_deleted(page):
     assert _await_state(page, _SCHEMES, ["divSchemes"], before) == before
 
 
-def test_duplicate_entry_name_shows_an_error_and_cannot_be_added(page):
+def test_duplicate_entry_name_shows_an_error_and_cannot_be_added(vof_page):
+    page = vof_page
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    section = (
-        _open_field(panel, "Other entries").locator(".nf-compact", has_text="divSchemes").first
-    )
+    section = panel.locator(".nf-compact", has_text="divSchemes").first
     before = _state(page, _SCHEMES)["divSchemes"]
 
-    _add_entry(section, "Add entry", "div(phi,U)")
+    _add_entry(section, "Add entry", "div(rhoPhi,U)")
 
     adder = section.locator(".nf-compact-adder")
-    expect(adder.get_by_role("alert")).to_contain_text("'div(phi,U)' already defined")
+    expect(adder.get_by_role("alert")).to_contain_text("'div(rhoPhi,U)' already defined")
     expect(adder.get_by_role("button", name="Add", exact=True)).to_be_disabled()
     assert _state(page, _SCHEMES)["divSchemes"] == before
 
 
-def test_dotted_scheme_key_is_stored_as_a_literal_key(page):
+def test_dotted_scheme_key_is_stored_as_a_literal_key(vof_page):
+    page = vof_page
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    section = (
-        _open_field(panel, "Other entries").locator(".nf-compact", has_text="divSchemes").first
-    )
+    section = panel.locator(".nf-compact", has_text="divSchemes").first
     key = "div(phi,alpha.water)"
 
     _add_entry(section, "Add entry", key)

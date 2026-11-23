@@ -17,12 +17,15 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
+pyf = pytest.importorskip("pybFoam")
 pytest.importorskip("trame")
 pytest.importorskip("trame_flow")  # the wizard fixture renders the sweep canvas
 
 from trame.app import get_server  # noqa: E402
 
+from neofoam.io import DictFile  # noqa: E402
+from neofoam.io.strategies.openfoam_strategy import _to_python  # noqa: E402
+from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.case_load import (  # noqa: E402
@@ -31,7 +34,12 @@ from neofoam.ui.case_load import (  # noqa: E402
     case_algorithm,
     models_to_select,
     read_case_configs,
+    rejected_slices,
+    remember_rejected_slices,
+    undeclared_entries_note,
 )
+from neofoam.ui.case_spec import configs_to_form_state, state_to_case_spec  # noqa: E402
+from neofoam.ui.forms import build_forms  # noqa: E402
 from neofoam.ui.steps import (  # noqa: E402
     build_model_families,
     select_model_state,
@@ -45,6 +53,8 @@ _ETC_INCLUDE_CASE = Path(__file__).resolve().parent / "cases" / "etc_include"
 #: A checked-in ``simulationType laminar`` case (read-only).
 _LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
 _TEST_ROOT = Path(__file__).resolve().parents[1]
+#: kEpsilon numerics leaning on ``default``, with one entry no selected model declares.
+_NUMERICS_ROWS = Path(__file__).resolve().parent / "cases" / "numerics_rows"
 #: A checked-in steady SIMPLE case (read-only): its fvSolution has no ``*Final`` solvers.
 _STEADY_CASE = _TEST_ROOT / "solver/incompressibleFluidNeoN/cases/pitzDailySteady"
 
@@ -312,3 +322,165 @@ def test_loaded_vof_case_moves_the_advection_choice_to_its_evidence(
 
     assert server.state.choice_advectionModel == advection
     assert server.state.sel_MULES is (advection == "MULES")
+
+
+def _numerics_case(tmp_path: Path) -> Path:
+    """The laminar case with the kEpsilon numerics of ``cases/numerics_rows``."""
+    case = shutil.copytree(_LAMINAR_CASE, tmp_path / "case")
+    shutil.copytree(_NUMERICS_ROWS, case, dirs_exist_ok=True)
+    return case
+
+
+def _load_numerics(wizard, solver, case: Path) -> list:
+    configs = read_case_configs(case, solver)
+    entries = wizard.controller.get_entries()
+    apply_configs_to_forms(wizard.state, entries, build_model_families(solver), configs, case)
+    return configs
+
+
+def _save_forms(wizard, solver, case: Path) -> None:
+    entries = wizard.controller.get_entries()
+    owners = {e.owner_model for e in entries if e.owner_model}
+    selected = {name for name in owners if wizard.state[selection_key(name)]}
+    forms = {e.key: wizard.state[e.state_key] for e in entries}
+    tools.save_case(solver, state_to_case_spec(entries, forms, selected), str(case))
+
+
+def _scheme(case: Path, section: str, key: str) -> str:
+    return " ".join(
+        str(_to_python(pyf.dictionary.read(str(case / "system/fvSchemes")))[section][key]).split()
+    )
+
+
+def test_undeclared_entry_is_named_in_the_load_report(wizard, solver, tmp_path):
+    case = _numerics_case(tmp_path)
+    configs = _load_numerics(wizard, solver, case)
+
+    notes = undeclared_entries_note(wizard.state, wizard.controller.get_entries(), configs)
+
+    assert notes == [
+        "system/fvSchemes: not used by the selected models, hidden and kept as written: "
+        "`divSchemes.div(phi,alpha.water)`."
+    ]
+
+
+def test_undeclared_entry_is_saved_unchanged(wizard, solver, tmp_path):
+    case = _numerics_case(tmp_path)
+    _load_numerics(wizard, solver, case)
+
+    _save_forms(wizard, solver, case)
+
+    assert _scheme(case, "divSchemes", "div(phi,alpha.water)") == "Gauss vanLeer"
+
+
+@pytest.mark.parametrize(
+    ("section", "value"),
+    [
+        ("ddtSchemes", "Euler"),
+        ("gradSchemes", "Gauss linear"),
+        ("divSchemes", "Gauss linear"),
+        ("laplacianSchemes", "Gauss linear corrected"),
+        ("interpolationSchemes", "linear"),
+        ("snGradSchemes", "corrected"),
+    ],
+)
+def test_default_scheme_survives_a_load_and_save(wizard, solver, tmp_path, section, value):
+    case = _numerics_case(tmp_path)
+    _load_numerics(wizard, solver, case)
+
+    _save_forms(wizard, solver, case)
+
+    assert _scheme(case, section, "default") == value
+
+
+def test_default_schemes_do_not_select_an_optional_model(wizard, solver, tmp_path):
+    case = _numerics_case(tmp_path)
+
+    _load_numerics(wizard, solver, case)
+
+    assert wizard.state[selection_key("boussinesq")] is False
+
+
+def test_form_edit_of_a_declared_entry_beats_the_copies_of_other_slices(wizard, solver, tmp_path):
+    case = _numerics_case(tmp_path)
+    _load_numerics(wizard, solver, case)
+    pimple = next(e for e in wizard.controller.get_entries() if e.cls_name == "Pimple_fvSchemes")
+    edited = {"type": "Gauss", "interpolation": {"type": "linear"}}
+    data = wizard.state[pimple.state_key]
+    wizard.state[pimple.state_key] = {
+        **data,
+        "divSchemes": {**data["divSchemes"], "div(phi,U)": edited},
+    }
+
+    _save_forms(wizard, solver, case)
+
+    assert _scheme(case, "divSchemes", "div(phi,U)") == "Gauss linear"
+
+
+def test_entry_of_an_unselected_model_is_saved_unchanged(wizard, solver, tmp_path):
+    case = _numerics_case(tmp_path)
+    schemes = DictFile(case / "system/fvSchemes")
+    schemes.set(("divSchemes", "div(phi,omega)"), "Gauss vanLeer")
+    schemes.write()
+    _load_numerics(wizard, solver, case)
+
+    _save_forms(wizard, solver, case)
+
+    assert _scheme(case, "divSchemes", "div(phi,omega)") == "Gauss vanLeer"
+
+
+def test_form_edit_of_an_algorithm_control_beats_the_copies_of_other_slices(
+    wizard, solver, tmp_path
+):
+    case = _numerics_case(tmp_path)
+    _load_numerics(wizard, solver, case)
+    control = next(
+        e for e in wizard.controller.get_entries() if e.cls_name == "PimpleAlgorithmConfig"
+    )
+    wizard.state[control.state_key] = {**wizard.state[control.state_key], "nCorrectors": 7}
+
+    _save_forms(wizard, solver, case)
+
+    written = _to_python(pyf.dictionary.read(str(case / "system/fvSolution")))
+    assert str(written["PIMPLE"]["nCorrectors"]) == "7"
+
+
+def test_form_edit_of_a_typed_solver_block_beats_the_copies_of_other_slices(tmp_path):
+    """The block is a nested dictionary, so a stale copy would merge into it key by key."""
+    neon = resolve_solver("incompressibleFluidNeoN")
+    case = shutil.copytree(
+        _TEST_ROOT / "solver/incompressibleFluidNeoN/cases/turbulentBox", tmp_path / "case"
+    )
+    entries = build_forms(neon)
+    forms = {e.key: dict(e.defaults) for e in entries}
+    forms.update(configs_to_form_state(entries, read_case_configs(case, neon)))
+    forms["dict:PimpleNeoN_fvSolution"]["solvers"]["p"]["tolerance"] = 1e-3
+
+    spec = state_to_case_spec(entries, forms, {"PimpleNeoN", "kEpsilon"})
+    tools.save_case(neon, spec, str(case))
+
+    written = _to_python(pyf.dictionary.read(str(case / "system/fvSolution")))
+    block = written["solvers"]["p"]
+    assert (float(block["tolerance"]), "l1ScaledResidual" in block) == (1e-3, False)
+
+
+@pytest.mark.parametrize(("model", "refused"), [("kEpsilon", True), ("kOmegaSST", False)])
+def test_partial_closure_block_protects_the_file_only_for_its_model(
+    wizard, solver, tmp_path, model, refused
+):
+    """``kEpsilon`` and ``realizableKE`` share their keys, so neither load can judge the block."""
+    case = _numerics_case(tmp_path)
+    schemes = case / "system/fvSchemes"
+    schemes.write_text(
+        schemes.read_text().replace("laplacianSchemes { default Gauss linear corrected; }", "")
+        + "\nlaplacianSchemes { laplacian(nuEff,U) Gauss linear corrected; }\n"
+    )
+    warnings: list[dict[str, str]] = []
+    read_case_configs(case, solver, warnings)
+    entries = wizard.controller.get_entries()
+    wizard.state.update(select_model_state(build_model_families(solver), model))
+    remember_rejected_slices(wizard.state, case, warnings)
+
+    held = rejected_slices(wizard.state, entries, case)
+
+    assert ("system/fvSchemes" in held) is refused
