@@ -18,12 +18,19 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, NamedTuple, Optional, Protocol
 
 import numpy as np
 
-# kind, name, rows, expected rows, shape after the rows
-_FieldLayout = tuple[str, str, int, int, tuple[int, ...]]
+
+class _FieldLayout(NamedTuple):
+    """What one rank passes for one field of a step."""
+
+    kind: str
+    name: str
+    rows: int
+    expected_rows: int
+    components: tuple[int, ...]
 
 
 class MeshExport(Protocol):
@@ -32,7 +39,19 @@ class MeshExport(Protocol):
     Cell ``c`` is the point indices ``connectivity[offsets[c]:offsets[c + 1]]``, of
     the VTK cell type ``cell_types[c]`` (e.g. 10 tetra, 12 hexahedron); cells of
     different types mix. Under MPI, the arrays of a rank are its piece, the point
-    indices local to it. :class:`UnstructuredMesh` is one from plain arrays.
+    indices local to it. :class:`UnstructuredMesh` is one from plain arrays; implement
+    this protocol instead to adapt a backend's mesh. Example::
+
+        class BackendMesh:
+            def __init__(self, mesh: Any) -> None:
+                self._mesh = mesh
+
+            def points(self) -> np.ndarray:
+                return self._mesh.vertices
+
+            ...  # connectivity, offsets and cell_types alike
+
+        VtkHdfWriter(path, BackendMesh(mesh)).write(0.1, cell_data={"p": p})
     """
 
     def points(self) -> np.ndarray:
@@ -53,12 +72,14 @@ class MeshExport(Protocol):
 
 
 class UnstructuredMesh:
-    """A :class:`MeshExport` from arrays; it holds them, not copies. Example::
+    """A :class:`MeshExport` from arrays; it holds them, not copies.
 
-    hex_and_tet = UnstructuredMesh(
-        points, connectivity=np.r_[0:8, 4, 5, 6, 8], offsets=np.array([0, 8, 12]),
-        cell_types=np.array([12, 10]),
-    )
+    Example::
+
+        hex_and_tet = UnstructuredMesh(
+            points, connectivity=np.r_[0:8, 4, 5, 6, 8], offsets=np.array([0, 8, 12]),
+            cell_types=np.array([12, 10]),
+        )
     """
 
     def __init__(
@@ -106,13 +127,15 @@ def _prepared_mesh(path: Path, mesh: MeshExport, comm: Any) -> dict[str, np.ndar
         path.parent.mkdir(parents=True, exist_ok=True)
         return _mesh_arrays(mesh)
     arrays: dict[str, np.ndarray] = {}
-    error = ""
+    local_error = ""
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         arrays = _mesh_arrays(mesh)
     except Exception as caught:  # re-raised below, on every rank
-        error = f"{type(caught).__name__}: {caught}"
-    failed = [f"rank {r}: {e}" for r, e in enumerate(comm.allgather(error)) if e]
+        local_error = f"{type(caught).__name__}: {caught}"
+    failed = [
+        f"rank {rank}: {error}" for rank, error in enumerate(comm.allgather(local_error)) if error
+    ]
     if failed:
         raise ValueError(f"VtkHdfWriter mesh: {'; '.join(failed)}")
     return arrays
@@ -140,31 +163,48 @@ def _step_fields(point_data: Any, cell_data: Any) -> dict[str, dict[str, np.ndar
     return fields
 
 
+def _parsed_step(
+    time: Any, point_data: Any, cell_data: Any, comm: Any
+) -> tuple[float, dict[str, dict[str, np.ndarray]], str]:
+    """The step's time, fields and error text; only under MPI is a failure caught."""
+    if comm is None:
+        return float(time), _step_fields(point_data, cell_data), ""
+    try:
+        return float(time), _step_fields(point_data, cell_data), ""
+    except Exception as caught:  # re-raised after the allgather, on every rank
+        return 0.0, {"point": {}, "cell": {}}, str(caught)
+
+
+def _different_fields_message(names: list[list[tuple[str, str]]]) -> str:
+    """The error listing each rank's fields."""
+    listed = (
+        f"\nrank {rank}:\n" + "".join(f"{kind} {name}\n" for kind, name in rank_names)
+        for rank, rank_names in enumerate(names)
+    )
+    return f"VtkHdfWriter.write: the ranks pass different fields:{''.join(listed)}"
+
+
 def _check_same_fields(reports: list[tuple[str, list[_FieldLayout]]]) -> None:
     """``ValueError`` if any rank failed or the ranks pass different field names."""
-    errors = "".join(f"rank {r}: {error}; " for r, (error, _) in enumerate(reports) if error)
+    errors = "".join(f"rank {rank}: {error}; " for rank, (error, _) in enumerate(reports) if error)
     if errors:
         raise ValueError(f"VtkHdfWriter.write: {errors}")
-    names = [[field[:2] for field in layout] for _, layout in reports]
+    names = [[(field.kind, field.name) for field in layout] for _, layout in reports]
     if any(other != names[0] for other in names):
-        listed = (
-            f"\nrank {r}:\n" + "".join(f"{kind} {name}\n" for kind, name in rank_names)
-            for r, rank_names in enumerate(names)
-        )
-        raise ValueError(f"VtkHdfWriter.write: the ranks pass different fields:{''.join(listed)}")
+        raise ValueError(_different_fields_message(names))
 
 
 def _agreed_components(per_rank: Sequence[_FieldLayout]) -> tuple[int, ...]:
     """A field's shape after the rows; a rank without rows may pass any shape."""
-    label = f"{per_rank[0][0]} data {per_rank[0][1]}"
-    with_rows = {components for _, _, rows, _, components in per_rank if rows > 0}
+    label = f"{per_rank[0].kind} data {per_rank[0].name}"
+    with_rows = {field.components for field in per_rank if field.rows > 0}
     if len(with_rows) > 1:
         raise ValueError(f"{label}: the ranks' components differ")
-    rows = [field[2] for field in per_rank]
-    expected = [field[3] for field in per_rank]
+    rows = [field.rows for field in per_rank]
+    expected = [field.expected_rows for field in per_rank]
     if rows != expected:
         raise ValueError(f"{label}: {rows} rows per part, {expected} expected")
-    components = with_rows.pop() if with_rows else per_rank[0][4]
+    components = with_rows.pop() if with_rows else per_rank[0].components
     if 0 in components:
         raise ValueError(f"{label}: a component dimension is zero")
     return components
@@ -241,16 +281,9 @@ class VtkHdfWriter:
         self, time: Any, point_data: Any, cell_data: Any
     ) -> tuple[float, dict[str, list[tuple[str, np.ndarray, tuple[int, ...]]]]]:
         """The step for the native writer; the same ``ValueError`` on every rank if it is bad."""
-        value = 0.0
-        fields: dict[str, dict[str, np.ndarray]] = {"point": {}, "cell": {}}
-        error = ""
-        try:
-            value = float(time)
-            fields = _step_fields(point_data, cell_data)
-        except Exception as caught:  # re-raised below, on every rank
-            error = str(caught)
+        value, fields, error = _parsed_step(time, point_data, cell_data, self._comm)
         layout = [
-            (kind, name, len(array), self._rows[kind], array.shape[1:])
+            _FieldLayout(kind, name, len(array), self._rows[kind], array.shape[1:])
             for kind, arrays in fields.items()
             for name, array in arrays.items()
         ]
@@ -268,7 +301,7 @@ class VtkHdfWriter:
         """Every field's components, which must not change between steps."""
         agreed = {}
         for per_rank in zip(*(layout for _, layout in reports)):
-            key = per_rank[0][:2]
+            key = (per_rank[0].kind, per_rank[0].name)
             agreed[key] = _agreed_components(per_rank)
             if self._components.get(key, agreed[key]) != agreed[key]:
                 raise ValueError(f"{key[0]} data {key[1]}: components changed between steps")
