@@ -10,7 +10,9 @@ output files.
 """
 
 from neofoam.postprocess.writers.csv import CsvWriter
+from neofoam.postprocess.writers.select import vtkhdf_writer
 from neofoam.postprocess.writers.vtkhdf import MeshExport, UnstructuredMesh, VtkHdfWriter
+from neofoam.postprocess.writers.vtkhdf_files import VtkHdfFilesWriter
 from neofoam.postprocess.writers.writer import TableWriter, table_headers, table_rows
 
 __all__ = [
@@ -21,4 +23,6 @@ __all__ = [
     "MeshExport",
     "UnstructuredMesh",
     "VtkHdfWriter",
+    "VtkHdfFilesWriter",
+    "vtkhdf_writer",
 ]

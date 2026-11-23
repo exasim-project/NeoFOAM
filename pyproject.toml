@@ -226,6 +226,11 @@ ignore_missing_imports = true
 module = ["h5py", "h5py.*"]
 ignore_missing_imports = true
 
+# mpi4py: VtkHdfFilesWriter imports it on first use, for node groups.
+[[tool.mypy.overrides]]
+module = ["mpi4py", "mpi4py.*"]
+ignore_missing_imports = true
+
 [tool.poe.executor]
 type = "simple"
 
