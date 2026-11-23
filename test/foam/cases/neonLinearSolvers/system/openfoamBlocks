@@ -1,0 +1,11 @@
+FoamFile { version 2; format ascii; class dictionary; object openfoamBlocks; }
+
+PcgDic { solver PCG; preconditioner DIC; tolerance 1e-06; relTol 0.05; }
+PcgNestedGamg { solver PCG; preconditioner { preconditioner GAMG; smoother DICGaussSeidel; tolerance 1e-05; relTol 0.1; nCellsInCoarsestLevel 50; notModelled 3; } tolerance 1e-09; relTol 0.01; }
+GamgUnmodelledKey { relTol 0.1; solver GAMG; smoother GaussSeidel; notModelled kept; tolerance 1e-06; }
+SmoothSolver { solver smoothSolver; smoother symGaussSeidel; nSweeps 2; tolerance 1e-08; }
+LibrarySolver { solver petsc; petsc { options { ksp_type cg; } } tolerance 1e-06; }
+UnknownPreconditioner { solver PCG; preconditioner myLibraryPreconditioner; tolerance 1e-06; }
+SmootherDictionary { solver smoothSolver; smoother { smoother GaussSeidel; } tolerance 1e-06; }
+NoPreconditioner { solver PCG; tolerance 1e-06; }
+CoupledVector { type coupled; solver PBiCCCG; preconditioner DILU; tolerance (1e-05 1e-05 1e-05); relTol (0 0 0); }

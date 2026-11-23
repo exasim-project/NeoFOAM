@@ -537,3 +537,224 @@ TEST_CASE("fvSchemes")
         );
     }
 }
+
+namespace
+{
+
+using GkoCg = gko::solver::Cg<NeoN::scalar>;
+using GkoMultigrid = gko::solver::Multigrid;
+using GkoPgm = gko::multigrid::Pgm<NeoN::scalar, int>;
+
+NeoN::Dictionary rawGamgBlock()
+{
+    NeoN::Dictionary block;
+    block.insert("solver", std::string("GAMG"));
+    block.insert("tolerance", NeoN::scalar(1e-6));
+    block.insert("relTol", NeoN::scalar(0.01));
+    return block;
+}
+
+// The form a typed Multigrid block reaches the mapper in.
+NeoN::Dictionary gamgBlock()
+{
+    NeoN::Dictionary block;
+    block.insert("solver", std::string("Ginkgo"));
+    block.insert("type", std::string("solver::Cg"));
+    block.insert("preconditioner", std::string("GAMG"));
+    block.insert("tolerance", NeoN::scalar(1e-6));
+    block.insert("relTol", NeoN::scalar(0.01));
+    return block;
+}
+
+std::shared_ptr<const gko::LinOpFactory> ginkgoFactory(const NeoN::Dictionary& mapped)
+{
+    gko::config::registry registry(NeoN::la::ginkgo::mergedPgmConfigMap<NeoN::scalar>());
+    return gko::config::parse(
+               NeoN::la::ginkgo::parse(mapped),
+               registry,
+               gko::config::make_type_descriptor<NeoN::scalar>()
+    )
+        .on(gko::ReferenceExecutor::create());
+}
+
+std::shared_ptr<const GkoMultigrid::Factory> multigridOf(const NeoN::Dictionary& mapped)
+{
+    const auto cg = gko::as<GkoCg::Factory>(ginkgoFactory(mapped));
+    return gko::as<GkoMultigrid::Factory>(cg->get_parameters().preconditioner);
+}
+
+gko::size_type smootherSweeps(const std::shared_ptr<const gko::LinOpFactory>& smoother)
+{
+    const auto& criteria = gko::as<GkoCg::Factory>(smoother)->get_parameters().criteria;
+    return gko::as<gko::stop::Iteration::Factory>(criteria.front())->get_parameters().max_iters;
+}
+
+} // namespace
+
+TEST_CASE("fvSolution Ginkgo tuning options")
+{
+    SECTION("GAMG without options equals GAMG with every default spelled out")
+    {
+        NeoN::Dictionary spelled = gamgBlock();
+        spelled.insert("max_levels", 10);
+        spelled.insert("cycle", std::string("v"));
+        spelled.insert("nCoarsestSweeps", 8);
+        spelled.insert("coarsening", NeoN::Dictionary());
+
+        REQUIRE(
+            NeoN::la::ginkgo::parse(NeoFOAM::mapFvSolution(gamgBlock()))
+            == NeoN::la::ginkgo::parse(NeoFOAM::mapFvSolution(spelled))
+        );
+    }
+
+    SECTION("multigrid hierarchy and sweeps reach Ginkgo")
+    {
+        NeoN::Dictionary block = gamgBlock();
+        block.insert("max_levels", 7);
+        block.insert("cycle", std::string("f"));
+        block.insert("nCoarsestSweeps", 12);
+        const auto multigrid = multigridOf(NeoFOAM::mapFvSolution(block));
+
+        REQUIRE(multigrid->get_parameters().max_levels == 7);
+        REQUIRE(multigrid->get_parameters().cycle == gko::solver::multigrid::cycle::f);
+        REQUIRE(smootherSweeps(multigrid->get_parameters().coarsest_solver.front()) == 12);
+    }
+
+    SECTION("Pgm numeric options stay in the dictionary")
+    {
+        NeoN::Dictionary coarsening;
+        coarsening.insert("max_iterations", 20);
+        coarsening.insert("max_unassigned_ratio", NeoN::scalar(0.1));
+        coarsening.insert("deterministic", std::string("false"));
+        NeoN::Dictionary block = gamgBlock();
+        block.insert("coarsening", coarsening);
+
+        const auto mapped = NeoFOAM::mapFvSolution(block);
+        const auto& level = mapped.subDict("preconditioner").subDict("mg_level");
+        REQUIRE_FALSE(level.contains("configFile"));
+
+        const auto multigrid = multigridOf(mapped);
+        const auto& pgm = gko::as<GkoPgm::Factory>(multigrid->get_parameters().mg_level.front())
+                              ->get_parameters();
+        REQUIRE(pgm.max_iterations == 20);
+        REQUIRE(pgm.max_unassigned_ratio == Catch::Approx(0.1));
+        REQUIRE_FALSE(pgm.deterministic);
+    }
+
+    SECTION("true Pgm switches reach Ginkgo")
+    {
+        NeoN::Dictionary coarsening;
+        coarsening.insert("max_iterations", 20);
+        coarsening.insert("max_unassigned_ratio", NeoN::scalar(0.1));
+        coarsening.insert("deterministic", std::string("true"));
+        coarsening.insert("skip_sorting", true);
+        NeoN::Dictionary block = gamgBlock();
+        block.insert("coarsening", coarsening);
+
+        const auto multigrid = multigridOf(NeoFOAM::mapFvSolution(block));
+        const auto& pgm = gko::as<GkoPgm::Factory>(multigrid->get_parameters().mg_level.front())
+                              ->get_parameters();
+        REQUIRE(pgm.max_iterations == 20);
+        REQUIRE(pgm.max_unassigned_ratio == Catch::Approx(0.1));
+        REQUIRE(pgm.deterministic);
+        REQUIRE(pgm.skip_sorting);
+    }
+
+    SECTION("krylov_dim reaches Gmres beside a GAMG preconditioner")
+    {
+        NeoN::Dictionary block;
+        block.insert("solver", std::string("Ginkgo"));
+        block.insert("type", std::string("solver::Gmres"));
+        block.insert("preconditioner", std::string("GAMG"));
+        block.insert("krylov_dim", 7);
+
+        const auto gmres = gko::as<gko::solver::Gmres<NeoN::scalar>::Factory>(
+            ginkgoFactory(NeoFOAM::mapFvSolution(block))
+        );
+        REQUIRE(gmres->get_parameters().krylov_dim == 7);
+    }
+
+    SECTION("krylov_dim on the GAMG solver is still dropped")
+    {
+        NeoN::Dictionary block = rawGamgBlock();
+        block.insert("krylov_dim", 7);
+        REQUIRE_FALSE(NeoFOAM::mapFvSolution(block).contains("krylov_dim"));
+    }
+
+    SECTION("raw solver GAMG keeps dropping the Multigrid tuning keys")
+    {
+        NeoN::Dictionary coarsening;
+        coarsening.insert("max_iterations", 20);
+        coarsening.insert("deterministic", true);
+        NeoN::Dictionary block = rawGamgBlock();
+        block.insert("max_levels", 8);
+        block.insert("cycle", std::string("f"));
+        block.insert("nCoarsestSweeps", 12);
+        block.insert("coarsening", coarsening);
+
+        const auto mapped = NeoFOAM::mapFvSolution(block);
+        for (const std::string key : {"max_levels", "cycle", "nCoarsestSweeps", "coarsening"})
+        {
+            REQUIRE_FALSE(mapped.contains(key));
+        }
+        REQUIRE(
+            NeoN::la::ginkgo::parse(mapped)
+            == NeoN::la::ginkgo::parse(NeoFOAM::mapFvSolution(rawGamgBlock()))
+        );
+    }
+
+    SECTION("relaxation_factor reaches Ir, also as a whole number")
+    {
+        const auto relaxation = GENERATE(as<double> {}, 0.5, 1.0);
+        NeoN::Dictionary block;
+        block.insert("solver", std::string("smoothSolver"));
+        block.insert("smoother", std::string("symGaussSeidel"));
+        if (relaxation == 1.0) block.insert("relaxation_factor", 1);
+        else
+            block.insert("relaxation_factor", NeoN::scalar(relaxation));
+
+        const auto ir = gko::as<gko::solver::Ir<NeoN::scalar>::Factory>(
+            ginkgoFactory(NeoFOAM::mapFvSolution(block))
+        );
+        REQUIRE(ir->get_parameters().relaxation_factor == Catch::Approx(relaxation));
+    }
+
+    SECTION("max_block_size reaches Jacobi")
+    {
+        NeoN::Dictionary block;
+        block.insert("solver", std::string("PCG"));
+        block.insert("preconditioner", std::string("diagonal"));
+        block.insert("max_block_size", 4);
+
+        const auto cg = gko::as<GkoCg::Factory>(ginkgoFactory(NeoFOAM::mapFvSolution(block)));
+        const auto jacobi = gko::as<gko::preconditioner::Jacobi<NeoN::scalar, int>::Factory>(
+            cg->get_parameters().preconditioner
+        );
+        REQUIRE(jacobi->get_parameters().max_block_size == 4);
+    }
+
+    SECTION("invalid options fail at mapping")
+    {
+        NeoN::Dictionary badCycle = gamgBlock();
+        badCycle.insert("cycle", std::string("x"));
+        REQUIRE_THROWS_AS(NeoFOAM::mapFvSolution(badCycle), std::runtime_error);
+
+        NeoN::Dictionary unknownEntry;
+        unknownEntry.insert("merge_levels", 2);
+        NeoN::Dictionary badCoarsening = gamgBlock();
+        badCoarsening.insert("coarsening", unknownEntry);
+        REQUIRE_THROWS_AS(NeoFOAM::mapFvSolution(badCoarsening), std::runtime_error);
+
+        NeoN::Dictionary badWord;
+        badWord.insert("deterministic", std::string("maybe"));
+        NeoN::Dictionary badSwitch = gamgBlock();
+        badSwitch.insert("coarsening", badWord);
+        REQUIRE_THROWS_AS(NeoFOAM::mapFvSolution(badSwitch), std::runtime_error);
+
+        NeoN::Dictionary wrongPreconditioner;
+        wrongPreconditioner.insert("solver", std::string("PCG"));
+        wrongPreconditioner.insert("preconditioner", std::string("DIC"));
+        wrongPreconditioner.insert("max_block_size", 4);
+        REQUIRE_THROWS_AS(NeoFOAM::mapFvSolution(wrongPreconditioner), std::runtime_error);
+    }
+}

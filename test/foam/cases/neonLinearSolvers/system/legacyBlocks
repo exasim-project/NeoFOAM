@@ -1,0 +1,24 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      legacyBlocks;
+}
+
+PCG { solver PCG; preconditioner DIC; tolerance 1e-06; relTol 0.05; maxIter 100; }
+PCGL1On { solver PCG; preconditioner diagonal; l1ScaledResidual true; }
+PCGWithGAMG { solver PCG; preconditioner GAMG; nCellsInCoarsestLevel 10; nPreSweeps 2; }
+PBiCG { solver PBiCG; preconditioner DILU; tolerance 1e-06; }
+PBiCGStab { solver PBiCGStab; preconditioner diagonal; relTol 0.1; }
+smoothSolver { solver smoothSolver; smoother symGaussSeidel; nSweeps 2; tolerance 1e-08; }
+smoothSolverDILU { solver smoothSolver; smoother GaussSeidel; preconditioner DILU; }
+GAMG { solver GAMG; smoother GaussSeidel; agglomerator faceAreaPair; nCellsInCoarsestLevel 10; nPreSweeps 2; nPostSweeps 2; mergeLevels 1; tolerance 1e-06; }
+GAMGAdvancedKeys { solver GAMG; smoother GaussSeidel; nCellsInCoarsestLevel 10; max_levels 8; cycle f; nCoarsestSweeps 12; }
+GAMGReuse { solver GAMG; smoother GaussSeidel; reuseSetup false; }
+NativeCg { solver Ginkgo; type solver::Cg; preconditioner { type preconditioner::Jacobi; max_block_size 1; } tolerance 1e-06; }
+NativeIc { solver Ginkgo; type solver::Cg; preconditioner { type preconditioner::Ic; factorization { type factorization::ParIc; } } }
+NativeWord { solver Ginkgo; type solver::Bicg; preconditioner DILU; maxIter 77; }
+NativeCriteria { solver Ginkgo; type solver::Bicgstab; preconditioner DILU; criteria { initial_residual_norm 0.01; absolute_residual_norm 1e-06; } }
+NativeGmres { solver Ginkgo; type solver::Gmres; preconditioner none; }
+NativeIrDefault { solver Ginkgo; type solver::Ir; tolerance 1e-06; }

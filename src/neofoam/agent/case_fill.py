@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 import pybFoam as pyf
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
+from pydantic import BaseModel, ConfigDict, Field, RootModel, ValidationError, create_model
 
 from neofoam.framework.solver.configurations import _snake_case, configurations
 from neofoam.io import BaseConfig, write_configs
@@ -224,7 +224,12 @@ def _required_keys(model: type[BaseModel], prefix: _KeyPath) -> Iterator[_KeyPat
     for name, info in model.model_fields.items():
         path = (*prefix, info.alias or name)
         nested = info.annotation
-        if isinstance(nested, type) and issubclass(nested, BaseModel):
+        # A RootModel is one value at its key, so it has no sub-keys to require.
+        if (
+            isinstance(nested, type)
+            and issubclass(nested, BaseModel)
+            and not issubclass(nested, RootModel)
+        ):
             yield from _required_keys(nested, path)
         elif info.is_required() and path[-1] != "default":
             yield path
