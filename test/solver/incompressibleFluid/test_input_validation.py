@@ -69,9 +69,6 @@ def test_solver_crashes_validator_should_predict(case: Path) -> None:
         )
     solver_crashed = result.returncode != 0
 
-    persistent_log = Path(__file__).parent / "solver_output.log"
-    shutil.copy(log_file, persistent_log)
-
     print(f"\n=== Validator found {len(errors)} errors ===")
     for e in errors:
         print(f"  {e.field}: {e.message}")
@@ -80,7 +77,7 @@ def test_solver_crashes_validator_should_predict(case: Path) -> None:
 
     if solver_crashed:
         assert len(errors) > 0, (
-            f"Solver crashed (see {persistent_log}).\n"
+            f"Solver crashed (see {log_file}).\n"
             f"But validator found NO errors — it should have predicted this crash."
         )
 

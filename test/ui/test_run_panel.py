@@ -170,6 +170,25 @@ def test_clean_runs_the_allclean_script(panel, tmp_path: Path) -> None:
     assert not list(tmp_path.glob("log.*"))
 
 
+def test_output_unread_when_the_script_exits_is_kept(
+    panel, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    drain = RunPanel._drain  # noqa: SLF001
+
+    async def late_drain(self: RunPanel, proc: Any) -> None:
+        await proc.wait()
+        await asyncio.sleep(0.6)  # past the 0.4 s poll: it saw the exit, stdout is unread
+        await drain(self, proc)
+
+    monkeypatch.setattr(RunPanel, "_drain", late_drain)
+    _allrun(tmp_path, "echo last-line\n")
+    panel._server.state.target_dir = str(tmp_path)  # noqa: SLF001
+
+    asyncio.run(panel.run_case())
+
+    assert "last-line" in panel._server.state.run_lines  # noqa: SLF001
+
+
 def test_clean_without_an_allclean_names_that_script(panel, tmp_path: Path) -> None:
     _allrun(tmp_path, "echo only-allrun-here\n")  # Allrun present, Allclean is not
     panel._server.state.target_dir = str(tmp_path)  # noqa: SLF001

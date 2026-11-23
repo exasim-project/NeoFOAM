@@ -29,6 +29,11 @@ NeoN::Executor createExecutor(const Foam::dictionary& dict);
  */
 NeoN::Executor createExecutor(const Foam::word& execName);
 
+/* @brief create a NeoN executor from its name, with the dictionary's optional allocator entries
+ * @return the Neon::Executor
+ */
+NeoN::Executor createExecutor(const Foam::word& execName, const Foam::dictionary& dict);
+
 /* @brief create a NeoN executor, preferring the -executor CLI flag over the dictionary entry
  * @return the NeoN::Executor
  */

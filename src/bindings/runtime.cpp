@@ -87,12 +87,13 @@ void registerRuntime(nb::module_& m)
         "create_adapter_run_time",
         [](const Foam::Time& rt, const std::string& executor) -> nf::RunTime
         {
-            // Build the executor by name (Serial/CPU/GPU/default) with the default
-            // allocator. This avoids the strict controlDict "executor"/"allocator"
-            // lookups of the 1-arg createAdapterRunTime, so a stock pimpleFoam case
-            // (no NeoN executor keys) works. Default Serial matches the deterministic
-            // parity setup in test/pimpleParity.cpp.
-            auto exec = nf::createExecutor(Foam::word(executor));
+            // Build the executor by name (Serial/CPU/GPU/default), with the optional
+            // controlDict "allocator"/"memPoolSize" entries. This avoids the strict
+            // controlDict "executor"/"allocator" lookups of the 1-arg
+            // createAdapterRunTime, so a stock pimpleFoam case (no NeoN executor keys)
+            // works. Default Serial matches the deterministic parity setup in
+            // test/pimpleParity.cpp.
+            auto exec = nf::createExecutor(Foam::word(executor), rt.controlDict());
             return nf::createAdapterRunTime(rt, exec);
         },
         "rt"_a,
