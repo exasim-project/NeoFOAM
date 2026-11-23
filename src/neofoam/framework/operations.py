@@ -52,6 +52,7 @@ class Operation:
     metadata: OperationMetadata = field(default_factory=OperationMetadata)
     level: int = 0
     sub_operations: list["Operation"] = field(default_factory=list)
+    run_if: Callable[[Context], bool] | None = None
 
     # --- Convenience accessors delegating to metadata ---
 
@@ -103,10 +104,13 @@ class Operation:
         return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
-        """Run on ``ctx``, unless its ``first``/``final`` mark skips this pass."""
+        """Run on ``ctx``, unless its ``first``/``final`` mark or ``run_if`` skips this pass."""
         if (self.metadata.first or self.metadata.final or ctx.run_every_pass) and self._skipped(
             ctx
         ):
+            return None
+        # after the pass check: a skipped pass must not evaluate a condition with side effects
+        if self.run_if is not None and not self.run_if(ctx):
             return None
         # loops report their predicate evaluations instead (_loop_test)
         observer = None if self.operation_type == "iterative" else execution_observer.current()
