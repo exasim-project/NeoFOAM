@@ -30,6 +30,13 @@ import numpy as np
 _RESULT_PREFIX = "#RESULT "
 
 
+def _assert_relative_l2(result: np.ndarray, expected: np.ndarray, tol: float, msg: str) -> None:
+    """Assert ``||result - expected||_2 / ||expected||_2 <= tol`` over all entries."""
+    assert result.shape == expected.shape, f"{msg}: shape {result.shape} vs {expected.shape}"
+    error = np.linalg.norm(result - expected) / np.linalg.norm(expected)
+    assert error <= tol, f"{msg}: relative L2 error {error:.3e} > {tol:.0e}"
+
+
 class _Worker:
     """One persistent evaluation subprocess bound to a staged case."""
 
