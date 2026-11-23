@@ -81,6 +81,23 @@ class Placement:
     operations: tuple[str, ...] | None = None
 
 
+@dataclass(frozen=True)
+class Schedule:
+    """In which pass of its wrapping loops a decorated operation runs.
+
+    By default it runs in every pass; ``first`` (``final``) limits it to the first
+    (final) pass. Use it with the ``operation`` decorators of solvers and models.
+    Marking both is rejected when the operation is built. Frozen.
+
+    Example::
+
+        @solver.operation(depends_on=["p"], schedule=Schedule(first=True))
+    """
+
+    first: bool = False
+    final: bool = False
+
+
 @dataclass
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated

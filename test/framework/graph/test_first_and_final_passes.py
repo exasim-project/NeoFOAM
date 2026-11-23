@@ -25,7 +25,7 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 from neofoam.framework.solver.spec import SolverSpec
-from neofoam.framework.types import OperationMetadata, Placement
+from neofoam.framework.types import OperationMetadata, Placement, Schedule
 
 
 class _Passes:
@@ -214,26 +214,26 @@ def test_a_first_operation_after_a_first_one_resolves() -> None:
 @pytest.mark.parametrize(
     ("mark", "marks", "expected"),
     [
-        ("first", ({"first": True}, {}), [True, False]),
-        ("final", ({}, {"final": True}), [False, True]),
+        ("first", (Schedule(first=True), Schedule()), [True, False]),
+        ("final", (Schedule(), Schedule(final=True)), [False, True]),
     ],
 )
 def test_the_operation_decorators_set_the_pass_mark(
-    mark: str, marks: tuple[dict[str, bool], dict[str, bool]], expected: list[bool]
+    mark: str, marks: tuple[Schedule, Schedule], expected: list[bool]
 ) -> None:
     solver = SolverSpec(f"{mark}Solver")
     model = ModelSpec(f"{mark}Model")
 
-    @solver.operation(**marks[0])
+    @solver.operation(schedule=marks[0])
     def solver_one(self: object) -> None: ...
 
-    @solver.operation(**marks[1])
+    @solver.operation(schedule=marks[1])
     def solver_two(self: object) -> None: ...
 
-    @model.operation(**marks[0])
+    @model.operation(schedule=marks[0])
     def model_one(self: object) -> None: ...
 
-    @model.operation(**marks[1])
+    @model.operation(schedule=marks[1])
     def model_two(self: object) -> None: ...
 
     solver_ops = solver.instantiate().operations
@@ -430,7 +430,7 @@ def test_metadata_marked_both_first_with_final_raises() -> None:
 def test_a_model_operation_marked_both_first_with_final_raises() -> None:
     model = ModelSpec("bothModel")
 
-    @model.operation(first=True, final=True)
+    @model.operation(schedule=Schedule(first=True, final=True))
     def solve(self: object) -> None: ...
 
     with pytest.raises(ValueError, match=r"solve is marked first and final"):

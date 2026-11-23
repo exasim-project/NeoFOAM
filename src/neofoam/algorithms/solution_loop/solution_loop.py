@@ -63,6 +63,7 @@ from neofoam.algorithms.solution_loop.time_integration import (
 )
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import InitStep, lazy, model
+from neofoam.framework.types import Schedule
 
 
 @runtime_checkable
@@ -347,7 +348,7 @@ class SolutionLoopPredicate:
 
 
 # -- operations: the loop body --------------------------------------------
-@solutionLoop.operation(first=True)
+@solutionLoop.operation(schedule=Schedule(first=True))
 def set_time_step(
     self: Any,
     ctx: Context,
@@ -380,7 +381,7 @@ def set_time_step(
     loop.constrain_delta_t(limit, ceiling)
 
 
-@solutionLoop.operation(first=True)
+@solutionLoop.operation(schedule=Schedule(first=True))
 def increment_time(self: Any, ctx: Context) -> None:
     """Announce the current step and advance the loop one step.
 
