@@ -1,0 +1,298 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
+  <compounddef id="vofOperators_8hpp" kind="file" language="C++">
+    <compoundname>vofOperators.hpp</compoundname>
+    <includes local="no">utility</includes>
+    <includes local="yes">NeoN/NeoN.hpp</includes>
+    <includes refid="runTime_8hpp" local="yes">NeoFOAM/datastructures/runTime.hpp</includes>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vofOperators.hpp</label>
+        <link refid="vofOperators_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="12">
+        <label>NeoFOAM/compatibility/fvSchemes.hpp</label>
+        <link refid="fvSchemes_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>NeoFOAM/datastructures/databaseWrapper.hpp</label>
+        <link refid="databaseWrapper_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>NeoFOAM/datastructures/meshAdapter.hpp</label>
+        <link refid="meshAdapter_8hpp"/>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>NeoFOAM/datastructures/runTime.hpp</label>
+        <link refid="runTime_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="8">
+        <label>functional</label>
+      </node>
+      <node id="5">
+        <label>fvMesh.H</label>
+      </node>
+      <node id="6">
+        <label>map</label>
+      </node>
+      <node id="9">
+        <label>memory</label>
+      </node>
+      <node id="11">
+        <label>regIOobject.H</label>
+      </node>
+      <node id="2">
+        <label>utility</label>
+      </node>
+    </incdepgraph>
+    <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2026<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;utility&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="runTime_8hpp" kindref="compound">NeoFOAM/datastructures/runTime.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="13"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoN_1_1finiteVolume_1_1cellCentred" kindref="compound">nnfvcc</ref><sp/>=<sp/>NeoN::finiteVolume::cellCentred;</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Interface<sp/>unit-normal<sp/>flux<sp/>nHatf<sp/>=<sp/>nHatfv<sp/>&amp;<sp/>Sf.</highlight></codeline>
+<codeline lineno="18"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>@detail<sp/>nHatfv<sp/>=<sp/>gradAlphaf<sp/>/<sp/>(|gradAlphaf|<sp/>+<sp/>deltaN),<sp/>with</highlight></codeline>
+<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>gradAlphaf<sp/>=<sp/>interpolate(grad(alpha1))<sp/>(Gauss-Green<sp/>grad,<sp/>linear<sp/>face<sp/>interpolation)<sp/>and</highlight></codeline>
+<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>deltaN<sp/>=<sp/>1e-8<sp/>/<sp/>cbrt(mean(cell<sp/>volume)).<sp/>Follows<sp/>interfaceProperties::calculateK</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/>*<sp/>without<sp/>the<sp/>contact-angle<sp/>correction.<sp/>The<sp/>gradient<sp/>is<sp/>summed<sp/>in<sp/>OpenFOAM&apos;s<sp/>face<sp/>order<sp/>with</highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>OpenFOAM&apos;s<sp/>linear<sp/>weights,<sp/>so<sp/>Serial<sp/>results<sp/>match<sp/>OpenFOAM<sp/>to<sp/>the<sp/>last<sp/>bit<sp/>even<sp/>where</highlight></codeline>
+<codeline lineno="24"><highlight class="comment"><sp/>*<sp/>gradAlpha<sp/>is<sp/>round-off,<sp/>which<sp/>the<sp/>1/deltaN<sp/>normalisation<sp/>amplifies.<sp/>Boundary<sp/>values<sp/>use<sp/>the</highlight></codeline>
+<codeline lineno="25"><highlight class="comment"><sp/>*<sp/>gaussGrad<sp/>boundary<sp/>correction.</highlight></codeline>
+<codeline lineno="26"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="27"><highlight class="comment"><sp/>*<sp/>The<sp/>weights<sp/>(and<sp/>vanLeerAlphaFlux&apos;s<sp/>owner-to-neighbour<sp/>deltas)<sp/>are<sp/>copied<sp/>from<sp/>the<sp/>OpenFOAM</highlight></codeline>
+<codeline lineno="28"><highlight class="comment"><sp/>*<sp/>mesh<sp/>in<sp/>@p<sp/>rt<sp/>to<sp/>the<sp/>device<sp/>once<sp/>and<sp/>cached<sp/>in<sp/>the<sp/>NeoN<sp/>mesh&apos;s<sp/>stencil<sp/>database.</highlight></codeline>
+<codeline lineno="29"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal">nnfvcc::SurfaceField&lt;NeoN::scalar&gt;</highlight></codeline>
+<codeline lineno="31" refid="namespaceNeoFOAM_1a56a70dd6af6a3d83fa25fe0fa855aa4b" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1a56a70dd6af6a3d83fa25fe0fa855aa4b" kindref="member">computeNHatf</ref>(<ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha1);</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>computeNHatf<sp/>into<sp/>an<sp/>existing<sp/>field<sp/>(internal<sp/>and<sp/>boundary<sp/>values<sp/>overwritten).<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="34" refid="namespaceNeoFOAM_1aac6cea6cf1190a10f16c555e95e6b75f" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a56a70dd6af6a3d83fa25fe0fa855aa4b" kindref="member">computeNHatf</ref>(</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha1,</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>nHatf</highlight></codeline>
+<codeline lineno="38"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>fvc::flux(phi,<sp/>alpha,<sp/>&quot;Gauss<sp/>vanLeer&quot;):<sp/>vanLeer-limited<sp/>face<sp/>flux<sp/>phi_f<sp/>*<sp/>alpha_f.</highlight></codeline>
+<codeline lineno="41"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="42"><highlight class="comment"><sp/>*<sp/>@detail<sp/>Transcribes<sp/>Foam::LimitedScheme::calcLimiter<sp/>+<sp/>NVDTVD::r<sp/>+<sp/>vanLeerLimiter<sp/>and</highlight></codeline>
+<codeline lineno="43"><highlight class="comment"><sp/>*<sp/>surfaceInterpolationScheme::interpolate<sp/>(alpha_f<sp/>=<sp/>w*(alpha_P<sp/>-<sp/>alpha_N)<sp/>+<sp/>alpha_N).</highlight></codeline>
+<codeline lineno="44"><highlight class="comment"><sp/>*<sp/>Linear<sp/>weights<sp/>and<sp/>the<sp/>cell-to-cell<sp/>delta<sp/>are<sp/>OpenFOAM&apos;s<sp/>(cached<sp/>per<sp/>mesh,<sp/>see<sp/>computeNHatf).</highlight></codeline>
+<codeline lineno="45"><highlight class="comment"><sp/>*<sp/>Boundary<sp/>flux<sp/>is<sp/>phi_b<sp/>*<sp/>alpha_b<sp/>(non-coupled<sp/>patch<sp/>value).</highlight></codeline>
+<codeline lineno="46"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47" refid="namespaceNeoFOAM_1a3304bf9456fd4dcacc8d9f6a1852d8ad" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a3304bf9456fd4dcacc8d9f6a1852d8ad" kindref="member">vanLeerAlphaFlux</ref>(</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi</highlight></codeline>
+<codeline lineno="51"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>vanLeerAlphaFlux<sp/>into<sp/>an<sp/>existing<sp/>field<sp/>(internal<sp/>and<sp/>boundary<sp/>values<sp/>overwritten).<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54" refid="namespaceNeoFOAM_1aa7f6842491bb6b2f0208f835eea2a193" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a3304bf9456fd4dcacc8d9f6a1852d8ad" kindref="member">vanLeerAlphaFlux</ref>(</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/><ref refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" kindref="member">flux</ref></highlight></codeline>
+<codeline lineno="59"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Upwind<sp/>face<sp/>flux<sp/>phi_f<sp/>*<sp/>alpha_upwind(f)<sp/>as<sp/>upwind&lt;scalar&gt;::flux<sp/>computes<sp/>it;</highlight></codeline>
+<codeline lineno="62"><highlight class="comment"><sp/>*<sp/>boundary<sp/>phi_b<sp/>*<sp/>alpha_b.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="63" refid="namespaceNeoFOAM_1a68785352f940db76e3456b12105fa1cd" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a68785352f940db76e3456b12105fa1cd" kindref="member">upwindAlphaFlux</ref>(</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi</highlight></codeline>
+<codeline lineno="66"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>alphaEqn.H<sp/>interface<sp/>compression<sp/>velocity<sp/>phic<sp/>=<sp/>cAlpha*|phi/magSf|.</highlight></codeline>
+<codeline lineno="69"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="70"><highlight class="comment"><sp/>*<sp/>@detail<sp/>Zero<sp/>on<sp/>the<sp/>boundary<sp/>faces:<sp/>interFoam<sp/>zeroes<sp/>phic<sp/>on<sp/>non-coupled<sp/>patches,<sp/>and<sp/>NeoN</highlight></codeline>
+<codeline lineno="71"><highlight class="comment"><sp/>*<sp/>has<sp/>no<sp/>coupled<sp/>ones.</highlight></codeline>
+<codeline lineno="72"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal">nnfvcc::SurfaceField&lt;NeoN::scalar&gt;</highlight></codeline>
+<codeline lineno="74" refid="namespaceNeoFOAM_1a8d466cfc369ee30808d15a748f4b8e6b" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1a8d466cfc369ee30808d15a748f4b8e6b" kindref="member">interfaceCompressionVelocity</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,<sp/>NeoN::scalar<sp/>cAlpha);</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>interfaceCompressionVelocity<sp/>into<sp/>an<sp/>existing<sp/>field.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="77" refid="namespaceNeoFOAM_1a1f3180f341ece363e1c4b62d93273929" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a8d466cfc369ee30808d15a748f4b8e6b" kindref="member">interfaceCompressionVelocity</ref>(</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>cAlpha,</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phic</highlight></codeline>
+<codeline lineno="81"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="82"><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>alphaEqn.H<sp/>compression<sp/>flux<sp/>fvc::flux(-fvc::flux(-phir,<sp/>alpha2,<sp/>linear),<sp/>alpha1,<sp/>linear).</highlight></codeline>
+<codeline lineno="84"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="85"><highlight class="comment"><sp/>*<sp/>@detail<sp/>alpha2<sp/>=<sp/>1<sp/>-<sp/>alpha1.<sp/>Internal<sp/>faces:<sp/>(phir*alpha2_f)*alpha1_f<sp/>with<sp/>OpenFOAM&apos;s<sp/>linear</highlight></codeline>
+<codeline lineno="86"><highlight class="comment"><sp/>*<sp/>weights<sp/>(cached<sp/>per<sp/>mesh,<sp/>see<sp/>computeNHatf),<sp/>so<sp/>Serial<sp/>matches<sp/>OpenFOAM<sp/>bit<sp/>for<sp/>bit;<sp/>NeoN&apos;s</highlight></codeline>
+<codeline lineno="87"><highlight class="comment"><sp/>*<sp/>own<sp/>interpolation<sp/>weights<sp/>round<sp/>differently.<sp/>Boundary<sp/>faces:<sp/>(phir_b*alpha2_b)*alpha1_b.</highlight></codeline>
+<codeline lineno="88"><highlight class="comment"><sp/>*<sp/>interFoam<sp/>passes<sp/>phir<sp/>=<sp/>phic*nHatf.</highlight></codeline>
+<codeline lineno="89"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="90" refid="namespaceNeoFOAM_1a1cc9fd94dda1b93df1147a72629bf887" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a1cc9fd94dda1b93df1147a72629bf887" kindref="member">linearCompressionFlux</ref>(</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha1,</highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phir</highlight></codeline>
+<codeline lineno="94"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>linearCompressionFlux<sp/>into<sp/>an<sp/>existing<sp/>field.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97" refid="namespaceNeoFOAM_1a4efe685283a8858de9dca5d1555dcf15" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a1cc9fd94dda1b93df1147a72629bf887" kindref="member">linearCompressionFlux</ref>(</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha1,</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phir,</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/><ref refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" kindref="member">flux</ref></highlight></codeline>
+<codeline lineno="102"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>alphaPhi<sp/>+=<sp/>linearCompressionFlux(alpha1,<sp/>phic*nHatf),<sp/>internal<sp/>and<sp/>boundary<sp/>faces.</highlight></codeline>
+<codeline lineno="105"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="106"><highlight class="comment"><sp/>*<sp/>@detail<sp/>The<sp/>same<sp/>face<sp/>arithmetic<sp/>as<sp/>forming<sp/>phir<sp/>=<sp/>phic*nHatf,<sp/>the<sp/>compression<sp/>flux<sp/>and<sp/>the</highlight></codeline>
+<codeline lineno="107"><highlight class="comment"><sp/>*<sp/>sum<sp/>one<sp/>after<sp/>the<sp/>other,<sp/>in<sp/>one<sp/>kernel<sp/>without<sp/>the<sp/>intermediate<sp/>fields:<sp/>vanLeerAlphaFlux</highlight></codeline>
+<codeline lineno="108"><highlight class="comment"><sp/>*<sp/>into<sp/>alphaPhi<sp/>followed<sp/>by<sp/>this<sp/>gives<sp/>alphaPhaseFlux.</highlight></codeline>
+<codeline lineno="109"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110" refid="namespaceNeoFOAM_1abf5fa6a07a56cecb31ce1cfe774f3484" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1abf5fa6a07a56cecb31ce1cfe774f3484" kindref="member">addInterfaceCompressionFlux</ref>(</highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha1,</highlight></codeline>
+<codeline lineno="113"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phic,</highlight></codeline>
+<codeline lineno="114"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>nHatf,</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>alphaPhi</highlight></codeline>
+<codeline lineno="116"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>interFoam<sp/>alphaEqn.H<sp/>high-order<sp/>phase<sp/>flux<sp/>alphaPhiUn.</highlight></codeline>
+<codeline lineno="119"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="120"><highlight class="comment"><sp/>*<sp/>@detail<sp/>vanLeerAlphaFlux(alpha1)<sp/>+<sp/>linearCompressionFlux(alpha1,<sp/>phir)<sp/>with</highlight></codeline>
+<codeline lineno="121"><highlight class="comment"><sp/>*<sp/>phir<sp/>=<sp/>interfaceCompressionVelocity(phi,<sp/>cAlpha)*computeNHatf(alpha1):<sp/>linear<sp/>alpharScheme,</highlight></codeline>
+<codeline lineno="122"><highlight class="comment"><sp/>*<sp/>icAlpha<sp/>==<sp/>scAlpha<sp/>==<sp/>0.<sp/>No<sp/>compression<sp/>on<sp/>(non-coupled)<sp/>boundary<sp/>faces.<sp/>The<sp/>same<sp/>face</highlight></codeline>
+<codeline lineno="123"><highlight class="comment"><sp/>*<sp/>arithmetic<sp/>as<sp/>that<sp/>composition,<sp/>fused<sp/>into<sp/>one<sp/>kernel<sp/>without<sp/>its<sp/>temporary<sp/>fields.</highlight></codeline>
+<codeline lineno="124"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125" refid="namespaceNeoFOAM_1a27e77dff7c0fad062d421fc8cff9f856" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a27e77dff7c0fad062d421fc8cff9f856" kindref="member">alphaPhaseFlux</ref>(</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha1,</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>cAlpha</highlight></codeline>
+<codeline lineno="130"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"></highlight></codeline>
+<codeline lineno="132"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Bounded<sp/>explicit<sp/>MULES<sp/>solve,<sp/>Foam::MULES::explicitSolve<sp/>(MULESTemplates.C).</highlight></codeline>
+<codeline lineno="133"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="134"><highlight class="comment"><sp/>*<sp/>@detail<sp/>rho<sp/>==<sp/>1,<sp/>Sp<sp/>==<sp/>Su<sp/>==<sp/>0,<sp/>static<sp/>mesh,<sp/>Euler<sp/>time<sp/>step,<sp/>extremaCoeff<sp/>==</highlight></codeline>
+<codeline lineno="135"><highlight class="comment"><sp/>*<sp/>boundaryExtremaCoeff<sp/>==<sp/>smoothLimiter<sp/>==<sp/>0.<sp/>As<sp/>in<sp/>OpenFOAM,<sp/>@p<sp/>alpha<sp/>(psi,<sp/>the<sp/>current</highlight></codeline>
+<codeline lineno="136"><highlight class="comment"><sp/>*<sp/>corrector&apos;s<sp/>field)<sp/>gives<sp/>the<sp/>upwind<sp/>flux<sp/>phiBD<sp/>and<sp/>the<sp/>local<sp/>extrema,<sp/>while<sp/>@p<sp/>alphaOld</highlight></codeline>
+<codeline lineno="137"><highlight class="comment"><sp/>*<sp/>(psi.oldTime(),<sp/>alpha<sp/>at<sp/>the<sp/>start<sp/>of<sp/>the<sp/>time<sp/>step)<sp/>enters<sp/>the<sp/>bound<sp/>right-hand<sp/>sides<sp/>and</highlight></codeline>
+<codeline lineno="138"><highlight class="comment"><sp/>*<sp/>the<sp/>update<sp/>alpha<sp/>=<sp/>(alphaOld*rDeltaT<sp/>-<sp/>surfaceIntegrate(alphaPhi))/rDeltaT.<sp/>Both<sp/>are<sp/>the<sp/>same</highlight></codeline>
+<codeline lineno="139"><highlight class="comment"><sp/>*<sp/>field<sp/>for<sp/>the<sp/>first<sp/>corrector<sp/>(nAlphaCorr<sp/>==<sp/>1);<sp/>@p<sp/>alphaOld<sp/>may<sp/>alias<sp/>@p<sp/>alpha.</highlight></codeline>
+<codeline lineno="140"><highlight class="comment"><sp/>*<sp/>@p<sp/>phi<sp/>is<sp/>the<sp/>volumetric<sp/>flux:<sp/>it<sp/>defines<sp/>the<sp/>upwind<sp/>(donor)<sp/>flux<sp/>and<sp/>is<sp/>the<sp/>BoundaryContext</highlight></codeline>
+<codeline lineno="141"><highlight class="comment"><sp/>*<sp/>&quot;phi&quot;<sp/>for<sp/>alpha.correctBoundaryConditions,<sp/>which<sp/>runs<sp/>on<sp/>entry<sp/>and<sp/>exit<sp/>(as<sp/>in<sp/>OpenFOAM).</highlight></codeline>
+<codeline lineno="142"><highlight class="comment"><sp/>*<sp/>Limits<sp/>@p<sp/>alphaPhi<sp/>in<sp/>place<sp/>(high-order<sp/>flux<sp/>in,<sp/>limited<sp/>flux<sp/>out)<sp/>and<sp/>advances<sp/>@p<sp/>alpha</highlight></codeline>
+<codeline lineno="143"><highlight class="comment"><sp/>*<sp/>conservatively.</highlight></codeline>
+<codeline lineno="144"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="145"><highlight class="comment"><sp/>*<sp/>Boundary<sp/>treatment<sp/>(MULES::limiter):<sp/>patches<sp/>that<sp/>fix<sp/>the<sp/>value<sp/>(NeoN<sp/>fixesValue,<sp/>plus</highlight></codeline>
+<codeline lineno="146"><highlight class="comment"><sp/>*<sp/>inletOutlet,<sp/>which<sp/>is<sp/>a<sp/>mixed<sp/>patch<sp/>and<sp/>fixesValue()<sp/>in<sp/>OpenFOAM)<sp/>widen<sp/>the<sp/>local<sp/>extrema<sp/>of</highlight></codeline>
+<codeline lineno="147"><highlight class="comment"><sp/>*<sp/>their<sp/>face<sp/>cells<sp/>by<sp/>the<sp/>patch<sp/>value.<sp/>The<sp/>boundary<sp/>correction<sp/>flux<sp/>is<sp/>zero<sp/>(phiBD_b<sp/>==</highlight></codeline>
+<codeline lineno="148"><highlight class="comment"><sp/>*<sp/>alphaPhi_b),<sp/>so<sp/>the<sp/>boundary<sp/>limiter<sp/>is<sp/>irrelevant.<sp/>Coupled<sp/>(processor)<sp/>patches<sp/>throw;<sp/>wedge</highlight></codeline>
+<codeline lineno="149"><highlight class="comment"><sp/>*<sp/>patches<sp/>do<sp/>not<sp/>exist<sp/>in<sp/>NeoN.</highlight></codeline>
+<codeline lineno="150"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="151" refid="namespaceNeoFOAM_1a02292127089700e6f37c2cd3b6b1286d" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a02292127089700e6f37c2cd3b6b1286d" kindref="member">mulesExplicitSolve</ref>(</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alphaOld,</highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>alphaPhi,</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>deltaT,</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>psiMax,</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>psiMin,</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>nLimiterIter</highlight></codeline>
+<codeline lineno="160"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"></highlight></codeline>
+<codeline lineno="162"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>MULES::correct<sp/>(CMULESTemplates.C)<sp/>for<sp/>the<sp/>VoF<sp/>path,<sp/>psiMax<sp/>==<sp/>1,<sp/>psiMin<sp/>==<sp/>0.</highlight></codeline>
+<codeline lineno="163"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="164"><highlight class="comment"><sp/>*<sp/>@detail<sp/>Limits<sp/>the<sp/>correction<sp/>flux<sp/>@p<sp/>phiCorr<sp/>(internal<sp/>and<sp/>boundary<sp/>faces)<sp/>so<sp/>that<sp/>applying</highlight></codeline>
+<codeline lineno="165"><highlight class="comment"><sp/>*<sp/>it<sp/>keeps<sp/>alpha<sp/>bounded,<sp/>then<sp/>applies<sp/>it:<sp/>alpha<sp/>=<sp/>(alpha*rDeltaT<sp/>-<sp/>surfaceIntegrate(phiCorr))</highlight></codeline>
+<codeline lineno="166"><highlight class="comment"><sp/>*<sp/>/<sp/>rDeltaT.<sp/>@p<sp/>phi<sp/>plays<sp/>the<sp/>role<sp/>of<sp/>OpenFOAM&apos;s<sp/>limiterCorr<sp/>phi<sp/>argument<sp/>(interFoam<sp/>passes</highlight></codeline>
+<codeline lineno="167"><highlight class="comment"><sp/>*<sp/>alphaPhiUn):<sp/>a<sp/>boundary<sp/>face<sp/>is<sp/>limited<sp/>only<sp/>where<sp/>phi_b<sp/>+<sp/>phiCorr_b<sp/>&gt;<sp/>SMALL^2<sp/>(outlets).</highlight></codeline>
+<codeline lineno="168"><highlight class="comment"><sp/>*<sp/>Fixed-value<sp/>/<sp/>inletOutlet<sp/>patches<sp/>widen<sp/>the<sp/>local<sp/>extrema<sp/>as<sp/>in<sp/>mulesExplicitSolve;<sp/>coupled</highlight></codeline>
+<codeline lineno="169"><highlight class="comment"><sp/>*<sp/>patches<sp/>throw.<sp/>@p<sp/>relaxOld<sp/>blends<sp/>the<sp/>result<sp/>with<sp/>the<sp/>pre-correction<sp/>field<sp/>(interFoam</highlight></codeline>
+<codeline lineno="170"><highlight class="comment"><sp/>*<sp/>aCorr<sp/>&gt;<sp/>0<sp/>branch,<sp/>0.5);<sp/>0<sp/>disables<sp/>it.</highlight></codeline>
+<codeline lineno="171"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="172"><highlight class="comment"><sp/>*<sp/>Unlike<sp/>OpenFOAM,<sp/>the<sp/>boundary<sp/>values<sp/>of<sp/>@p<sp/>alpha<sp/>are<sp/>NOT<sp/>corrected<sp/>here:<sp/>an<sp/>inletOutlet<sp/>patch</highlight></codeline>
+<codeline lineno="173"><highlight class="comment"><sp/>*<sp/>needs<sp/>the<sp/>volumetric<sp/>flux,<sp/>which<sp/>@p<sp/>phi<sp/>is<sp/>not.<sp/>Call<sp/>correctBoundaryConditions<sp/>afterwards.</highlight></codeline>
+<codeline lineno="174"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="175" refid="namespaceNeoFOAM_1ab91f49b295c1d09af6e91fc8d4a18d18" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ab91f49b295c1d09af6e91fc8d4a18d18" kindref="member">mulesCorrect</ref>(</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phiCorr,</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>deltaT,</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>nLimiterIter,</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>relaxOld</highlight></codeline>
+<codeline lineno="182"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="183"><highlight class="normal"></highlight></codeline>
+<codeline lineno="184"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Flow<sp/>and<sp/>interface<sp/>Courant<sp/>numbers<sp/>of<sp/>advectorVoF&apos;s<sp/>setDeltaT.H,<sp/>as<sp/>{CoNum,<sp/>alphaCoNum}.</highlight></codeline>
+<codeline lineno="185"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="186"><highlight class="comment"><sp/>*<sp/>@detail<sp/>sumPhi<sp/>=<sp/>fvc::surfaceSum(mag(phi)),<sp/>CoNum<sp/>=<sp/>0.5*gMax(sumPhi/V)*deltaT</highlight></codeline>
+<codeline lineno="187"><highlight class="comment"><sp/>*<sp/>(CourantNo.H)<sp/>and<sp/>alphaCoNum<sp/>=<sp/>0.5*gMax(pos(alpha<sp/>-<sp/>0.01)*pos(0.99<sp/>-<sp/>alpha)*sumPhi/V)*deltaT</highlight></codeline>
+<codeline lineno="188"><highlight class="comment"><sp/>*<sp/>(advectorVoF&apos;s<sp/>alphaCourantNo.H,<sp/>with<sp/>strict<sp/>inequalities).<sp/>Each<sp/>cell<sp/>sums<sp/>its<sp/>faces<sp/>in</highlight></codeline>
+<codeline lineno="189"><highlight class="comment"><sp/>*<sp/>OpenFOAM&apos;s<sp/>order<sp/>(internal<sp/>faces<sp/>by<sp/>index,<sp/>then<sp/>boundary<sp/>faces),<sp/>so<sp/>the<sp/>result<sp/>is</highlight></codeline>
+<codeline lineno="190"><highlight class="comment"><sp/>*<sp/>bitwise<sp/>OpenFOAM&apos;s<sp/>on<sp/>every<sp/>executor.<sp/>The<sp/>cell-to-face<sp/>map<sp/>is<sp/>built<sp/>once<sp/>per<sp/>mesh<sp/>and<sp/>cached</highlight></codeline>
+<codeline lineno="191"><highlight class="comment"><sp/>*<sp/>in<sp/>its<sp/>stencil<sp/>database.<sp/>Only<sp/>the<sp/>internal<sp/>field<sp/>of<sp/>@p<sp/>alpha<sp/>is<sp/>read.</highlight></codeline>
+<codeline lineno="192"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="193" refid="namespaceNeoFOAM_1a220b0aed6d36feacc454e55a17abb177" refkind="member"><highlight class="normal">std::pair&lt;NeoN::scalar,<sp/>NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a220b0aed6d36feacc454e55a17abb177" kindref="member">courantNumbers</ref>(</highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>deltaT</highlight></codeline>
+<codeline lineno="197"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>alpha.correctBoundaryConditions<sp/>with<sp/>the<sp/>volumetric<sp/>flux<sp/>@p<sp/>phi<sp/>in<sp/>the</highlight></codeline>
+<codeline lineno="200"><highlight class="comment"><sp/>*<sp/>BoundaryContext<sp/>under<sp/>&quot;phi&quot;,<sp/>so<sp/>inletOutlet<sp/>patches<sp/>switch<sp/>per<sp/>face<sp/>on<sp/>the<sp/>flux<sp/>sign.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="201" refid="namespaceNeoFOAM_1ade1e556856ce6e94add9887c7142c41a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ade1e556856ce6e94add9887c7142c41a" kindref="member">correctBoundaryConditionsWithFlux</ref>(</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi</highlight></codeline>
+<codeline lineno="204"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="205"><highlight class="normal"></highlight></codeline>
+<codeline lineno="206"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vofOperators.hpp"/>
+  </compounddef>
+</doxygen>
