@@ -33,7 +33,7 @@ enum class DragType
  * model is chosen with an enum and a switch. DragModel is a small value
  * type, copied into the kernel.
  *
- * To add a correlation: write a class with a KOKKOS_INLINE_FUNCTION cdRe(re),
+ * To add a correlation: write a class with a NEON_INLINE_FUNCTION cdRe(re),
  * add a DragType entry and a case below.
  */
 class DragModel
@@ -43,7 +43,7 @@ public:
     DragType type = DragType::sphere;
 
     /* @brief Cd * Re for particle Reynolds number Re >= 0. */
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar cdRe(NeoN::scalar re) const
     {
         switch (type)

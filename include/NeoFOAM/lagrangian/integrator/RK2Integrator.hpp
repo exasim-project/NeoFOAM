@@ -22,7 +22,7 @@ public:
      * @param dt     timestep [s]
      */
     template<typename AccelFunc>
-    KOKKOS_INLINE_FUNCTION void
+    NEON_INLINE_FUNCTION void
     step(NeoN::Vec3& u, NeoN::Vec3& x, const AccelFunc& accel, NeoN::scalar dt) const
     {
         // keep the old state: both corrector formulas need u and x of the start of the step

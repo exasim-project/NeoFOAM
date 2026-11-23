@@ -27,7 +27,7 @@ namespace NeoFOAM::lagrangian
  * The drag force always points in the direction of the slip vector:
  * it accelerates the particle toward the fluid velocity.
  *
- * Callable on the GPU (KOKKOS_INLINE_FUNCTION).
+ * Callable on the GPU (NEON_INLINE_FUNCTION).
  */
 
 class DragForce
@@ -37,7 +37,7 @@ public:
     // Method to compute the drag force on a particle given its velocity, diameter, and the force
     // context (which includes fluid properties and drag coefficient). The force is calculated based
     // on the slip velocity between the fluid and the particle.
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::Vec3
     compute(const NeoN::Vec3& up, NeoN::scalar d, NeoN::scalar, const ForceContext& ctx) const
     {
@@ -53,7 +53,7 @@ public:
 
 
     // Method to compute the drag coefficient: F_D = Sp * slip, Sp = (pi / 8) * mu * d * CdRe.
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar sp(NeoN::scalar d, NeoN::scalar, const ForceContext& ctx) const
     {
         return M_PI / 8.0 * ctx.muF * d * ctx.cdRe;

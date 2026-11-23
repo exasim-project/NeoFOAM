@@ -19,13 +19,13 @@ namespace NeoFOAM::lagrangian
  * the Putnam correlation (SphereDrag), not this one; the two give slightly
  * different terminal velocities.
  *
- * Callable on the GPU (KOKKOS_INLINE_FUNCTION).
+ * Callable on the GPU (NEON_INLINE_FUNCTION).
  */
 class SchillerNaumann
 {
 public:
 
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar cdRe(NeoN::scalar re) const
     {
         if (re > 1000.0)

@@ -16,13 +16,13 @@ namespace NeoFOAM::lagrangian
  *
  * Recovers Stokes drag (Cd * Re = 24) as Re -> 0.
  *
- * Callable on the GPU (KOKKOS_INLINE_FUNCTION).
+ * Callable on the GPU (NEON_INLINE_FUNCTION).
  */
 class SphereDrag
 {
 public:
 
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar cdRe(NeoN::scalar re) const
     {
         if (re > 1000.0)

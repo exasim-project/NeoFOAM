@@ -17,13 +17,13 @@ namespace NeoFOAM::lagrangian
  * This is the exact analytical solution for a sphere in Stokes flow.
  * For higher Re_p, use SphereDrag or SchillerNaumann instead.
  *
- * Callable on the GPU (KOKKOS_INLINE_FUNCTION).
+ * Callable on the GPU (NEON_INLINE_FUNCTION).
  */
 class StokesDrag
 {
 public:
 
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar cdRe(NeoN::scalar) const { return 24.0; }
 };
 

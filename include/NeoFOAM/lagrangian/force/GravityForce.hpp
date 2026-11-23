@@ -24,7 +24,7 @@ namespace NeoFOAM::lagrangian
  * If rho_p < rho_f, the net force points opposite to g
  * (the particle rises, e.g. a bubble).
  *
- * Callable on the GPU (KOKKOS_INLINE_FUNCTION).
+ * Callable on the GPU (NEON_INLINE_FUNCTION).
  */
 class GravityForce
 {
@@ -33,7 +33,7 @@ public:
     NeoN::Vec3 g = {0.0, 0.0, 0.0}; ///< gravity vector [m/s^2], from constant/g
 
     /* @brief Compute gravity + buoyancy force on one particle. */
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::Vec3
     compute(const NeoN::Vec3&, NeoN::scalar d, NeoN::scalar rhoP, const ForceContext& ctx) const
     {
@@ -48,7 +48,7 @@ public:
     }
 
     /* @brief Gravity does not depend on the slip: fully explicit, Sp = 0. */
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar sp(NeoN::scalar, NeoN::scalar, const ForceContext&) const { return 0.0; }
 };
 

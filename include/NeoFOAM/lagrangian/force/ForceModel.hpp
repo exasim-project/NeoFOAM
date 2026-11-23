@@ -31,7 +31,7 @@ namespace NeoFOAM::lagrangian
  * kernel, so every force is a member here, switched on or off by a flag.
  * ForceModels is a small value type, copied into the kernel.
  *
- * To add a force: write a class with KOKKOS_INLINE_FUNCTION compute(...) and
+ * To add a force: write a class with NEON_INLINE_FUNCTION compute(...) and
  * sp(...), add a flag and a member below, and add it to compute() and sp().
  */
 class ForceModels
@@ -52,7 +52,7 @@ public:
      * @param ctx     fluid context at the particle's position
      */
 
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::Vec3
     compute(const NeoN::Vec3& up, NeoN::scalar d, NeoN::scalar rhoP, const ForceContext& ctx) const
     {
@@ -73,7 +73,7 @@ public:
      * The part of the force that is linear in the slip: F = ... + Sp * (uf - up).
      * Used by the implicit Euler integrator.
      */
-    KOKKOS_INLINE_FUNCTION
+    NEON_INLINE_FUNCTION
     NeoN::scalar sp(NeoN::scalar d, NeoN::scalar rhoP, const ForceContext& ctx) const
     {
         NeoN::scalar total = 0.0;

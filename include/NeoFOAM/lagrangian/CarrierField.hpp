@@ -59,7 +59,7 @@ buildCarrierField(const NeoN::Executor& exec, const Foam::volVectorField& U, Int
 
 // Q2: carrier velocity at x in cell c. cell: the cell value. cellPoint: NeoN's
 // interpolateCellPoint (OpenFOAM's interpolationCellPoint) from the cell and point values.
-KOKKOS_INLINE_FUNCTION
+NEON_INLINE_FUNCTION
 NeoN::Vec3 interpolate(
     const CarrierFieldView& f,
     const NeoN::TrackingMeshView& m,
