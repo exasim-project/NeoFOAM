@@ -247,3 +247,106 @@ TEST_CASE("lagrangian walk locate and cellPoint interpolation", "[lagrangian]")
         REQUIRE(ufH.view()[0][2] == Catch::Approx(0.0).margin(1e-12));
     }
 }
+
+TEST_CASE("lagrangian evolve: one particle, Stokes drag and gravity", "[lagrangian]")
+{
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+
+    // evolve() does not use the mesh or U (only locate does), but the solver needs them
+    Foam::volVectorField U(
+        Foam::IOobject("U", runTime.timeName(), mesh),
+        mesh,
+        Foam::dimensionedVector(Foam::dimVelocity, Foam::Zero)
+    );
+
+    // One particle with u = (1, 0, 0) in still air (uf = 0), one step dt
+    const NeoN::scalar d = 1e-4;
+    const NeoN::scalar rhoP = 2500.0;
+    const lag::CarrierProperties air {1.2, 1.8e-5};
+    const NeoN::scalar dt = 1e-3;
+
+    // Stokes relaxation time tau = rho_p d^2 / (18 mu): with Stokes drag, evolve() must give
+    // a = -u / tau and bp = 1 / tau, the same as the integrator test above
+    const NeoN::scalar tau = rhoP * d * d / (18.0 * air.mu);
+
+    lag::ParticleCloud cloud(exec, {{0.0, 0.0, 0.0}}, {{1.0, 0.0, 0.0}}, {d}, {rhoP}, {0});
+    NeoN::Vector<NeoN::Vec3> uf(exec, 1, NeoN::Vec3 {0.0, 0.0, 0.0});
+
+    lag::DragModel stokes;
+    stokes.type = lag::DragType::Stokes;
+
+    lag::ForceModels forces;
+    forces.useDrag = true;
+
+    SECTION("Stokes drag, Euler: u = tau / (tau + dt), x = dt (" + execName + ")")
+    {
+        lag::ParticleSolver solver(
+            stokes,
+            forces,
+            lag::IntegrationScheme::Euler,
+            air,
+            lag::LocateMethod::findCell,
+            lag::Interpolation::cell,
+            exec,
+            mesh,
+            U
+        );
+        solver.evolve(cloud, uf, dt);
+
+        const auto uH = cloud.U.copyToHost();
+        const auto xH = cloud.x.copyToHost();
+        REQUIRE(uH.view()[0][0] == Catch::Approx(tau / (tau + dt)).epsilon(1e-12));
+        REQUIRE(uH.view()[0][1] == Catch::Approx(0.0).margin(1e-15));
+        REQUIRE(xH.view()[0][0] == Catch::Approx(dt).epsilon(1e-12));
+    }
+
+    SECTION("Stokes drag, RK2: u = 1 - dt/tau + dt^2/(2 tau^2) (" + execName + ")")
+    {
+        lag::ParticleSolver solver(
+            stokes,
+            forces,
+            lag::IntegrationScheme::RK2,
+            air,
+            lag::LocateMethod::findCell,
+            lag::Interpolation::cell,
+            exec,
+            mesh,
+            U
+        );
+        solver.evolve(cloud, uf, dt);
+
+        const auto uH = cloud.U.copyToHost();
+        const auto xH = cloud.x.copyToHost();
+        const NeoN::scalar r = dt / tau;
+        REQUIRE(uH.view()[0][0] == Catch::Approx(1.0 - r + r * r / 2.0).epsilon(1e-12));
+        REQUIRE(xH.view()[0][0] == Catch::Approx(dt - dt * r / 2.0).epsilon(1e-12));
+    }
+
+    SECTION("Stokes drag + gravity, Euler: u_y = g' dt / (1 + dt/tau) (" + execName + ")")
+    {
+        // gravity with buoyancy: a = g (1 - rho_f / rho_p), fully explicit (sp = 0)
+        forces.useGravity = true;
+        forces.gravity.g = {0.0, -9.81, 0.0};
+        const NeoN::scalar gPrime = -9.81 * (1.0 - air.rho / rhoP);
+
+        lag::ParticleSolver solver(
+            stokes,
+            forces,
+            lag::IntegrationScheme::Euler,
+            air,
+            lag::LocateMethod::findCell,
+            lag::Interpolation::cell,
+            exec,
+            mesh,
+            U
+        );
+        solver.evolve(cloud, uf, dt);
+
+        const auto uH = cloud.U.copyToHost();
+        REQUIRE(uH.view()[0][0] == Catch::Approx(tau / (tau + dt)).epsilon(1e-12));
+        REQUIRE(uH.view()[0][1] == Catch::Approx(gPrime * dt / (1.0 + dt / tau)).epsilon(1e-12));
+    }
+}

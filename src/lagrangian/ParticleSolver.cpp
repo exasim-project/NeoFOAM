@@ -119,6 +119,14 @@ NeoN::label ParticleSolver::locateFindCell(
 // locate the particles and interpolate the carrier velocity at the particle position.
 NeoN::label ParticleSolver::locateWalk(ParticleCloud& cloud, NeoN::Vector<NeoN::Vec3>& uf) const
 {
+    // The walk data is built only for locate walk (see the constructor)
+    if (!trackingMesh_ || !carrierField_)
+    {
+        NF_ERROR_EXIT(
+            "ParticleSolver::locateWalk: walk data not built (solver uses locate findCell)"
+        );
+    }
+
     auto xV = cloud.x.view();
     auto cellV = cloud.cell.view();
     auto activeV = cloud.active.view();

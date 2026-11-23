@@ -29,7 +29,13 @@ public:
         , rho(exec, rho0)
         , cell(exec, cell0)
         , active(exec, static_cast<NeoN::localIdx>(x0.size()), NeoN::label(1))
-    {}
+    {
+        const auto n = x0.size();
+        if (u0.size() != n || d0.size() != n || rho0.size() != n || cell0.size() != n)
+        {
+            NF_ERROR_EXIT("ParticleCloud: x0, u0, d0, rho0 and cell0 must have the same size");
+        }
+    }
 
     // Returns the number of particles in the cloud by returning the size of the position vector x.
     NeoN::localIdx size() const { return x.size(); }
