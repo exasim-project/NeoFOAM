@@ -675,6 +675,10 @@
 <span class="sd">Separately installed packages add solvers through the ``neofoam.region_solvers`` entry</span>
 <span class="sd">point group (:mod:`neofoam.core.entry_points`). A built-in solver of the same name wins;</span>
 <span class="sd">two entry points sharing another name with different targets raise ``ValueError``.</span>
+
+<span class="sd">Example::</span>
+
+<span class="sd">    spec = resolve_solver(list_solver_names()[0])</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -724,7 +728,17 @@
 <div class="viewcode-block" id="list_solver_names">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.mcp.registry.html#neofoam.framework.solver.registry.list_solver_names">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_solver_names</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Registered solver names, built-in and from plugins; loads no spec (no pybFoam)."""</span>
+<span class="w">    </span><span class="sd">"""List the registered solver names, built-in and from installed packages.</span>
+
+<span class="sd">    Use it to show or check solver names; use :func:`resolve_solver` to get a spec.</span>
+
+<span class="sd">    Loads no spec. The names are sorted and unique. Two entry points that</span>
+<span class="sd">    give a non-built-in name different targets raise ``ValueError``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        available = "incompressibleFluid" in list_solver_names()</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="o">*</span><span class="n">_discover_solver_names</span><span class="p">(),</span> <span class="o">*</span><span class="n">_plugin_solvers</span><span class="p">()})</span></div>
 
 
@@ -732,7 +746,19 @@
 <div class="viewcode-block" id="resolve_solver">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.mcp.registry.html#neofoam.framework.solver.registry.resolve_solver">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_solver</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Resolve a registered solver spec by name; built-in names win, unknown names fail fast."""</span>
+<span class="w">    </span><span class="sd">"""Return the solver spec registered under ``name``.</span>
+
+<span class="sd">    Use it when a case or tool selects a solver by name; use :func:`list_solver_names`</span>
+<span class="sd">    to see the names without loading a spec.</span>
+
+<span class="sd">    A built-in solver wins over an entry point of the same name and is resolved without</span>
+<span class="sd">    reading entry points. For any other name, an unknown name or two entry points that</span>
+<span class="sd">    give one name different targets raise ``ValueError``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        spec = resolve_solver("incompressibleFluid")</span>
+<span class="sd">    """</span>
     <span class="n">known</span> <span class="o">=</span> <span class="n">_discover_solver_names</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">"neofoam.solver.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
