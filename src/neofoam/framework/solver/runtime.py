@@ -11,13 +11,22 @@ runtime so multiple solver runs never share mutable state.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
     from neofoam.framework.operations import OperationCollection, StepBuilder
 
     from .spec import SolverSpec
+
+
+@runtime_checkable
+class Finalizer(Protocol):
+    """A model of ``ctx.models`` that releases what it holds once the time loop has ended."""
+
+    def finalize(self) -> None:
+        """Release it (collective under MPI: every rank calls it)."""
+        ...
 
 
 @dataclass
@@ -95,6 +104,12 @@ class SolverRuntime:
         transiently, never stored on the runtime.
         """
         return self.spec._run_execution_graph(self, domain_name, ctx)
+
+    def finalize(self, ctx: "Context") -> None:
+        """Call ``finalize()`` on every :class:`Finalizer` of ``ctx.models``."""
+        for model in ctx.models.values():
+            if isinstance(model, Finalizer):
+                model.finalize()
 
     @property
     def operations(self) -> "OperationCollection":

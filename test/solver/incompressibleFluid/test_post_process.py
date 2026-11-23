@@ -30,7 +30,8 @@ of headroom over the sum of nine cell values.
 current time has advanced a full interval past the last write — so on a six-step
 run the rows land at 0.002, 0.004 and 0.006, and never at an odd step.
 
-**Placement.** That ``post_process`` is stepped *after* ``write_output`` is what
+**Placement.** That ``post_process`` (and ``insitu``, when the case declares
+in-situ entries) is stepped *after* ``write_output`` is what
 the CSV rows mean, and a solved case cannot show it (nothing mutates the fields
 between the two). It is asserted on the built graph instead, case-free, with the
 core models the graph step reads faked down to their spec name and op names.
@@ -120,13 +121,20 @@ def _core_model(spec_name: str, op_names: list[str]) -> SimpleNamespace:
     )
 
 
-def test_the_time_loop_ends_with_write_output_then_post_process() -> None:
+@pytest.mark.parametrize(
+    "post_ops",
+    [["post_process"], ["post_process", "insitu"]],
+    ids=["tables_only", "with_insitu_entries"],
+)
+def test_the_time_loop_ends_with_write_output_then_every_post_process_op(
+    post_ops: list[str],
+) -> None:
     state = SimpleNamespace(
         core_models=[
             _core_model("pimple", ["inner_loop", "momentum", "continuity"]),
             _core_model("solutionLoop", ["set_time_step", "increment_time"]),
             _core_model("fieldWriter", ["write_output"]),
-            _core_model("postProcess", ["post_process"]),
+            _core_model("postProcess", post_ops),
         ],
         optional_models=[],
     )
@@ -141,7 +149,5 @@ def test_the_time_loop_ends_with_write_output_then_post_process() -> None:
     builder, _ = execution_graph(SimpleNamespace(state=state), ctx)
 
     time_loop = builder.operations["time_loop"]
-    assert [op.operation_name for op in time_loop.sub_operations][-2:] == [
-        "write_output",
-        "post_process",
-    ]
+    names = [op.operation_name for op in time_loop.sub_operations]
+    assert names[-1 - len(post_ops) :] == ["write_output", *post_ops]

@@ -21,6 +21,7 @@ from __future__ import annotations
 import csv
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 
 import numpy as np
@@ -89,8 +90,8 @@ def _rows(path: Path) -> list[list[str]]:
 def test_modelspec_is_a_full_core_model() -> None:
     assert postProcess.name == "postProcess"
     assert postProcess._load_func is not None
-    op_names = {meta["name"] for _, meta in postProcess._operations}
-    assert op_names == {"post_process"}
+    operations = postProcess._build_operations_for(SimpleNamespace(config=TableSet()))
+    assert [op.operation_name for op in operations] == ["post_process"]
 
 
 def test_build_emits_the_post_processor(tmp_path: Path) -> None:
