@@ -578,7 +578,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.field_form.html">neofoam.ui.field_form</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.file_preview.html">neofoam.ui.file_preview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -699,8 +698,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.agent_panel</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentPanel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_load</span><span class="w"> </span><span class="kn">import</span> <span class="n">rejected_slices</span><span class="p">,</span> <span class="n">without_rejected_files</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.dir_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_dirs</span><span class="p">,</span> <span class="n">start_dir</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.file_preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">preview_entries</span><span class="p">,</span> <span class="n">preview_files</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.form_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ADDER_TRANSLATIONS</span><span class="p">,</span> <span class="n">NF_FIELD_FORM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.form_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ADDER_TRANSLATIONS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FormEntry</span><span class="p">,</span>
     <span class="n">build_forms</span><span class="p">,</span>
@@ -813,9 +811,6 @@
 <span class="s2">"""</span>
 
 
-<span class="n">_PREVIEW_FILES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="s2">"system/fvSchemes"</span><span class="p">)</span>
-
-
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_Wizard</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What the wizard derives from the solver and its step plugins, computed once."""</span>
@@ -922,30 +917,6 @@
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="p">]</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_refresh_file_preview</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Publish what Save would write to the per-field numerics files."""</span>
-    <span class="n">entries</span> <span class="o">=</span> <span class="n">preview_entries</span><span class="p">(</span><span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
-    <span class="n">selected</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">wizard</span><span class="o">.</span><span class="n">gated</span> <span class="k">if</span> <span class="n">state</span><span class="p">[</span><span class="n">selection_key</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)]}</span>
-    <span class="n">form_state</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">state_key</span><span class="p">])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">}</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">target_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">target_dir</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">refused</span> <span class="o">=</span> <span class="n">rejected_slices</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="k">if</span> <span class="n">target</span> <span class="k">else</span> <span class="p">{}</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">file_preview</span> <span class="o">=</span> <span class="n">preview_files</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">form_state</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">refused</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_register_file_preview</span><span class="p">(</span><span class="n">server</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Keep the preview current; a wizard without a per-field form has none."""</span>
-    <span class="n">entries</span> <span class="o">=</span> <span class="n">preview_entries</span><span class="p">(</span><span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">file_preview_tab</span> <span class="o">=</span> <span class="n">_PREVIEW_FILES</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">_refresh_file_preview</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
-    <span class="n">watched</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">state_key</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">]</span>
-    <span class="n">watched</span> <span class="o">+=</span> <span class="p">[</span><span class="n">selection_key</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">wizard</span><span class="o">.</span><span class="n">gated</span><span class="p">]</span>
-    <span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">change</span><span class="p">(</span><span class="o">*</span><span class="n">watched</span><span class="p">,</span> <span class="s2">"target_dir"</span><span class="p">,</span> <span class="s2">"rejected_slices"</span><span class="p">)(</span>
-        <span class="k">lambda</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">_refresh_file_preview</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
-    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_select_model</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1379,38 +1350,11 @@
         <span class="n">wizard</span><span class="o">.</span><span class="n">plugin_by_id</span><span class="p">[</span><span class="n">step</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_file_preview_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The live text of the files Save writes, one tab per file."""</span>
-    <span class="n">html</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">html</span>
-    <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Aside</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-preview"</span><span class="p">,</span> <span class="n">aria_label</span><span class="o">=</span><span class="s2">"File preview"</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-preview-tabs"</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">_PREVIEW_FILES</span><span class="p">:</span>
-                <span class="n">html</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span>
-                    <span class="n">file</span><span class="p">,</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">"button"</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">{{</span><span class="s2">'nf-preview-on': file_preview_tab === '</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">'</span><span class="se">}}</span><span class="s2">"</span><span class="p">,),</span>
-                    <span class="n">click</span><span class="o">=</span><span class="sa">f</span><span class="s2">"file_preview_tab = '</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">'"</span><span class="p">,</span>
-                <span class="p">)</span>
-        <span class="n">html</span><span class="o">.</span><span class="n">Pre</span><span class="p">(</span><span class="s2">"{{ file_preview[file_preview_tab] }}"</span><span class="p">)</span>
-        <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-            <span class="s2">"Live preview. Options left at their default are not written."</span><span class="p">,</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-preview-note"</span><span class="p">,</span>
-        <span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_step_forms</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">Step</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The step's form panels, beside the file preview when one of them is a per-field form."""</span>
-    <span class="n">panels</span> <span class="o">=</span> <span class="p">[</span><span class="n">wizard</span><span class="o">.</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">entry_keys</span><span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">NF_FIELD_FORM</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">form_schema</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">panels</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="o">.</span><span class="n">VExpansionPanels</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">panels</span><span class="p">:</span>
-                <span class="n">_form_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
-        <span class="k">return</span>
-    <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-numerics"</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-numerics-forms"</span><span class="p">),</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="o">.</span><span class="n">VExpansionPanels</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">panels</span><span class="p">:</span>
-                <span class="n">_form_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
-        <span class="n">_file_preview_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The step's form panels."""</span>
+    <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="o">.</span><span class="n">VExpansionPanels</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">entry_keys</span><span class="p">:</span>
+            <span class="n">_form_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">(</span>
@@ -1449,7 +1393,6 @@
 
     <span class="n">_seed_state</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
     <span class="n">_register_case_controllers</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
-    <span class="n">_register_file_preview</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
     <span class="n">geometry_panel</span> <span class="o">=</span> <span class="n">GeometryPanel</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
     <span class="n">run_panel</span> <span class="o">=</span> <span class="n">RunPanel</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
     <span class="n">agent_panel</span> <span class="o">=</span> <span class="n">AgentPanel</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">solver</span><span class="p">)</span>

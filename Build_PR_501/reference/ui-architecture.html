@@ -579,7 +579,6 @@
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.field_form.html">neofoam.ui.field_form</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.file_preview.html">neofoam.ui.file_preview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -727,9 +726,6 @@ step-plugin interface; the bundled <code class="docutils literal notranslate"><s
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">steps</span></code>, <code class="docutils literal notranslate"><span class="pre">case_spec</span></code>, <code class="docutils literal notranslate"><span class="pre">geometry_panel</span></code></dt><dd><p>Steps, model choices/families and <code class="docutils literal notranslate"><span class="pre">selection_key</span></code>/<code class="docutils literal notranslate"><span class="pre">choice_key</span></code>; form state
 ↔ <code class="docutils literal notranslate"><span class="pre">save_case</span></code> spec; the Geometry step.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">file_preview</span></code></dt><dd><p>The text Save would write to a per-field form’s files, through <code class="docutils literal notranslate"><span class="pre">write_configs</span></code> in a
-temporary directory.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">case_load</span></code>, <code class="docutils literal notranslate"><span class="pre">sweep_view</span></code></dt><dd><p>Reopen a case from disk (<code class="docutils literal notranslate"><span class="pre">case_algorithm</span></code>, <code class="docutils literal notranslate"><span class="pre">case_advection_model</span></code>,
 <code class="docutils literal notranslate"><span class="pre">models_to_select</span></code>, <code class="docutils literal notranslate"><span class="pre">apply_configs_to_forms</span></code>); the Parameters step’s layout.</p>
@@ -1024,28 +1020,24 @@ its own)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case_load.apply_configs_to_forms</span></code> increments it; it is the <code class="docutils literal notranslate"><span class="pre">key</span></code> of each step
 form, so a load remounts the form and a union shows the loaded arm</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">file_preview</span></code>, <code class="docutils literal notranslate"><span class="pre">file_preview_tab</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">app</span></code>, only for a wizard with a per-field form</p></td>
-<td><p>read-only elsewhere: the Numerics step’s live file preview</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rejected_slices</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rejected_slices</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">app</span></code>; <code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> and the load routes (<code class="docutils literal notranslate"><span class="pre">case_load.remember_rejected_slices</span></code>)</p></td>
 <td><p>every case writer asks <code class="docutils literal notranslate"><span class="pre">case_load.rejected_slices</span></code> before writing</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">run_busy</span></code>, <code class="docutils literal notranslate"><span class="pre">run_lines</span></code>, <code class="docutils literal notranslate"><span class="pre">run_status</span></code>, <code class="docutils literal notranslate"><span class="pre">run_severity</span></code>, <code class="docutils literal notranslate"><span class="pre">run_source</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">run_busy</span></code>, <code class="docutils literal notranslate"><span class="pre">run_lines</span></code>, <code class="docutils literal notranslate"><span class="pre">run_status</span></code>, <code class="docutils literal notranslate"><span class="pre">run_severity</span></code>, <code class="docutils literal notranslate"><span class="pre">run_source</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">run_panel</span></code></p></td>
 <td><p>read-only elsewhere: the Review step’s run output. <code class="docutils literal notranslate"><span class="pre">run_lines</span></code> is capped at
 <code class="docutils literal notranslate"><span class="pre">run_panel.TAIL_LINES</span></code> because the whole list is pushed on every poll</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">main_drawer</span></code> / <code class="docutils literal notranslate"><span class="pre">main_drawer_mobile</span></code>, <code class="docutils literal notranslate"><span class="pre">ai_panel</span></code> / <code class="docutils literal notranslate"><span class="pre">ai_panel_mobile</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">main_drawer</span></code> / <code class="docutils literal notranslate"><span class="pre">main_drawer_mobile</span></code>, <code class="docutils literal notranslate"><span class="pre">ai_panel</span></code> / <code class="docutils literal notranslate"><span class="pre">ai_panel_mobile</span></code></p></td>
 <td><p>trame’s layout (<code class="docutils literal notranslate"><span class="pre">main_drawer</span></code>), <code class="docutils literal notranslate"><span class="pre">app</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> binds the <code class="docutils literal notranslate"><span class="pre">ai_panel</span></code> pair and opens it for a “Load case” report</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">chat_log</span></code>, <code class="docutils literal notranslate"><span class="pre">chat_html</span></code>, <code class="docutils literal notranslate"><span class="pre">chat_input</span></code>, <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>, <code class="docutils literal notranslate"><span class="pre">suggested_prompts</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">chat_log</span></code>, <code class="docutils literal notranslate"><span class="pre">chat_html</span></code>, <code class="docutils literal notranslate"><span class="pre">chat_input</span></code>, <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>, <code class="docutils literal notranslate"><span class="pre">suggested_prompts</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">agent_panel</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">app</span></code> reads <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code> to disable the toolbar’s “Load case”</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sweep_*</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sweep_*</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">sweep_panel</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">sweep_view</span></code> only (which also reads <code class="docutils literal notranslate"><span class="pre">target_dir</span></code>)</p></td>
 </tr>
