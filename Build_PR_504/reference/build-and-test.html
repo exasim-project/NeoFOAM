@@ -682,6 +682,10 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 square brackets as a glob pattern. Instead of <code class="docutils literal notranslate"><span class="pre">all</span></code> you can pick just the
 optional features you need: <code class="docutils literal notranslate"><span class="pre">dev</span></code>, <code class="docutils literal notranslate"><span class="pre">docs</span></code>, <code class="docutils literal notranslate"><span class="pre">agent</span></code>, <code class="docutils literal notranslate"><span class="pre">mcp</span></code>,
 <code class="docutils literal notranslate"><span class="pre">telemetry</span></code>, <code class="docutils literal notranslate"><span class="pre">ui</span></code> — e.g. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[dev,mcp]&quot;</span> <span class="pre">-v</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">VtkHdfWriter</span></code> is compiled against a private static HDF5 that CMake fetches. To
+build without it, pass <code class="docutils literal notranslate"><span class="pre">-C</span> <span class="pre">cmake.define.NEOFOAM_WITH_HDF5=OFF</span></code> to <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code>;
+constructing the writer then raises an error. <code class="docutils literal notranslate"><span class="pre">h5py</span></code> is only a test dependency
+(<code class="docutils literal notranslate"><span class="pre">dev</span></code> extra), used to read the written files back.</p>
 <p>The editable install uses scikit-build’s <code class="docutils literal notranslate"><span class="pre">redirect</span></code> mode: edits to
 <code class="docutils literal notranslate"><span class="pre">src/neofoam/*.py</span></code> take effect on the next Python start without
 reinstalling. Automatic rebuilds are off (<code class="docutils literal notranslate"><span class="pre">editable.rebuild</span> <span class="pre">=</span> <span class="pre">false</span></code>), so
