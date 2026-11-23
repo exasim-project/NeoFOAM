@@ -12,6 +12,7 @@ import {
   entryKeys,
   formatNumber,
   keptValues,
+  withoutRuleErrors,
   parseNumberInput,
   pinnedKeys,
   rowsSchema,
@@ -394,4 +395,10 @@ describe('field choices of a typed OpenFOAM block', () => {
     expect(per.armFields(other, block.oneOf, { solver: 'Other' }, true)).toContain('solverName')
     expect(per.solverSummary(block, { solver: 'Other', solverName: 'petsc' })).toBe('petsc')
   })
+})
+
+test('a required companion reports only its own message', () => {
+  const errors = 'must match "then" schema\nis a required property'
+  expect(withoutRuleErrors(errors)).toBe('is a required property')
+  expect(withoutRuleErrors(undefined)).toBe('')
 })

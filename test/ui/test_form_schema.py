@@ -10,6 +10,7 @@ from typing import Annotated, Literal, Union
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
+from neofoam.foam import linear_solver_entry
 from neofoam.framework.solver.registry import (  # built-ins only: no installed plugin
     _discover_solver_names as builtin_solver_names,
 )
@@ -293,7 +294,7 @@ def _solver_blocks():
     for name in sorted(set(builtin_solver_names()) - _TYPED_BLOCK_SOLVERS):
         for entry in build_forms(resolve_solver(name)):
             section = entry.schema.get("properties", {}).get("solvers")
-            if entry.cls_name.endswith("fvSolution") and section:
+            if entry.cls_name.endswith("fvSolution") and section and "nfUnions" not in section:
                 for field, block in section["properties"].items():
                     yield pytest.param(section, block, id=f"{name}-{entry.cls_name}-{field}")
 
@@ -329,11 +330,48 @@ def test_neon_solver_blocks_are_flat_unions_on_solver(config):
         assert not any("backend" in arm["properties"] for arm in block["oneOf"])
 
 
-def test_solver_block_names_the_companion_key_of_every_suggested_solver(solver):
+def _open_pressure_block():
+    """The ``p_rgh`` block of VoF, whose ``fvSolution`` is still an open dictionary."""
+    entries = {e.key: e for e in build_forms(resolve_solver("incompressibleVoF"))}
+    solvers = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]
+    return solvers["properties"]["p_rgh"]
+
+
+@pytest.mark.parametrize("config", ["Pimple_fvSolution", "Simple_fvSolution"])
+def test_openfoam_solver_blocks_are_unions_with_the_standard_controls(config):
+    entries = build_forms(resolve_solver("incompressibleFluid"))
+    section = next(e for e in entries if e.cls_name == config).schema["properties"]["solvers"]
+
+    assert "nfSolvers" not in section
+    assert section["nfUnions"] is True
+    for block in section["properties"].values():
+        arms = {arm["title"]: arm for arm in block["oneOf"]}
+        assert block["nfDiscriminator"] == "solver"
+        assert {"PCG", "PBiCGStab", "smoothSolver", "GAMG", "Other"} <= set(arms)
+        assert all({"tolerance", "relTol"} <= set(arm["properties"]) for arm in arms.values())
+
+
+@pytest.mark.parametrize(
+    ("data", "plugin"),
+    [
+        # NeoN/Ginkgo names are not OpenFOAM's; a loaded case must not turn red.
+        (
+            {"solver": "Ginkgo", "type": "solver::Bicgstab", "tolerance": 1e-6, "relTol": 0},
+            "FoamOtherBlock",
+        ),
+        # OpenFOAM's GAMG-preconditioned PCG nests a dictionary under `preconditioner`.
+        ({"solver": "PCG", "preconditioner": {"preconditioner": "GAMG", "nVcycles": 2}}, "FoamPCG"),
+    ],
+)
+def test_openfoam_block_outside_the_typed_choices_still_loads(data, plugin):
+    entry = linear_solver_entry("openfoam", "pressure").model_validate(data)
+    assert type(entry.root).__name__ == plugin
+
+
+def test_solver_block_names_the_companion_key_of_every_suggested_solver():
     # A Krylov solver takes a preconditioner, a smoothing one a smoother: the block's
     # `nfSolver` map tells the renderer which of the two sits next to `solver`.
-    entries = {e.key: e for e in build_forms(solver)}
-    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
+    block = _open_pressure_block()
     assert block["nfSolver"]["PCG"] == "preconditioner"
     assert block["nfSolver"]["GAMG"] == block["nfSolver"]["smoothSolver"] == "smoother"
     assert set(block["nfSolver"]) == set(block["properties"]["solver"]["examples"])
@@ -348,11 +386,9 @@ def test_solver_block_names_the_companion_key_of_every_suggested_solver(solver):
         {"solver": "PCG", "preconditioner": {"preconditioner": "GAMG", "nVcycles": 2}},
     ],
 )
-def test_solver_choices_are_suggestions_not_a_closed_enum(data, solver):
+def test_solver_choices_are_suggestions_not_a_closed_enum(data):
     jsonschema = pytest.importorskip("jsonschema")
-    entries = {e.key: e for e in build_forms(solver)}
-    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
-    jsonschema.Draft202012Validator(block).validate(data)
+    jsonschema.Draft202012Validator(_open_pressure_block()).validate(data)
 
 
 @pytest.mark.parametrize(

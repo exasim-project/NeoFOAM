@@ -70,6 +70,13 @@ export const keptValues = (from, to, data, fits) => {
   return kept
 }
 
+// A control's errors without the failed `if`/`then` wrapper of its "required" message.
+export const withoutRuleErrors = (errors) =>
+  (errors ?? '')
+    .split('\n')
+    .filter((message) => message !== 'must match "then" schema')
+    .join('\n')
+
 // An entry shown only under "All entries".
 export const isAdvanced = (property) => property?.nfLevel === 'advanced'
 

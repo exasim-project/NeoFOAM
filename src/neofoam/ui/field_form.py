@@ -73,7 +73,8 @@ def _refused_alone(
         key
         for key, entry in arm["properties"].items()
         if key in shared
-        and entry.get("type") in _PROBE_VALUES
+        and isinstance(entry.get("type"), str)
+        and entry["type"] in _PROBE_VALUES
         and not _accepts(adapter, {**probe, key: _PROBE_VALUES[entry["type"]]})
     ]
 

@@ -238,6 +238,31 @@ def test_other_block_stays_editable_and_round_trips(page, case):
     assert re.search(r"tolerance\s+2e-08;", saved)
 
 
+def test_coupled_block_with_component_controls_stays_valid_and_round_trips(page, case):
+    _replace_u_block(
+        case,
+        """    U
+    {
+        type            coupled;
+        solver          PBiCCCG;
+        preconditioner  DILU;
+        tolerance       (1e-05 1e-05 1e-05);
+        relTol          (0 0 0);
+    }
+""",
+    )
+    _load(page, case)
+    row = _row(page, "U")
+
+    expect(_text_field(row, "Solver Name")).to_have_value("PBiCCCG")
+    expect(row.get_by_role("alert")).to_have_count(0)
+    _save(page)
+
+    saved = (case / "system/fvSolution").read_text()
+    assert re.search(r"tolerance\s+\(\s*1e-05 1e-05 1e-05\s*\);", saved)
+    assert re.search(r"relTol\s+\(\s*0 0 0\s*\);", saved)
+
+
 def test_key_no_plugin_models_is_reachable_and_survives_save(page, case):
     _replace_u_block(case, _U_BLOCK.replace("relTol          0.01;", "relTol 0.01; myKey 7;"))
     _load(page, case)

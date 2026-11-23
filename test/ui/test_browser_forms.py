@@ -236,10 +236,33 @@ def _add_entry(section: Any, button: str, name: str) -> None:
     box.press("Enter")
 
 
+def _open_field(panel: Any, name: str) -> Any:
+    """The collapsible row of one field on the Numerics page, expanded."""
+    label = panel.page.locator(".nf-field-name:visible").get_by_text(name, exact=True)
+    field = panel.locator(".nf-field").filter(has=label).last
+    head = field.locator("> .nf-field-head")
+    if head.get_attribute("aria-expanded") == "false":
+        head.click()
+    return field
+
+
 def _solver_card(panel: Any, name: str) -> Any:
-    return (
-        panel.locator(".nf-card-entry").filter(has=panel.page.get_by_text(name, exact=True)).first
+    return _open_field(panel, name).locator(".nf-union-row").first
+
+
+def _labelled_input(scope: Any, label: str) -> Any:
+    # By the visible label: Vuetify doubles it in the accessible name.
+    title = re.compile(rf"^\s*{re.escape(label)}\s*$")
+    return scope.locator(".v-input", has=scope.page.locator("label", has_text=title)).locator(
+        "input"
     )
+
+
+def _choose(page: Any, select: Any, option: str) -> None:
+    select.locator(".v-field").first.click()
+    page.locator(".v-overlay--active .v-list").last.get_by_role(
+        "option", name=option, exact=True
+    ).click()
 
 
 _SCHEMES = "form_pimple_fv_schemes"
@@ -250,7 +273,7 @@ _TRANSPORT = "form_transport_properties_config"
 
 def test_scheme_variant_switch_keeps_type_and_seeds_the_new_arm(page):
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    row = panel.locator(".nf-compact-row", has_text="div(phi,U)").first
+    row = _open_field(panel, "U").locator(".nf-compact-row", has_text="div(phi,U)").first
     path = ["divSchemes", "div(phi,U)"]
 
     _pick(page, row, "Interpolation*", "limitedLinear")
@@ -275,7 +298,9 @@ def test_scheme_variant_switch_keeps_type_and_seeds_the_new_arm(page):
 
 def test_added_scheme_entry_returns_focus_and_can_be_deleted(page):
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    section = panel.locator(".nf-compact", has_text="divSchemes").first
+    section = (
+        _open_field(panel, "Other entries").locator(".nf-compact", has_text="divSchemes").first
+    )
     before = _state(page, _SCHEMES)["divSchemes"]
 
     _add_entry(section, "Add entry", "div(phi,k)")
@@ -291,7 +316,9 @@ def test_added_scheme_entry_returns_focus_and_can_be_deleted(page):
 
 def test_duplicate_entry_name_shows_an_error_and_cannot_be_added(page):
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    section = panel.locator(".nf-compact", has_text="divSchemes").first
+    section = (
+        _open_field(panel, "Other entries").locator(".nf-compact", has_text="divSchemes").first
+    )
     before = _state(page, _SCHEMES)["divSchemes"]
 
     _add_entry(section, "Add entry", "div(phi,U)")
@@ -304,7 +331,9 @@ def test_duplicate_entry_name_shows_an_error_and_cannot_be_added(page):
 
 def test_dotted_scheme_key_is_stored_as_a_literal_key(page):
     panel = _open_panel(page, "Numerics", "fvSchemes · Pimple")
-    section = panel.locator(".nf-compact", has_text="divSchemes").first
+    section = (
+        _open_field(panel, "Other entries").locator(".nf-compact", has_text="divSchemes").first
+    )
     key = "div(phi,alpha.water)"
 
     _add_entry(section, "Add entry", key)
@@ -343,14 +372,15 @@ def test_solver_of_the_other_family_swaps_its_companion_key(page):
     panel = _open_panel(page, "Numerics", "fvSolution · Pimple")
     card = _solver_card(panel, "p")
 
-    _pick(page, card, "solver", "GAMG")
+    _choose(page, card.locator(".v-select").first, "GAMG")
 
     swapped = {"solver": "GAMG", "tolerance": 1e-06, "relTol": 0.05}
     assert _await_state(page, _SOLUTION, ["solvers", "p"], swapped) == swapped
-    expect(card.get_by_role("combobox", name="smoother*", exact=True)).to_have_value("")
+    smoother = card.locator(".v-input", has_text="Smoother").first
+    expect(smoother.locator("input").first).to_have_value("")
     expect(card.get_by_role("alert")).to_contain_text("is a required property")
 
-    _pick(page, card, "smoother*", "GaussSeidel")
+    _choose(page, smoother, "GaussSeidel")
 
     complete = {**swapped, "smoother": "GaussSeidel"}
     assert _await_state(page, _SOLUTION, ["solvers", "p"], complete) == complete
@@ -359,19 +389,22 @@ def test_solver_of_the_other_family_swaps_its_companion_key(page):
 
 def test_unknown_solver_name_deletes_no_key(page):
     panel = _open_panel(page, "Numerics", "fvSolution · Pimple")
-    card = _solver_card(panel, "pFinal")
-    solver = card.get_by_role("combobox", name="solver", exact=True)
+    card = _solver_card(panel, "p")
 
-    solver.fill("Ginkgo")
-    solver.press("Tab")
+    _choose(page, card.locator(".v-select").first, "Other")
+    name = _labelled_input(card, "Solver Name")
+    name.fill("Ginkgo")
+    name.press("Tab")
 
-    kept = {"solver": "Ginkgo", "preconditioner": "DIC", "tolerance": 1e-06, "relTol": 0}
-    assert _await_state(page, _SOLUTION, ["solvers", "pFinal"], kept) == kept
+    block = _await_state(page, _SOLUTION, ["solvers", "p", "solverName"], "Ginkgo")
+    kept = _state(page, _SOLUTION)["solvers"]["p"]
+    assert block == "Ginkgo"
+    assert (kept["solver"], kept["tolerance"], kept["relTol"]) == ("Other", 1e-06, 0.05)
 
 
 def test_number_field_stores_a_number_and_displays_it_as_typed_in_a_case(page):
     panel = _open_panel(page, "Numerics", "fvSolution · Pimple")
-    tolerance = _solver_card(panel, "U").get_by_role("textbox", name="tolerance", exact=True)
+    tolerance = _labelled_input(_solver_card(panel, "U"), "Tolerance")
 
     tolerance.fill("0.00001")
 
@@ -385,7 +418,7 @@ def test_number_field_stores_a_number_and_displays_it_as_typed_in_a_case(page):
 def test_number_field_rejects_a_decimal_comma_and_keeps_the_last_value(page):
     panel = _open_panel(page, "Numerics", "fvSolution · Pimple")
     card = _solver_card(panel, "U")
-    tolerance = card.get_by_role("textbox", name="tolerance", exact=True)
+    tolerance = _labelled_input(card, "Tolerance")
 
     tolerance.fill("1e-5")
     tolerance.fill("0,5")
@@ -397,7 +430,7 @@ def test_number_field_rejects_a_decimal_comma_and_keeps_the_last_value(page):
 def test_number_field_leaves_the_keyboard_choice_to_the_device(page):
     # `inputmode=decimal` brings up a phone keypad without `e` and `-`: no `1e-5`.
     panel = _open_panel(page, "Numerics", "fvSolution · Pimple")
-    tolerance = _solver_card(panel, "U").get_by_role("textbox", name="tolerance", exact=True)
+    tolerance = _labelled_input(_solver_card(panel, "U"), "Tolerance")
 
     assert tolerance.get_attribute("inputmode") is None
 
