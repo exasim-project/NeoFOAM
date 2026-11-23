@@ -69,7 +69,16 @@ jobs:
         run: |
           pip install -v .[all]
 
+      # From source, so that it binds to the OpenMPI the bindings were built against.
+      - name: Install mpi4py
+        run: |
+          pip install --no-binary=mpi4py mpi4py
+
       - name: Test with pytest
+        env:
+          NEOFOAM_REQUIRE_MPI_TESTS: "1"
+          # Open MPI counts physical cores as slots; the VTKHDF tests start 3 ranks.
+          OMPI_MCA_rmaps_base_oversubscribe: "1"
         run: |
           pytest --cov=neofoam --cov-report=xml --cov-report=term
 
