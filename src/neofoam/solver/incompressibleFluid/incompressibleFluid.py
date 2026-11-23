@@ -29,7 +29,6 @@ from neofoam.framework.operations import (
     SequentialOp,
     StepBuilder,
 )
-from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
@@ -45,6 +44,7 @@ from .create_fields import create_init
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import SolutionLoopPredicate
+from .solver_spec import incompressibleFluid as incompressibleFluid
 
 
 def maybe_configure_telemetry(case_dir: Union[Path, str] = ".") -> bool:
@@ -101,8 +101,6 @@ def _under_turb_corr(op: Operation) -> Operation:
 
     return Operation(func=SequentialOp(gated), metadata=op.metadata)
 
-
-incompressibleFluid = Solver("incompressibleFluid")
 
 # Declare the full config schema on the spec, case-free: the solver's own
 # configs plus the model families it owns. Every member's configs join the

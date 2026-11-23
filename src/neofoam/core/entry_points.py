@@ -13,6 +13,8 @@ Two groups are read:
   …), so a plugin can add to *any* PluginSystem family. :func:`load_plugins`
   imports them all; every ``neofoam`` process entry point calls it before building
   models or schemas.
+  A module can also bind a new optional family with ``solver.models(family)``; the
+  solver's load step detects it through ``SolverSpec.detect_optional_models``.
 * ``neofoam.solvers`` — each entry point names a ``run(argv: list[str]) -> None``
   callable, exposed as ``neofoam solver <lower-cased entry point name>``.
 
