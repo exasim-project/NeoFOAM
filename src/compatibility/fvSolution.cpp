@@ -320,7 +320,10 @@ void updateSolver(NeoN::Dictionary& solverDict)
         {"PCG", {"Ginkgo", "solver::Cg"}},
         {"PBiCG", {"Ginkgo", "solver::Bicg"}},
         {"PBiCGStab", {"Ginkgo", "solver::Bicgstab"}},
-        {"smoothSolver", {"Ginkgo", "solver::Bicgstab"}},
+        // Richardson iteration around the smoother (Jacobi, see updatePreconditioner): unlike a
+        // Krylov solver stopped after a few iterations it keeps a non-negative field non-negative,
+        // which turbulence equations such as omega rely on.
+        {"smoothSolver", {"Ginkgo", "solver::Ir"}},
         {"GAMG", {"Ginkgo", "solver::Cg"}}, // CG-accelerated multigrid, see below
     };
 
@@ -418,13 +421,16 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     const bool distributed = isDistributedRun();
     const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
 
-    // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
-    // (see solverMap). BiCGStab is used for NON-symmetric systems such as the momentum matrix, so
-    // the defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
+    // smoothSolver maps to Ir (see solverMap), whose inner solver is this preconditioner; without
+    // one Ir would iterate unpreconditioned, so a smoother (e.g. symGaussSeidel) or a bare Ir gets
+    // a default. smoothSolver is used for NON-symmetric systems such as the momentum matrix, so the
+    // defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
     // (DIC -> preconditioner::Ic) is symmetric-positive-definite only: on a non-SPD momentum block
     // its factorisation hits a negative pivot and SIGFPEs (sqrt of a negative diagonal). Default to
     // diagonal (block-Jacobi) instead, which is always defined and matches the intended behaviour.
-    if (!solverDict.contains("preconditioner") && solverDict.contains("smoother"))
+    const bool isIr =
+        solverDict.contains("type") && solverDict.get<std::string>("type") == "solver::Ir";
+    if (!solverDict.contains("preconditioner") && (solverDict.contains("smoother") || isIr))
     {
         solverDict.insert("preconditioner", activeMap.at("diagonal"));
     }

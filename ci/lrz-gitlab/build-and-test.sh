@@ -92,6 +92,8 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
     # COMPOSITE hierarchy exposes each tile as a separate L0 device so Kokkos
     # selects a single tile — all work and synchronisation stay on one tile.
     export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+    # Single node: use shared memory, verbs fails MPI_Init on the low memlock limit
+    export I_MPI_FABRICS=shm
 
 else
     echo "Unsupported GPU vendor: $GPU_VENDOR"
