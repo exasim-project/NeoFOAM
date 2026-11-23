@@ -96,3 +96,9 @@ def test_nested_gamg_options_are_advanced() -> None:
         "advanced",
         10,
     )
+
+
+def test_other_arm_controls_are_a_number_or_a_component_list() -> None:
+    schema = linear_solver_entry("openfoam", "momentum").model_json_schema()
+    properties = schema["$defs"]["FoamOtherBlock"]["properties"]
+    assert properties["tolerance"]["type"] == properties["relTol"]["type"] == ["number", "string"]

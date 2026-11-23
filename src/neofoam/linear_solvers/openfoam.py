@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, ClassVar, Literal, Optional, Union
+from typing import Annotated, Any, ClassVar, Literal, Optional, Union
 
 from pydantic import (
     BaseModel,
@@ -14,6 +14,7 @@ from pydantic import (
     Field,
     PrivateAttr,
     SerializationInfo,
+    WithJsonSchema,
     field_validator,
     model_serializer,
     model_validator,
@@ -354,6 +355,14 @@ class FoamGAMG(_GamgOptions, OpenFoamSolver):
     smoother: Optional[str] = Field(None, examples=_FOAM_SMOOTHERS)
 
 
+# A coupled solver sets a control per component, as ``(1e-05 1e-05 1e-05)``.
+_ScalarOrComponents = Annotated[
+    Union[float, str, None],
+    Field(union_mode="left_to_right"),
+    WithJsonSchema({"type": ["number", "string"]}),
+]
+
+
 @LinearSolver.register
 class FoamOtherBlock(OpenFoamSolver):
     """A block the typed solvers cannot represent, kept exactly as read.
@@ -370,9 +379,8 @@ class FoamOtherBlock(OpenFoamSolver):
 
     solver: Literal["Other"] = "Other"
     solverName: Optional[str] = None
-    # A coupled solver sets these per component, as ``(1e-05 1e-05 1e-05)``.
-    tolerance: Optional[Union[float, str]] = Field(None, union_mode="left_to_right")  # type: ignore[assignment]
-    relTol: Optional[Union[float, str]] = Field(None, union_mode="left_to_right")  # type: ignore[assignment]
+    tolerance: _ScalarOrComponents = None  # type: ignore[assignment]
+    relTol: _ScalarOrComponents = None  # type: ignore[assignment]
 
     def _file_block(self, data: dict[str, Any], info: SerializationInfo) -> dict[str, Any]:
         """Put the file's own solver word back."""
