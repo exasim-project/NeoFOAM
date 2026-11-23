@@ -193,9 +193,10 @@ def execution_graph(
                 inner_builder.step(_under_turb_corr(op))
 
         time_builder.step(writer_ops["write_output"])
-        # Last in the loop: a pure reader, so a CSV row and the time directory
+        # Last in the loop: pure readers, so a CSV row and the time directory
         # just written describe the same state.
-        time_builder.step(post_ops["post_process"])
+        for op in post_ops:
+            time_builder.step(op)
 
     # Optional-model operations are merged by the resolver (placed by their own
     # depends_on / operation_number).
@@ -242,6 +243,7 @@ def run(
             resolved = resolver.resolve(builder, model_ops)
 
             resolved.operations.run(ctx)
+            solver.finalize(ctx)
 
             Info("End")
         return ctx

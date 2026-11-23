@@ -14,6 +14,11 @@ per table, both opened at the first write), and the model steps
 a CSV row and a time directory describe the same state. A case that declares no
 table gets an empty set and the operation does nothing (not even a
 ``postProcessing/`` directory).
+
+A case that declares ``actions`` also gets the ``actions`` operation after
+``post_process`` (and its :class:`~neofoam.postprocess.actions.ActionRunner`
+init step); without them neither exists. A solver steps every operation of the
+model, in order.
 """
 
 from pathlib import Path
@@ -21,8 +26,15 @@ from typing import Any, NamedTuple, Protocol, runtime_checkable
 
 from neofoam.algorithms.field_writer.write_control import WriteControl
 from neofoam.framework.context import Context
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
 from neofoam.framework.initialization import InitStep, model
 from neofoam.framework.model import Model
+from neofoam.framework.operations import Operation, Operations, SequentialOp
+from neofoam.framework.types import OperationMetadata
+from neofoam.postprocess.actions import ActionRunner
 from neofoam.postprocess.node import AggregatedDataSet, Pipeline
 from neofoam.postprocess.table import TableSet, tables_for_case
 from neofoam.postprocess.writers.writer import TableWriter
@@ -126,14 +138,40 @@ def build(tables: TableSet) -> list[InitStep]:
     def create_processor(ctx: dict[str, Any]) -> PostProcessor:
         return PostProcessor(tables, base_path)
 
-    return [model("post_processor", create_processor)]
+    steps = [model("post_processor", create_processor)]
+    if tables.actions:
+        steps.append(model("actions", lambda ctx: ActionRunner(tables.actions)))
+    return steps
 
 
-# -- operation: append a row per due table -----------------------------------
-# Stepped last in the solver's time loop; builder-insertion order already puts it
-# after every field-mutating op and after the writer, so no ``depends_on``.
-@postProcess.operation()
+# -- operations: append a row per due table, then the actions ----------------
+# Stepped last in the solver's time loop; builder-insertion order already puts
+# them after every field-mutating op and after the writer, so no ``depends_on``.
 def post_process(self: Any, ctx: Context) -> None:
     """Evaluate the due tables against the live Context and append their rows."""
     processor: PostProcessor = ctx.models["post_processor"]
     processor.write(ctx)
+
+
+def actions(self: Any, ctx: Context) -> None:
+    """Hand the live Context to the due actions (on every rank)."""
+    runner: ActionRunner = ctx.models["actions"]
+    runner.execute(ctx)
+
+
+@postProcess.operation_collection
+def operations(self: Any) -> Operations:
+    """``post_process``, and ``actions`` when the case declares actions."""
+    functions = [post_process]
+    if self.config.actions:
+        functions.append(actions)
+    resolver = DependencyResolver()
+    return Operations(
+        [
+            Operation(
+                func=SequentialOp(wrap_with_dependency_resolution(func, self, resolver)),
+                metadata=OperationMetadata(op_name=func.__name__),
+            )
+            for func in functions
+        ]
+    )
