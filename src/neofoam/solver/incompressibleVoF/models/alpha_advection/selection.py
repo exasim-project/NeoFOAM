@@ -25,7 +25,7 @@ from pybFoam import Info
 
 from .advectionModel import ModelSpec, advectionModel
 
-__all__ = ["model_name", "select_advection_scheme", "select_from_case"]
+__all__ = ["model_name", "scheme_name_from_case", "select_advection_scheme", "select_from_case"]
 
 _DEFAULT_SCHEME = "MULES"
 _ISO_ADVECTOR_SCHEME = "isoAdvector"
@@ -77,13 +77,21 @@ def _isoadvector_controls_present(fv_solution: Any) -> bool:
     return False
 
 
-def select_from_case(case_dir: str = ".") -> ModelSpec:
-    """Read ``advectionScheme`` from ``system/fvSolution`` and select the scheme.
+def scheme_name_from_case() -> str:
+    """The advection-scheme name the case in the working directory asks for.
 
-    An explicit ``advectionScheme`` key always wins; otherwise isoAdvector is
-    selected when the ``solvers`` "alpha.*" sub-dict carries isoAdvector controls
-    (see :data:`_ISO_ADVECTOR_DISCRIMINATOR_KEYS`), and MULES is the fallback.
+    Use it to resolve the name against your own family, as ``incompressibleVoFNeoN``
+    does, so a case selects the same scheme in both solvers; :func:`select_from_case`
+    is the alternative that also looks up the pybFoam spec.
+
+    An explicit ``advectionScheme`` key always wins; otherwise ``isoAdvector``
+    when the ``solvers`` "alpha.*" sub-dict carries isoAdvector controls (see
+    :data:`_ISO_ADVECTOR_DISCRIMINATOR_KEYS`), and ``MULES`` is the fallback.
     A missing/unreadable fvSolution is logged so the scheme never changes silently.
+
+    Example::
+
+        name = scheme_name_from_case()
     """
     name = _DEFAULT_SCHEME
     try:
@@ -100,4 +108,17 @@ def select_from_case(case_dir: str = ".") -> ModelSpec:
             name = str(fv_solution.getOrDefault[str]("advectionScheme", _DEFAULT_SCHEME))
         elif _isoadvector_controls_present(fv_solution):
             name = _ISO_ADVECTOR_SCHEME
-    return select_advection_scheme(name)
+    return name
+
+
+def select_from_case(case_dir: str = ".") -> ModelSpec:
+    """Select the registered scheme :func:`scheme_name_from_case` names.
+
+    Use it for the pybFoam family; :func:`select_advection_scheme` is the alternative
+    when the name is already known. An unregistered name raises ``ValueError``.
+
+    Example::
+
+        spec = select_from_case()
+    """
+    return select_advection_scheme(scheme_name_from_case())
