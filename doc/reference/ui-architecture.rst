@@ -61,9 +61,6 @@ point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
 ``steps``, ``case_spec``, ``geometry_panel``
     Steps, model choices/families and ``selection_key``/``choice_key``; form state
     ↔ ``save_case`` spec; the Geometry step.
-``file_preview``
-    The text Save would write to a per-field form's files, through ``write_configs`` in a
-    temporary directory.
 ``case_load``, ``sweep_view``
     Reopen a case from disk (``case_algorithm``, ``case_advection_model``,
     ``models_to_select``, ``apply_configs_to_forms``); the Parameters step's layout.
@@ -312,9 +309,6 @@ computed names with their helper, which makes them valid JS identifiers.
      - ``app``
      - ``case_load.apply_configs_to_forms`` increments it; it is the ``key`` of each step
        form, so a load remounts the form and a union shows the loaded arm
-   * - ``file_preview``, ``file_preview_tab``
-     - ``app``, only for a wizard with a per-field form
-     - read-only elsewhere: the Numerics step's live file preview
    * - ``rejected_slices``
      - ``app``; ``agent_panel`` and the load routes (``case_load.remember_rejected_slices``)
      - every case writer asks ``case_load.rejected_slices`` before writing

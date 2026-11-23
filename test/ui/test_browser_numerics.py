@@ -123,13 +123,9 @@ def _save(page: Any) -> None:
     page.locator("nav.v-navigation-drawer").first.get_by_text("Numerics", exact=True).click()
 
 
-def _preview(page: Any, file: str) -> str:
-    return str(page.evaluate("f => window.trame.state.get('file_preview')[f]", file))
-
-
-def _await_preview(page: Any, text: str) -> None:
+def _await_form(page: Any, text: str) -> None:
     page.wait_for_function(
-        "t => window.trame.state.get('file_preview')['system/fvSolution'].includes(t)", arg=text
+        "([k, t]) => JSON.stringify(window.trame.state.get(k)).includes(t)", arg=[_SOLUTION, text]
     )
 
 
@@ -200,7 +196,7 @@ def test_switch_to_the_config_file_does_not_block_save(page, case):
 
     _pick(page, row.locator(".v-select").first, "Config file")
     _text_field(row, "JSON file (relative to the case directory)*").fill("p.json")
-    _await_preview(page, "configFile")
+    _await_form(page, "configFile")
     _save(page)
 
     saved = (case / "system/fvSolution").read_text()
@@ -234,18 +230,6 @@ def test_same_as_round_trip_writes_the_full_block(page, case):
     assert "UFinal" in saved and "$U" not in saved and "4e-07" in saved
 
 
-def test_preview_equals_the_saved_files(page, case):
-    row = _use_multigrid(page)
-    _text_field(row, "N Pre Sweeps").fill("2")
-    _await_preview(page, "nPreSweeps")
-
-    expected = {file: _preview(page, file) for file in ("system/fvSolution", "system/fvSchemes")}
-    _save(page)
-
-    for file, text in expected.items():
-        assert (case / file).read_text() == text
-
-
 def test_unset_options_are_not_written_and_a_cleared_one_leaves_the_file(page, case):
     row = _use_multigrid(page)
     _save(page)
@@ -254,7 +238,7 @@ def test_unset_options_are_not_written_and_a_cleared_one_leaves_the_file(page, c
 
     row = _field(page, "p").locator(".nf-union-row").first
     _text_field(row, "Max Levels").fill("8")
-    _await_preview(page, "max_levels")
+    _await_form(page, "max_levels")
     _save(page)
     assert "max_levels" in (case / "system/fvSolution").read_text()
 
@@ -271,7 +255,7 @@ def test_set_options_reach_the_saved_file(page, case):
     row = _use_multigrid(page)
     _text_field(row, "N Cells In Coarsest Level").fill("50")
     _text_field(row, "Max Iterations").fill("20")
-    _await_preview(page, "max_iterations")
+    _await_form(page, "max_iterations")
 
     _save(page)
 

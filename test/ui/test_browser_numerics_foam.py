@@ -148,13 +148,9 @@ def _save(page: Any) -> None:
     page.locator("nav.v-navigation-drawer").first.get_by_text("Numerics", exact=True).click()
 
 
-def _preview(page: Any, file: str) -> str:
-    return str(page.evaluate("f => window.trame.state.get('file_preview')[f]", file))
-
-
-def _await_preview(page: Any, text: str) -> None:
+def _await_form(page: Any, text: str) -> None:
     page.wait_for_function(
-        "t => window.trame.state.get('file_preview')['system/fvSolution'].includes(t)", arg=text
+        "([k, t]) => JSON.stringify(window.trame.state.get(k)).includes(t)", arg=[_SOLUTION, text]
     )
 
 
@@ -178,7 +174,7 @@ def test_pcg_with_nested_gamg_edits_and_saves_in_the_native_form(page, case):
     )
     expect(_text_field(row, "N Cells In Coarsest Level")).to_have_value("50")
     _text_field(row, "N Vcycles").fill("3")
-    _await_preview(page, "nVcycles")
+    _await_form(page, "nVcycles")
     _save(page)
 
     saved = (case / "system/fvSolution").read_text()
@@ -229,7 +225,7 @@ def test_other_block_stays_editable_and_round_trips(page, case):
     expect(_text_field(row, "Solver Name")).to_have_value("petsc")
 
     _text_field(row, "Tolerance").fill("2e-8")
-    _await_preview(page, "2e-08")
+    _await_form(page, "2e-8")
     _save(page)
 
     saved = (case / "system/fvSolution").read_text()
@@ -282,29 +278,11 @@ def test_regex_key_file_is_left_byte_identical(page, case):
     original = path.read_bytes()
     _load(page, case)
     page.wait_for_function("() => (window.trame.state.get('rejected_slices') || []).length > 0")
-    page.wait_for_function(
-        "t => window.trame.state.get('file_preview')['system/fvSolution'] === t",
-        arg=original.decode(),
-    )
 
     page.get_by_role("button", name="Save case").first.click()
     page.wait_for_function("() => window.trame.state.get('save_report') !== null")
 
     assert path.read_bytes() == original
-
-
-def test_preview_equals_the_saved_files(page, case):
-    _load(page, case)
-    row = _row(page, "p")
-    row.get_by_role("button", name="All entries").click()
-    _text_field(row, "N Pre Sweeps").fill("2")
-    _await_preview(page, "nPreSweeps")
-
-    expected = {file: _preview(page, file) for file in ("system/fvSolution", "system/fvSchemes")}
-    _save(page)
-
-    for file, text in expected.items():
-        assert (case / file).read_text() == text
 
 
 def test_same_as_switch_starts_on_only_for_identical_blocks(page, case):

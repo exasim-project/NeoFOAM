@@ -32,8 +32,7 @@ from neofoam.ui._responsive import _MOBILE, _responsive_open, _toggle
 from neofoam.ui.agent_panel import AgentPanel
 from neofoam.ui.case_load import rejected_slices, without_rejected_files
 from neofoam.ui.dir_picker import list_dirs, start_dir
-from neofoam.ui.file_preview import preview_entries, preview_files
-from neofoam.ui.form_schema import ADDER_TRANSLATIONS, NF_FIELD_FORM
+from neofoam.ui.form_schema import ADDER_TRANSLATIONS
 from neofoam.ui.forms import (
     FormEntry,
     build_forms,
@@ -146,9 +145,6 @@ _CSS = """
 """
 
 
-_PREVIEW_FILES = ("system/fvSolution", "system/fvSchemes")
-
-
 @dataclass(frozen=True)
 class _Wizard:
     """What the wizard derives from the solver and its step plugins, computed once."""
@@ -255,30 +251,6 @@ def _report_path_error(state: Any, exc: ValueError) -> None:
             )
         )
     ]
-
-
-def _refresh_file_preview(state: Any, wizard: _Wizard) -> None:
-    """Publish what Save would write to the per-field numerics files."""
-    entries = preview_entries(wizard.entries)
-    selected = {c.name for c in wizard.gated if state[selection_key(c.name)]}
-    form_state = {e.key: dict(state[e.state_key]) for e in entries}
-    target = Path(state.target_dir) if state.target_dir else None
-    refused = rejected_slices(state, wizard.entries, target) if target else {}
-    state.file_preview = preview_files(entries, form_state, selected, target, refused)
-
-
-def _register_file_preview(server: Any, wizard: _Wizard) -> None:
-    """Keep the preview current; a wizard without a per-field form has none."""
-    entries = preview_entries(wizard.entries)
-    if not entries:
-        return
-    server.state.file_preview_tab = _PREVIEW_FILES[0]
-    _refresh_file_preview(server.state, wizard)
-    watched = [e.state_key for e in entries]
-    watched += [selection_key(c.name) for c in wizard.gated]
-    server.state.change(*watched, "target_dir", "rejected_slices")(
-        lambda **_kwargs: _refresh_file_preview(server.state, wizard)
-    )
 
 
 def _select_model(state: Any, wizard: _Wizard, name: str) -> None:
@@ -712,38 +684,11 @@ def _step_panel(
         wizard.plugin_by_id[step.id].render(ctx)
 
 
-def _file_preview_panel(ctx: StepContext) -> None:
-    """The live text of the files Save writes, one tab per file."""
-    html = ctx.html
-    with html.Aside(classes="nf-preview", aria_label="File preview"):
-        with html.Div(classes="nf-preview-tabs"):
-            for file in _PREVIEW_FILES:
-                html.Button(
-                    file,
-                    type="button",
-                    classes=(f"{{'nf-preview-on': file_preview_tab === '{file}'}}",),
-                    click=f"file_preview_tab = '{file}'",
-                )
-        html.Pre("{{ file_preview[file_preview_tab] }}")
-        html.Div(
-            "Live preview. Options left at their default are not written.",
-            classes="nf-preview-note",
-        )
-
-
 def _step_forms(ctx: StepContext, wizard: _Wizard, step: Step) -> None:
-    """The step's form panels, beside the file preview when one of them is a per-field form."""
-    panels = [wizard.by_key[key] for key in step.entry_keys]
-    if not any(NF_FIELD_FORM in entry.form_schema for entry in panels):
-        with ctx.v3.VExpansionPanels():
-            for entry in panels:
-                _form_panel(ctx, wizard, entry)
-        return
-    with ctx.html.Div(classes="nf-numerics"):
-        with ctx.html.Div(classes="nf-numerics-forms"), ctx.v3.VExpansionPanels():
-            for entry in panels:
-                _form_panel(ctx, wizard, entry)
-        _file_preview_panel(ctx)
+    """The step's form panels."""
+    with ctx.v3.VExpansionPanels():
+        for key in step.entry_keys:
+            _form_panel(ctx, wizard, wizard.by_key[key])
 
 
 def _content(
@@ -780,7 +725,6 @@ def build_app(
 
     _seed_state(server.state, wizard)
     _register_case_controllers(server, wizard)
-    _register_file_preview(server, wizard)
     geometry_panel = GeometryPanel(server, wizard.entries)
     run_panel = RunPanel(server)
     agent_panel = AgentPanel(server, wizard.entries, wizard.solver)

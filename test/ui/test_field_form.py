@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The per-field keywords of a numerics form and the preview of what Save writes."""
+"""The per-field keywords of a numerics form."""
 
 from __future__ import annotations
 
 import pytest
 
 from neofoam.mcp.registry import resolve_solver
-from neofoam.ui.file_preview import preview_entries, preview_files
 from neofoam.ui.forms import build_forms
 
 _NEON = "incompressibleFluidNeoN"
@@ -56,18 +55,4 @@ def test_config_file_arm_is_labelled_and_drops_the_limits_it_refuses():
 def test_other_solvers_get_no_per_field_form(solver):
     entries = build_forms(resolve_solver(solver))
 
-    assert preview_entries(entries) == []
     assert not any("nfFieldForm" in entry.form_schema for entry in entries)
-
-
-def test_preview_leaves_an_unset_option_out_and_reports_a_refused_form():
-    entries = [e for e in preview_entries(build_forms(resolve_solver(_NEON))) if "Pimple" in e.key]
-    state = {entry.key: dict(entry.defaults) for entry in entries}
-    solution = state["dict:PimpleNeoN_fvSolution"]
-
-    text = preview_files(entries, state, {"PimpleNeoN"}, None)["system/fvSolution"]
-    assert "krylov_dim" not in text and "FoamFile" in text
-
-    solution["solvers"] = {**solution["solvers"], "U": {"solver": "Gmres"}}
-    text = preview_files(entries, state, {"PimpleNeoN"}, None)["system/fvSolution"]
-    assert text.startswith("// Save would refuse this form:") and "Gmres" in text
