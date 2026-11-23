@@ -116,18 +116,21 @@ class Operation:
         observer = None if self.operation_type == "iterative" else execution_observer.current()
         if observer is not None:
             observer.before_operation(self, ctx)
-        if not telemetry.is_active():
-            result = self._execute(ctx)
-        else:
-            with telemetry.span(
-                self.metadata.op_name or self.metadata.name or "operation",
-                operation_type=self.operation_type,
-                domain=self.metadata.domain_name,
-            ):
-                result = self._execute(ctx)
+        result = self._execute_in_span(ctx)
         if observer is not None:
             observer.after_operation(self, ctx)
         return result
+
+    def _execute_in_span(self, ctx: Context) -> Any:
+        """Execute, inside a telemetry span when telemetry is active."""
+        if not telemetry.is_active():
+            return self._execute(ctx)
+        with telemetry.span(
+            self.metadata.op_name or self.metadata.name or "operation",
+            operation_type=self.operation_type,
+            domain=self.metadata.domain_name,
+        ):
+            return self._execute(ctx)
 
     def _loop_test(self, ctx: Context, iteration: int) -> bool:
         observer = execution_observer.current()

@@ -20,7 +20,7 @@ class Recorder(ExecutionObserver):
         self.events: list[tuple[Any, ...]] = []
 
     def init_steps(self, steps: list[InitStep]) -> None:
-        self.events.append(("init_steps", [s.name for s in steps]))
+        self.events.append(("init_steps", [step.name for step in steps]))
 
     def before_init_step(self, step: InitStep, context: dict[str, Any]) -> None:
         self.events.append(("before_init", step.name, sorted(context)))
@@ -41,27 +41,27 @@ class Recorder(ExecutionObserver):
         self.events.append(("tested", op.name, iteration, result))
 
 
-def _seq(name: str) -> Operation:
+def _sequential(name: str) -> Operation:
     return Operation(func=SequentialOp(lambda ctx: None), metadata=OperationMetadata(op_name=name))
 
 
-def _ctx() -> Context:
+def _context() -> Context:
     return Context(fields={}, models={}, mesh={})
 
 
-def test_operations_and_loop_tests_are_reported_in_order() -> None:
+def test_observer_reports_execution_events_in_order() -> None:
     builder = StepBuilder()
-    with builder as b:
-        b.step(_seq("first"))
+    with builder as scope:
+        scope.step(_sequential("first"))
         loop = Operation(
             func=IterativeOp(MaxIterations(max_iters=2)), metadata=OperationMetadata(op_name="loop")
         )
-        with b.loop(loop) as body:
-            body.step(_seq("inner"))
+        with scope.loop(loop) as body:
+            body.step(_sequential("inner"))
 
     recorder = Recorder()
     with observe(recorder):
-        builder.operations.run(_ctx())
+        builder.operations.run(_context())
 
     assert recorder.events == [
         ("before", "first"),
@@ -79,7 +79,7 @@ def test_operations_and_loop_tests_are_reported_in_order() -> None:
     ]
 
 
-def test_init_steps_are_reported_with_order_and_values() -> None:
+def test_observer_reports_init_steps_in_order_with_their_values() -> None:
     steps = [
         InitStep(name="b", depends_on=["a"], initializer=lambda ctx: ctx["a"] + 1),
         InitStep(name="a", initializer=lambda ctx: 1),
@@ -113,7 +113,7 @@ def test_no_observer_runs_unchanged() -> None:
         func=SequentialOp(lambda ctx: count.__setitem__(0, count[0] + 1)),
         metadata=OperationMetadata(op_name="count"),
     )
-    op.run(_ctx())
+    op.run(_context())
     assert count == [1]
 
 

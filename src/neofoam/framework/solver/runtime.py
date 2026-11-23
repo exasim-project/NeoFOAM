@@ -103,7 +103,13 @@ class SolverRuntime:
     def resolve_operations(self, ctx: "Context") -> "Operations":
         """The runnable execution graph: ``execution_graph`` resolved with its model operations.
 
-        Reported to the installed execution observer before it is returned.
+        Use it to run a solver; call ``execution_graph`` directly only to inspect the
+        unresolved steps. Reported to the installed execution observer before it is
+        returned; each call resolves anew.
+
+        Example::
+
+            solver.resolve_operations(ctx).run(ctx)
         """
         from neofoam.framework import execution_observer  # noqa: PLC0415
         from neofoam.framework.graph import DAGResolver  # noqa: PLC0415

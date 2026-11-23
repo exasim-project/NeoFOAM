@@ -37,7 +37,18 @@ __all__ = ["ExecutionObserver", "current", "observe"]
 
 
 class ExecutionObserver:
-    """Base class: every hook is a no-op, override the ones you need."""
+    """Base class: every hook is a no-op, override the ones you need.
+
+    Subclass it to watch or pause a run without changing the solver; for timing
+    alone prefer :mod:`neofoam.telemetry`. Hooks run synchronously on the solver's
+    thread, so a hook that blocks pauses the run.
+
+    Example::
+
+        class Printer(ExecutionObserver):
+            def before_operation(self, op, ctx):
+                print("next:", op.name)
+    """
 
     def init_steps(self, steps: list[InitStep]) -> None:
         """The init steps in execution order, before the first one runs."""
@@ -70,13 +81,32 @@ _observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(
 
 
 def current() -> Optional[ExecutionObserver]:
-    """The observer installed in this thread, or ``None``."""
+    """The observer installed in this thread, or ``None``.
+
+    Use it at a point the run reports from; install one with :func:`observe`
+    instead of setting it. Per thread: a started thread does not inherit it.
+
+    Example::
+
+        observer = current()
+        if observer is not None:
+            observer.before_operation(op, ctx)
+    """
     return _observer.get()
 
 
 @contextmanager
 def observe(observer: ExecutionObserver) -> Iterator[ExecutionObserver]:
-    """Install ``observer`` in this thread for the duration of the ``with`` block."""
+    """Install ``observer`` in this thread for the duration of the ``with`` block.
+
+    Use it around a solver run; nested blocks restore the previous observer on exit,
+    also after an exception. Other threads are unaffected.
+
+    Example::
+
+        with observe(Printer()):
+            run(argv)
+    """
     token = _observer.set(observer)
     try:
         yield observer
