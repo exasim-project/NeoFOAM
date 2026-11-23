@@ -735,7 +735,12 @@
 
 <span class="sd">    Without ``operations`` the loop wraps the whole time-step body; with them, the</span>
 <span class="sd">    named operations and everything downstream of them in their scope</span>
-<span class="sd">    (:mod:`~neofoam.framework.graph.wrapping`).</span>
+<span class="sd">    (:mod:`~neofoam.framework.graph.wrapping`). Use it for a loop contributed from</span>
+<span class="sd">    outside the solver; a solver's own loop belongs in its ``StepBuilder``. Frozen.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        OperationMetadata(op_name="couple", wraps=Placement(operations=("solve_T",)))</span>
 <span class="sd">    """</span>
 
     <span class="n">operations</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -747,7 +752,12 @@
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OperationMetadata</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""collection of the metadata for operations - describes both decorated</span>
-<span class="sd">    functions and DAG nodes."""</span>
+<span class="sd">    functions and DAG nodes.</span>
+
+<span class="sd">    ``wraps`` makes the operation a wrapping loop and says where the resolver places</span>
+<span class="sd">    it; ``first`` (``final``) runs it only in the first (final) pass of the wrapping</span>
+<span class="sd">    loops around it.</span>
+<span class="sd">    """</span>
 
     <span class="n">op_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -765,9 +775,9 @@
     <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">before</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">domain_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">wraps</span><span class="p">:</span> <span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># a wrapping loop: where the resolver places it</span>
-    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># run only in the first pass of the wrapping loops around it</span>
-    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># run only in their final pass</span>
+    <span class="n">wraps</span><span class="p">:</span> <span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># DAG visualization properties</span>
     <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"box"</span>

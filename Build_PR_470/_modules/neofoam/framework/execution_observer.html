@@ -696,7 +696,18 @@
 <div class="viewcode-block" id="ExecutionObserver">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExecutionObserver</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Base class: every hook is a no-op, override the ones you need."""</span>
+<span class="w">    </span><span class="sd">"""Base class: every hook is a no-op, override the ones you need.</span>
+
+<span class="sd">    Subclass it to watch or pause a run without changing the solver; for timing</span>
+<span class="sd">    alone prefer :mod:`neofoam.telemetry`. Hooks run synchronously on the solver's</span>
+<span class="sd">    thread, so a hook that blocks pauses the run.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        class Printer(ExecutionObserver):</span>
+<span class="sd">            def before_operation(self, op, ctx):</span>
+<span class="sd">                print("next:", op.name)</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="ExecutionObserver.init_steps">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.init_steps">[docs]</a>
@@ -756,7 +767,17 @@
 <div class="viewcode-block" id="current">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.current">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">current</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The observer installed in this thread, or ``None``."""</span>
+<span class="w">    </span><span class="sd">"""The observer installed in this thread, or ``None``.</span>
+
+<span class="sd">    Use it at a point the run reports from; install one with :func:`observe`</span>
+<span class="sd">    instead of setting it. Per thread: a started thread does not inherit it.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        observer = current()</span>
+<span class="sd">        if observer is not None:</span>
+<span class="sd">            observer.before_operation(op, ctx)</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
 
 
@@ -765,7 +786,16 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.observe">[docs]</a>
 <span class="nd">@contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">observe</span><span class="p">(</span><span class="n">observer</span><span class="p">:</span> <span class="n">ExecutionObserver</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Install ``observer`` in this thread for the duration of the ``with`` block."""</span>
+<span class="w">    </span><span class="sd">"""Install ``observer`` in this thread for the duration of the ``with`` block.</span>
+
+<span class="sd">    Use it around a solver run; nested blocks restore the previous observer on exit,</span>
+<span class="sd">    also after an exception. Other threads are unaffected.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        with observe(Printer()):</span>
+<span class="sd">            run(argv)</span>
+<span class="sd">    """</span>
     <span class="n">token</span> <span class="o">=</span> <span class="n">_observer</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">yield</span> <span class="n">observer</span>

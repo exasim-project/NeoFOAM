@@ -684,8 +684,15 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LoopEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A running loop, an entry of :attr:`Context.loops`.</span>
 
-<span class="sd">    ``iteration`` counts passes from 0; ``final`` is set by the loop's test</span>
-<span class="sd">    (:meth:`Context.mark_final`).</span>
+<span class="sd">    Read it from an operation or loop test that depends on the current pass; for</span>
+<span class="sd">    a run-once or last-pass operation prefer the ``first``/``final`` marks.</span>
+<span class="sd">    Immutable: ``iteration`` counts passes from 0 and the running loop replaces its</span>
+<span class="sd">    entry each pass; ``final`` is set by the loop's test (:meth:`Context.mark_final`).</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        if ctx.loops[-1].first:</span>
+<span class="sd">            store_old_iterate(ctx)</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -708,6 +715,11 @@
 <span class="sd">    It contains fields and models that are used by various components of the framework.</span>
 
 <span class="sd">    The relevant fields or models are injected into the operations</span>
+
+<span class="sd">    ``loops`` holds the running loops, outermost first. ``run_every_pass`` names</span>
+<span class="sd">    ``final`` operations that also run in every other pass, e.g. to watch them</span>
+<span class="sd">    while debugging. ``region`` is set by ``SolverRuntime.initialize``; ``None`` for</span>
+<span class="sd">    a single-region case.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
@@ -720,19 +732,24 @@
     <span class="c1"># names of fields (keys of ``fields``) flagged for persistence via</span>
     <span class="c1"># ``field(..., write=True)``; a per-field write backend writes exactly these.</span>
     <span class="n">write_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
-    <span class="c1"># the loops running now, outermost first</span>
     <span class="n">loops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoopEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="c1"># ``final`` operations to run in every pass too, e.g. to watch them while debugging</span>
     <span class="n">run_every_pass</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
-    <span class="c1"># set by SolverRuntime.initialize; None for a single-region case</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Context.mark_final">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context.mark_final">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mark_final</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Mark the pass the innermost loop is about to run as its last; call from its test.</span>
+<span class="w">        </span><span class="sd">"""Mark the pass the innermost loop is about to run as its last.</span>
 
-<span class="sd">        The next pass is not final again until the test marks it.</span>
+<span class="sd">        Call it from that loop's test, when the test knows the coming pass ends the</span>
+<span class="sd">        loop; a loop that never calls it never runs its ``final`` operations. The</span>
+<span class="sd">        mark lasts one pass: the next is not final until the test marks it again.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            def converged_test(ctx: Context) -&gt; bool:</span>
+<span class="sd">                ctx.mark_final(residual(ctx) &lt; tolerance)</span>
+<span class="sd">                return ctx.loops[-1].iteration &lt; max_passes</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span></div>
 </div>
