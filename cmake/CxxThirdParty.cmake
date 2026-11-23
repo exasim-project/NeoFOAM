@@ -14,6 +14,37 @@ if(NEOFOAM_WITH_MPI)
   find_package(MPI 3.1 REQUIRED)
 endif()
 
+# Only the private neofoam._vtkhdf module links HDF5. EXCLUDE_FROM_ALL also drops HDF5's install
+# rules, so nothing of it lands in the wheel besides what is linked into that module.
+if(NEOFOAM_WITH_HDF5 AND NEOFOAM_BUILD_PYTHON_BINDINGS)
+  cpmaddpackage(
+    NAME
+    HDF5
+    GITHUB_REPOSITORY
+    HDFGroup/hdf5
+    GIT_TAG
+    hdf5_1.14.6
+    GIT_SHALLOW
+    TRUE
+    EXCLUDE_FROM_ALL
+    YES
+    SYSTEM
+    YES
+    OPTIONS
+    "HDF5_ENABLE_PARALLEL ${NEOFOAM_WITH_MPI}"
+    "BUILD_SHARED_LIBS OFF"
+    "BUILD_STATIC_LIBS ON"
+    "CMAKE_POSITION_INDEPENDENT_CODE ON"
+    "BUILD_TESTING OFF"
+    "HDF5_BUILD_TOOLS OFF"
+    "HDF5_BUILD_EXAMPLES OFF"
+    "HDF5_BUILD_HL_LIB OFF"
+    "HDF5_BUILD_CPP_LIB OFF"
+    "HDF5_BUILD_FORTRAN OFF"
+    "HDF5_ENABLE_Z_LIB_SUPPORT OFF"
+    "HDF5_ENABLE_SZIP_SUPPORT OFF")
+endif()
+
 # nanobind is not fetched here: NeoN's CxxThirdParty.cmake provides it whenever
 # NeoN_BUILD_PYTHON_BINDINGS is ON, taking it from the active Python environment
 # (NeoN_EXTERNAL_NANOBIND, set by the python-bindings preset) so this module, _neon and pybFoam are

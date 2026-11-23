@@ -57,6 +57,22 @@ endif()
 # Link against NeoFOAM
 target_link_libraries(neofoam_bindings PRIVATE NeoFOAM)
 
+# A module of its own, so NEOFOAM_WITH_HDF5=OFF leaves neofoam_bindings untouched.
+if(NEOFOAM_WITH_HDF5)
+  nanobind_add_module(_vtkhdf NB_STATIC NOMINSIZE vtkHdfWriter.cpp)
+  target_link_libraries(_vtkhdf PRIVATE hdf5-static)
+  # Keep the static HDF5 out of the dynamic symbol table: h5py brings its own HDF5 into the same
+  # process. Mach-O's two-level namespace already binds each image to its own copy.
+  if(UNIX AND NOT APPLE)
+    target_link_options(_vtkhdf PRIVATE "LINKER:--exclude-libs,ALL")
+  endif()
+  if(DEFINED SKBUILD)
+    install(TARGETS _vtkhdf LIBRARY DESTINATION neofoam COMPONENT python)
+  else()
+    install(TARGETS _vtkhdf LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/python/neofoam)
+  endif()
+endif()
+
 # Installation
 if(DEFINED SKBUILD)
   install(TARGETS neofoam_bindings LIBRARY DESTINATION neofoam COMPONENT python)

@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Add `VtkHdfWriter` (`neofoam.postprocess.writers`, CMake option `NEOFOAM_WITH_HDF5`): a static unstructured mesh and its point and cell data over time as transient VTKHDF for ParaView, every MPI rank writing its part into one file through a compiled collective HDF5 writer [#504](https://github.com/exasim-project/NeoFOAM/pull/504)
 - Add post-processing actions: where tables save reduced values to disk, `actions` entries in `system/postProcess.yaml` (plugin family `Action`, cadence by `write_control`) run on the live simulation state at chosen time steps, for example live visualization through Catalyst. They step an `actions` operation after `post_process`; after the time loop a solver calls `finalize()` on every model that has one (`Finalizer`, `SolverRuntime.finalize`) [#503](https://github.com/exasim-project/NeoFOAM/pull/503)
 - Write the solver comparison test cases into `tmp_path` instead of the repository [#429](https://github.com/exasim-project/NeoFOAM/pull/429)
 - Make the steady `simpleFoam` parity tests tolerant of FMA round-off between pybFoam and prebuilt OpenFOAM [#495](https://github.com/exasim-project/NeoFOAM/pull/495)
