@@ -15,8 +15,8 @@ their arithmetic with the NeoN kernels, so a field is reduced on the executor it
 lives on; pybFoam appears in the sources, the CSV writer and the reductions.
 """
 
-from neofoam.postprocess.config import InSituSpec, PostProcessConfig, TableSpec
-from neofoam.postprocess.insitu import InSitu, InSituEntry, InSituRunner
+from neofoam.postprocess.actions import Action, ActionEntry, ActionRunner
+from neofoam.postprocess.config import ActionSpec, PostProcessConfig, TableSpec
 from neofoam.postprocess.model import PostProcessor, postProcess
 from neofoam.postprocess.node import (
     AggregatedData,
@@ -99,7 +99,7 @@ __all__ = [
     # Plugin families
     "Node",
     "Source",
-    "InSitu",
+    "Action",
     # Pipelines
     "Pipeline",
     "field",
@@ -147,10 +147,10 @@ __all__ = [
     "TableSet",
     "TableSpec",
     "PostProcessConfig",
-    # In-situ entries
-    "InSituSpec",
-    "InSituEntry",
-    "InSituRunner",
+    # Actions
+    "ActionSpec",
+    "ActionEntry",
+    "ActionRunner",
     # Geometry adapters
     "CellGeometry",
     "NeonCellGeometry",

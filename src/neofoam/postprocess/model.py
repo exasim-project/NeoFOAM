@@ -15,8 +15,8 @@ a CSV row and a time directory describe the same state. A case that declares no
 table gets an empty set and the operation does nothing (not even a
 ``postProcessing/`` directory).
 
-A case that declares ``insitu`` entries also gets the ``insitu`` operation after
-``post_process`` (and its :class:`~neofoam.postprocess.insitu.InSituRunner`
+A case that declares ``actions`` also gets the ``actions`` operation after
+``post_process`` (and its :class:`~neofoam.postprocess.actions.ActionRunner`
 init step); without them neither exists. A solver steps every operation of the
 model, in order.
 """
@@ -34,7 +34,7 @@ from neofoam.framework.initialization import InitStep, model
 from neofoam.framework.model import Model
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata
-from neofoam.postprocess.insitu import InSituRunner
+from neofoam.postprocess.actions import ActionRunner
 from neofoam.postprocess.node import AggregatedDataSet, Pipeline
 from neofoam.postprocess.table import TableSet, tables_for_case
 from neofoam.postprocess.writers.writer import TableWriter
@@ -139,12 +139,12 @@ def build(tables: TableSet) -> list[InitStep]:
         return PostProcessor(tables, base_path)
 
     steps = [model("post_processor", create_processor)]
-    if tables.insitu:
-        steps.append(model("insitu", lambda ctx: InSituRunner(tables.insitu)))
+    if tables.actions:
+        steps.append(model("actions", lambda ctx: ActionRunner(tables.actions)))
     return steps
 
 
-# -- operations: append a row per due table, then the in-situ entries --------
+# -- operations: append a row per due table, then the actions ----------------
 # Stepped last in the solver's time loop; builder-insertion order already puts
 # them after every field-mutating op and after the writer, so no ``depends_on``.
 def post_process(self: Any, ctx: Context) -> None:
@@ -153,18 +153,18 @@ def post_process(self: Any, ctx: Context) -> None:
     processor.write(ctx)
 
 
-def insitu(self: Any, ctx: Context) -> None:
-    """Hand the live Context to the due in-situ entries (on every rank)."""
-    runner: InSituRunner = ctx.models["insitu"]
+def actions(self: Any, ctx: Context) -> None:
+    """Hand the live Context to the due actions (on every rank)."""
+    runner: ActionRunner = ctx.models["actions"]
     runner.execute(ctx)
 
 
 @postProcess.operation_collection
 def operations(self: Any) -> Operations:
-    """``post_process``, and ``insitu`` when the case declares in-situ entries."""
+    """``post_process``, and ``actions`` when the case declares actions."""
     functions = [post_process]
-    if self.config.insitu:
-        functions.append(insitu)
+    if self.config.actions:
+        functions.append(actions)
     resolver = DependencyResolver()
     return Operations(
         [

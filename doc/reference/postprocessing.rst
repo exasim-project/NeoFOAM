@@ -633,25 +633,26 @@ scratch truncates it.
    points. It raises a ``NotImplementedError`` naming the table instead — use an
    aggregator, or run that case serially.
 
-In-situ entries
----------------
+Actions
+-------
 
-Besides tables, the spec file can hand the live solver state to an in-situ tool
-(a renderer such as Catalyst, a steering client) through ``insitu`` entries:
+Tables save reduced values to disk. An **action** runs on the live simulation
+state at chosen time steps, for example live visualization through Catalyst. A
+case declares its actions in the same spec file:
 
 .. code-block:: yaml
 
-    insitu:
+    actions:
       - name: view
         type: catalyst          # registered by the tool's own package
         write_control: {write_control_type: timeStep, interval: 5}
         field: U                # every other key belongs to the type
 
-A case that declares an entry gets an ``insitu`` operation, stepped right after
-``post_process``, which calls each entry on its own write steps (the same
-``write_control`` policies as a table, default every step); without entries the
-operation does not exist. NeoFOAM ships no entry type: a type is an
-``@InSitu.register`` subclass with a ``type: Literal[...]`` discriminator and an
+A case that declares an action gets an ``actions`` operation, stepped right after
+``post_process``, which calls each action on its own write steps (the same
+``write_control`` policies as a table, default every step); without actions the
+operation does not exist. NeoFOAM ships no action type: a type is an
+``@Action.register`` subclass with a ``type: Literal[...]`` discriminator and an
 ``execute(ctx)`` taking the live :class:`~neofoam.framework.context.Context`
 (optionally a ``finalize()``, called once after the time loop), registered by
 importing its module — from the tool that drives the run, or from the case's
@@ -662,17 +663,17 @@ importing its module — from the tool that drives the run, or from the case's
     from typing import Literal
 
     from neofoam.framework.context import Context
-    from neofoam.postprocess import InSitu
+    from neofoam.postprocess import Action
 
-    @InSitu.register
-    class PrintTime(InSitu):
+    @Action.register
+    class PrintTime(Action):
         type: Literal["printTime"] = "printTime"
 
         def execute(self, ctx: Context) -> None:
             print(self.name, ctx.time.value)
 
-Decomposed, every rank calls every entry at the same steps, so ``execute`` may be
-collective. The entry the operation runs is a private copy of the declaration, so
+Decomposed, every rank calls every action at the same steps, so ``execute`` may be
+collective. The action the operation runs is a private copy of the declaration, so
 state it keeps between calls belongs to the run.
 
 Try it

@@ -4,16 +4,18 @@
 # NB: no ``from __future__ import annotations`` — Context injection matches
 # ``param.annotation is Context`` literally (see field_writer.py).
 
-"""The InSitu plugin family: hand the live solver state to an in-situ tool.
+"""The Action plugin family: run something on the live simulation state.
 
-A case declares in-situ entries next to its tables (``insitu:`` in
-``system/postProcess.yaml``); the ``postProcess`` model then steps an
-``insitu`` operation after ``post_process`` that calls each entry's
-:meth:`InSitu.execute` on that entry's write steps. NeoFOAM ships no entry
-type: a renderer (Catalyst, say) registers one from its own package::
+Tables save reduced values to disk; an action runs on the live state at chosen
+time steps, for example live visualization through Catalyst. A case declares
+actions next to its tables (``actions:`` in ``system/postProcess.yaml``); the
+``postProcess`` model then steps an ``actions`` operation after ``post_process``
+that calls each action's :meth:`Action.execute` on its write steps. NeoFOAM
+ships no action type: a renderer (Catalyst, say) registers one from its own
+package::
 
-    @InSitu.register
-    class Catalyst(InSitu):
+    @Action.register
+    class Catalyst(Action):
         type: Literal["catalyst"] = "catalyst"
 
         def execute(self, ctx: Context) -> None: ...
@@ -32,19 +34,19 @@ from neofoam.framework.context import Context
 from neofoam.io import BaseConfig
 
 
-@PluginSystem.register(discriminator_variable="insitu", discriminator="type")
-class InSitu(BaseConfig):
-    """Plugin interface: one in-situ tool, called with the live Context.
+@PluginSystem.register(discriminator_variable="action", discriminator="type")
+class Action(BaseConfig):
+    """Plugin interface: one action on the live simulation state ("in situ" in HPC terms).
 
-    An entry is a spec until the run's first step: :class:`InSituRunner` runs a
+    An entry is a spec until the run's first step: :class:`ActionRunner` runs a
     private copy, so the state an implementation keeps between calls (a
     session, an output counter) belongs to the run. Unknown keys are refused.
 
     Subclass it to drive an external tool from a case; for a table of reduced
     values use a :class:`~neofoam.postprocess.table.TableSet` table instead. Example::
 
-        @InSitu.register
-        class Snapshot(InSitu):
+        @Action.register
+        class Snapshot(Action):
             type: Literal["snapshot"] = "snapshot"
 
             def execute(self, ctx: Context) -> None:
@@ -54,7 +56,7 @@ class InSitu(BaseConfig):
     model_config = ConfigDict(extra="forbid")
 
     # A default only because the family's wrapper model inherits the base's fields;
-    # a declared entry always has its name (InSituSpec requires it).
+    # a declared entry always has its name (ActionSpec requires it).
     name: str = ""
 
     def execute(self, ctx: Context) -> None:
@@ -68,35 +70,35 @@ class InSitu(BaseConfig):
         """Release what :meth:`execute` opened; called once, after the time loop."""
 
 
-class InSituEntry(NamedTuple):
+class ActionEntry(NamedTuple):
     """A declared entry: the plugin and when it runs.
 
-    ``tables_for_case`` builds these from ``insitu:``; build one directly only to
-    drive an :class:`InSituRunner` without a case file. It is a spec, shared by
+    ``tables_for_case`` builds these from ``actions:``; build one directly only to
+    drive an :class:`ActionRunner` without a case file. It is a spec, shared by
     runs, so the runner copies it. Example::
 
-        InSituEntry(plugin, write_control)
+        ActionEntry(plugin, write_control)
     """
 
-    plugin: InSitu
+    plugin: Action
     write_control: WriteControl
 
 
-class InSituRunner:
-    """The runtime state of the ``insitu`` operation: a private copy of every entry.
+class ActionRunner:
+    """The runtime state of the ``actions`` operation: a private copy of every entry.
 
     The ``postProcess`` model builds one per run when a case declares entries, so a
     solver never constructs it. Its lifecycle is :meth:`execute` once per step, then
     :meth:`finalize` once; both run on every rank. Example::
 
-        runner = InSituRunner(tables.insitu)
+        runner = ActionRunner(tables.actions)
         runner.execute(ctx)
         runner.finalize()
     """
 
-    def __init__(self, entries: list[InSituEntry]) -> None:
+    def __init__(self, entries: list[ActionEntry]) -> None:
         self.entries = [
-            InSituEntry(
+            ActionEntry(
                 entry.plugin.model_copy(deep=True), entry.write_control.model_copy(deep=True)
             )
             for entry in entries

@@ -113,7 +113,7 @@ def execution_graph(
         turbulence_correct   # once per step, after the PIMPLE loop
         write_output         # NeoN write hook on write steps + step reporter
         post_process         # in-situ tables (empty on this backend today)
-        insitu               # in-situ entries (only when declared)
+        actions              # live-state actions (only when declared)
     """
     _ = domain_name
 
