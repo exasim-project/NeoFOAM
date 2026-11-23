@@ -10,22 +10,22 @@ translation. Two fields cover the boundary treatment: ``alpha`` has zeroGradient
 walls; ``alphaFixed`` has fixedValue 1 walls, which with the zeroGradient ``U``
 carry alpha inflow and outflow.
 
-Tolerances: Serial follows OpenFOAM's arithmetic order face by face and matches
-it bit for bit; ``rtol=1e-12`` only guards against compiler contraction. On CPU
-(Kokkos threads) and GPU the per-cell sums are atomic and add up in a different
-order (the GPU also fuses multiply-adds), which moves the last bits. One place
-amplifies that: the interface normal ``gradAlphaf/(|gradAlphaf| + deltaN)`` with
-``deltaN = 1e-8/h`` turns a round-off gradient (~1e-16/h) into a normal of size
-~1e-8, so the compression flux may differ by ~1e-8 of its peak (seen: 3e-9 on
-the 5-cell mesh with the fixedValue walls).
+Tolerances are the same on every executor. Serial follows OpenFOAM's arithmetic
+order, but pybFoam and the prebuilt OpenFOAM may differ in FMA use (as on the
+ubuntu-latest CI runner), which moves the last bits. On CPU (Kokkos threads) and
+GPU the per-cell sums are atomic and add up in a different order (the GPU also
+fuses multiply-adds), with the same effect. One place amplifies that: the
+interface normal ``gradAlphaf/(|gradAlphaf| + deltaN)`` with ``deltaN = 1e-8/h``
+turns a round-off gradient (~1e-16/h) into a normal of size ~1e-8, so the
+compression flux may differ by ~1e-8 of its peak (seen: 3e-9 on the 5-cell mesh
+with the fixedValue walls).
 
 The two compression pieces of ``alpha_phase_flux`` are tested on their own,
 boundary faces included: the compression velocity ``phic`` and the linear
 compression flux, the latter with ``phir = phi`` (it is linear in any face
 flux, and ``phi`` is the same on every executor, which keeps the nHatf
-round-off out). Both are per-face kernels without sums, so Serial and CPU
-match OpenFOAM exactly (``atol=0``); the GPU may fuse the linear
-interpolation's multiply-add, a few ulps of the flux peak.
+round-off out). Both are per-face kernels without sums, so they differ by a few
+ulps of the flux peak at most (seen: 3e-16 relative).
 
 Every per-step binding the NeoN MULES ops use also writes into an existing
 field (``out=``); the ``out`` cases fill a buffer of stale values that way and
@@ -48,14 +48,9 @@ from .conftest import EXECUTORS, MESH_NAMES
 FIELDS = ["alpha", "alphaFixed"]
 
 
-def _flux_tolerances(executor: str) -> tuple[float, float]:
-    """(rtol, atol relative to the flux peak)."""
-    return (1e-12, 1e-14) if executor == "Serial" else (1e-8, 2.2e-8)
-
-
-def _per_face_tolerances(executor: str) -> tuple[float, float]:
-    """(rtol, atol relative to the peak) of the per-face kernels: exact off the GPU."""
-    return (1e-12, 1e-14) if executor == "GPU" else (0.0, 0.0)
+# (rtol, atol relative to the peak)
+_FLUX_TOLERANCES = (1e-8, 2.2e-8)
+_PER_FACE_TOLERANCES = (1e-12, 1e-14)
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
@@ -80,7 +75,7 @@ def test_alpha_phase_flux_matches_openfoam(
     expected = pyb.vof.alpha_phase_flux(alpha, c_alpha)
     result = nb.vof.alpha_phase_flux(alpha, c_alpha, composed)[: expected.shape[0]]
 
-    rtol, atol = _flux_tolerances(executor)
+    rtol, atol = _FLUX_TOLERANCES
     np.testing.assert_allclose(
         result,
         expected,
@@ -107,7 +102,7 @@ def test_interface_compression_velocity_matches_openfoam(
     expected = pyb.vof.compression_velocity(phi, c_alpha)
     result = nb.vof.compression_velocity(phi, c_alpha, into)
 
-    rtol, atol = _per_face_tolerances(executor)
+    rtol, atol = _PER_FACE_TOLERANCES
     np.testing.assert_allclose(
         result,
         expected,
@@ -137,7 +132,7 @@ def test_linear_compression_flux_matches_openfoam(
     expected = pyb.vof.linear_compression_flux(alpha)
     result = nb.vof.linear_compression_flux(alpha, into)
 
-    rtol, atol = _per_face_tolerances(executor)
+    rtol, atol = _PER_FACE_TOLERANCES
     np.testing.assert_allclose(
         result,
         expected,

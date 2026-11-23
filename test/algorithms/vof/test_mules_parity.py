@@ -13,14 +13,14 @@ base field whose sphere is shifted (``alphaFixedShifted``, the ``alpha-alphaFixe
 case) gives a nonzero boundary correction flux, which exercises the outlet
 limiting of ``limiterCorr``.
 
-Tolerances: Serial follows OpenFOAM's arithmetic order face by face and matches
-it bit for bit; ``rtol=1e-12`` only guards against compiler contraction. On CPU
-(Kokkos threads) and GPU the per-cell sums are atomic and add up in a different
-order (the GPU also fuses multiply-adds), which moves the last bits. The
-interface normal ``gradAlphaf/(|gradAlphaf| + deltaN)`` with ``deltaN = 1e-8/h``
-amplifies that to ~1e-8 of the compression flux peak, and through 20 nonlinear
-limiter steps that grows to ~1e-6 in alpha (seen: 8e-7); everything else differs
-by ~1e-15.
+Tolerances are the same on every executor. Serial follows OpenFOAM's arithmetic
+order, but pybFoam and the prebuilt OpenFOAM may differ in FMA use (as on the
+ubuntu-latest CI runner), which moves the last bits. On CPU (Kokkos threads) and
+GPU the per-cell sums are atomic and add up in a different order (the GPU also
+fuses multiply-adds), with the same effect. The interface normal
+``gradAlphaf/(|gradAlphaf| + deltaN)`` with ``deltaN = 1e-8/h`` amplifies that to
+~1e-8 of the compression flux peak, and through 20 nonlinear limiter steps that
+grows to ~1e-6 in alpha (seen: 1.4e-6); everything else differs by ~1e-15.
 """
 
 from __future__ import annotations
@@ -38,9 +38,7 @@ FIELDS = ["alpha", "alphaFixed"]
 DELTA_T = 0.02  # Courant number below 0.3 on all meshes for |U| <= 0.75
 
 
-def _alpha_tolerances(executor: str) -> tuple[float, float]:
-    """(rtol, atol) for alpha, which is O(1)."""
-    return (1e-12, 1e-14) if executor == "Serial" else (1e-8, 5e-6)
+_ALPHA_TOLERANCES = (1e-8, 5e-6)  # (rtol, atol) for alpha, which is O(1)
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
@@ -67,7 +65,7 @@ def test_mules_explicit_solve_matches_openfoam(
     expected = pyb.mules.explicit_solve(alpha, DELTA_T, 1.0, n_steps, n_corr)
     result = nb.mules.explicit_solve(alpha, DELTA_T, 1.0, n_steps, n_corr)
 
-    rtol, atol = _alpha_tolerances(executor)
+    rtol, atol = _ALPHA_TOLERANCES
     np.testing.assert_allclose(
         result,
         expected,
@@ -101,7 +99,7 @@ def test_mules_correct_matches_openfoam(
     expected = pyb.mules.correct(alpha, sim.field(base), DELTA_T, 1.0)
     result = nb.mules.correct(alpha, sim.field(base), DELTA_T, 1.0)
 
-    rtol, atol = _alpha_tolerances(executor)
+    rtol, atol = _ALPHA_TOLERANCES
     np.testing.assert_allclose(
         result, expected, rtol=rtol, atol=atol, err_msg=f"{mesh}/{executor}/{field}<-{base}"
     )
