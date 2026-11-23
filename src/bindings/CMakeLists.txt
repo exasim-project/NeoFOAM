@@ -38,7 +38,8 @@ nanobind_add_module(
   wallFunctions.cpp
   fieldRelaxation.cpp
   mrf.cpp
-  postprocess.cpp)
+  postprocess.cpp
+  vofOperators.cpp)
 
 # nanobind builds the module -fvisibility=hidden, which also hides the typeinfo emitted here for the
 # NeoN types this module boxes (VolumeField and friends). std::any dispatches on type_info identity,

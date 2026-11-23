@@ -1,0 +1,35 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+_centre
+{
+    #include "sphereCentre"
+}
+
+expressions
+(
+    // solid-body rotation about the mesh centroid with a vertical drift
+    URotation
+    {
+        field       URotation;
+        create      yes;
+        dimensions  [0 1 -1 0 0 0 0];
+        $_centre;
+        expression  #{ vector(-(pos().y() - $[(scalar)cy]), pos().x() - $[(scalar)cx], 0.2) #};
+    }
+);
+
+// ************************************************************************* //
