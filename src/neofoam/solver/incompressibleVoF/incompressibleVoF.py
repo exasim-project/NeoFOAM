@@ -37,7 +37,6 @@ from neofoam.framework.operations import (
     Operations,
     StepBuilder,
 )
-from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
@@ -55,6 +54,7 @@ from .create_fields import create_init
 from .models.alpha_advection import advectionModel  # noqa: F401 (registers members)
 from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
+from .solver_spec import incompressibleVoF as incompressibleVoF
 
 # Interface band for the alpha Courant number: only cells whose phase fraction
 # straddles the interface (0.01 <= alpha1 <= 0.99) contribute. Mirrors
@@ -115,8 +115,6 @@ def _core_model(state: Any, spec_name: str) -> Any:
         m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
     )
 
-
-incompressibleVoF = Solver("incompressibleVoF")
 
 # Declare the full case-authoring schema on the spec, case-free (mirrors
 # ``incompressibleFluid``): the solver's own configs plus the model families it

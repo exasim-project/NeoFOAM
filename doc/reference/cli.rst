@@ -53,6 +53,40 @@ lower-cased name matches another solver command is refused.
 A ``neofoam.region_solvers`` spec is found by the solver registry; a built-in
 solver of the same name takes precedence.
 
+Adding a new kind of model
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A new member of a family a solver already binds needs only a registration:
+
+.. literalinclude:: ../../test/solver/_optional_family_plugin.py
+    :language: python
+    :start-after: # docs-existing-family-start
+    :end-before: # docs-existing-family-end
+
+A new *optional* family is bound to a solver with ``solver.models(family)``. The
+family provides ``all_specs()`` (its members, for the config schema) and
+``detect_models(case_dir)`` (the members active for a case):
+
+.. literalinclude:: ../../test/solver/_optional_family_plugin.py
+    :language: python
+    :start-after: # docs-new-family-start
+    :end-before: # docs-new-family-end
+
+Limits:
+
+* Supported by ``incompressibleFluid``, ``incompressibleFluidNeoN`` and
+  ``incompressibleVoF``, whose load steps call ``detect_optional_models``. The
+  script solvers (``icofoam``, ``pimplefoam``, ``neoicofoam``, ``neopimplefoam``)
+  have no solver spec. A plugin solver must call it in its own load step.
+* Each active member needs ``@config`` or ``@load``, or it cannot be instantiated.
+* Bound families load after the solver's own optional family, in binding order.
+* Operations must fit the solver's execution graph: ``depends_on`` and ``before``
+  name operations of that solver. ``momentum`` exists in all three loops; most
+  other names and the fields available differ per solver.
+* Only optional families are extensible this way. The load steps select their
+  required families directly, so ``models(family, required=True)`` adds a family
+  to the schema but does not run it.
+
 Executor selection and GPU initialization
 -----------------------------------------
 
