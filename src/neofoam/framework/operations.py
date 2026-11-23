@@ -121,7 +121,7 @@ class Operation:
         every_pass = self.name in ctx.run_every_pass
         if every_pass and not self.metadata.final:
             raise ValueError(_not_final(self))
-        wrapping = [entry for entry in ctx.loops if entry.wrapping]
+        wrapping = _wrapping_entries(ctx)
         if self.metadata.first:
             return not all(entry.first for entry in wrapping)
         if self.metadata.final and not every_pass:
@@ -156,6 +156,11 @@ class Operation:
             del loops[index:]
 
 
+def _wrapping_entries(ctx: Context) -> list[LoopEntry]:
+    """The entries of the wrapping loops running now."""
+    return [entry for entry in ctx.loops if entry.wrapping]
+
+
 def _not_final(op: Operation) -> str:
     kind = "first" if op.metadata.first else "not marked final"
     return (
@@ -164,17 +169,19 @@ def _not_final(op: Operation) -> str:
     )
 
 
+def _by_name(ops: list[Operation]) -> dict[str, Operation]:
+    """Every named operation of ``ops`` and below."""
+    found: dict[str, Operation] = {}
+    for op in ops:
+        if op.name is not None:
+            found[op.name] = op
+        found.update(_by_name(op.sub_operations))
+    return found
+
+
 def _check_run_every_pass(ops: list[Operation], names: set[str]) -> None:
     """Raise ``ValueError`` unless each of ``names`` is a ``final`` operation of ``ops``."""
-    found: dict[str, Operation] = {}
-
-    def walk(scope: list[Operation]) -> None:
-        for op in scope:
-            if op.name is not None:
-                found[op.name] = op
-            walk(op.sub_operations)
-
-    walk(ops)
+    found = _by_name(ops)
     for name in sorted(names):
         if name not in found:
             final = sorted(other for other, op in found.items() if op.metadata.final)

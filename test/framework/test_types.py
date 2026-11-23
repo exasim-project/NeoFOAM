@@ -95,7 +95,9 @@ def test_operation_metadata() -> None:
     ("op_name", "domain", "name"),
     [("solve", None, "solve"), ("solve", "model", "model.solve")],
 )
-def test_name_is_domain_and_operation(op_name: str, domain: str | None, name: str) -> None:
+def test_name_prefixes_the_operation_with_its_domain(
+    op_name: str, domain: str | None, name: str
+) -> None:
     metadata = OperationMetadata(op_name=op_name, domain_name=domain)
 
     assert metadata.name == name

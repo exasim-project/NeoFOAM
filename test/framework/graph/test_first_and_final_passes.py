@@ -10,7 +10,7 @@ final one in every pass.
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable
 
 import pytest
 
@@ -46,24 +46,12 @@ class _Passes:
         return False
 
 
-def _op(
-    name: str,
-    run: Callable[[Context], object],
-    first: bool = False,
-    final: bool = False,
-    depends_on: list[str] | None = None,
-    before: list[str] | None = None,
-) -> Operation:
-    return Operation(
-        func=SequentialOp(run),
-        metadata=OperationMetadata(
-            op_name=name, first=first, final=final, depends_on=depends_on, before=before
-        ),
-    )
+def _op(name: str, run: Callable[[Context], object], **metadata: Any) -> Operation:
+    return Operation(func=SequentialOp(run), metadata=OperationMetadata(op_name=name, **metadata))
 
 
-def _logged(name: str, log: list[str], **metadata: object) -> Operation:
-    return _op(name, lambda ctx: log.append(name), **metadata)  # type: ignore[arg-type]
+def _logged(name: str, log: list[str], **metadata: Any) -> Operation:
+    return _op(name, lambda ctx: log.append(name), **metadata)
 
 
 def _loop(name: str, count: int, wraps: Placement | None = None, marks: bool = True) -> Operation:
@@ -145,29 +133,24 @@ def test_a_failing_loop_leaves_ctx_loops_empty() -> None:
     assert ctx.loops == []
 
 
-def test_a_first_operation_outside_a_wrapping_loop_runs_every_first_step() -> None:
+@pytest.mark.parametrize(
+    ("passes", "expected"),
+    [
+        ((), ["start_step", "solve_T", "write"] * 2),
+        ((("couple", 3),), ["start_step", *["solve_T", "write"] * 3] * 2),
+        ((("outer", 2), ("inner", 2)), ["start_step", *["solve_T", "write"] * 4] * 2),
+    ],
+    ids=["outside_a_wrapping_loop", "in_a_wrapping_loop", "in_nested_wrapping_loops"],
+)
+def test_a_first_operation_runs_only_in_the_first_pass_of_its_wrapping_loops(
+    passes: tuple[tuple[str, int], ...], expected: list[str]
+) -> None:
     log: list[str] = []
+    loops = [_loop(name, count, Placement()) for name, count in passes]
 
-    _resolve(_first_step(log)).run(_context())
+    _resolve(_first_step(log), *loops).run(_context())
 
-    assert log == ["start_step", "solve_T", "write"] * 2
-
-
-def test_a_first_operation_in_a_wrapping_loop_runs_once_per_first_step() -> None:
-    log: list[str] = []
-
-    _resolve(_first_step(log), _loop("couple", 3, Placement())).run(_context())
-
-    assert log == ["start_step", *["solve_T", "write"] * 3] * 2
-
-
-def test_a_first_operation_in_nested_wrapping_loops_runs_in_their_first_pass_only() -> None:
-    log: list[str] = []
-    ops = _resolve(_first_step(log), _loop("outer", 2, Placement()), _loop("inner", 2, Placement()))
-
-    ops.run(_context())
-
-    assert log == ["start_step", *["solve_T", "write"] * 4] * 2
+    assert log == expected
 
 
 def test_a_first_operation_in_an_inner_wrapping_loop_waits_for_the_outer_first_pass() -> None:
@@ -228,26 +211,35 @@ def test_a_first_operation_after_a_first_one_resolves() -> None:
     _resolve(builder, _loop("couple", 2, Placement()))
 
 
-def test_the_operation_decorators_mark_an_operation_first() -> None:
-    solver = SolverSpec("firstSolver")
-    model = ModelSpec("firstModel")
+@pytest.mark.parametrize(
+    ("mark", "marks", "expected"),
+    [
+        ("first", ({"first": True}, {}), [True, False]),
+        ("final", ({}, {"final": True}), [False, True]),
+    ],
+)
+def test_the_operation_decorators_set_the_pass_mark(
+    mark: str, marks: tuple[dict[str, bool], dict[str, bool]], expected: list[bool]
+) -> None:
+    solver = SolverSpec(f"{mark}Solver")
+    model = ModelSpec(f"{mark}Model")
 
-    @solver.operation(first=True)
-    def start(self: object) -> None: ...
+    @solver.operation(**marks[0])
+    def solver_one(self: object) -> None: ...
 
-    @solver.operation()
-    def solve(self: object) -> None: ...
+    @solver.operation(**marks[1])
+    def solver_two(self: object) -> None: ...
 
-    @model.operation(first=True)
-    def start_model(self: object) -> None: ...
+    @model.operation(**marks[0])
+    def model_one(self: object) -> None: ...
 
-    @model.operation()
-    def solve_model(self: object) -> None: ...
+    @model.operation(**marks[1])
+    def model_two(self: object) -> None: ...
 
     solver_ops = solver.instantiate().operations
-    model_ops = ModelRuntime(spec=model, name="firstModel", config={}).operations
-    assert [op.metadata.first for op in solver_ops] == [True, False]
-    assert [op.metadata.first for op in model_ops] == [True, False]
+    model_ops = ModelRuntime(spec=model, name=f"{mark}Model", config={}).operations
+    assert [getattr(op.metadata, mark) for op in solver_ops] == expected
+    assert [getattr(op.metadata, mark) for op in model_ops] == expected
 
 
 def test_a_loop_entry_is_not_final_unless_its_test_marks_it() -> None:
@@ -264,46 +256,33 @@ def test_a_loop_entry_is_not_final_unless_its_test_marks_it() -> None:
     assert seen == [LoopEntry("couple", i, True, i == 2) for i in range(3)]
 
 
-def test_a_final_operation_outside_a_wrapping_loop_runs_every_final_step() -> None:
+@pytest.mark.parametrize(
+    ("passes", "marks", "expected"),
+    [
+        ((), True, ["start_step", "solve_T", "write"] * 2),
+        ((("couple", 3),), True, ["start_step", "solve_T", "solve_T", "solve_T", "write"] * 2),
+        ((("couple", 1),), True, ["start_step", "solve_T", "write"] * 2),
+        ((("couple", 2),), False, ["start_step", "solve_T", "solve_T"] * 2),
+        # the inner loop's final pass of the outer loop's first pass skips write
+        ((("outer", 2), ("inner", 2)), True, ["start_step", *["solve_T"] * 4, "write"] * 2),
+    ],
+    ids=[
+        "outside_a_wrapping_loop",
+        "in_a_wrapping_loop",
+        "in_a_single_pass",
+        "in_a_loop_that_marks_no_pass_final",
+        "in_nested_wrapping_loops",
+    ],
+)
+def test_a_final_operation_runs_only_in_the_final_pass_of_its_wrapping_loops(
+    passes: tuple[tuple[str, int], ...], marks: bool, expected: list[str]
+) -> None:
     log: list[str] = []
+    loops = [_loop(name, count, Placement(), marks=marks) for name, count in passes]
 
-    _resolve(_final_step(log)).run(_context())
+    _resolve(_final_step(log), *loops).run(_context())
 
-    assert log == ["start_step", "solve_T", "write"] * 2
-
-
-def test_a_final_operation_in_a_wrapping_loop_runs_in_its_final_pass_only() -> None:
-    log: list[str] = []
-
-    _resolve(_final_step(log), _loop("couple", 3, Placement())).run(_context())
-
-    assert log == ["start_step", "solve_T", "solve_T", "solve_T", "write"] * 2
-
-
-def test_a_single_pass_is_first_and_final() -> None:
-    log: list[str] = []
-
-    _resolve(_final_step(log), _loop("couple", 1, Placement())).run(_context())
-
-    assert log == ["start_step", "solve_T", "write"] * 2
-
-
-def test_a_final_operation_in_a_wrapping_loop_that_marks_no_pass_final_never_runs() -> None:
-    log: list[str] = []
-
-    _resolve(_final_step(log), _loop("couple", 2, Placement(), marks=False)).run(_context())
-
-    assert log == ["start_step", "solve_T", "solve_T"] * 2
-
-
-def test_a_final_operation_in_nested_wrapping_loops_runs_in_their_final_passes_only() -> None:
-    log: list[str] = []
-    ops = _resolve(_final_step(log), _loop("outer", 2, Placement()), _loop("inner", 2, Placement()))
-
-    ops.run(_context())
-
-    # the inner loop's final pass of the outer loop's first pass skips write
-    assert log == ["start_step", *["solve_T"] * 4, "write"] * 2
+    assert log == expected
 
 
 def test_a_final_operation_in_an_inner_final_pass_waits_for_the_outer_final_pass() -> None:
@@ -443,10 +422,12 @@ def test_a_final_operation_after_a_final_one_resolves() -> None:
     assert log == ["write", "report"]
 
 
-def test_an_operation_marked_first_and_final_raises() -> None:
+def test_metadata_marked_both_first_with_final_raises() -> None:
     with pytest.raises(ValueError, match=r"solve is marked first and final"):
         OperationMetadata(op_name="solve", first=True, final=True)
 
+
+def test_a_model_operation_marked_both_first_with_final_raises() -> None:
     model = ModelSpec("bothModel")
 
     @model.operation(first=True, final=True)
@@ -454,25 +435,3 @@ def test_an_operation_marked_first_and_final_raises() -> None:
 
     with pytest.raises(ValueError, match=r"solve is marked first and final"):
         ModelRuntime(spec=model, name="bothModel", config={}).operations
-
-
-def test_the_operation_decorators_mark_an_operation_final() -> None:
-    solver = SolverSpec("finalSolver")
-    model = ModelSpec("finalModel")
-
-    @solver.operation()
-    def solve(self: object) -> None: ...
-
-    @solver.operation(final=True)
-    def write(self: object) -> None: ...
-
-    @model.operation()
-    def solve_model(self: object) -> None: ...
-
-    @model.operation(final=True)
-    def write_model(self: object) -> None: ...
-
-    solver_ops = solver.instantiate().operations
-    model_ops = ModelRuntime(spec=model, name="finalModel", config={}).operations
-    assert [op.metadata.final for op in solver_ops] == [False, True]
-    assert [op.metadata.final for op in model_ops] == [False, True]

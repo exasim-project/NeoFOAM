@@ -70,7 +70,12 @@ class Placement:
 
     Without ``operations`` the loop wraps the whole time-step body; with them, the
     named operations and everything downstream of them in their scope
-    (:mod:`~neofoam.framework.graph.wrapping`).
+    (:mod:`~neofoam.framework.graph.wrapping`). Use it for a loop contributed from
+    outside the solver; a solver's own loop belongs in its ``StepBuilder``. Frozen.
+
+    Example::
+
+        OperationMetadata(op_name="couple", wraps=Placement(operations=("solve_T",)))
     """
 
     operations: tuple[str, ...] | None = None
@@ -79,7 +84,12 @@ class Placement:
 @dataclass
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated
-    functions and DAG nodes."""
+    functions and DAG nodes.
+
+    ``wraps`` makes the operation a wrapping loop and says where the resolver places
+    it; ``first`` (``final``) runs it only in the first (final) pass of the wrapping
+    loops around it.
+    """
 
     op_name: str | None = None
 
@@ -97,9 +107,9 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
-    wraps: Placement | None = None  # a wrapping loop: where the resolver places it
-    first: bool = False  # run only in the first pass of the wrapping loops around it
-    final: bool = False  # run only in their final pass
+    wraps: Placement | None = None
+    first: bool = False
+    final: bool = False
 
     # DAG visualization properties
     shape: str = "box"

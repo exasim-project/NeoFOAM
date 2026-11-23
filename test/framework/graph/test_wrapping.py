@@ -114,7 +114,7 @@ def test_a_loop_without_operations_wraps_the_root_without_a_loop() -> None:
     ]
 
 
-def test_a_loop_around_an_operation_holds_it_and_what_is_downstream() -> None:
+def test_a_loop_around_an_operation_holds_its_downstream_operations() -> None:
     ops = _resolve(_time_step([]), _loop("couple", _around("solve_T")))
 
     assert _tree(ops) == [
@@ -200,7 +200,7 @@ def _time_step_op(log: list[str]) -> Operation:
 _INNER = ("inner_loop", ["solve_U", "solve_p"])
 
 
-def test_a_loop_around_a_loop_holds_it_whole_and_what_is_downstream() -> None:
+def test_a_loop_around_a_loop_holds_its_downstream_operations() -> None:
     """update_T depends on solve_p inside inner_loop: it is downstream of the loop."""
     ops = _resolve(_pimple_step([]), _loop("couple", _around("inner_loop")))
 
@@ -282,7 +282,7 @@ def test_a_loop_around_a_loop_that_holds_a_placed_loop_raises() -> None:
         )
 
 
-def test_a_loop_around_a_loop_and_an_operation_inside_it_raises() -> None:
+def test_a_loop_around_a_loop_with_an_operation_inside_it_raises() -> None:
     with pytest.raises(ValueError, match="lie in more than one loop scope; couple wraps"):
         _resolve(_pimple_step([]), _loop("couple", _around("inner_loop", "solve_p")))
 

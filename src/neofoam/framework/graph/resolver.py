@@ -21,7 +21,7 @@ from neofoam.framework.operations import (
 )
 
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter
-from .wrapping import check_passes, wrap
+from .wrapping import _check_passes, _wrap
 
 
 class CyclicDependencyError(Exception):
@@ -195,10 +195,6 @@ def _sort_global(
     relative to the surrounding ops; ops may therefore precede **and** follow a
     loop in the same scope. Loops carry no edges, so interleaving them by builder
     index is always dependency-safe.
-
-    Only the builder's ops (the first ``stepped`` of ``tagged``) place a loop: after the
-    last op of its scope stepped before it, or ahead of the first stepped after it if
-    that sorts earlier.
     """
     # Builder insertion order: position in the pre-order ``tagged`` list.
     order: dict[int, int] = {id(op): i for i, (_, op) in enumerate(tagged)}
@@ -228,28 +224,50 @@ def _sort_global(
         if isinstance(op.func, IterativeOp):
             loops_by_scope[scope].append(op)
 
-    n_stepped = len(tagged) if stepped is None else stepped
+    # Model ops sort freely, so only the builder's (the first ``stepped`` of ``tagged``)
+    # may anchor a loop to where it was stepped.
+    stepped_count = len(tagged) if stepped is None else stepped
     by_scope: dict[str, list[Operation]] = {}
     for scope in set(seq_by_scope) | set(loops_by_scope):
         seq = seq_by_scope[scope]
-        builder_idx = [order.get(id(op), len(order)) for op in seq]
-        at: list[tuple[int, Operation]] = []
-        for loop in sorted(loops_by_scope[scope], key=lambda op: order[id(op)]):
-            loop_idx = order[id(loop)]
-            after = [i for i, idx in enumerate(builder_idx) if idx < loop_idx]
-            ahead = [i for i, idx in enumerate(builder_idx) if loop_idx < idx < n_stepped]
-            at.append((min(after[-1] + 1 if after else 0, ahead[0] if ahead else len(seq)), loop))
-        merged: list[Operation] = []
-        next_loop = 0
-        for i, seq_op in enumerate(seq):
-            while next_loop < len(at) and at[next_loop][0] <= i:
-                merged.append(at[next_loop][1])
-                next_loop += 1
-            merged.append(seq_op)
-        merged.extend(loop for _, loop in at[next_loop:])
-        by_scope[scope] = merged
+        placed = _place_loops(seq, loops_by_scope[scope], order, stepped_count)
+        by_scope[scope] = _merge_loops(seq, placed)
 
     return by_scope
+
+
+def _place_loops(
+    seq: list[Operation],
+    loops: list[Operation],
+    order: dict[int, int],
+    stepped_count: int,
+) -> list[tuple[int, Operation]]:
+    """Each loop by builder order, with the index in ``seq`` it is inserted at."""
+    positions = [order.get(id(op), len(order)) for op in seq]
+    return [
+        (_insertion_index(positions, order[id(loop)], stepped_count), loop)
+        for loop in sorted(loops, key=lambda op: order[id(op)])
+    ]
+
+
+def _insertion_index(positions: list[int], loop_position: int, stepped_count: int) -> int:
+    """After the last op stepped before the loop, or ahead of the first stepped after it."""
+    after = [i for i, position in enumerate(positions) if position < loop_position]
+    ahead = [i for i, position in enumerate(positions) if loop_position < position < stepped_count]
+    return min(after[-1] + 1 if after else 0, ahead[0] if ahead else len(positions))
+
+
+def _merge_loops(seq: list[Operation], placed: list[tuple[int, Operation]]) -> list[Operation]:
+    """``seq`` with each placed loop inserted at its index."""
+    merged: list[Operation] = []
+    next_loop = 0
+    for index, seq_op in enumerate(seq):
+        while next_loop < len(placed) and placed[next_loop][0] <= index:
+            merged.append(placed[next_loop][1])
+            next_loop += 1
+        merged.append(seq_op)
+    merged.extend(loop for _, loop in placed[next_loop:])
+    return merged
 
 
 def _rebuild_builder(sorted_scopes: dict[str, list[Operation]]) -> StepBuilder:
@@ -288,7 +306,7 @@ class DAGResolver:
         """The operations of ``builder`` and ``additional_ops``, ordered in their scopes.
 
         Additional wrapping loops (``metadata.wraps``) are placed afterwards, in
-        the order given (:func:`~.wrapping.wrap`, :func:`~.wrapping.check_passes`).
+        the order given (:mod:`~neofoam.framework.graph.wrapping`).
         """
         wrapping = [op for op in additional_ops if op.metadata.wraps is not None]
         rest = Operations([op for op in additional_ops if op.metadata.wraps is None])
@@ -299,6 +317,6 @@ class DAGResolver:
         )
         ops = _rebuild_builder(sorted_scopes).operations.ops
         for loop in wrapping:
-            ops = wrap(ops, loop)
-        check_passes(ops)
+            ops = _wrap(ops, loop)
+        _check_passes(ops)
         return StepBuilder(ops)

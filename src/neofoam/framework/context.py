@@ -22,8 +22,15 @@ class FieldUpdates(dict[str, Any]):
 class LoopEntry(NamedTuple):
     """A running loop, an entry of :attr:`Context.loops`.
 
-    ``iteration`` counts passes from 0; ``final`` is set by the loop's test
-    (:meth:`Context.mark_final`).
+    Read it from an operation or loop test that depends on the current pass; for
+    a run-once or last-pass operation prefer the ``first``/``final`` marks.
+    Immutable: ``iteration`` counts passes from 0 and the running loop replaces its
+    entry each pass; ``final`` is set by the loop's test (:meth:`Context.mark_final`).
+
+    Example::
+
+        if ctx.loops[-1].first:
+            store_old_iterate(ctx)
     """
 
     name: Optional[str]
@@ -43,6 +50,10 @@ class Context(BaseModel):
     It contains fields and models that are used by various components of the framework.
 
     The relevant fields or models are injected into the operations
+
+    ``loops`` holds the running loops, outermost first. ``run_every_pass`` names
+    ``final`` operations that also run in every other pass, e.g. to watch them
+    while debugging.
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -55,14 +66,20 @@ class Context(BaseModel):
     # names of fields (keys of ``fields``) flagged for persistence via
     # ``field(..., write=True)``; a per-field write backend writes exactly these.
     write_fields: set[str] = Field(default_factory=set)
-    # the loops running now, outermost first
     loops: list[LoopEntry] = Field(default_factory=list)
-    # ``final`` operations to run in every pass too, e.g. to watch them while debugging
     run_every_pass: set[str] = Field(default_factory=set)
 
     def mark_final(self, final: bool = True) -> None:
-        """Mark the pass the innermost loop is about to run as its last; call from its test.
+        """Mark the pass the innermost loop is about to run as its last.
 
-        The next pass is not final again until the test marks it.
+        Call it from that loop's test, when the test knows the coming pass ends the
+        loop; a loop that never calls it never runs its ``final`` operations. The
+        mark lasts one pass: the next is not final until the test marks it again.
+
+        Example::
+
+            def converged_test(ctx: Context) -> bool:
+                ctx.mark_final(residual(ctx) < tolerance)
+                return ctx.loops[-1].iteration < max_passes
         """
         self.loops[-1] = self.loops[-1]._replace(final=final)

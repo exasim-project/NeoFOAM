@@ -611,8 +611,8 @@ def test_resolve_keeps_root_level_ops_beside_a_loop() -> None:
     """Sequential ops at the root stay in their place around a root-level loop."""
     builder = StepBuilder()
     builder.step(_seq("setup", number="1"))
-    with builder.loop(_loop_op("time_loop", number="2")) as lb:
-        lb.step(_seq("step1", number="1"))
+    with builder.loop(_loop_op("time_loop", number="2")) as loop_builder:
+        loop_builder.step(_seq("step1", number="1"))
     builder.step(_seq("teardown", number="3"))
 
     result = DAGResolver().resolve(builder, Operations())

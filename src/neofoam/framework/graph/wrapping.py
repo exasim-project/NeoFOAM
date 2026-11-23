@@ -33,7 +33,15 @@ says which part:
 Loops are placed in the order given, outer first; one that would have to hold a
 loop placed before it raises. An operation marked ``first`` runs only in the first
 pass of the wrapping loops around it, one marked ``final`` only in their final
-pass; :func:`check_passes` rejects dependencies that would read stale data.
+pass; dependencies that would read stale data are rejected.
+
+Use ``wraps`` for a loop contributed from outside the solver; a solver's own loop
+belongs in its ``StepBuilder``. Placing a loop leaves the operations it is given
+unchanged and returns new containers.
+
+Example::
+
+    OperationMetadata(op_name="couple", wraps=Placement(operations=("solve_T",)))
 """
 
 from __future__ import annotations
@@ -44,7 +52,6 @@ from typing import Callable, Iterator
 from neofoam.framework.operations import IterativeOp, Operation
 from neofoam.framework.types import Placement
 
-# The path to a scope: the index of each loop on the way down from the root.
 Path = tuple[int, ...]
 
 
@@ -65,11 +72,8 @@ def _downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list
     return selected
 
 
-def wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
-    """The resolved ``ops`` with ``loop`` placed as its ``metadata.wraps`` says.
-
-    Raises ``ValueError`` when the placement names no, or no single, scope.
-    """
+def _wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
+    """The resolved ``ops`` with ``loop`` placed; ``ValueError`` without a single scope."""
     placement = loop.metadata.wraps
     assert placement is not None
     if placement.operations is None:
@@ -86,8 +90,7 @@ def _around(ops: list[Operation]) -> dict[str, tuple[Operation, tuple[str, ...]]
     def walk(scope: list[Operation], around: tuple[str, ...]) -> None:
         for op in scope:
             if _is_loop(op):
-                inner = (*around, op.operation_name or "loop") if _is_wrapping(op) else around
-                walk(op.sub_operations, inner)
+                walk(op.sub_operations, _inside(op, around))
             elif op.operation_name:
                 located[op.operation_name] = (op, around)
 
@@ -95,20 +98,25 @@ def _around(ops: list[Operation]) -> dict[str, tuple[Operation, tuple[str, ...]]
     return located
 
 
+def _inside(loop: Operation, around: tuple[str, ...]) -> tuple[str, ...]:
+    """The wrapping loops around the body of ``loop``."""
+    return (*around, loop.operation_name or "loop") if _is_wrapping(loop) else around
+
+
 def _upstream(
     name: str, op: Operation, located: dict[str, tuple[Operation, tuple[str, ...]]]
 ) -> list[str]:
     """The operations ``op`` depends on: its ``depends_on``, and those naming it ``before``."""
-    return [*op.depends_on, *(other for other, (o, _) in located.items() if name in o.before)]
+    return [
+        *op.depends_on,
+        *(other for other, (other_op, _) in located.items() if name in other_op.before),
+    ]
 
 
-def check_passes(ops: list[Operation]) -> None:
-    """Raise ``ValueError`` when a dependency inside a shared wrapping loop crosses passes.
-
-    Within a wrapping loop around both, an operation not marked ``final`` may not
-    depend on one that is, and one marked ``first`` only on one that is too: either
-    would run before its dependency, or on stale data.
-    """
+def _check_passes(ops: list[Operation]) -> None:
+    """Raise ``ValueError`` when a dependency inside a shared wrapping loop crosses passes."""
+    # An op not marked final must not depend on a final one, and a first op only on a
+    # first one: either would run before its dependency, or on stale data.
     pairs = list(_sharing_a_loop(_around(ops)))
     for name, op, dependency, dependency_op, loop in pairs:
         if dependency_op.metadata.final and not op.metadata.final:
@@ -135,24 +143,21 @@ def _sharing_a_loop(
             if dependency not in located:
                 continue
             dependency_op, dependency_around = located[dependency]
-            shared = [loop for loop in around if loop in dependency_around]
-            if shared:
-                yield name, op, dependency, dependency_op, shared[-1]
+            loop = _innermost_shared(around, dependency_around)
+            if loop is not None:
+                yield name, op, dependency, dependency_op, loop
+
+
+def _innermost_shared(around: tuple[str, ...], other: tuple[str, ...]) -> str | None:
+    """The innermost of the loops ``around`` that is also in ``other``."""
+    shared = [loop for loop in around if loop in other]
+    return shared[-1] if shared else None
 
 
 def _top(ops: list[Operation], loop: Operation) -> Path:
     """The path to the scope a loop without operations wraps whole."""
-    path: Path = ()
-    scope = ops
-    outer = [index for index, op in enumerate(scope) if isinstance(op.func, IterativeOp)]
-    if len(outer) > 1:
-        raise ValueError(
-            f"{loop.operation_name} wraps the body of the outermost loop, but the graph "
-            "has several; name its operations"
-        )
-    if outer:
-        path = (outer[0],)
-        scope = scope[outer[0]].sub_operations
+    path = _outermost_path(ops, loop)
+    scope = _scope(ops, path)
     while True:
         wrapping = [index for index, op in enumerate(scope) if _is_wrapping(op)]
         if not wrapping:
@@ -166,14 +171,28 @@ def _top(ops: list[Operation], loop: Operation) -> Path:
         scope = scope[wrapping[0]].sub_operations
 
 
-def _selected(
-    ops: list[Operation], loop: Operation, placement: Placement
-) -> tuple[Path, list[Operation]]:
-    """The scope of the operations ``placement`` names, and what the loop takes there."""
-    names = list(placement.operations or ())
-    located = _located(ops, ())
+def _outermost_path(ops: list[Operation], loop: Operation) -> Path:
+    """The path to the body of the single outermost loop, or to the root without one."""
+    outer = [index for index, op in enumerate(ops) if isinstance(op.func, IterativeOp)]
+    if len(outer) > 1:
+        raise ValueError(
+            f"{loop.operation_name} wraps the body of the outermost loop, but the graph "
+            "has several; name its operations"
+        )
+    return (outer[0],) if outer else ()
+
+
+def _outermost_loops(located: dict[str, tuple[Path, Operation]]) -> set[str]:
+    """The names of the loops in the top scope."""
+    return {name for name, (path, op) in located.items() if not path and _is_loop(op)}
+
+
+def _check_named(
+    loop: Operation, names: list[str], located: dict[str, tuple[Path, Operation]]
+) -> None:
+    """Raise ``ValueError`` unless ``names`` are operations inside the outermost loop."""
     # A loop of the top scope (the time loop) cannot be repeated by one inside it.
-    outermost = {name for name, (path, op) in located.items() if not path and _is_loop(op)}
+    outermost = _outermost_loops(located)
     unknown = [name for name in names if name not in located]
     if unknown:
         available = sorted(name for name in located if name not in outermost)
@@ -187,6 +206,15 @@ def _selected(
             f"{loop.operation_name} wraps {loops}, the outermost loop; it wraps operations "
             "or loops inside it"
         )
+
+
+def _selected(
+    ops: list[Operation], loop: Operation, placement: Placement
+) -> tuple[Path, list[Operation]]:
+    """The scope of the operations ``placement`` names, and what the loop takes there."""
+    names = list(placement.operations or ())
+    located = _located(ops, ())
+    _check_named(loop, names, located)
     paths = {located[name][0] for name in names}
     if len(paths) > 1:
         raise ValueError(
@@ -218,7 +246,7 @@ def _wrapping_in(ops: list[Operation]) -> list[str | None]:
 
 
 def _located(ops: list[Operation], path: Path) -> dict[str, tuple[Path, Operation]]:
-    """Every named operation in ``ops`` and below, with the path to its scope."""
+    """Every named operation in ``ops`` and below, with its scope's loop indices from the root."""
     located: dict[str, tuple[Path, Operation]] = {}
     for index, op in enumerate(ops):
         if op.operation_name:
