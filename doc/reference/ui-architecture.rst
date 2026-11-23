@@ -51,6 +51,8 @@ point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
     Seeds a field's boundary conditions from scanned patches; ``patch_bc_schema``.
 ``form_schema``
     The JSON-Schema → JSONForms transform and the renderer keywords (below).
+``field_form``
+    Adds the per-field layout keywords to a numerics form whose model declares fields.
 ``geometry_agent``
     The LLM helper that assigns patch roles from prose.
 ``forms``
@@ -59,6 +61,9 @@ point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
 ``steps``, ``case_spec``, ``geometry_panel``
     Steps, model choices/families and ``selection_key``/``choice_key``; form state
     ↔ ``save_case`` spec; the Geometry step.
+``file_preview``
+    The text Save would write to a per-field form's files, through ``write_configs`` in a
+    temporary directory.
 ``case_load``, ``sweep_view``
     Reopen a case from disk (``case_algorithm``, ``case_advection_model``,
     ``models_to_select``, ``apply_configs_to_forms``); the Parameters step's layout.
@@ -148,16 +153,90 @@ falls back to the stock renderer without any error. Python emits them in
      - ``true``
      - ``_tag_scalar_grid``: an object of two or more scalars only
      - ``NfGridLayout`` (wrapping grid of the stock controls)
+   * - ``nfDiscriminator``
+     - the property name, e.g. ``solver``
+     - ``inline_refs``: a discriminated union on a property other than ``type``
+     - ``NfInlineOneOf``: the select is titled after it, a switch keeps shared values
+   * - ``nfUnions``
+     - ``true``
+     - ``_tag_adders``: an OpenFOAM section whose entries all carry ``nfDiscriminator``
+     - ``NfCompactSection``, ``rows`` (one line per entry)
+   * - ``nfLevel``
+     - ``"main"`` or ``"advanced"``; absent means main
+     - the model: ``advanced()``, or a scheme key declared with ``field=``
+     - ``NfFieldForm``: main row, or "All entries"
+   * - ``nfGroup``
+     - a heading, e.g. ``Hierarchy``
+     - the model: ``advanced(group=...)``
+     - ``advancedGroups``: the heading inside "All entries"
+   * - ``nfDefaultHint``
+     - the value used when unset; may be ``false``
+     - the model: ``advanced(default_hint=...)``
+     - ``NfOptionField``: placeholder only, never written
+   * - ``nfField``
+     - the field name, e.g. ``U``
+     - the model: scheme keys and typed ``solvers`` entries
+     - ``fieldRows``: the collapsible row of the entry
+   * - ``nfFinalOf``
+     - on an entry its base; on ``solvers`` a ``{final: base}`` map
+     - the model; ``field_form.tag_field_form``
+     - ``NfFieldForm``: the "Same as" switch
+   * - ``nfFieldGroups``
+     - ``{field: [solver entries]}``
+     - ``field_form.tag_field_form``: the ``solvers`` section
+     - ``fieldRows``
+   * - ``nfFieldForm``
+     - ``true``
+     - ``field_form.tag_field_form``: a form with any ``nfField`` entry
+     - ``NfFieldForm`` (``fieldForm.mjs``)
+   * - ``nfBackend``
+     - ``{name, openfoam: [words]}``
+     - ``field_form.tag_field_form``: from the model's ``_backend``
+     - ``NfFieldForm``: the read-only backend note
+   * - ``nfArmLabel``
+     - the select's text, e.g. ``Config file``
+     - ``field_form.tag_field_form``: an arm declaring ``configFile``
+     - ``NfInlineOneOf``; the data keeps the discriminator value
+   * - ``nfRefusedArms``
+     - discriminator values
+     - ``field_form.tag_field_form``: arms the field's validators reject
+     - ``NfInlineOneOf``: not offered unless the data holds one
+   * - ``nfSwitchDrops``
+     - property names
+     - ``field_form.tag_field_form``: shared keys the arm rejects when set alone
+     - ``keptValues``: not carried over on a switch
+   * - ``nfRefusedChoices``
+     - ``{solver|preconditioner|smoother: [names]}``
+     - the model: names a field's matrix type refuses
+     - ``withFieldChoices``: not offered in that field
+   * - ``nfDefaultChoices``
+     - ``{preconditioner: name}``
+     - the model: a field's default for a new block
+     - ``withFieldChoices``: the preconditioner a new block starts from
 
 ``nfInline`` and ``nfRowKey`` are UISchema options the JS sets for itself. The contract
 has implicit parts as well:
 
-* **Discriminator** — a union arm's ``type`` is ``{"const": t, "default": t}``: no
-  control is drawn, ``default`` puts it into the data when the arm is picked, and
-  ``NfInlineOneOf`` selects the arm by it.
+* **Discriminator** — a union arm's discriminator (``type`` unless ``nfDiscriminator``
+  names another) is ``{"const": t, "default": t}``: no control is drawn, ``default`` puts
+  it into the data when the arm is picked, and ``NfInlineOneOf`` selects the arm by it.
 * **Pinned solver keys** — ``solver``, the companion key its ``nfSolver`` map names,
   ``tolerance`` and ``relTol`` cannot be deleted and come first; switching the solver
-  family drops the stale companion key.
+  family drops the stale companion key. Only open-dictionary blocks are pinned; a block
+  with a schema of its own takes the generic path.
+* **Named discriminators** — a union discriminated on another property (a NeoN linear
+  solver on ``solver``) carries ``nfDiscriminator``; a ``type`` union carries nothing and
+  renders as before. Its select is titled after the property. A switch keeps each value
+  both arms declare that validates against the new arm's property schema, and asks for
+  no confirmation. A field only one arm declares (``configFile``'s ``reuseSetup``) is drawn
+  when it is required or set, so the row stays one line. Choices and required fields
+  lead the arm. A dictionary no arm claims (an open ``k`` block) is a free-form block. A
+  nested ``type`` union (``preconditioner``) is one more inline select plus the selected
+  plugin's own options, so a newly registered preconditioner needs no UI change.
+* **Typed OpenFOAM blocks** — a block a plugin cannot represent loads as the ``Other`` arm
+  (``solverName`` holds the file's word) and is written back as read. Keys no plugin models
+  are listed under "All entries" as *Other keys*, at the block and in a nested
+  preconditioner, and stay editable and removable.
 * **Suggestions** — JSON-schema ``examples`` become a combobox's suggestions: free
   text stays valid (a loaded case may name ``Ginkgo``), unlike with an ``enum``.
 * **New entries** — a hand-added map entry starts from the ``default`` of the map's
@@ -212,6 +291,10 @@ computed names with their helper, which makes them valid JS identifiers.
    * - ``schema_*`` / ``uischema_*`` (``schema_key`` / ``uischema_key``)
      - ``app``
      - ``geometry_panel`` replaces a ``field_bc`` schema with ``patch_bc_schema``
+   * - ``field_schema_*`` (``field_schema_key``)
+     - ``app``, only for a form whose model declares fields
+     - read-only: what that form draws, ``schema_*`` plus the per-field keywords. The
+       Parameters step keeps drawing ``schema_*``
    * - ``form_translations``
      - ``app``
      - read-only; ``sweep_view`` binds it to its own forms
@@ -225,6 +308,16 @@ computed names with their helper, which makes them valid JS identifiers.
    * - ``validation_ok``, ``findings``, ``save_report``, ``scaffolded``
      - ``app``
      - ``sweep_panel`` reads ``scaffolded`` before an export
+   * - ``form_epoch``
+     - ``app``
+     - ``case_load.apply_configs_to_forms`` increments it; it is the ``key`` of each step
+       form, so a load remounts the form and a union shows the loaded arm
+   * - ``file_preview``, ``file_preview_tab``
+     - ``app``, only for a wizard with a per-field form
+     - read-only elsewhere: the Numerics step's live file preview
+   * - ``rejected_slices``
+     - ``app``; ``agent_panel`` and the load routes (``case_load.remember_rejected_slices``)
+     - every case writer asks ``case_load.rejected_slices`` before writing
    * - ``run_busy``, ``run_lines``, ``run_status``, ``run_severity``, ``run_source``
      - ``run_panel``
      - read-only elsewhere: the Review step's run output. ``run_lines`` is capped at
@@ -278,6 +371,29 @@ adds ``Allrun`` and ``Allclean``; ``tools.validate_case`` runs the checks of
 ``PCG`` without a ``preconditioner``. ``review.findings_to_rows`` turns the findings
 into ``findings``; an exception on the way becomes rows too (``save_error_rows``), so a
 failed save never crashes the UI. ``ctrl.revalidate`` repeats the last step alone.
+
+A slice that is on disk but fails validation is not in the forms, which hold defaults in
+its place, so writing it would replace the user's block. Each load records such slices
+(``rejected_slices``). Save, the assistant's auto-save and a sweep export then leave
+that file byte-identical, co-owning slices included, and report the file and block as
+error findings (``review.rejected_slice_rows``) until a new load reads it cleanly. Only a
+slice that would be written counts: a slice of an unselected model, or one whose file is
+gone, blocks nothing, and a slice genuinely absent from the case is unaffected.
+
+A file with a quoted regex key (``"(U|k)"``) is valid but cannot be written back: a slice
+it completes holds defaults, and the writer would drop the quotes of a key it keeps,
+leaving a file OpenFOAM cannot parse. ``case_load.read_case_configs`` therefore marks such
+a slice ``"cause": "regex"``, after checking that the entries OpenFOAM's pattern lookup
+finds validate. Save leaves the file byte-identical whichever model is selected and
+reports a *warning*, so the case still validates and the other files are written; form
+edits to that file are not saved. A regex block that fails validation stays an error.
+
+Loading a legacy NeoN block converts it to the flat form (``solver PCG`` → ``Cg``/``Ic``)
+and may drop keys NeoN ignores. ``case_load.conversion_notes`` names each field and its
+dropped keys in the load report. A pairing the model rejects but the JSON schema allows
+(``Multigrid`` off ``Cg``, ``Ir`` with ``none``) draws no inline error: Save reports the
+model's message as a finding, writes nothing and keeps the form's values. A solver a field's
+own validator refuses (``Gmres`` on ``U``) is not offered in that field's select.
 
 Test and inspect
 ----------------

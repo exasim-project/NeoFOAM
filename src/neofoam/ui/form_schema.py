@@ -14,6 +14,14 @@ from neofoam.ui.boundary_forms import _arm_titles, _role_bc_seed
 
 __all__ = [
     "ADDER_TRANSLATIONS",
+    "NF_ARM_LABEL",
+    "NF_BACKEND",
+    "NF_FIELD",
+    "NF_FIELD_FORM",
+    "NF_FIELD_GROUPS",
+    "NF_FINAL_OF",
+    "NF_REFUSED_ARMS",
+    "NF_SWITCH_DROPS",
     "RENDERER_KEYWORDS",
     "alternatives_uischema",
     "humanize",
@@ -31,6 +39,21 @@ _NF_GRID = "nfGrid"
 _NF_DICT = "nfDict"
 _NF_DICTS = "nfDicts"
 _NF_PATCHES = "nfPatches"
+_NF_DISCRIMINATOR = "nfDiscriminator"
+_NF_UNIONS = "nfUnions"
+_NF_LEVEL = "nfLevel"
+_NF_GROUP = "nfGroup"
+_NF_DEFAULT_HINT = "nfDefaultHint"
+NF_FIELD = "nfField"
+NF_FINAL_OF = "nfFinalOf"
+NF_FIELD_GROUPS = "nfFieldGroups"
+NF_FIELD_FORM = "nfFieldForm"
+NF_BACKEND = "nfBackend"
+NF_ARM_LABEL = "nfArmLabel"
+NF_REFUSED_ARMS = "nfRefusedArms"
+NF_SWITCH_DROPS = "nfSwitchDrops"
+_NF_REFUSED_CHOICES = "nfRefusedChoices"
+_NF_DEFAULT_CHOICES = "nfDefaultChoices"
 RENDERER_KEYWORDS = (
     _NF_COMPACT,
     _NF_SOLVERS,
@@ -39,6 +62,21 @@ RENDERER_KEYWORDS = (
     _NF_DICT,
     _NF_DICTS,
     _NF_PATCHES,
+    _NF_DISCRIMINATOR,
+    _NF_UNIONS,
+    _NF_LEVEL,
+    _NF_GROUP,
+    _NF_DEFAULT_HINT,
+    NF_FIELD,
+    NF_FINAL_OF,
+    NF_FIELD_GROUPS,
+    NF_FIELD_FORM,
+    NF_BACKEND,
+    NF_ARM_LABEL,
+    NF_REFUSED_ARMS,
+    NF_SWITCH_DROPS,
+    _NF_REFUSED_CHOICES,
+    _NF_DEFAULT_CHOICES,
 )
 
 # The ``FoamFile`` header (version / format / class / object) a config may mirror is
@@ -111,18 +149,23 @@ def _clean_description(text: str) -> str:
     return re.sub(r"\s+", " ", first).strip()
 
 
-def _const_type_of(arm: dict[str, Any], defs: dict[str, Any]) -> str | None:
-    """The ``type`` discriminator ``const`` of a union arm (resolving ``$ref``)."""
+def _discriminator_key(node: dict[str, Any]) -> str:
+    """The property a union names its arm by; ``type`` unless the schema says otherwise."""
+    return str(node.get(_NF_DISCRIMINATOR, "type"))
+
+
+def _const_type_of(arm: dict[str, Any], defs: dict[str, Any], key: str = "type") -> str | None:
+    """The discriminator ``const`` under ``key`` of a union arm (resolving ``$ref``)."""
     node = arm
     ref = arm.get("$ref")
     if ref:
         node = defs.get(ref.rsplit("/", 1)[-1], {})
-    const = node.get("properties", {}).get("type", {}).get("const")
+    const = node.get("properties", {}).get(key, {}).get("const")
     return const if isinstance(const, str) else None
 
 
 def _hidden_discriminator(const: str) -> dict[str, Any]:
-    """A ``type`` discriminator that stays in the data but renders no control.
+    """A discriminator that stays in the data but renders no control.
 
     The union's arm selector already names the type, so a second "Type" dropdown with
     that one value only doubles the form's height. JSONForms generates a control per
@@ -198,7 +241,7 @@ def _accepts_new_keys(node: dict[str, Any]) -> bool:
     hides the row and — absent meaning "allowed" — still validates the same data.
     """
     shapes = [
-        {k: v for k, v in prop.items() if k not in ("title", "default")}
+        {k: v for k, v in prop.items() if k not in ("title", "default") and not k.startswith("nf")}
         for prop in node.get("properties", {}).values()
     ]
     if not shapes:
@@ -242,6 +285,7 @@ def _tag_adders(node: dict[str, Any]) -> None:
 
     A section of scheme unions additionally gets ``nfCompact``: the bundled renderer
     then draws it as one row per entry instead of JSONForms' stacked full-width selects.
+    A section of unions naming their discriminator gets the same rows through ``nfUnions``.
     """
     if not _is_openfoam_block(node):
         return
@@ -251,7 +295,10 @@ def _tag_adders(node: dict[str, Any]) -> None:
             shape["i18n"] = "nf.option"
     if node.get("additionalProperties") is not True or not shapes:
         return
-    if all("oneOf" in shape for shape in shapes):
+    if all(_NF_DISCRIMINATOR in shape for shape in shapes):
+        node["i18n"] = "nf.solver" if node.get("title") == "_solvers" else "nf.entry"
+        node[_NF_UNIONS] = True
+    elif all("oneOf" in shape for shape in shapes):
         node["i18n"] = "nf.entry"
         node[_NF_COMPACT] = True
     else:
@@ -289,17 +336,38 @@ def _pin_solver_controls(node: dict[str, Any]) -> None:
 
     The config publishes a block as an open dictionary (any key, written back as read);
     only the form declares the keys, so the bundled renderer can offer dropdowns and
-    number fields.
+    number fields. A block with a schema of its own is left to the generic path.
     """
     if node.get("title") != "_solvers":
         return
+    blocks = node.get("properties", {})
+    open_blocks = [block for block in blocks.values() if _is_open_dict(block)]
+    if blocks and not open_blocks:
+        return
     node[_NF_SOLVERS] = True
-    for block in node.get("properties", {}).values():
+    for block in open_blocks:
         block[_NF_SOLVER] = SOLVER_COMPANION
         block["allOf"] = _companion_rules()
         block["properties"] = {
             key: {**control, "title": key} for key, control in _SOLVER_CONTROLS.items()
         }
+
+
+def _keep_typed_block_rules(node: dict[str, Any]) -> None:
+    """Give a typed block of OpenFOAM's solvers an open block's rules (mutates ``node``).
+
+    OpenFOAM aborts without the companion key, so an empty one still shows as required, and
+    keys no plugin models stay allowed. Runs after the passes that recognise an open block
+    by its ``additionalProperties``.
+    """
+    if node.get("title") != "_solvers":
+        return
+    for block in node.get("properties", {}).values():
+        tags = {arm["properties"]["solver"].get("const") for arm in block.get("oneOf", [])}
+        if block.get(_NF_DISCRIMINATOR) == "solver" and tags & set(SOLVER_COMPANION):
+            block["allOf"] = _companion_rules()
+            block["additionalProperties"] = True
+            block["i18n"] = "nf.option"
 
 
 _SCALAR_TYPES = ("number", "integer", "boolean")
@@ -314,8 +382,11 @@ def _tag_scalar_grid(node: dict[str, Any]) -> None:
     """Flag an object of two or more scalars only with ``nfGrid`` (mutates ``node``).
 
     The bundled layout renderer then sets its controls side by side in a wrapping grid
-    instead of one full-width control per line (``PIMPLE``, a model's coefficients).
+    instead of one full-width control per line (``PIMPLE``, a model's coefficients). An
+    advanced object is drawn inside "All entries", which lays out its own controls.
     """
+    if node.get(_NF_LEVEL) == "advanced":
+        return
     shapes = list(node.get("properties", {}).values())
     if len(shapes) >= 2 and all(_is_scalar(shape) for shape in shapes):
         node[_NF_GRID] = True
@@ -364,6 +435,19 @@ def _patch_adder(node: dict[str, Any]) -> None:
     node["properties"]["boundaryField"] = boundary_field
 
 
+def _named_discriminator(node: dict[str, Any]) -> str | None:
+    """The union's discriminator property when it is not ``type``.
+
+    ``properties`` may hold a key called ``discriminator``; only a schema keyword has
+    ``propertyName``.
+    """
+    discriminator = node.get("discriminator")
+    if not isinstance(discriminator, dict):
+        return None
+    name = discriminator.get("propertyName")
+    return name if isinstance(name, str) and name != "type" else None
+
+
 def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     """Resolve every ``#/$defs/...`` ``$ref`` into a self-contained subtree.
 
@@ -380,9 +464,10 @@ def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     dropped, which bounds a self-referential union at one level: inside
     ``cellLimited`` the inner gradient scheme offers the non-recursive arms only
     (OpenFOAM cases do not nest a limiter in a limiter). Other cyclic refs, and
-    unknown ones, are left in place; ``discriminator`` keys are dropped
-    (JSONForms ignores them, and their ``mapping`` would dangle once the defs are
-    gone). ``$defs`` is removed when nothing refers to it anymore.
+    unknown ones, are left in place. ``discriminator`` keys are dropped (JSONForms
+    ignores them, and their ``mapping`` would dangle once the defs are gone); one naming
+    a property other than ``type``, the renderers' default, survives as
+    ``nfDiscriminator``. ``$defs`` is removed when nothing refers to it anymore.
     """
     defs = schema.get("$defs", {})
 
@@ -403,9 +488,9 @@ def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
             target = resolve(defs[name], stack | {name})
             siblings = {k: v for k, v in node.items() if k != "$ref"}
             return {**target, **{k: resolve(v, stack) for k, v in siblings.items()}}
-        return {
-            k: resolve(v, stack) for k, v in node.items() if k not in ("$defs", "discriminator")
-        }
+        out = {k: resolve(v, stack) for k, v in node.items() if k not in ("$defs", "discriminator")}
+        named = _named_discriminator(node)
+        return {**out, _NF_DISCRIMINATOR: named} if named else out
 
     def has_ref(node: Any) -> bool:
         if isinstance(node, list):
@@ -441,7 +526,8 @@ def _unwrapped_optional(node: dict[str, Any], comb: str, arm: dict[str, Any]) ->
 
 def _title_arms(node: dict[str, Any], comb: str, non_null: list[Any], names: _SchemaNames) -> bool:
     """Make a discriminated union a ``oneOf`` titled by the arms' ``const`` (mutates ``node``)."""
-    consts = [_const_type_of(a, names.defs) for a in non_null if isinstance(a, dict)]
+    key = _discriminator_key(node)
+    consts = [_const_type_of(a, names.defs, key) for a in non_null if isinstance(a, dict)]
     if sum(c is not None for c in consts) < 2:
         return False
     node.pop(comb, None)
@@ -525,6 +611,25 @@ def _hide_discriminator(node: dict[str, Any]) -> None:
         node["properties"]["type"] = _hidden_discriminator(const)
 
 
+def _hide_named_discriminator(node: dict[str, Any]) -> None:
+    """Hide a non-``type`` discriminator and lead each arm with its choices (mutates ``node``).
+
+    The arm's fields follow its select on one row, so a choice or a required field comes
+    before the optional numbers whatever the model's field order is.
+    """
+    key = _discriminator_key(node)
+    if key == "type":
+        return
+    for arm in node.get("oneOf", []):
+        properties = arm.get("properties", {})
+        const = properties.get(key, {}).get("const")
+        if const:
+            properties[key] = _hidden_discriminator(const)
+        required = arm.get("required", [])
+        leads = [k for k, v in properties.items() if "enum" in v or "oneOf" in v or k in required]
+        arm["properties"] = {**{k: properties[k] for k in leads}, **properties}
+
+
 # The passes run on every node, in this order, once its children are rewritten, so a
 # pass sees finished children. Two ordering constraints; the other passes commute:
 # * _drop_useless_adder before _tag_adders: a label goes on a row that is still there
@@ -535,9 +640,11 @@ _NODE_PASSES = (
     _drop_useless_adder,
     _tag_adders,
     _pin_solver_controls,
+    _keep_typed_block_rules,
     _patch_adder,
     _tag_scalar_grid,
     _hide_discriminator,
+    _hide_named_discriminator,
 )
 
 
@@ -583,6 +690,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
       their ``const`` value, so JSONForms shows a clean "pick a type" dropdown
       (``fixedValue``/``noSlip``/…) instead of stacking every arm. The arm's own
       ``type`` property is kept in the data but not rendered (:func:`_hidden_discriminator`).
+      A union on another property works the same and keeps it as ``nfDiscriminator``.
     * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.
     * **Renderer keywords** — the ``_NODE_PASSES`` on every node, then
       ``_dictionary_cards`` on the whole schema, tag what the bundled renderers draw

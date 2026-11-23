@@ -12,14 +12,20 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import warnings as python_warnings
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
+import pybFoam as pyf
+from pydantic import RootModel, ValidationError
+
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
+from neofoam.foam import LinearSolverConversionWarning
 from neofoam.framework.solver.configurations import configurations
 from neofoam.io import OpenFOAMStrategy
 from neofoam.io.dictread import Value, foam_case, read_keys, read_section, read_toplevel
+from neofoam.io.strategies.openfoam_strategy import _read_fields, _to_python
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.steps import (
@@ -31,7 +37,11 @@ from neofoam.ui.steps import (
 
 __all__ = [
     "read_case_configs",
+    "conversion_notes",
     "apply_configs_to_forms",
+    "remember_rejected_slices",
+    "rejected_slices",
+    "without_rejected_files",
     "case_algorithm",
     "case_advection_model",
     "models_to_select",
@@ -86,7 +96,8 @@ def read_case_configs(
     absent are simply missing from the result; pass ``warnings`` to also collect
     the ones that are present but do not validate. A dictionary OpenFOAM cannot parse
     raises ``ValueError`` (found in a child process, as such an error ends the process
-    it occurs in). Pair it with
+    it occurs in). A warning whose missing keys are valid regex entries of the file
+    (``"(U|k)"``) gets ``"cause": "regex"``. Pair it with
     :func:`apply_configs_to_forms` to put the result in front of the user::
 
         configs = read_case_configs(Path(case_dir), solver)
@@ -96,7 +107,217 @@ def read_case_configs(
     # aborts the server process on the read it was meant to protect.
     with foam_case(case_dir):
         _require_parsable(case_dir, solver)
-        return case_spec_to_configs(load_case_from_disk(case_dir, solver=solver, warnings=warnings))
+        configs = case_spec_to_configs(
+            load_case_from_disk(case_dir, solver=solver, warnings=warnings)
+        )
+        # Here, not at save: the file has just passed the parse probe.
+        if warnings is not None:
+            _note_regex_slices(case_dir, solver, configs, warnings)
+        return configs
+
+
+def conversion_notes(case_dir: Path, configs: list[Any]) -> list[str]:
+    """One line per loaded solver block whose conversion dropped keys of the file.
+
+    Use it after :func:`read_case_configs` to report what a legacy block lost. Each block
+    is converted again here because the warning itself does not name its field. Warnings
+    filters are process-global, so this must run on trame's event loop::
+
+        notes = conversion_notes(Path(case_dir), configs)
+    """
+    notes: dict[str, None] = {}
+    with foam_case(case_dir):
+        for config in configs:
+            for field, message in _block_conversions(case_dir, config):
+                notes[f"{type(config).io_config.file} solvers.{field}: {message}"] = None
+    return list(notes)
+
+
+def _block_conversions(case_dir: Path, config: Any) -> list[tuple[str, str]]:
+    """The ``(field, warning)`` pairs of converting ``config``'s typed solver blocks."""
+    solvers = getattr(config, "solvers", None)
+    typed = {
+        info.alias or name: type(getattr(solvers, name))
+        for name, info in (type(solvers).model_fields.items() if solvers else ())
+        if isinstance(getattr(solvers, name), RootModel)
+    }
+    if not typed:
+        return []
+    raw = _to_python(pyf.dictionary.read(str(case_dir / config.io_config.file)))["solvers"]
+    found: list[tuple[str, str]] = []
+    for field in typed.keys() & raw.keys():
+        with python_warnings.catch_warnings(record=True) as caught:
+            python_warnings.simplefilter("always", LinearSolverConversionWarning)
+            typed[field].model_validate(raw[field])
+        found += [(field, str(w.message)) for w in caught]
+    return sorted(found)
+
+
+def remember_rejected_slices(state: Any, case_dir: Path, warnings: list[dict[str, str]]) -> None:
+    """Record the slices a load found on disk but could not validate.
+
+    Their forms hold defaults rather than the file's values, so every writer asks
+    :func:`rejected_slices` before touching the case. Call it after each successful
+    read; a new read replaces the record::
+
+        remember_rejected_slices(state, Path(case_dir), warnings)
+    """
+    where = str(case_dir.resolve())
+    state.rejected_slices = [{**warning, "case_dir": where} for warning in warnings]
+
+
+def rejected_slices(
+    state: Any, entries: list[FormEntry], target: Path
+) -> dict[str, list[dict[str, str]]]:
+    """The files in ``target`` a writer must leave alone, each with its rejected slices.
+
+    Only a slice a save would write counts: one with a form, whose model is selected,
+    in the case it was read from, and whose file is still there. A slice whose missing
+    keys are valid regex entries counts whichever model is selected, because any write
+    of that file would clear them, and is marked ``"cause": "regex"``::
+
+        refused = rejected_slices(state, entries, target)
+    """
+    by_name = {entry.cls_name: entry for entry in entries}
+    where = str(target.resolve())
+    refused: dict[str, list[dict[str, str]]] = {}
+    for rejected in state.rejected_slices or []:
+        entry, file = by_name.get(rejected["config"]), rejected["file"]
+        if rejected["case_dir"] != where or entry is None or not (target / file).exists():
+            continue
+        regex = rejected.get("cause") == "regex"
+        if regex or entry.owner_model is None or state[selection_key(entry.owner_model)]:
+            refused.setdefault(file, []).append(rejected)
+    return refused
+
+
+def _note_regex_slices(
+    case_dir: Path, solver: Any, configs: list[Any], warnings: list[dict[str, str]]
+) -> None:
+    """Mark reported slices that regex keys complete and report every other regex file.
+
+    The load takes a slice without a key of its own for absent, yet a form default
+    written over its file would clear the regex block. A slice that did load is no
+    safer: the writer drops the key's quotes, which leaves a file OpenFOAM cannot parse.
+    """
+    classes = {cls.__name__: cls for cls in configurations(solver)}
+    for warning in warnings:
+        cls = classes[warning["config"]]
+        if _regex_cause(cls, case_dir / warning["file"], warning["reason"]) == "regex":
+            warning["cause"] = "regex"
+    settled = {type(config).__name__ for config in configs} | {w["config"] for w in warnings}
+    for name, cls in classes.items():
+        io = getattr(cls, "io_config", None)
+        if name in settled or io is None or not (case_dir / io.file).exists():
+            continue
+        reason = _missing_keys_reason(cls, case_dir)
+        cause = _regex_cause(cls, case_dir / io.file, reason) if reason else None
+        if reason and cause:
+            noted = {"file": io.file, "config": name, "reason": reason}
+            warnings.append({**noted, "cause": "regex"} if cause == "regex" else noted)
+    _note_loaded_regex_files(case_dir, configs, warnings)
+
+
+def _note_loaded_regex_files(
+    case_dir: Path, configs: list[Any], warnings: list[dict[str, str]]
+) -> None:
+    """Report each loaded config whose file spells a key as a quoted regex."""
+    reported = {w["file"] for w in warnings}
+    for config in configs:
+        io = getattr(type(config), "io_config", None)
+        if io is None or io.file in reported or not (case_dir / io.file).is_file():
+            continue
+        text = (case_dir / io.file).read_text(errors="ignore")
+        entries = (
+            _regex_entries(pyf.dictionary.read(str(case_dir / io.file)), text)
+            if '"' in text
+            else []
+        )
+        if entries:
+            reason = "regex keys " + ", ".join(entries)
+            warnings.append(
+                {
+                    "file": io.file,
+                    "config": type(config).__name__,
+                    "reason": reason,
+                    "cause": "regex",
+                }
+            )
+
+
+def _regex_entries(node: Any, text: str, prefix: str = "") -> list[str]:
+    """The dotted keys below ``node`` that the file's ``text`` spells in quotes."""
+    found: list[str] = []
+    for entry in node.toc():
+        key = str(entry)
+        if f'"{key}"' in text:
+            found.append(prefix + key)
+        elif node.isDict(key):
+            found += _regex_entries(node.subDict(key), text, f"{prefix}{key}.")
+    return found
+
+
+def _missing_keys_reason(cls: Any, case_dir: Path) -> str | None:
+    """``missing <key>, <key>`` when only absent keys keep ``cls`` from loading."""
+    try:
+        cls.load(case_dir=case_dir)
+    except KeyError:
+        return None
+    except ValidationError as exc:
+        errors = exc.errors()
+        if all(error["type"] == "missing" for error in errors):
+            return "missing " + ", ".join(".".join(map(str, e["loc"])) for e in errors)
+    return None
+
+
+def _regex_cause(cls: Any, path: Path, reason: str) -> str | None:
+    """``regex`` when the file's regex keys validly supply every missing key.
+
+    ``invalid`` when they supply them but the slice still fails, else ``None``.
+    """
+    if not reason.startswith("missing ") or cls.io_config.subdict:
+        return None
+    root = pyf.dictionary.read(str(path))
+    data = _to_python(root)
+    for loc in reason.removeprefix("missing ").split(", "):
+        if not _copy_matched_entry(root, data, loc.split(".")):
+            return None
+    try:
+        cls.model_validate(_read_fields(cls, data))
+    except ValidationError:
+        return "invalid"
+    return "regex"
+
+
+def _copy_matched_entry(root: Any, data: dict[str, Any], keys: list[str]) -> bool:
+    """Copy the entry OpenFOAM's pattern lookup finds for ``keys`` into ``data``."""
+    *parents, leaf = keys
+    node, section = root, data
+    for part in parents:
+        if not node.isDict(part):
+            return False
+        node, section = node.subDict(part), section[part]
+    if not node.found(leaf):
+        return False
+    section[leaf] = (
+        _to_python(node.subDict(leaf)) if node.isDict(leaf) else str(node.get[str](leaf))
+    )
+    return True
+
+
+def without_rejected_files(
+    spec: dict[str, Any],
+    entries: list[FormEntry],
+    refused: dict[str, list[dict[str, str]]],
+) -> dict[str, Any]:
+    """``spec`` minus every config that writes to a ``refused`` file, co-owners included."""
+    file_of = {e.config_name: e.cls.io_config.file for e in entries if _has_file(e)}
+    return {name: data for name, data in spec.items() if file_of.get(name) not in refused}
+
+
+def _has_file(entry: FormEntry) -> bool:
+    """True when ``entry``'s config is bound to a file."""
+    return getattr(entry.cls, "io_config", None) is not None
 
 
 def case_algorithm(case_dir: Path, entries: list[FormEntry]) -> str | None:
@@ -211,6 +432,9 @@ def apply_configs_to_forms(
         state[by_key[key].state_key] = data
     if case_dir is not None:
         _clear_absent(state, entries, families, filled)
+    # JSONForms keeps a combinator's selected arm across a data replace, so a loaded
+    # block would show the previous arm over the new data until the form remounts.
+    state.form_epoch = (state.form_epoch or 0) + 1
     algorithm = case_algorithm(case_dir, entries) if case_dir else None
     selected = models_to_select(models_filled_by(entries, configs), families, algorithm)
     for model in selected:

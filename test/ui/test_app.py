@@ -21,6 +21,7 @@ from trame.app import get_server  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.forms import schema_key  # noqa: E402
 from neofoam.ui.geometry import discover_geometry  # noqa: E402
+from neofoam.ui.steps import selection_key  # noqa: E402
 
 #: How long the stubbed STL read blocks — a 21 MB STL takes ~0.5 s in practice.
 _SCAN_SECONDS = 0.3
@@ -685,3 +686,175 @@ def test_chat_renders_assistant_messages_as_html_and_user_messages_as_text(prist
     assert "{{" not in assistant
     for bubble in (user, assistant):
         assert "overflow-wrap: anywhere" in bubble
+
+
+#: NeoN cases whose ``p`` block is typed, and one no linear-solver plugin accepts.
+_NEON_CASES = Path(__file__).resolve().parent / "cases"
+
+
+def _neon_wizard(request, case_name, tmp_path):
+    case = shutil.copytree(_NEON_CASES / case_name, tmp_path / "case")
+    wizard = build_app(
+        solver_name="incompressibleFluidNeoN",
+        server=get_server(f"neon_{request.node.name}"),
+        plugins=[],
+    )
+    wizard.state.target_dir = str(case)
+    wizard.controller.load_target_case()
+    # The case holds fvSolution only: a complete spec is what reaches the file writer.
+    required = {
+        "transport_properties_config": {"nu": 1e-05},
+        "control_dict_config": {"endTime": 1.0, "deltaT": 0.1},
+    }
+    for entry in wizard.controller.get_entries():
+        if entry.config_name in required:
+            wizard.state[entry.state_key] = {**entry.defaults, **required[entry.config_name]}
+    return wizard, case
+
+
+def test_save_leaves_a_file_with_a_rejected_block_byte_identical(request, tmp_path):
+    wizard, case = _neon_wizard(request, "neon_rejected_block", tmp_path)
+    before = (case / "system" / "fvSolution").read_bytes()
+
+    wizard.controller.save_case()
+
+    assert "error" not in wizard.state.save_report
+    assert (case / "system" / "fvSolution").read_bytes() == before
+
+
+def test_save_reports_the_file_and_block_it_refused(request, tmp_path):
+    wizard, _ = _neon_wizard(request, "neon_rejected_block", tmp_path)
+
+    wizard.controller.save_case()
+
+    assert wizard.state.validation_ok is False
+    refused = [f for f in wizard.state.findings if f["file"] == "system/fvSolution"]
+    assert "solvers.p could not be loaded" in refused[0]["message"]
+
+
+def test_save_writes_a_typed_block_that_loaded(request, tmp_path):
+    wizard, case = _neon_wizard(request, "neon_typed_block", tmp_path)
+
+    wizard.controller.save_case()
+
+    assert str(case / "system" / "fvSolution") in wizard.state.save_report["written"]
+    assert "solver::Cg" not in (case / "system" / "fvSolution").read_text()
+    assert wizard.state.form_pimple_neo_n_fv_solution["solvers"]["p"]["solver"] == "Cg"
+    assert not [f for f in wizard.state.findings if "could not be loaded" in f["message"]]
+
+
+def test_save_writes_a_slice_that_is_absent_from_the_case(request, tmp_path):
+    wizard, case = _neon_wizard(request, "neon_typed_block", tmp_path)
+    (case / "system" / "fvSolution").unlink()
+    wizard.controller.load_target_case()
+
+    wizard.controller.save_case()
+
+    assert (case / "system" / "fvSolution").is_file()
+
+
+def test_a_load_that_replaces_the_forms_bumps_the_form_epoch(request, tmp_path):
+    wizard, _ = _neon_wizard(request, "neon_typed_block", tmp_path)
+    loaded = wizard.state.form_epoch
+
+    wizard.controller.load_target_case()
+
+    assert wizard.state.form_epoch == loaded + 1
+
+
+def _regex_wizard(request, tmp_path):
+    case = shutil.copytree(_PITZ_DAILY, tmp_path / "case")
+    wizard = build_app(
+        solver_name="incompressibleFluid",
+        server=get_server(f"regex_{request.node.name}"),
+        plugins=[],
+    )
+    wizard.state.target_dir = str(case)
+    wizard.controller.load_target_case()
+    return wizard, case
+
+
+def test_save_of_a_valid_regex_file_is_not_refused(request, tmp_path):
+    wizard, _ = _regex_wizard(request, tmp_path)
+
+    wizard.controller.save_case()
+
+    assert "error" not in wizard.state.save_report
+    assert not [f for f in wizard.state.findings if "could not be loaded" in f["message"]]
+
+
+def test_save_leaves_a_regex_file_byte_identical(request, tmp_path):
+    wizard, case = _regex_wizard(request, tmp_path)
+    before = (case / "system" / "fvSolution").read_bytes()
+
+    wizard.controller.save_case()
+
+    assert (case / "system" / "fvSolution").read_bytes() == before
+
+
+def test_save_with_another_algorithm_selected_keeps_the_regex_file(request, tmp_path):
+    wizard, case = _regex_wizard(request, tmp_path)
+    before = (case / "system" / "fvSolution").read_bytes()
+    wizard.state[selection_key("Pimple")] = False
+    wizard.state[selection_key("Simple")] = True
+
+    wizard.controller.save_case()
+
+    assert (case / "system" / "fvSolution").read_bytes() == before
+
+
+def test_save_refuses_a_regex_block_that_fails_validation(request, tmp_path):
+    wizard, case = _neon_wizard(request, "neon_regex_invalid", tmp_path)
+    before = (case / "system" / "fvSolution").read_bytes()
+
+    wizard.controller.save_case()
+
+    assert (case / "system" / "fvSolution").read_bytes() == before
+    assert wizard.state.validation_ok is False
+    assert any("could not be loaded" in f["message"] for f in wizard.state.findings)
+
+
+def test_save_keeps_a_regex_block_beside_literal_solver_keys(request, tmp_path):
+    case = shutil.copytree(_NEON_CASES / "regex_beside_literal", tmp_path / "case")
+    before = (case / "system" / "fvSolution").read_bytes()
+    wizard = build_app(
+        solver_name="incompressibleFluid",
+        server=get_server(f"regex_{request.node.name}"),
+        plugins=[],
+    )
+    wizard.state.target_dir = str(case)
+    wizard.controller.load_target_case()
+
+    wizard.controller.save_case()
+
+    assert (case / "system" / "fvSolution").read_bytes() == before
+
+
+def test_load_report_names_the_field_and_keys_a_conversion_dropped(request, tmp_path):
+    wizard, _ = _neon_wizard(request, "neon_legacy_block", tmp_path)
+
+    report = wizard.state.chat_log[-1]["content"]
+
+    assert "system/fvSolution solvers.p: PCG converted to Cg: dropped ['smoother']" in report
+
+
+def test_load_report_is_silent_for_a_block_that_loses_nothing(request, tmp_path):
+    wizard, _ = _neon_wizard(request, "neon_typed_block", tmp_path)
+
+    assert "Converted:" not in wizard.state.chat_log[-1]["content"]
+
+
+def test_save_reports_a_combination_the_model_rejects_and_keeps_the_file(request, tmp_path):
+    wizard, case = _neon_wizard(request, "neon_typed_block", tmp_path)
+    before = (case / "system" / "fvSolution").read_bytes()
+    key = "form_pimple_neo_n_fv_solution"
+    form = wizard.state[key]
+    wizard.state[key] = {
+        **form,
+        "solvers": {**form["solvers"], "p": {"solver": "Ir", "preconditioner": {"type": "none"}}},
+    }
+
+    wizard.controller.save_case()
+
+    assert (case / "system" / "fvSolution").read_bytes() == before
+    assert any("unpreconditioned Ir diverges" in f["message"] for f in wizard.state.findings)

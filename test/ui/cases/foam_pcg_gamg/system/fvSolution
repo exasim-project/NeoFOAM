@@ -1,0 +1,101 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2406                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    location        system;
+    object          fvSolution;
+}
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner
+        {
+            preconditioner  GAMG;
+            smoother        DICGaussSeidel;
+            tolerance       1e-05;
+            relTol          0.1;
+            nCellsInCoarsestLevel 50;
+        }
+        tolerance       1e-09;
+        relTol          0.01;
+    }
+    pFinal
+    {
+        solver          PCG;
+        preconditioner
+        {
+            preconditioner  GAMG;
+            smoother        DICGaussSeidel;
+            tolerance       1e-05;
+            relTol          0.1;
+            nCellsInCoarsestLevel 50;
+        }
+        tolerance       1e-09;
+        relTol          0;
+    }
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-09;
+        relTol          0.01;
+    }
+    UFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-09;
+        relTol          0;
+    }
+}
+
+relaxationFactors
+{
+    equations
+    {
+        U               0.7;
+        UFinal          1;
+    }
+    fields
+    {
+        p               0.3;
+        pFinal          1;
+    }
+}
+
+PIMPLE
+{
+    nOuterCorrectors 3;
+    nCorrectors     2;
+    nNonOrthogonalCorrectors 0;
+    pRefCell        0;
+    pRefValue       0;
+    residualControl
+    {
+        p
+        {
+            tolerance       1e-06;
+            relTol          0;
+        }
+        U
+        {
+            tolerance       1e-06;
+            relTol          0;
+        }
+    }
+}
+
+
+// ************************************************************************* //

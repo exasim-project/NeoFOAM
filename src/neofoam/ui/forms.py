@@ -21,6 +21,7 @@ from neofoam.agent.case_forms import INPUT_KEYS, field_name, is_scheme_config
 from neofoam.framework.solver.configurations import configurations
 from neofoam.io.pydantic_schema import slice_schema
 from neofoam.mcp import tools
+from neofoam.ui.field_form import tag_field_form
 from neofoam.ui.form_schema import alternatives_uischema, humanize, jsonforms_schema
 
 __all__ = [
@@ -91,6 +92,13 @@ class FormEntry:
     """The config class (used by field-half merge in ``case_spec``)."""
     uischema: dict[str, Any] | None = None
     """Optional JSONForms UISchema (``None`` ⇒ auto-layout from the schema)."""
+    field_schema: dict[str, Any] | None = None
+    """``schema`` with the per-field layout keywords, for a model that declares fields."""
+
+    @property
+    def form_schema(self) -> dict[str, Any]:
+        """The schema the wizard's own form draws."""
+        return self.schema if self.field_schema is None else self.field_schema
 
 
 def schema_key(entry: FormEntry) -> str:
@@ -100,6 +108,11 @@ def schema_key(entry: FormEntry) -> str:
     ``state[schema_key(entry)]``; step plugins get it as ``ctx.schema_key``.
     """
     return js_identifier("schema_" + entry.key)
+
+
+def field_schema_key(entry: FormEntry) -> str:
+    """The trame state key of ``entry``'s per-field schema, beside :func:`schema_key`."""
+    return f"field_{schema_key(entry)}"
 
 
 def uischema_key(entry: FormEntry) -> str:
@@ -246,6 +259,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
         else:
             step = "schemes" if is_scheme_config(cls) else "models"
             schema = jsonforms_schema(dto.json_schema)
+            tagged = tag_field_form(schema, cls)
             entries.append(
                 FormEntry(
                     key=f"dict:{info.cls_name}",
@@ -260,6 +274,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     owner_model=owner_model,
                     cls=cls,
                     uischema=alternatives_uischema(schema),
+                    field_schema=None if tagged is schema else tagged,
                 )
             )
     return entries

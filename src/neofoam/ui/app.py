@@ -30,12 +30,25 @@ from neofoam.ui import jsonforms_module
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open, _toggle
 from neofoam.ui.agent_panel import AgentPanel
+from neofoam.ui.case_load import rejected_slices, without_rejected_files
 from neofoam.ui.dir_picker import list_dirs, start_dir
-from neofoam.ui.form_schema import ADDER_TRANSLATIONS
-from neofoam.ui.forms import FormEntry, build_forms, schema_key, uischema_key
+from neofoam.ui.file_preview import preview_entries, preview_files
+from neofoam.ui.form_schema import ADDER_TRANSLATIONS, NF_FIELD_FORM
+from neofoam.ui.forms import (
+    FormEntry,
+    build_forms,
+    field_schema_key,
+    schema_key,
+    uischema_key,
+)
 from neofoam.ui.geometry_panel import GeometryPanel
 from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
-from neofoam.ui.review import FindingRow, findings_to_rows, save_error_rows
+from neofoam.ui.review import (
+    FindingRow,
+    findings_to_rows,
+    rejected_slice_rows,
+    save_error_rows,
+)
 from neofoam.ui.run_panel import RunPanel
 from neofoam.ui.scaffold import scaffold_runnable_case
 from neofoam.ui.steps import (
@@ -133,6 +146,9 @@ _CSS = """
 """
 
 
+_PREVIEW_FILES = ("system/fvSolution", "system/fvSchemes")
+
+
 @dataclass(frozen=True)
 class _Wizard:
     """What the wizard derives from the solver and its step plugins, computed once."""
@@ -202,8 +218,12 @@ def _seed_state(state: Any, wizard: _Wizard) -> None:
         for c in family.members:
             state[selection_key(c.name)] = c is family.members[0]
     state.form_translations = ADDER_TRANSLATIONS
+    state.form_epoch = 0
+    state.rejected_slices = []
     for entry in wizard.entries:
         state[schema_key(entry)] = entry.schema
+        if entry.field_schema is not None:
+            state[field_schema_key(entry)] = entry.field_schema
         state[entry.state_key] = dict(entry.defaults)
         if entry.uischema is not None:
             state[uischema_key(entry)] = entry.uischema
@@ -237,6 +257,30 @@ def _report_path_error(state: Any, exc: ValueError) -> None:
     ]
 
 
+def _refresh_file_preview(state: Any, wizard: _Wizard) -> None:
+    """Publish what Save would write to the per-field numerics files."""
+    entries = preview_entries(wizard.entries)
+    selected = {c.name for c in wizard.gated if state[selection_key(c.name)]}
+    form_state = {e.key: dict(state[e.state_key]) for e in entries}
+    target = Path(state.target_dir) if state.target_dir else None
+    refused = rejected_slices(state, wizard.entries, target) if target else {}
+    state.file_preview = preview_files(entries, form_state, selected, target, refused)
+
+
+def _register_file_preview(server: Any, wizard: _Wizard) -> None:
+    """Keep the preview current; a wizard without a per-field form has none."""
+    entries = preview_entries(wizard.entries)
+    if not entries:
+        return
+    server.state.file_preview_tab = _PREVIEW_FILES[0]
+    _refresh_file_preview(server.state, wizard)
+    watched = [e.state_key for e in entries]
+    watched += [selection_key(c.name) for c in wizard.gated]
+    server.state.change(*watched, "target_dir", "rejected_slices")(
+        lambda **_kwargs: _refresh_file_preview(server.state, wizard)
+    )
+
+
 def _select_model(state: Any, wizard: _Wizard, name: str) -> None:
     """Select model ``name`` (deselecting its siblings when it is one alternative)."""
     state.update(select_model_state(wizard.families, name))
@@ -255,9 +299,12 @@ def _save_case(state: Any, wizard: _Wizard) -> None:
         state.scaffolded = []
         _report_path_error(state, exc)
         return
+    refused = rejected_slices(state, wizard.entries, target)
+    refused_rows = [asdict(row) for row in rejected_slice_rows(refused)]
     try:
         # state_to_case_spec merges/validates field halves and may itself raise.
         spec = cs.state_to_case_spec(wizard.entries, form_state, selected)
+        spec = without_rejected_files(spec, wizard.entries, refused)
         result = tools.save_case(wizard.solver, spec, str(target))
         state.save_report = result.model_dump()
         # Make the saved case runnable, then validate it — inside the try, so a
@@ -265,12 +312,15 @@ def _save_case(state: Any, wizard: _Wizard) -> None:
         # the case still has to be saved.
         state.scaffolded = [str(p) for p in scaffold_runnable_case(target, wizard.solver_name)]
         _validate_and_store(state, wizard.solver, target)
+        if any(row["level"] == "error" for row in refused_rows):
+            state.validation_ok = False
+        state.findings = [*refused_rows, *state.findings]
     except Exception as exc:  # noqa: BLE001 - a save failure must not crash the UI
         # Incomplete/invalid configs — surface each field instead of crashing.
         state.save_report = {"error": str(exc)}
         state.scaffolded = []
         state.validation_ok = False
-        state.findings = [asdict(r) for r in save_error_rows(exc)]
+        state.findings = [*refused_rows, *(asdict(r) for r in save_error_rows(exc))]
 
 
 def _revalidate(state: Any, wizard: _Wizard) -> None:
@@ -394,10 +444,11 @@ def _form_panel(ctx: StepContext, wizard: _Wizard, entry: FormEntry) -> None:
                 )
         with v3.VExpansionPanelText():
             ctx.json_forms(
-                schema=(schema_key(entry),),
+                schema=(field_schema_key(entry) if entry.field_schema else schema_key(entry),),
                 data=(entry.state_key,),
                 translations=("form_translations",),
                 change=f"{entry.state_key} = $event.data",
+                key=("form_epoch", 0),
                 **form_kwargs,
             )
 
@@ -661,6 +712,40 @@ def _step_panel(
         wizard.plugin_by_id[step.id].render(ctx)
 
 
+def _file_preview_panel(ctx: StepContext) -> None:
+    """The live text of the files Save writes, one tab per file."""
+    html = ctx.html
+    with html.Aside(classes="nf-preview", aria_label="File preview"):
+        with html.Div(classes="nf-preview-tabs"):
+            for file in _PREVIEW_FILES:
+                html.Button(
+                    file,
+                    type="button",
+                    classes=(f"{{'nf-preview-on': file_preview_tab === '{file}'}}",),
+                    click=f"file_preview_tab = '{file}'",
+                )
+        html.Pre("{{ file_preview[file_preview_tab] }}")
+        html.Div(
+            "Live preview. Options left at their default are not written.",
+            classes="nf-preview-note",
+        )
+
+
+def _step_forms(ctx: StepContext, wizard: _Wizard, step: Step) -> None:
+    """The step's form panels, beside the file preview when one of them is a per-field form."""
+    panels = [wizard.by_key[key] for key in step.entry_keys]
+    if not any(NF_FIELD_FORM in entry.form_schema for entry in panels):
+        with ctx.v3.VExpansionPanels():
+            for entry in panels:
+                _form_panel(ctx, wizard, entry)
+        return
+    with ctx.html.Div(classes="nf-numerics"):
+        with ctx.html.Div(classes="nf-numerics-forms"), ctx.v3.VExpansionPanels():
+            for entry in panels:
+                _form_panel(ctx, wizard, entry)
+        _file_preview_panel(ctx)
+
+
 def _content(
     ctx: StepContext, wizard: _Wizard, geometry_panel: GeometryPanel, run_panel: RunPanel
 ) -> None:
@@ -670,9 +755,7 @@ def _content(
             _step_header(ctx, wizard, step)
             _step_panel(ctx, wizard, step, geometry_panel, run_panel)
             if step.entry_keys:
-                with ctx.v3.VExpansionPanels():
-                    for key in step.entry_keys:
-                        _form_panel(ctx, wizard, wizard.by_key[key])
+                _step_forms(ctx, wizard, step)
 
 
 def build_app(
@@ -697,6 +780,7 @@ def build_app(
 
     _seed_state(server.state, wizard)
     _register_case_controllers(server, wizard)
+    _register_file_preview(server, wizard)
     geometry_panel = GeometryPanel(server, wizard.entries)
     run_panel = RunPanel(server)
     agent_panel = AgentPanel(server, wizard.entries, wizard.solver)

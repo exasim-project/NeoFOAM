@@ -48,7 +48,7 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam import advanced, fvSchemes, openfoamFvSolution
 from neofoam.foam.algorithm_configs import (
     DynamicMeshControls,
     PimpleAlgorithmConfig,
@@ -79,13 +79,13 @@ pimple = Model("Pimple")
 # Per-spec fvSchemes / fvSolution slices. Operations extend these via
 # ``@PimpleFvSchemes.add(...)`` / ``@PimpleFvSolution.add(...)`` below.
 PimpleFvSchemes = pimple.config(fvSchemes)
-PimpleFvSolution = pimple.config(fvSolution)
+PimpleFvSolution = pimple.config(openfoamFvSolution)
 
 # Optional PIMPLE control keys read straight from ``system/fvSolution`` by
 # ``setRefCell`` (see ``create_pressure_reference``). A closed domain (no
 # fixed-pressure BC) needs a pressure reference; an open domain doesn't, so
 # these stay optional and only serialise when the case author sets them.
-PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+PimpleFvSolution.add_controls("PIMPLE", pRefCell=advanced(int), pRefValue=advanced(float))
 
 # Only the ``PIMPLE`` spelling is declared: a declared config is also written,
 # and ``control_factory`` ignores a ``PISO`` block once a ``PIMPLE`` one exists.
@@ -321,15 +321,16 @@ def mesh_update(
 
 @pimple.operation(operation_number="2.1")
 @PimpleFvSchemes.add(
+    field="U",
     ddt="ddt(U)",
     # ``div(phi,U)`` (convection) + the viscous-stress divergence emitted by
     # ``divDevReff(U)`` — both required for the momentum predictor.
-    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    div=["div(phi,U)", advanced("div((nuEff*dev2(T(grad(U)))))")],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
     # ``flux(U)`` builds the initial face flux phi (``createPhi``) in every case,
     # buoyant or not.
-    interpolation="flux(U)",
+    interpolation=advanced("flux(U)"),
 )
 @PimpleFvSolution.add("U")
 def momentum(
@@ -378,10 +379,15 @@ def momentum(
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum"])
 @PimpleFvSchemes.add(
+    field="p",
     grad="grad(p)",
     laplacian="laplacian(rAU,p)",
-    interpolation=["flux(HbyA)", "interpolate(rAU)", "dotInterpolate(S,U_0)"],
-    snGrad="snGrad(p)",
+    interpolation=[
+        advanced("flux(HbyA)"),
+        advanced("interpolate(rAU)"),
+        advanced("dotInterpolate(S,U_0)"),
+    ],
+    snGrad=advanced("snGrad(p)"),
 )
 @PimpleFvSolution.add("p")
 def continuity(
@@ -463,8 +469,9 @@ def continuity(
 
 @pimple.operation(operation_number="2.1")
 @PimpleFvSchemes.add(
+    field="U",
     ddt="ddt(U)",
-    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    div=["div(phi,U)", advanced("div((nuEff*dev2(T(grad(U)))))")],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
 )

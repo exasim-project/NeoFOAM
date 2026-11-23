@@ -49,7 +49,12 @@ from neofoam.tooling.workflow.sweep import (
 from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
 from neofoam.ui import sweep_view
 from neofoam.ui._paths import _resolve_target
-from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
+from neofoam.ui.case_load import (
+    apply_configs_to_forms,
+    read_case_configs,
+    rejected_slices,
+    remember_rejected_slices,
+)
 from neofoam.ui.forms import FormEntry, build_field_forms, build_mesh_forms
 from neofoam.ui.steps import build_model_families, selection_key
 from neofoam.ui.sweep_model import DimensionState, SweepModel, series_values
@@ -857,7 +862,9 @@ class SweepPanel:
         """
         state = self._server.state
         state.target_dir = base_case
-        configs = read_case_configs(Path(base_case), self._solver)
+        warnings: list[dict[str, str]] = []
+        configs = read_case_configs(Path(base_case), self._solver, warnings)
+        remember_rejected_slices(state, Path(base_case), warnings)
         apply_configs_to_forms(state, self._entries, self._families, configs, Path(base_case))
 
     def confirm_load(self) -> None:
@@ -907,6 +914,13 @@ class SweepPanel:
         except ValueError as exc:
             self._notify(error=str(exc))
             return
+        unloaded = self._unloaded_dimension_files(base_case)
+        if unloaded:
+            self._notify(
+                error=f"Not exported: {', '.join(unloaded)} could not be loaded, so its"
+                " variants would hold defaults. Correct it, then use Load case again."
+            )
+            return
         # A CAD axis is a plugin concern: neofoam.tooling.workflow.sweep exports the
         # solver's own dimensions only. Refuse loudly rather than dropping the axis.
         if self._model.cad_dimensions():
@@ -945,6 +959,13 @@ class SweepPanel:
             message=f"Exported {state.sweep_case_count} case(s) to {result.out_dir} —"
             f" run them with: cd '{result.out_dir}' && snakemake -j4"
         )
+
+    def _unloaded_dimension_files(self, base_case: Path) -> list[str]:
+        """The files swept by a dimension whose config a load could not validate."""
+        refused = rejected_slices(self._server.state, self._entries, base_case)
+        classes = (self._classes.get(name) for name in self._model.to_dimensions())
+        files = {cls.io_config.file for cls in classes if cls and cls.io_config}
+        return sorted(files.intersection(refused))
 
     async def refresh_dag(self) -> None:
         """Export the sweep, run ``snakemake --dag|--rulegraph`` and render it."""

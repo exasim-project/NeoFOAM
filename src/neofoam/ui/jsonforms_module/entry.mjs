@@ -41,6 +41,13 @@
 //
 // An object of scalars only (`nfGrid`, see form_schema.py `_tag_scalar_grid`) keeps JSONForms'
 // generated layout and controls; its layout renderer just sets them in a wrapping grid.
+//
+// A union discriminated on a property other than `type` (`nfDiscriminator`, see form_schema.py
+// `inline_refs`) titles its select after it and keeps shared values on a switch; a section
+// of them (`nfUnions`) is drawn as rows, each entry on one line.
+//
+// A form whose model assigns entries to fields (`nfFieldForm`, see field_form.py) is drawn by
+// NfFieldForm (fieldForm.mjs): one collapsible row per field.
 
 import { computed, defineComponent, h, nextTick, ref, watch } from 'vue'
 import {
@@ -70,11 +77,19 @@ import {
 import { VBtn, VCard, VCardText, VCardTitle, VSelect, VTextField } from 'vuetify/components'
 import '@jsonforms/vue-vuetify/lib/jsonforms-vue-vuetify.css'
 import './compact.css'
+import { NfFieldForm } from './fieldForm.mjs'
 import {
+  BLOCK_UISCHEMA,
+  INLINE_OPTIONS,
   PATH_UNSAFE,
+  armFields,
+  armLabel,
+  discriminatorLabel,
+  discriminatorOf,
   entryKeys,
   entryShape,
   formatNumber,
+  keptValues,
   parseNumberInput,
   pinnedKeys,
   rowsSchema as sectionRowsSchema,
@@ -84,22 +99,17 @@ import {
 
 // Inside a compact row or grid the error text shows only when there is one.
 const INLINE_FIELD = { on: { hideDetails: 'auto' }, off: {} }
-const INLINE_OPTIONS = {
-  nfInline: true,
-  vuetify: {
-    'v-text-field': INLINE_FIELD.on,
-    'v-select': INLINE_FIELD.on,
-    'v-combobox': INLINE_FIELD.on,
-    'v-checkbox': { ...INLINE_FIELD.on, density: 'compact' },
-  },
-}
 
 // One control of `schema` (the property `key`), laid out inline.
 const inlineChild = (control, schema, key) =>
   h(DispatchRenderer, {
     key,
     schema,
-    uischema: { type: 'Control', scope: '#/properties/' + encode(key), options: INLINE_OPTIONS },
+    uischema: {
+      type: 'Control',
+      scope: '#/properties/' + encode(key),
+      options: { ...INLINE_OPTIONS, suggestion: schema.properties[key]?.examples },
+    },
     path: control.path,
     enabled: control.enabled,
     renderers: control.renderers,
@@ -168,51 +178,66 @@ const NfInlineOneOf = defineComponent({
         c.schema.oneOf, c.rootSchema, 'oneOf', c.uischema, c.path, c.uischemas,
       )
     })
-    // The `type` const names the arm outright. JSONForms' own "fitting schema" probe
-    // finds none while a required field of a freshly picked arm is still empty.
+    // The discriminator const names the arm outright. JSONForms' own "fitting schema"
+    // probe finds none while a required field of a freshly picked arm is still empty.
     const selected = computed(() => {
       const c = control.value
-      const byType = arms.value.findIndex(
-        (arm) => c.data && arm.schema.properties?.type?.const === c.data.type,
+      const key = discriminatorOf(c.schema)
+      const byConst = arms.value.findIndex(
+        (arm) => c.data && arm.schema.properties?.[key]?.const === c.data[key],
       )
-      if (byType >= 0) return byType
+      if (byConst >= 0) return byConst
+      if (c.schema.nfDiscriminator) return null
       return c.indexOfFittingSchema ?? (c.data === undefined ? null : 0)
     })
     return { control, handleChange, arms, selected, t: useTranslator() }
+  },
+  methods: {
+    // A union naming its discriminator keeps the values both arms declare.
+    pick(index) {
+      const c = this.control
+      const to = this.arms[index].schema
+      const defaults = createDefaultValue(to, c.rootSchema)
+      if (!c.schema.nfDiscriminator) return this.handleChange(c.path, defaults)
+      const from = this.arms[this.selected]?.schema
+      const fits = (property, value) => blockAjv.validate(property, value)
+      this.handleChange(c.path, { ...defaults, ...keptValues(from, to, c.data, fits) })
+    },
   },
   render() {
     const c = this.control
     if (!c.visible) return null
     const arm = this.selected === null ? null : this.arms[this.selected]
     const topLevel = c.uischema.options.nfRowKey !== undefined
-    const label = c.label + (c.required ? '*' : '')
-    const fields = Object.keys(arm?.schema.properties ?? {}).filter(
-      (key) => arm.schema.properties[key].const === undefined,
-    )
+    const named = discriminatorLabel(c.schema)
+    const label = named ?? c.label + (c.required ? '*' : '')
+    const armSchemas = this.arms.map((info) => info.schema)
+    const fields = armFields(arm?.schema, armSchemas, c.data, named !== null)
     return h('div', { class: 'nf-inline' }, [
       h(VSelect, {
         id: c.id + '-input',
         // The row already shows the entry's key next to its first select.
-        label: topLevel ? undefined : label,
+        label: topLevel && !named ? undefined : label,
         'aria-label': label,
-        items: this.arms.map((info, index) => ({
-          title: this.t(info.label, info.label),
-          value: index,
-        })),
+        // A choice the field's model refuses stays listed only while the data holds it.
+        items: this.arms
+          .map((info, index) => {
+            const title = armLabel(info.schema) ?? info.label
+            const refused = c.schema.nfRefusedArms?.includes(info.schema.title)
+            return { title: this.t(title, title), value: index, refused }
+          })
+          .filter((item) => !item.refused || item.value === this.selected),
         modelValue: this.selected,
         disabled: !c.enabled,
         errorMessages: c.errors,
         hideDetails: 'auto',
-        'onUpdate:modelValue': (index) =>
-          this.handleChange(c.path, createDefaultValue(this.arms[index].schema, c.rootSchema)),
+        'onUpdate:modelValue': this.pick,
       }),
       ...fields.map((key) => inlineChild(c, arm.schema, key)),
     ])
   },
 })
 
-// A solver block is a form of its own, rooted at the block.
-const BLOCK_UISCHEMA = { type: 'Control', scope: '#' }
 const blockAjv = createAjv()
 
 // A section of like entries as a dense card: one row per entry, "+ add entry" at the foot.
@@ -258,7 +283,8 @@ const NfCompactSection = defineComponent({
     nameError() {
       const name = this.newName
       if (!name) return null
-      return this.keys.includes(name) ? `'${name}' already defined` : null
+      const taken = [...this.keys, ...(this.control.schema.reservedKeys ?? [])]
+      return taken.includes(name) ? `'${name}' already defined` : null
     },
   },
   methods: {
@@ -326,7 +352,8 @@ const NfCompactSection = defineComponent({
     },
     rowEntry(key) {
       const required = (this.control.schema.required ?? []).includes(key)
-      return h('div', { class: 'nf-compact-row', key }, [
+      const unionRow = { 'nf-union-row': this.control.schema.nfUnions === true }
+      return h('div', { class: ['nf-compact-row', unionRow], key }, [
         h('span', { class: 'nf-compact-key' }, key + (required ? '*' : '')),
         h('div', { class: 'nf-compact-controls' }, [
           this.child(key, { ...INLINE_OPTIONS, nfRowKey: key }),
@@ -447,6 +474,10 @@ const NfGridLayout = defineComponent({
 const isInline = optionIs('nfInline', true)
 const renderers = [
   ...vuetifyRenderers,
+  {
+    tester: rankWith(45, and(isObjectControl, schemaMatches((s) => s.nfFieldForm === true))),
+    renderer: NfFieldForm,
+  },
   { tester: rankWith(30, isNumberControl), renderer: NfNumberControl },
   {
     tester: rankWith(40, and(isObjectControl, schemaMatches((s) => layoutOf(s) !== undefined))),
@@ -494,8 +525,10 @@ const NeoFoamJsonForms = defineComponent({
     return () =>
       h(JsonForms, {
         schema: schema.value,
-        // A schema that is itself a section has no property for a generated layout to show.
-        uischema: props.uischema || (layoutOf(props.schema) ? BLOCK_UISCHEMA : undefined),
+        // A schema that is itself a section, or a per-field form, has no property for a generated layout to show.
+        uischema:
+          props.uischema ||
+          (layoutOf(props.schema) || props.schema.nfFieldForm ? BLOCK_UISCHEMA : undefined),
         data: props.data,
         renderers,
         i18n: i18n.value,
