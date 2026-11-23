@@ -22,7 +22,16 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class Finalizer(Protocol):
-    """A model of ``ctx.models`` that releases what it holds once the time loop has ended."""
+    """A model of ``ctx.models`` that releases what it holds once the time loop has ended.
+
+    Implement it on a model that keeps a resource across steps (a session, an open
+    file); a model with nothing to release needs nothing. ``SolverRuntime.finalize``
+    calls it once per run, on every rank. Example::
+
+        class Session:
+            def finalize(self) -> None:
+                self.connection.close()
+    """
 
     def finalize(self) -> None:
         """Release it (collective under MPI: every rank calls it)."""

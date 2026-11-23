@@ -39,6 +39,16 @@ class InSitu(BaseConfig):
     An entry is a spec until the run's first step: :class:`InSituRunner` runs a
     private copy, so the state an implementation keeps between calls (a
     session, an output counter) belongs to the run. Unknown keys are refused.
+
+    Subclass it to drive an external tool from a case; for a table of reduced
+    values use a :class:`~neofoam.postprocess.table.TableSet` table instead. Example::
+
+        @InSitu.register
+        class Snapshot(InSitu):
+            type: Literal["snapshot"] = "snapshot"
+
+            def execute(self, ctx: Context) -> None:
+                render(ctx.fields["p"])
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -48,6 +58,10 @@ class InSitu(BaseConfig):
     name: str = ""
 
     def execute(self, ctx: Context) -> None:
+        """Hand ``ctx`` to the tool: called on this entry's due steps, on every rank.
+
+        Every rank calls it at the same steps, so it may be collective.
+        """
         raise NotImplementedError
 
     def finalize(self) -> None:
@@ -55,19 +69,37 @@ class InSitu(BaseConfig):
 
 
 class InSituEntry(NamedTuple):
-    """A declared entry: the plugin and when it runs."""
+    """A declared entry: the plugin and when it runs.
+
+    ``tables_for_case`` builds these from ``insitu:``; build one directly only to
+    drive an :class:`InSituRunner` without a case file. It is a spec, shared by
+    runs, so the runner copies it. Example::
+
+        InSituEntry(plugin, write_control)
+    """
 
     plugin: InSitu
     write_control: WriteControl
 
 
 class InSituRunner:
-    """The runtime state of the ``insitu`` operation: a private copy of every entry."""
+    """The runtime state of the ``insitu`` operation: a private copy of every entry.
+
+    The ``postProcess`` model builds one per run when a case declares entries, so a
+    solver never constructs it. Its lifecycle is :meth:`execute` once per step, then
+    :meth:`finalize` once; both run on every rank. Example::
+
+        runner = InSituRunner(tables.insitu)
+        runner.execute(ctx)
+        runner.finalize()
+    """
 
     def __init__(self, entries: list[InSituEntry]) -> None:
         self.entries = [
-            InSituEntry(e.plugin.model_copy(deep=True), e.write_control.model_copy(deep=True))
-            for e in entries
+            InSituEntry(
+                entry.plugin.model_copy(deep=True), entry.write_control.model_copy(deep=True)
+            )
+            for entry in entries
         ]
 
     def execute(self, ctx: Context) -> None:

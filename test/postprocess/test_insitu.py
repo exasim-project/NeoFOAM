@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Literal, cast
 
 import pytest
@@ -23,7 +22,7 @@ from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.framework.context import Context
 from neofoam.postprocess.insitu import InSitu, InSituRunner
 from neofoam.postprocess.model import build, insitu, postProcess
-from neofoam.postprocess.table import TableSet, tables_for_case
+from neofoam.postprocess.table import tables_for_case
 
 CASES = Path(__file__).parent / "cases"
 
@@ -62,31 +61,28 @@ def _ctx(runner: InSituRunner, index: int) -> Context:
     )
 
 
-def _op_names(tables: TableSet) -> list[str]:
-    return [
-        op.operation_name
-        for op in postProcess._build_operations_for(SimpleNamespace(config=tables))
-    ]
+@pytest.mark.parametrize(
+    ("case", "expected"),
+    [
+        ("cadence", ["post_process"]),
+        ("insitu", ["post_process", "insitu"]),
+    ],
+    ids=["no_entries", "declared_entries"],
+)
+def test_the_insitu_operation_follows_post_process_only_when_declared(
+    tmp_path: Path, case: str, expected: list[str]
+) -> None:
+    runtime = postProcess.instantiate(case_dir=_case(tmp_path, case))
 
+    operations = runtime.operations
 
-def test_a_case_without_insitu_entries_has_no_insitu_operation(tmp_path: Path) -> None:
-    tables = tables_for_case(_case(tmp_path, "cadence"))
-
-    assert _op_names(tables) == ["post_process"]
+    assert [op.operation_name for op in operations] == expected
 
 
 def test_a_case_without_insitu_entries_builds_no_insitu_runner(tmp_path: Path) -> None:
     steps = build(tables_for_case(_case(tmp_path, "cadence")))
 
     assert [step.name for step in steps] == ["models.post_processor"]
-
-
-def test_declared_insitu_entries_add_the_insitu_operation_after_post_process(
-    tmp_path: Path,
-) -> None:
-    tables = tables_for_case(_case(tmp_path, "insitu"))
-
-    assert _op_names(tables) == ["post_process", "insitu"]
 
 
 def test_declared_insitu_entries_build_the_insitu_runner(tmp_path: Path) -> None:
@@ -112,14 +108,17 @@ def test_each_insitu_entry_runs_on_its_own_write_steps(tmp_path: Path) -> None:
     ]
 
 
-def test_an_unknown_insitu_type_lists_the_registered_ones(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match=r"insitu 'view'.*registered insitu types: \[.*'recorder'"):
-        tables_for_case(_case(tmp_path, "unknown_insitu"))
-
-
-def test_two_insitu_entries_sharing_a_name_are_refused(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="duplicate insitu entries"):
-        tables_for_case(_case(tmp_path, "duplicate_insitu"))
+@pytest.mark.parametrize(
+    ("case", "message"),
+    [
+        ("unknown_insitu", r"insitu 'view'.*registered insitu types: \[.*'recorder'"),
+        ("duplicate_insitu", "duplicate insitu entries"),
+    ],
+    ids=["unknown_type", "duplicate_name"],
+)
+def test_an_invalid_insitu_declaration_is_refused(tmp_path: Path, case: str, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        tables_for_case(_case(tmp_path, case))
 
 
 def test_the_runner_finalizes_every_entry(tmp_path: Path) -> None:

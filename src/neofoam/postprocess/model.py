@@ -162,9 +162,9 @@ def insitu(self: Any, ctx: Context) -> None:
 @postProcess.operation_collection
 def operations(self: Any) -> Operations:
     """``post_process``, and ``insitu`` when the case declares in-situ entries."""
-    funcs = [post_process]
-    if getattr(getattr(self, "config", None), "insitu", None):
-        funcs.append(insitu)
+    functions = [post_process]
+    if self.config.insitu:
+        functions.append(insitu)
     resolver = DependencyResolver()
     return Operations(
         [
@@ -172,6 +172,6 @@ def operations(self: Any) -> Operations:
                 func=SequentialOp(wrap_with_dependency_resolution(func, self, resolver)),
                 metadata=OperationMetadata(op_name=func.__name__),
             )
-            for func in funcs
+            for func in functions
         ]
     )

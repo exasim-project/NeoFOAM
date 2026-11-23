@@ -21,7 +21,6 @@ from __future__ import annotations
 import csv
 import shutil
 from pathlib import Path
-from types import SimpleNamespace
 from typing import cast
 
 import numpy as np
@@ -29,6 +28,7 @@ import pytest
 
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.framework.context import Context
+from neofoam.framework.model import ModelRuntime
 from neofoam.postprocess.model import PostProcessor, build, post_process, postProcess
 from neofoam.postprocess.table import TableSet
 
@@ -90,7 +90,8 @@ def _rows(path: Path) -> list[list[str]]:
 def test_modelspec_is_a_full_core_model() -> None:
     assert postProcess.name == "postProcess"
     assert postProcess._load_func is not None
-    operations = postProcess._build_operations_for(SimpleNamespace(config=TableSet()))
+    runtime = ModelRuntime(spec=postProcess, name="postProcess", config=TableSet())
+    operations = runtime.operations
     assert [op.operation_name for op in operations] == ["post_process"]
 
 

@@ -145,7 +145,7 @@ def resolve_table(spec: TableSpec) -> Table:
     )
 
 
-def resolve_insitu(spec: InSituSpec) -> InSituEntry:
+def _resolve_insitu(spec: InSituSpec) -> InSituEntry:
     """Turn one declared in-situ entry into its plugin and its cadence."""
     entry = spec.model_dump(exclude={"write_control"})
     try:
