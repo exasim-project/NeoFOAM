@@ -30,8 +30,8 @@ of headroom over the sum of nine cell values.
 current time has advanced a full interval past the last write — so on a six-step
 run the rows land at 0.002, 0.004 and 0.006, and never at an odd step.
 
-**Placement.** That ``post_process`` (and ``insitu``, when the case declares
-in-situ entries) is stepped *after* ``write_output`` is what
+**Placement.** That ``post_process`` (and ``actions``, when the case declares
+actions) is stepped *after* ``write_output`` is what
 the CSV rows mean, and a solved case cannot show it (nothing mutates the fields
 between the two). It is asserted on the built graph instead, case-free, with the
 core models the graph step reads faked down to their spec name and op names.
@@ -123,8 +123,8 @@ def _core_model(spec_name: str, op_names: list[str]) -> SimpleNamespace:
 
 @pytest.mark.parametrize(
     "post_ops",
-    [["post_process"], ["post_process", "insitu"]],
-    ids=["tables_only", "with_insitu_entries"],
+    [["post_process"], ["post_process", "actions"]],
+    ids=["tables_only", "with_actions"],
 )
 def test_the_time_loop_ends_with_write_output_then_every_post_process_op(
     post_ops: list[str],
