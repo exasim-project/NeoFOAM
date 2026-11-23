@@ -314,7 +314,6 @@ TEST_CASE("Applying permutation may change the direction of face normals")
     const PermutationApplicator applicator {exec};
 
     // Prepare expected results
-    // The original face normals of internal faces:
     const std::vector<NeoN::Vec3> expectedInternalFaceNormals {
         {-1.0 / 30.0, 0.0, 0.0},
         {0.0, 1.0 / 30.0, 0.0},
@@ -434,20 +433,20 @@ TEST_CASE("Applying an incompatible permutation to a field throws an exception")
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
-    auto ofT = cellIndexScalarField(runTime, mesh, "T");
+    // Create a cell-centered scalar field on the mesh
+    auto ofT = NeoFOAM::indexVolScalarField(runTime, mesh, "T");
     auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
 
     const std::vector<NeoN::scalar> expectedScalarField {0.0, 1.0, 2.0, 3.0};
 
     // --- Arrange ---
     // Prepare an incompatible permutation and the applicator
-    // const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
-    // const Permutation permutation {oldToNew};
-    // const PreparedPermutation prepared {exec, permutation};
-    // const PermutationApplicator applicator {exec};
+    const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
+    const Permutation permutation {oldToNew};
+    const PreparedPermutation prepared {exec, permutation};
+    const PermutationApplicator applicator {exec};
 
     // --- Act & Assert ---
-    // REQUIRE_THROWS_AS(applicator.apply(prepared, nfMesh), std::invalid_argument);
-    REQUIRE_THAT(nfT.internalVector(), Equals(expectedScalarField, ApproxScalar {1e-12}));
+    REQUIRE_THROWS_AS(applicator.apply(prepared, nfT), std::invalid_argument);
 }
 TEST_CASE("Applying permutation preserves field-cell association") {}

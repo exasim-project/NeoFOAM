@@ -350,16 +350,14 @@ void randomizeField(auto& field)
     }
 }
 
-/** @brief
- * Create and return a named OpenFOAM field of type @p FieldType with values
- * supplied by @p init functor.
- */
-template<typename FieldType, typename Initializer>
-FieldType createOpenFOAMField(
+/** @brief Create and return a named OpenFOAM field of type @p FieldType with values supplied by @p
+ * rand. */
+template<typename FieldType, typename RandomFunc>
+FieldType createRandomField(
     const Foam::Time& runTime,
     const Foam::fvMesh& mesh,
     Foam::word name,
-    Initializer init
+    RandomFunc rand
 )
 {
     FieldType t(
@@ -378,20 +376,20 @@ FieldType createOpenFOAMField(
         // Surface field — fill internal + boundary
         auto& intF = t.primitiveFieldRef();
         forAll(intF, facei)
-            intF[facei] = init();
+            intF[facei] = rand();
 
         forAll(t.boundaryField(), patchi)
         {
             auto& p = t.boundaryFieldRef()[patchi];
             forAll(p, i)
-                p[i] = init();
+                p[i] = rand();
         }
     }
     else
     {
         for (auto celli = 0; celli < t.size(); celli++)
         {
-            t[celli] = init();
+            t[celli] = rand();
         }
 
         t.correctBoundaryConditions();
@@ -399,32 +397,12 @@ FieldType createOpenFOAMField(
     return t;
 }
 
-
-/** @brief Create a volScalarField with values equal to the cell indices */
-auto cellIndexScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
-{
-    // createOpenFOAMField calls init() once per cell in ascending cell order,
-    // so a running counter yields value == cell index.
-    return createOpenFOAMField<Foam::volScalarField>(
-        runTime,
-        mesh,
-        name,
-        [celli = Foam::label {0}]() mutable { return Foam::scalar(celli++); }
-    );
-}
-
-
 /** @brief Create a volScalarField with uniform random values in [1, 2]. */
 auto randomScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
 {
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
-    return createOpenFOAMField<Foam::volScalarField>(
-        runTime,
-        mesh,
-        name,
-        [&]() { return dis(gen); }
-    );
+    return createRandomField<Foam::volScalarField>(runTime, mesh, name, [&]() { return dis(gen); });
 }
 
 /** @brief Create a volVectorField with random component values in [1, 2]. */
@@ -432,7 +410,7 @@ auto randomVectorField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam
 {
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
-    return createOpenFOAMField<Foam::volVectorField>(
+    return createRandomField<Foam::volVectorField>(
         runTime,
         mesh,
         name,
@@ -447,7 +425,7 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 {
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
-    return createOpenFOAMField<Foam::surfaceScalarField>(
+    return createRandomField<Foam::surfaceScalarField>(
         runTime,
         mesh,
         name,
@@ -493,6 +471,73 @@ FieldType randDimField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet
     return field;
 }
 
+/** @brief Create and return a named OpenFOAM field of type @p FieldType with values supplied by @p
+ * rand. */
+template<typename FieldType, typename Func>
+FieldType
+createIndexedField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name, Func func)
+{
+    FieldType t(
+        Foam::IOobject(
+            name,
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::AUTO_WRITE
+        ),
+        mesh
+    );
+
+    if constexpr (std::is_same_v<FieldType, Foam::surfaceScalarField> || std::is_same_v<FieldType, Foam::surfaceVectorField>)
+    {
+        // Surface field — fill internal + boundary
+        auto& intF = t.primitiveFieldRef();
+        forAll(intF, facei)
+            intF[facei] = func(facei);
+
+        forAll(t.boundaryField(), patchi)
+        {
+            auto& p = t.boundaryFieldRef()[patchi];
+            forAll(p, i)
+                p[i] = func(i);
+        }
+    }
+    else
+    {
+        for (auto celli = 0; celli < t.size(); celli++)
+        {
+            t[celli] = func(celli);
+        }
+        t.correctBoundaryConditions();
+    }
+    return t;
+}
+
+/** @brief Create a volScalarField with uniform random values in [1, 2]. */
+auto indexVolScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
+{
+    return createIndexedField<Foam::volScalarField>(
+        runTime,
+        mesh,
+        name,
+        [](int i) { return static_cast<Foam::scalar>(i); }
+    );
+}
+
+/** @brief Create a volVectorField with random component values in [1, 2]. */
+auto indexVolVectorField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
+{
+    std::mt19937 gen(42);
+    std::uniform_real_distribution<> dis(1.0, 2.0);
+    return createIndexedField<Foam::volVectorField>(
+        runTime,
+        mesh,
+        name,
+        [](int i) {
+            return Foam::vector {i, i, i};
+        }
+    );
+}
 /**
  * @brief Catch2 matcher that checks the internal field of a NeoN field against an OpenFOAM field.
  *
