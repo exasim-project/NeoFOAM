@@ -296,6 +296,48 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
     }
 }
 
+TEST_CASE("Applying permutation may change the direction of face normals")
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    // Create a 2x2x1 non-uniform mesh
+    Foam::Time& runTime = *timePtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
+    // --- Arrange ---
+    // Prepare a permutation and the applicator
+    const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+    const Permutation permutation {oldToNew};
+    const PreparedPermutation prepared {exec, permutation};
+    const PermutationApplicator applicator {exec};
+
+    // Prepare expected results
+    // The original face normals of internal faces:
+    const std::vector<NeoN::Vec3> expectedInternalFaceNormals {
+        {-1.0 / 30.0, 0.0, 0.0},
+        {0.0, 1.0 / 30.0, 0.0},
+        {0.0, 2.0 / 30.0, 0.0},
+        {-2.0 / 30.0, 0.0, 0.0}
+    };
+
+    const sizeType expectedInternalFaces {4};
+
+    // --- Act ---
+    applicator.apply(prepared, nfMesh);
+
+    // --- Assert ---
+    REQUIRE_THAT(
+        nfMesh.faceNormals(),
+        EqualsRange(
+            expectedInternalFaceNormals,
+            {0, NeoN::toLocalIdx(expectedInternalFaces)},
+            ApproxVector {1e-12}
+        )
+    );
+}
+
 TEST_CASE("Applying identity permutation leaves mesh unchanged")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());

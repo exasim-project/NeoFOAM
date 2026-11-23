@@ -79,6 +79,7 @@ void remapConnectivity(
     );
 
     // Correct the face owner and neighbor indices according to OpenFOAM convention
+    auto faceNormalsView = mesh.faceNormals().view();
     NeoN::parallelFor(
         exec,
         {0, NeoN::toLocalIdx(mesh.nInternalFaces())},
@@ -89,6 +90,10 @@ void remapConnectivity(
             {
                 faceOwnersView[i] = neighborIdx;
                 faceNeighborsView[i] = ownerIdx;
+
+                faceNormalsView[i][0] = -faceNormalsView[i][0];
+                faceNormalsView[i][1] = -faceNormalsView[i][1];
+                faceNormalsView[i][2] = -faceNormalsView[i][2];
             }
         },
         "correct face owner and neighbor indices of internal faces"
