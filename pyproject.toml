@@ -31,8 +31,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# the VTKHDF writer (neofoam.postprocess.writers.vtkhdf)
-h5py = ["h5py>=3"]
 dev = [
     "pytest>=6.0",
     "pytest-cov",
@@ -51,6 +49,8 @@ dev = [
     # test/ui/test_browser_forms.py (opt-in, `-m browser`); the browser itself comes
     # from `playwright install chromium`.
     "playwright",
+    # test/io/test_vtkhdf*.py read the written file back; src/ does not import it.
+    "h5py>=3",
     # build deps needed in env when no-build-isolation is enabled
     "scikit-build-core[pyproject]>=0.11.0",
     "nanobind>=3,<4",  # as in [build-system]
@@ -211,6 +211,7 @@ module = [
   "neon",
   "neon.*",
   "neofoam.neofoam_bindings",
+  "neofoam._vtkhdf",
 ]
 ignore_missing_imports = true
 follow_imports = "skip"
@@ -218,12 +219,6 @@ follow_imports = "skip"
 # opentelemetry is the optional [telemetry] extra — absent in most envs.
 [[tool.mypy.overrides]]
 module = ["opentelemetry", "opentelemetry.*"]
-ignore_missing_imports = true
-
-# h5py: the VTKHDF writer (neofoam.postprocess.writers.vtkhdf, the [h5py] extra) imports it
-# on first use.
-[[tool.mypy.overrides]]
-module = ["h5py", "h5py.*"]
 ignore_missing_imports = true
 
 [tool.poe.executor]

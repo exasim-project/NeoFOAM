@@ -20,6 +20,7 @@ option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_WITH_MPI "Enable MPI support" ON)
+option(NEOFOAM_WITH_HDF5 "Build VTKHDF output" ON)
 option(NEOFOAM_ENABLE_KOKKOS_TOOLS "Enable Kokkos Tools" OFF)
 
 option(NEOFOAM_BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)

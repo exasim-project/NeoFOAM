@@ -26,6 +26,11 @@ square brackets as a glob pattern. Instead of ``all`` you can pick just the
 optional features you need: ``dev``, ``docs``, ``agent``, ``mcp``,
 ``telemetry``, ``ui`` — e.g. ``pip install -e ".[dev,mcp]" -v``.
 
+``VtkHdfWriter`` is compiled against a private static HDF5 that CMake fetches. To
+build without it, pass ``-C cmake.define.NEOFOAM_WITH_HDF5=OFF`` to ``pip install``;
+constructing the writer then raises an error. ``h5py`` is only a test dependency
+(``dev`` extra), used to read the written files back.
+
 The editable install uses scikit-build's ``redirect`` mode: edits to
 ``src/neofoam/*.py`` take effect on the next Python start without
 reinstalling. Automatic rebuilds are off (``editable.rebuild = false``), so

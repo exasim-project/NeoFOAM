@@ -13,6 +13,7 @@ VTK's own ``vtkHDFReader`` (that ParaView reads it).
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -101,6 +102,25 @@ def test_vtkhdf_writer_rejects_a_field_of_the_wrong_length(tmp_path: Path) -> No
 
     with pytest.raises(ValueError, match="point data T"):
         out.write(0.1, point_data={"T": np.zeros(8)})
+
+
+def test_vtkhdf_writer_appends_while_h5py_reads_in_the_same_process(tmp_path: Path) -> None:
+    path = tmp_path / "hexAndTet.vtkhdf"
+    out = VtkHdfWriter(path, HEX_AND_TET)
+
+    for step, time in enumerate(TIMES):
+        out.write(time, point_data={"T": _point_T(step)})
+        with h5py.File(path, "r") as f:
+            assert f["VTKHDF/Steps"].attrs["NSteps"] == step + 1
+
+
+def test_vtkhdf_writer_names_the_cmake_option_if_the_module_is_not_built(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(sys.modules, "neofoam._vtkhdf", None)
+
+    with pytest.raises(RuntimeError, match="NEOFOAM_WITH_HDF5=ON"):
+        VtkHdfWriter(tmp_path / "hexAndTet.vtkhdf", HEX_AND_TET)
 
 
 def test_vtkhdf_writer_file_reads_in_vtk_at_a_later_step(written: Path) -> None:

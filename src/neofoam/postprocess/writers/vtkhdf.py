@@ -14,13 +14,13 @@ are 0. A backend hands its mesh over as a :class:`MeshExport`.
 from __future__ import annotations
 
 import gc
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from importlib import import_module
 from pathlib import Path
 from typing import Any, Optional, Protocol
 
 import numpy as np
-
-_MESH_KEYS = ("points", "connectivity", "offsets", "cell_types")
 
 
 class MeshExport(Protocol):
@@ -84,31 +84,66 @@ class UnstructuredMesh:
 
 
 def _mesh_arrays(mesh: MeshExport) -> dict[str, np.ndarray]:
-    """The arrays of ``mesh`` in the file's dtypes."""
-    return {
-        "points": np.asarray(mesh.points(), dtype=float).reshape(-1, 3),
-        "connectivity": np.asarray(mesh.connectivity(), dtype=np.int64),
-        "offsets": np.asarray(mesh.offsets(), dtype=np.int64),
-        "cell_types": np.asarray(mesh.cell_types(), dtype=np.uint8),
+    """The arrays of ``mesh`` in the file's dtypes; ``ValueError`` for inconsistent offsets."""
+    arrays = {
+        "points": np.asarray(mesh.points(), dtype=float, order="C").reshape(-1, 3),
+        "connectivity": np.asarray(mesh.connectivity(), dtype=np.int64, order="C"),
+        "offsets": np.asarray(mesh.offsets(), dtype=np.int64, order="C"),
+        "cell_types": np.asarray(mesh.cell_types(), dtype=np.uint8, order="C"),
     }
+    n_cells = len(arrays["cell_types"])
+    if len(arrays["offsets"]) != n_cells + 1:
+        raise ValueError(f"offsets: {len(arrays['offsets'])} entries, {n_cells + 1} expected")
+    return arrays
 
 
-def _h5py() -> Any:
-    """h5py, imported on first use: an optional dependency."""
-    import h5py  # noqa: PLC0415 - optional, only a run that writes VTKHDF needs it
+def _prepared_mesh(path: Path, mesh: MeshExport, comm: Any) -> dict[str, np.ndarray]:
+    """The mesh arrays; a failure on one rank raises on all, none is left in a collective."""
+    if comm is None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return _mesh_arrays(mesh)
+    arrays: dict[str, np.ndarray] = {}
+    error = ""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        arrays = _mesh_arrays(mesh)
+    except Exception as caught:  # re-raised below, on every rank
+        error = f"{type(caught).__name__}: {caught}"
+    failed = [f"rank {r}: {e}" for r, e in enumerate(comm.allgather(error)) if e]
+    if failed:
+        raise ValueError(f"VtkHdfWriter mesh: {'; '.join(failed)}")
+    return arrays
 
-    return h5py
 
-
-def _appendable(group: Any, name: str, data: np.ndarray) -> None:
-    """Append ``data`` (rows) to the resizable dataset ``group[name]``, created on first use."""
-    if name not in group:
-        group.create_dataset(name, data=data, maxshape=(None, *data.shape[1:]), chunks=True)
+@contextmanager
+def _no_cyclic_gc(comm: Any) -> Iterator[None]:
+    """Collect on every rank at one point, then keep the collector off during the collectives."""
+    if comm is None:
+        yield
         return
-    dataset = group[name]
-    start = dataset.shape[0]
-    dataset.resize(start + data.shape[0], axis=0)
-    dataset[start:] = data
+    # Objects whose finalizers are collective (petsc4py/dolfinx objects, mpi4py communicators)
+    # wait in reference cycles for the cyclic collector, which runs whenever an allocation trips
+    # it: then on one rank only, possibly inside a collective below, while the other ranks wait
+    # there for it, a hang. write() allocates too, so it needs this as much as the constructor.
+    enabled = gc.isenabled()
+    gc.collect()
+    gc.disable()
+    try:
+        yield
+    finally:
+        if enabled:
+            gc.enable()
+
+
+def _native_writer() -> Any:
+    """The compiled writer class; ``RuntimeError`` if this build has none."""
+    try:
+        return import_module("neofoam._vtkhdf").VtkHdfWriter
+    except ImportError as error:
+        raise RuntimeError(
+            "VtkHdfWriter needs the compiled module neofoam._vtkhdf: "
+            "build NeoFOAM with NEOFOAM_WITH_HDF5=ON"
+        ) from error
 
 
 class VtkHdfWriter:
@@ -118,30 +153,21 @@ class VtkHdfWriter:
     mesh comes as a :class:`MeshExport`. Every :meth:`write` opens, appends to and
     closes the file, so a run that ends without a finalizer leaves a complete file.
     With ``comm`` (an mpi4py communicator) every rank passes its piece, the
-    constructor and :meth:`write` are collective and rank 0 gathers and writes, one
-    part per rank; ``comm=None`` is serial. Needs h5py. Example::
+    constructor and :meth:`write` are collective and every rank writes its own part
+    into the one file, in rank order; ``comm=None`` is serial. Example::
 
         out = VtkHdfWriter(path, UnstructuredMesh(points, connectivity, offsets, cell_types))
         out.write(0.1, point_data={"T": T}, cell_data={"p": p})
     """
 
     def __init__(self, path: Path, mesh: MeshExport, comm: Any = None) -> None:
+        native_writer = _native_writer()
         self.path = Path(path)
-        self._comm = comm
-        if comm is not None:
-            # Collect on every rank before the first collective. Objects whose finalizers
-            # are collective (petsc4py/dolfinx objects, mpi4py communicators) wait in
-            # reference cycles for the cyclic collector, which runs whenever an allocation
-            # trips it: then on one rank only, possibly inside the gather below, while the
-            # other ranks wait there for it, a hang. Here every rank collects at one point.
-            gc.collect()
-        parts = self._gather(_mesh_arrays(mesh))
-        self._sizes = {
-            "Point": [len(part["points"]) for part in parts],
-            "Cell": [len(part["cell_types"]) for part in parts],
-        }
-        if parts:
-            self._create(parts)
+        self._comm = comm  # the native writer holds its handle, this keeps it valid
+        with _no_cyclic_gc(comm):
+            arrays = _prepared_mesh(self.path, mesh, comm)
+            handle = None if comm is None else comm.py2f()
+            self._writer = native_writer(str(self.path), arrays, handle)
 
     def write(
         self,
@@ -150,61 +176,5 @@ class VtkHdfWriter:
         cell_data: Optional[Mapping[str, np.ndarray]] = None,
     ) -> None:
         """Append the time step ``time``; every rank passes the same field names."""
-        data = {"Point": dict(point_data or {}), "Cell": dict(cell_data or {})}
-        parts = self._gather(data)
-        if parts:
-            self._append(time, parts)
-
-    def _gather(self, piece: dict[str, Any]) -> list[dict[str, Any]]:
-        """Every rank's ``piece`` on rank 0 in rank order, ``[]`` on the others."""
-        if self._comm is None:
-            return [piece]
-        return self._comm.gather(piece, root=0) or []
-
-    def _create(self, parts: list[dict[str, np.ndarray]]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with _h5py().File(self.path, "w") as f:
-            root = f.create_group("VTKHDF")
-            root.attrs["Version"] = (2, 1)
-            kind = "UnstructuredGrid"
-            root.attrs.create("Type", np.bytes_(kind), dtype=f"S{len(kind)}")
-            root.create_dataset("NumberOfPoints", data=self._sizes["Point"], dtype=np.int64)
-            root.create_dataset("NumberOfCells", data=self._sizes["Cell"], dtype=np.int64)
-            connectivity_ids = [len(part["connectivity"]) for part in parts]
-            root.create_dataset("NumberOfConnectivityIds", data=connectivity_ids, dtype=np.int64)
-            for name, key in zip(("Points", "Connectivity", "Offsets", "Types"), _MESH_KEYS):
-                root.create_dataset(name, data=np.concatenate([part[key] for part in parts]))
-            root.create_group("PointData")
-            root.create_group("CellData")
-            steps = root.create_group("Steps")
-            steps.attrs["NSteps"] = 0
-            steps.create_group("PointDataOffsets")
-            steps.create_group("CellDataOffsets")
-
-    def _append(self, time: float, parts: list[dict[str, dict[str, np.ndarray]]]) -> None:
-        with _h5py().File(self.path, "a") as f:
-            root = f["VTKHDF"]
-            steps = root["Steps"]
-            _appendable(steps, "Values", np.array([time], dtype=float))
-            _appendable(steps, "NumberOfParts", np.array([len(parts)], dtype=np.int64))
-            # one static mesh: every step reads the same parts, points and cells
-            for name in ("PartOffsets", "PointOffsets", "CellOffsets"):
-                _appendable(steps, name, np.zeros(1, dtype=np.int64))
-            _appendable(steps, "ConnectivityIdOffsets", np.zeros((1, 1), dtype=np.int64))
-            for kind in ("Point", "Cell"):
-                for name in parts[0][kind]:
-                    values = self._concatenate(parts, kind, name)
-                    start = root[f"{kind}Data"][name].shape[0] if name in root[f"{kind}Data"] else 0
-                    _appendable(steps[f"{kind}DataOffsets"], name, np.array([start], np.int64))
-                    _appendable(root[f"{kind}Data"], name, values)
-            steps.attrs["NSteps"] = int(steps["Values"].shape[0])
-
-    def _concatenate(self, parts: list[dict[str, Any]], kind: str, name: str) -> np.ndarray:
-        """The parts' values of the field ``name``; ``ValueError`` for a wrong row count."""
-        arrays = [np.asarray(part[kind][name], dtype=float) for part in parts]
-        rows = [len(array) for array in arrays]
-        if rows != self._sizes[kind]:
-            raise ValueError(
-                f"{kind.lower()} data {name}: {rows} rows per part, {self._sizes[kind]} expected"
-            )
-        return np.concatenate(arrays)
+        with _no_cyclic_gc(self._comm):
+            self._writer.write(time, point_data or {}, cell_data or {})
