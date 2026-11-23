@@ -744,9 +744,8 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_epoch_us</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""ISO-8601 span timestamp -&gt; microseconds since the epoch (float)."""</span>
-    <span class="c1"># OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; the trailing</span>
-    <span class="c1"># ``Z`` is only accepted by ``fromisoformat`` from 3.11, so normalise it</span>
-    <span class="c1"># (the package targets 3.10).</span>
+    <span class="c1"># OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; normalise the</span>
+    <span class="c1"># trailing ``Z`` to an explicit UTC offset.</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Z"</span><span class="p">,</span> <span class="s2">"+00:00"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="n">_US_PER_S</span>
 
