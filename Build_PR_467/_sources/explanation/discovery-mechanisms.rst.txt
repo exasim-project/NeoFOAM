@@ -80,9 +80,9 @@ selection.**
 The solver registers a known list of specs via
 ``StagedInit.register_core_models([...])``. At LOAD time, exactly one
 of them is selected — typically by reading a case file directly — and
-added to ``LoadResult.core_models``. The solver pulls the chosen spec
-out of ``state.core_models`` by index when building its execution
-graph.
+its runtime is added to ``LoadResult.core_models``. The solver pulls
+that runtime out of ``state.core_models`` by index when building its
+execution graph.
 
 This is the right mechanism when:
 
@@ -95,8 +95,8 @@ This is the right mechanism when:
 
 In ``incompressibleFluid``, the pressure-velocity algorithm uses this
 mechanism. ``PressureVelocityAlgorithm.detect_and_create()`` reads
-``system/fvSolution`` exactly once and returns the right spec; the
-``execution_graph`` step then pulls it out of
+``system/fvSolution`` exactly once and returns a fresh runtime of the
+right spec; the ``execution_graph`` step then pulls it out of
 ``self.state.core_models[0]``.
 
 Decision tree
