@@ -19,6 +19,7 @@ var searchData=
   ['meshadapter_5f_16',['meshAdapter_',['../classNeoFOAM_1_1Forces.html#a7e95e12bbd3b38155a472ddc1a854c59',1,'NeoFOAM::Forces']]],
   ['meshptr_17',['meshPtr',['../structNeoFOAM_1_1RunTime.html#aa14f6fa7f861be2e130a8e5944a116b9',1,'NeoFOAM::RunTime']]],
   ['mpienvironment_18',['mpiEnvironment',['../structNeoFOAM_1_1RunTime.html#ad5773d54934f9c502a84a00e4e2248fd',1,'NeoFOAM::RunTime']]],
-  ['mulescorrect_19',['mulesCorrect',['../namespaceNeoFOAM.html#ab91f49b295c1d09af6e91fc8d4a18d18',1,'NeoFOAM']]],
-  ['mulesexplicitsolve_20',['mulesExplicitSolve',['../namespaceNeoFOAM.html#a02292127089700e6f37c2cd3b6b1286d',1,'NeoFOAM']]]
+  ['mules_2ehpp_19',['mules.hpp',['../mules_8hpp.html',1,'']]],
+  ['mulescorrect_20',['mulesCorrect',['../namespaceNeoFOAM.html#ab91f49b295c1d09af6e91fc8d4a18d18',1,'NeoFOAM']]],
+  ['mulesexplicitsolve_21',['mulesExplicitSolve',['../namespaceNeoFOAM.html#a02292127089700e6f37c2cd3b6b1286d',1,'NeoFOAM']]]
 ];

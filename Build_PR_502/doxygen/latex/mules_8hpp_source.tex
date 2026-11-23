@@ -1,0 +1,78 @@
+\doxysection{mules.\+hpp}
+\hypertarget{mules_8hpp_source}{}\label{mules_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/mules.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/mules.hpp}}
+\mbox{\hyperlink{mules_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00008}00008\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00009}00009\ \{}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00011}00011\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred}{nnfvcc}}\ =\ NeoN::finiteVolume::cellCentred;}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00013}00013\ \textcolor{comment}{/*\ @brief\ Bounded\ explicit\ MULES\ solve,\ Foam::MULES::explicitSolve\ (MULESTemplates.C).}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00014}00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00015}00015\ \textcolor{comment}{\ *\ @detail\ rho\ ==\ 1,\ Sp\ ==\ Su\ ==\ 0,\ static\ mesh,\ Euler\ time\ step,\ extremaCoeff\ ==}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00016}00016\ \textcolor{comment}{\ *\ boundaryExtremaCoeff\ ==\ smoothLimiter\ ==\ 0.\ As\ in\ OpenFOAM,\ @p\ alpha\ (psi,\ the\ current}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00017}00017\ \textcolor{comment}{\ *\ corrector's\ field)\ gives\ the\ upwind\ flux\ phiBD\ and\ the\ local\ extrema,\ while\ @p\ alphaOld}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00018}00018\ \textcolor{comment}{\ *\ (psi.oldTime(),\ alpha\ at\ the\ start\ of\ the\ time\ step)\ enters\ the\ bound\ right-\/hand\ sides\ and}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00019}00019\ \textcolor{comment}{\ *\ the\ update\ alpha\ =\ (alphaOld*rDeltaT\ -\/\ surfaceIntegrate(alphaPhi))/rDeltaT.\ Both\ are\ the\ same}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00020}00020\ \textcolor{comment}{\ *\ field\ for\ the\ first\ corrector\ (nAlphaCorr\ ==\ 1);\ @p\ alphaOld\ may\ alias\ @p\ alpha.}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00021}00021\ \textcolor{comment}{\ *\ @p\ phi\ is\ the\ volumetric\ flux:\ it\ defines\ the\ upwind\ (donor)\ flux\ and\ is\ the\ BoundaryContext}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00022}00022\ \textcolor{comment}{\ *\ "{}phi"{}\ for\ alpha.correctBoundaryConditions,\ which\ runs\ on\ entry\ and\ exit\ (as\ in\ OpenFOAM).}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00023}00023\ \textcolor{comment}{\ *\ Limits\ @p\ alphaPhi\ in\ place\ (high-\/order\ flux\ in,\ limited\ flux\ out)\ and\ advances\ @p\ alpha}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00024}00024\ \textcolor{comment}{\ *\ conservatively.}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00025}00025\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00026}00026\ \textcolor{comment}{\ *\ Boundary\ treatment\ (MULES::limiter):\ patches\ that\ fix\ the\ value\ (NeoN\ fixesValue,\ plus}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00027}00027\ \textcolor{comment}{\ *\ inletOutlet,\ which\ is\ a\ mixed\ patch\ and\ fixesValue()\ in\ OpenFOAM)\ widen\ the\ local\ extrema\ of}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00028}00028\ \textcolor{comment}{\ *\ their\ face\ cells\ by\ the\ patch\ value.\ The\ boundary\ correction\ flux\ is\ zero\ (phiBD\_b\ ==}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00029}00029\ \textcolor{comment}{\ *\ alphaPhi\_b),\ so\ the\ boundary\ limiter\ is\ irrelevant.\ Coupled\ (processor)\ patches\ throw;\ wedge}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00030}00030\ \textcolor{comment}{\ *\ patches\ do\ not\ exist\ in\ NeoN.}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00031}00031\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00032}\mbox{\hyperlink{namespaceNeoFOAM_a02292127089700e6f37c2cd3b6b1286d}{00032}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a02292127089700e6f37c2cd3b6b1286d}{mulesExplicitSolve}}(}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00033}00033\ \ \ \ \ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00034}00034\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alphaOld,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00035}00035\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00036}00036\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ alphaPhi,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00037}00037\ \ \ \ \ NeoN::scalar\ deltaT,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00038}00038\ \ \ \ \ NeoN::scalar\ psiMax,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00039}00039\ \ \ \ \ NeoN::scalar\ psiMin,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00040}00040\ \ \ \ \ \textcolor{keywordtype}{int}\ nLimiterIter}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00041}00041\ );}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00043}00043\ \textcolor{comment}{/*\ @brief\ MULES::correct\ (CMULESTemplates.C)\ for\ the\ VoF\ path,\ psiMax\ ==\ 1,\ psiMin\ ==\ 0.}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00044}00044\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00045}00045\ \textcolor{comment}{\ *\ @detail\ Limits\ the\ correction\ flux\ @p\ phiCorr\ (internal\ and\ boundary\ faces)\ so\ that\ applying}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00046}00046\ \textcolor{comment}{\ *\ it\ keeps\ alpha\ bounded,\ then\ applies\ it:\ alpha\ =\ (alpha*rDeltaT\ -\/\ surfaceIntegrate(phiCorr))}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00047}00047\ \textcolor{comment}{\ *\ /\ rDeltaT.\ @p\ phi\ plays\ the\ role\ of\ OpenFOAM's\ limiterCorr\ phi\ argument\ (interFoam\ passes}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00048}00048\ \textcolor{comment}{\ *\ alphaPhiUn):\ a\ boundary\ face\ is\ limited\ only\ where\ phi\_b\ +\ phiCorr\_b\ >\ SMALL\string^2\ (outlets).}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00049}00049\ \textcolor{comment}{\ *\ Fixed-\/value\ /\ inletOutlet\ patches\ widen\ the\ local\ extrema\ as\ in\ mulesExplicitSolve;\ coupled}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00050}00050\ \textcolor{comment}{\ *\ patches\ throw.\ @p\ relaxOld\ blends\ the\ result\ with\ the\ pre-\/correction\ field\ (interFoam}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00051}00051\ \textcolor{comment}{\ *\ aCorr\ >\ 0\ branch,\ 0.5);\ 0\ disables\ it.}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00052}00052\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00053}00053\ \textcolor{comment}{\ *\ Unlike\ OpenFOAM,\ the\ boundary\ values\ of\ @p\ alpha\ are\ NOT\ corrected\ here:\ an\ inletOutlet\ patch}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00054}00054\ \textcolor{comment}{\ *\ needs\ the\ volumetric\ flux,\ which\ @p\ phi\ is\ not.\ Call\ correctBoundaryConditions\ afterwards.}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00055}00055\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00056}\mbox{\hyperlink{namespaceNeoFOAM_ab91f49b295c1d09af6e91fc8d4a18d18}{00056}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ab91f49b295c1d09af6e91fc8d4a18d18}{mulesCorrect}}(}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00057}00057\ \ \ \ \ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00059}00059\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ phiCorr,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00060}00060\ \ \ \ \ \textcolor{keywordtype}{double}\ deltaT,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keywordtype}{int}\ nLimiterIter,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00062}00062\ \ \ \ \ \textcolor{keywordtype}{double}\ relaxOld}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00063}00063\ );}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00065}00065\ \textcolor{comment}{/*\ @brief\ alpha.correctBoundaryConditions\ with\ the\ volumetric\ flux\ @p\ phi\ in\ the}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00066}00066\ \textcolor{comment}{\ *\ BoundaryContext\ under\ "{}phi"{},\ so\ inletOutlet\ patches\ switch\ per\ face\ on\ the\ flux\ sign.\ */}}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00067}\mbox{\hyperlink{namespaceNeoFOAM_ade1e556856ce6e94add9887c7142c41a}{00067}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ade1e556856ce6e94add9887c7142c41a}{correctBoundaryConditionsWithFlux}}(}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00068}00068\ \ \ \ \ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha,}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00069}00069\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00070}00070\ );}
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{mules_8hpp_source_l00072}00072\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}

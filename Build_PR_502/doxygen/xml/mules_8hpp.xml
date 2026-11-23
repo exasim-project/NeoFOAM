@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
+  <compounddef id="mules_8hpp" kind="file" language="C++">
+    <compoundname>mules.hpp</compoundname>
+    <includes local="yes">NeoN/NeoN.hpp</includes>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/mules.hpp</label>
+        <link refid="mules_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+    </incdepgraph>
+    <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2026<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="9"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoN_1_1finiteVolume_1_1cellCentred" kindref="compound">nnfvcc</ref><sp/>=<sp/>NeoN::finiteVolume::cellCentred;</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Bounded<sp/>explicit<sp/>MULES<sp/>solve,<sp/>Foam::MULES::explicitSolve<sp/>(MULESTemplates.C).</highlight></codeline>
+<codeline lineno="14"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="15"><highlight class="comment"><sp/>*<sp/>@detail<sp/>rho<sp/>==<sp/>1,<sp/>Sp<sp/>==<sp/>Su<sp/>==<sp/>0,<sp/>static<sp/>mesh,<sp/>Euler<sp/>time<sp/>step,<sp/>extremaCoeff<sp/>==</highlight></codeline>
+<codeline lineno="16"><highlight class="comment"><sp/>*<sp/>boundaryExtremaCoeff<sp/>==<sp/>smoothLimiter<sp/>==<sp/>0.<sp/>As<sp/>in<sp/>OpenFOAM,<sp/>@p<sp/>alpha<sp/>(psi,<sp/>the<sp/>current</highlight></codeline>
+<codeline lineno="17"><highlight class="comment"><sp/>*<sp/>corrector&apos;s<sp/>field)<sp/>gives<sp/>the<sp/>upwind<sp/>flux<sp/>phiBD<sp/>and<sp/>the<sp/>local<sp/>extrema,<sp/>while<sp/>@p<sp/>alphaOld</highlight></codeline>
+<codeline lineno="18"><highlight class="comment"><sp/>*<sp/>(psi.oldTime(),<sp/>alpha<sp/>at<sp/>the<sp/>start<sp/>of<sp/>the<sp/>time<sp/>step)<sp/>enters<sp/>the<sp/>bound<sp/>right-hand<sp/>sides<sp/>and</highlight></codeline>
+<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>the<sp/>update<sp/>alpha<sp/>=<sp/>(alphaOld*rDeltaT<sp/>-<sp/>surfaceIntegrate(alphaPhi))/rDeltaT.<sp/>Both<sp/>are<sp/>the<sp/>same</highlight></codeline>
+<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>field<sp/>for<sp/>the<sp/>first<sp/>corrector<sp/>(nAlphaCorr<sp/>==<sp/>1);<sp/>@p<sp/>alphaOld<sp/>may<sp/>alias<sp/>@p<sp/>alpha.</highlight></codeline>
+<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>@p<sp/>phi<sp/>is<sp/>the<sp/>volumetric<sp/>flux:<sp/>it<sp/>defines<sp/>the<sp/>upwind<sp/>(donor)<sp/>flux<sp/>and<sp/>is<sp/>the<sp/>BoundaryContext</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/>*<sp/>&quot;phi&quot;<sp/>for<sp/>alpha.correctBoundaryConditions,<sp/>which<sp/>runs<sp/>on<sp/>entry<sp/>and<sp/>exit<sp/>(as<sp/>in<sp/>OpenFOAM).</highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>Limits<sp/>@p<sp/>alphaPhi<sp/>in<sp/>place<sp/>(high-order<sp/>flux<sp/>in,<sp/>limited<sp/>flux<sp/>out)<sp/>and<sp/>advances<sp/>@p<sp/>alpha</highlight></codeline>
+<codeline lineno="24"><highlight class="comment"><sp/>*<sp/>conservatively.</highlight></codeline>
+<codeline lineno="25"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="26"><highlight class="comment"><sp/>*<sp/>Boundary<sp/>treatment<sp/>(MULES::limiter):<sp/>patches<sp/>that<sp/>fix<sp/>the<sp/>value<sp/>(NeoN<sp/>fixesValue,<sp/>plus</highlight></codeline>
+<codeline lineno="27"><highlight class="comment"><sp/>*<sp/>inletOutlet,<sp/>which<sp/>is<sp/>a<sp/>mixed<sp/>patch<sp/>and<sp/>fixesValue()<sp/>in<sp/>OpenFOAM)<sp/>widen<sp/>the<sp/>local<sp/>extrema<sp/>of</highlight></codeline>
+<codeline lineno="28"><highlight class="comment"><sp/>*<sp/>their<sp/>face<sp/>cells<sp/>by<sp/>the<sp/>patch<sp/>value.<sp/>The<sp/>boundary<sp/>correction<sp/>flux<sp/>is<sp/>zero<sp/>(phiBD_b<sp/>==</highlight></codeline>
+<codeline lineno="29"><highlight class="comment"><sp/>*<sp/>alphaPhi_b),<sp/>so<sp/>the<sp/>boundary<sp/>limiter<sp/>is<sp/>irrelevant.<sp/>Coupled<sp/>(processor)<sp/>patches<sp/>throw;<sp/>wedge</highlight></codeline>
+<codeline lineno="30"><highlight class="comment"><sp/>*<sp/>patches<sp/>do<sp/>not<sp/>exist<sp/>in<sp/>NeoN.</highlight></codeline>
+<codeline lineno="31"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="32" refid="namespaceNeoFOAM_1a02292127089700e6f37c2cd3b6b1286d" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a02292127089700e6f37c2cd3b6b1286d" kindref="member">mulesExplicitSolve</ref>(</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alphaOld,</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>alphaPhi,</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>deltaT,</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>psiMax,</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>psiMin,</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>nLimiterIter</highlight></codeline>
+<codeline lineno="41"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>MULES::correct<sp/>(CMULESTemplates.C)<sp/>for<sp/>the<sp/>VoF<sp/>path,<sp/>psiMax<sp/>==<sp/>1,<sp/>psiMin<sp/>==<sp/>0.</highlight></codeline>
+<codeline lineno="44"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="45"><highlight class="comment"><sp/>*<sp/>@detail<sp/>Limits<sp/>the<sp/>correction<sp/>flux<sp/>@p<sp/>phiCorr<sp/>(internal<sp/>and<sp/>boundary<sp/>faces)<sp/>so<sp/>that<sp/>applying</highlight></codeline>
+<codeline lineno="46"><highlight class="comment"><sp/>*<sp/>it<sp/>keeps<sp/>alpha<sp/>bounded,<sp/>then<sp/>applies<sp/>it:<sp/>alpha<sp/>=<sp/>(alpha*rDeltaT<sp/>-<sp/>surfaceIntegrate(phiCorr))</highlight></codeline>
+<codeline lineno="47"><highlight class="comment"><sp/>*<sp/>/<sp/>rDeltaT.<sp/>@p<sp/>phi<sp/>plays<sp/>the<sp/>role<sp/>of<sp/>OpenFOAM&apos;s<sp/>limiterCorr<sp/>phi<sp/>argument<sp/>(interFoam<sp/>passes</highlight></codeline>
+<codeline lineno="48"><highlight class="comment"><sp/>*<sp/>alphaPhiUn):<sp/>a<sp/>boundary<sp/>face<sp/>is<sp/>limited<sp/>only<sp/>where<sp/>phi_b<sp/>+<sp/>phiCorr_b<sp/>&gt;<sp/>SMALL^2<sp/>(outlets).</highlight></codeline>
+<codeline lineno="49"><highlight class="comment"><sp/>*<sp/>Fixed-value<sp/>/<sp/>inletOutlet<sp/>patches<sp/>widen<sp/>the<sp/>local<sp/>extrema<sp/>as<sp/>in<sp/>mulesExplicitSolve;<sp/>coupled</highlight></codeline>
+<codeline lineno="50"><highlight class="comment"><sp/>*<sp/>patches<sp/>throw.<sp/>@p<sp/>relaxOld<sp/>blends<sp/>the<sp/>result<sp/>with<sp/>the<sp/>pre-correction<sp/>field<sp/>(interFoam</highlight></codeline>
+<codeline lineno="51"><highlight class="comment"><sp/>*<sp/>aCorr<sp/>&gt;<sp/>0<sp/>branch,<sp/>0.5);<sp/>0<sp/>disables<sp/>it.</highlight></codeline>
+<codeline lineno="52"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="53"><highlight class="comment"><sp/>*<sp/>Unlike<sp/>OpenFOAM,<sp/>the<sp/>boundary<sp/>values<sp/>of<sp/>@p<sp/>alpha<sp/>are<sp/>NOT<sp/>corrected<sp/>here:<sp/>an<sp/>inletOutlet<sp/>patch</highlight></codeline>
+<codeline lineno="54"><highlight class="comment"><sp/>*<sp/>needs<sp/>the<sp/>volumetric<sp/>flux,<sp/>which<sp/>@p<sp/>phi<sp/>is<sp/>not.<sp/>Call<sp/>correctBoundaryConditions<sp/>afterwards.</highlight></codeline>
+<codeline lineno="55"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56" refid="namespaceNeoFOAM_1ab91f49b295c1d09af6e91fc8d4a18d18" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ab91f49b295c1d09af6e91fc8d4a18d18" kindref="member">mulesCorrect</ref>(</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phiCorr,</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>deltaT,</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>nLimiterIter,</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>relaxOld</highlight></codeline>
+<codeline lineno="63"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>alpha.correctBoundaryConditions<sp/>with<sp/>the<sp/>volumetric<sp/>flux<sp/>@p<sp/>phi<sp/>in<sp/>the</highlight></codeline>
+<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>BoundaryContext<sp/>under<sp/>&quot;phi&quot;,<sp/>so<sp/>inletOutlet<sp/>patches<sp/>switch<sp/>per<sp/>face<sp/>on<sp/>the<sp/>flux<sp/>sign.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="67" refid="namespaceNeoFOAM_1ade1e556856ce6e94add9887c7142c41a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ade1e556856ce6e94add9887c7142c41a" kindref="member">correctBoundaryConditionsWithFlux</ref>(</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi</highlight></codeline>
+<codeline lineno="70"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/mules.hpp"/>
+  </compounddef>
+</doxygen>

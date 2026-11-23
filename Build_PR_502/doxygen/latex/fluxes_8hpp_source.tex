@@ -1,0 +1,136 @@
+\doxysection{fluxes.\+hpp}
+\hypertarget{fluxes_8hpp_source}{}\label{fluxes_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/fluxes.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/fluxes.hpp}}
+\mbox{\hyperlink{fluxes_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runTime_8hpp}{NeoFOAM/datastructures/runTime.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00010}00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00011}00011\ \{}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00013}00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred}{nnfvcc}}\ =\ NeoN::finiteVolume::cellCentred;}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00014}00014\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00015}00015\ \textcolor{comment}{/*\ @brief\ Interface\ unit-\/normal\ flux\ nHatf\ =\ nHatfv\ \&\ Sf.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00016}00016\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00017}00017\ \textcolor{comment}{\ *\ @detail\ nHatfv\ =\ gradAlphaf\ /\ (|gradAlphaf|\ +\ deltaN),\ with}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00018}00018\ \textcolor{comment}{\ *\ gradAlphaf\ =\ interpolate(grad(alpha1))\ (Gauss-\/Green\ grad,\ linear\ face\ interpolation)\ and}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00019}00019\ \textcolor{comment}{\ *\ deltaN\ =\ 1e-\/8\ /\ cbrt(mean(cell\ volume)).\ Follows\ interfaceProperties::calculateK}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00020}00020\ \textcolor{comment}{\ *\ without\ the\ contact-\/angle\ correction.\ The\ gradient\ is\ summed\ in\ OpenFOAM's\ face\ order\ with}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00021}00021\ \textcolor{comment}{\ *\ OpenFOAM's\ linear\ weights,\ so\ Serial\ results\ match\ OpenFOAM\ to\ the\ last\ bit\ even\ where}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00022}00022\ \textcolor{comment}{\ *\ gradAlpha\ is\ round-\/off,\ which\ the\ 1/deltaN\ normalisation\ amplifies.\ Boundary\ values\ use\ the}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00023}00023\ \textcolor{comment}{\ *\ gaussGrad\ boundary\ correction.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00024}00024\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00025}00025\ \textcolor{comment}{\ *\ The\ weights\ (and\ vanLeerAlphaFlux's\ owner-\/to-\/neighbour\ deltas)\ are\ copied\ from\ the\ OpenFOAM}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00026}00026\ \textcolor{comment}{\ *\ mesh\ in\ @p\ rt\ to\ the\ device\ once\ and\ cached\ in\ the\ NeoN\ mesh's\ stencil\ database.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00027}00027\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00028}00028\ nnfvcc::SurfaceField<NeoN::scalar>}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00029}\mbox{\hyperlink{namespaceNeoFOAM_a56a70dd6af6a3d83fa25fe0fa855aa4b}{00029}}\ \mbox{\hyperlink{namespaceNeoFOAM_a56a70dd6af6a3d83fa25fe0fa855aa4b}{computeNHatf}}(\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,\ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha1);}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00030}00030\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00031}00031\ \textcolor{comment}{/*\ @brief\ computeNHatf\ into\ an\ existing\ field\ (internal\ and\ boundary\ values\ overwritten).\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00032}\mbox{\hyperlink{namespaceNeoFOAM_aac6cea6cf1190a10f16c555e95e6b75f}{00032}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a56a70dd6af6a3d83fa25fe0fa855aa4b}{computeNHatf}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00033}00033\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00034}00034\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha1,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00035}00035\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ nHatf}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00036}00036\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00037}00037\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00038}00038\ \textcolor{comment}{/*\ @brief\ fvc::flux(phi,\ alpha,\ "{}Gauss\ vanLeer"{}):\ vanLeer-\/limited\ face\ flux\ phi\_f\ *\ alpha\_f.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00039}00039\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00040}00040\ \textcolor{comment}{\ *\ @detail\ Transcribes\ Foam::LimitedScheme::calcLimiter\ +\ NVDTVD::r\ +\ vanLeerLimiter\ and}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00041}00041\ \textcolor{comment}{\ *\ surfaceInterpolationScheme::interpolate\ (alpha\_f\ =\ w*(alpha\_P\ -\/\ alpha\_N)\ +\ alpha\_N).}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00042}00042\ \textcolor{comment}{\ *\ Linear\ weights\ and\ the\ cell-\/to-\/cell\ delta\ are\ OpenFOAM's\ (cached\ per\ mesh,\ see\ computeNHatf).}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00043}00043\ \textcolor{comment}{\ *\ Boundary\ flux\ is\ phi\_b\ *\ alpha\_b\ (non-\/coupled\ patch\ value).}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00044}00044\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00045}\mbox{\hyperlink{namespaceNeoFOAM_a3304bf9456fd4dcacc8d9f6a1852d8ad}{00045}}\ nnfvcc::SurfaceField<NeoN::scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a3304bf9456fd4dcacc8d9f6a1852d8ad}{vanLeerAlphaFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00046}00046\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00047}00047\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00049}00049\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00051}00051\ \textcolor{comment}{/*\ @brief\ vanLeerAlphaFlux\ into\ an\ existing\ field\ (internal\ and\ boundary\ values\ overwritten).\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00052}\mbox{\hyperlink{namespaceNeoFOAM_aa7f6842491bb6b2f0208f835eea2a193}{00052}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a3304bf9456fd4dcacc8d9f6a1852d8ad}{vanLeerAlphaFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00053}00053\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00054}00054\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00056}00056\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00057}00057\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00059}00059\ \textcolor{comment}{/*\ @brief\ Upwind\ face\ flux\ phi\_f\ *\ alpha\_upwind(f)\ as\ upwind<scalar>::flux\ computes\ it;}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00060}00060\ \textcolor{comment}{\ *\ boundary\ phi\_b\ *\ alpha\_b.\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00061}\mbox{\hyperlink{namespaceNeoFOAM_a68785352f940db76e3456b12105fa1cd}{00061}}\ nnfvcc::SurfaceField<NeoN::scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a68785352f940db76e3456b12105fa1cd}{upwindAlphaFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00062}00062\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00063}00063\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00064}00064\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00065}00065\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00066}00066\ \textcolor{comment}{/*\ @brief\ alphaEqn.H\ interface\ compression\ velocity\ phic\ =\ cAlpha*|phi/magSf|.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00067}00067\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00068}00068\ \textcolor{comment}{\ *\ @detail\ Zero\ on\ the\ boundary\ faces:\ interFoam\ zeroes\ phic\ on\ non-\/coupled\ patches,\ and\ NeoN}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00069}00069\ \textcolor{comment}{\ *\ has\ no\ coupled\ ones.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00070}00070\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00071}00071\ nnfvcc::SurfaceField<NeoN::scalar>}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00072}\mbox{\hyperlink{namespaceNeoFOAM_a8d466cfc369ee30808d15a748f4b8e6b}{00072}}\ \mbox{\hyperlink{namespaceNeoFOAM_a8d466cfc369ee30808d15a748f4b8e6b}{interfaceCompressionVelocity}}(\textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi,\ NeoN::scalar\ cAlpha);}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00074}00074\ \textcolor{comment}{/*\ @brief\ interfaceCompressionVelocity\ into\ an\ existing\ field.\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00075}\mbox{\hyperlink{namespaceNeoFOAM_a1f3180f341ece363e1c4b62d93273929}{00075}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a8d466cfc369ee30808d15a748f4b8e6b}{interfaceCompressionVelocity}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00076}00076\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00077}00077\ \ \ \ \ NeoN::scalar\ cAlpha,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00078}00078\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ phic}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00079}00079\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00081}00081\ \textcolor{comment}{/*\ @brief\ alphaEqn.H\ compression\ flux\ fvc::flux(-\/fvc::flux(-\/phir,\ alpha2,\ linear),\ alpha1,\ linear).}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00082}00082\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00083}00083\ \textcolor{comment}{\ *\ @detail\ alpha2\ =\ 1\ -\/\ alpha1.\ Internal\ faces:\ (phir*alpha2\_f)*alpha1\_f\ with\ OpenFOAM's\ linear}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00084}00084\ \textcolor{comment}{\ *\ weights\ (cached\ per\ mesh,\ see\ computeNHatf),\ so\ Serial\ matches\ OpenFOAM\ bit\ for\ bit;\ NeoN's}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00085}00085\ \textcolor{comment}{\ *\ own\ interpolation\ weights\ round\ differently.\ Boundary\ faces:\ (phir\_b*alpha2\_b)*alpha1\_b.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00086}00086\ \textcolor{comment}{\ *\ interFoam\ passes\ phir\ =\ phic*nHatf.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00087}00087\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00088}\mbox{\hyperlink{namespaceNeoFOAM_a1cc9fd94dda1b93df1147a72629bf887}{00088}}\ nnfvcc::SurfaceField<NeoN::scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a1cc9fd94dda1b93df1147a72629bf887}{linearCompressionFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00089}00089\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00090}00090\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha1,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00091}00091\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phir}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00092}00092\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00094}00094\ \textcolor{comment}{/*\ @brief\ linearCompressionFlux\ into\ an\ existing\ field.\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00095}\mbox{\hyperlink{namespaceNeoFOAM_a4efe685283a8858de9dca5d1555dcf15}{00095}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a1cc9fd94dda1b93df1147a72629bf887}{linearCompressionFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00096}00096\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00097}00097\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha1,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00098}00098\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phir,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00099}00099\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00100}00100\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00102}00102\ \textcolor{comment}{/*\ @brief\ alphaPhi\ +=\ linearCompressionFlux(alpha1,\ phic*nHatf),\ internal\ and\ boundary\ faces.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00103}00103\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00104}00104\ \textcolor{comment}{\ *\ @detail\ The\ same\ face\ arithmetic\ as\ forming\ phir\ =\ phic*nHatf,\ the\ compression\ flux\ and\ the}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00105}00105\ \textcolor{comment}{\ *\ sum\ one\ after\ the\ other,\ in\ one\ kernel\ without\ the\ intermediate\ fields:\ vanLeerAlphaFlux}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00106}00106\ \textcolor{comment}{\ *\ into\ alphaPhi\ followed\ by\ this\ gives\ alphaPhaseFlux.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00107}00107\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00108}\mbox{\hyperlink{namespaceNeoFOAM_abf5fa6a07a56cecb31ce1cfe774f3484}{00108}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_abf5fa6a07a56cecb31ce1cfe774f3484}{addInterfaceCompressionFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00109}00109\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00110}00110\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha1,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00111}00111\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phic,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00112}00112\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ nHatf,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00113}00113\ \ \ \ \ nnfvcc::SurfaceField<NeoN::scalar>\&\ alphaPhi}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00114}00114\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00115}00115\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00116}00116\ \textcolor{comment}{/*\ @brief\ interFoam\ alphaEqn.H\ high-\/order\ phase\ flux\ alphaPhiUn.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00117}00117\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00118}00118\ \textcolor{comment}{\ *\ @detail\ vanLeerAlphaFlux(alpha1)\ +\ linearCompressionFlux(alpha1,\ phir)\ with}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00119}00119\ \textcolor{comment}{\ *\ phir\ =\ interfaceCompressionVelocity(phi,\ cAlpha)*computeNHatf(alpha1):\ linear\ alpharScheme,}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00120}00120\ \textcolor{comment}{\ *\ icAlpha\ ==\ scAlpha\ ==\ 0.\ No\ compression\ on\ (non-\/coupled)\ boundary\ faces.\ The\ same\ face}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00121}00121\ \textcolor{comment}{\ *\ arithmetic\ as\ that\ composition,\ fused\ into\ one\ kernel\ without\ its\ temporary\ fields.}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00122}00122\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00123}\mbox{\hyperlink{namespaceNeoFOAM_a27e77dff7c0fad062d421fc8cff9f856}{00123}}\ nnfvcc::SurfaceField<NeoN::scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a27e77dff7c0fad062d421fc8cff9f856}{alphaPhaseFlux}}(}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00124}00124\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00125}00125\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::scalar>\&\ alpha1,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00126}00126\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<NeoN::scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00127}00127\ \ \ \ \ \textcolor{keywordtype}{double}\ cAlpha}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00128}00128\ );}
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00129}00129\ }
+\DoxyCodeLine{\Hypertarget{fluxes_8hpp_source_l00130}00130\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}

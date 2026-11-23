@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
+  <compounddef id="courant_8hpp" kind="file" language="C++">
+    <compoundname>courant.hpp</compoundname>
+    <includes local="no">utility</includes>
+    <includes local="yes">NeoN/NeoN.hpp</includes>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/courant.hpp</label>
+        <link refid="courant_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="2">
+        <label>utility</label>
+      </node>
+    </incdepgraph>
+    <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2026<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;utility&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="11"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoN_1_1finiteVolume_1_1cellCentred" kindref="compound">nnfvcc</ref><sp/>=<sp/>NeoN::finiteVolume::cellCentred;</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Flow<sp/>and<sp/>interface<sp/>Courant<sp/>numbers<sp/>of<sp/>advectorVoF&apos;s<sp/>setDeltaT.H,<sp/>as<sp/>{CoNum,<sp/>alphaCoNum}.</highlight></codeline>
+<codeline lineno="16"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="17"><highlight class="comment"><sp/>*<sp/>@detail<sp/>sumPhi<sp/>=<sp/>fvc::surfaceSum(mag(phi)),<sp/>CoNum<sp/>=<sp/>0.5*gMax(sumPhi/V)*deltaT</highlight></codeline>
+<codeline lineno="18"><highlight class="comment"><sp/>*<sp/>(CourantNo.H)<sp/>and<sp/>alphaCoNum<sp/>=<sp/>0.5*gMax(pos(alpha<sp/>-<sp/>0.01)*pos(0.99<sp/>-<sp/>alpha)*sumPhi/V)*deltaT</highlight></codeline>
+<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>(advectorVoF&apos;s<sp/>alphaCourantNo.H,<sp/>with<sp/>strict<sp/>inequalities).<sp/>Each<sp/>cell<sp/>sums<sp/>its<sp/>faces<sp/>in</highlight></codeline>
+<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>OpenFOAM&apos;s<sp/>order<sp/>(internal<sp/>faces<sp/>by<sp/>index,<sp/>then<sp/>boundary<sp/>faces),<sp/>so<sp/>the<sp/>result<sp/>is</highlight></codeline>
+<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>bitwise<sp/>OpenFOAM&apos;s<sp/>on<sp/>every<sp/>executor.<sp/>The<sp/>cell-to-face<sp/>map<sp/>is<sp/>built<sp/>once<sp/>per<sp/>mesh<sp/>and<sp/>cached</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/>*<sp/>in<sp/>its<sp/>stencil<sp/>database.<sp/>Only<sp/>the<sp/>internal<sp/>field<sp/>of<sp/>@p<sp/>alpha<sp/>is<sp/>read.</highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="24" refid="namespaceNeoFOAM_1a220b0aed6d36feacc454e55a17abb177" refkind="member"><highlight class="normal">std::pair&lt;NeoN::scalar,<sp/>NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a220b0aed6d36feacc454e55a17abb177" kindref="member">courantNumbers</ref>(</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>alpha,</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>deltaT</highlight></codeline>
+<codeline lineno="28"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/vof/courant.hpp"/>
+  </compounddef>
+</doxygen>
