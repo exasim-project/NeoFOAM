@@ -22,10 +22,19 @@ from .simpleAlgorithm import simple
 
 @dataclass
 class PressureVelocitySettings:
-    """One run's settings, kept off the spec that regions and runs share."""
+    """One run's settings, kept off the spec that regions and runs share.
+
+    Use it as the ``config`` of a pressure-velocity runtime; obtain it through
+    :meth:`PressureVelocityAlgorithm.create` or ``detect_and_create`` instead of
+    building one. Belongs to one run and is not thread-safe: the boussinesq model's
+    resolve sets ``use_boussinesq``, which dispatches the buoyant variants.
+
+    Example::
+
+        settings = PressureVelocityAlgorithm.create(algorithm_type="PIMPLE").config
+    """
 
     algorithm_type: str
-    #: Set by the boussinesq model's resolve: dispatches the buoyant variants.
     use_boussinesq: bool = False
 
 

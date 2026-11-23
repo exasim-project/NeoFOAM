@@ -24,7 +24,16 @@ from .simpleAlgorithm import simpleNeoN
 
 @dataclass(frozen=True)
 class PressureVelocitySettingsNeoN:
-    """One run's settings, kept off the spec that regions and runs share."""
+    """One run's settings, kept off the spec that regions and runs share.
+
+    Use it as the ``config`` of a NeoN pressure-velocity runtime; obtain it through
+    :meth:`PressureVelocityAlgorithmNeoN.create` or ``detect_and_create`` instead of
+    building one. Frozen, so it is safe to read from any thread.
+
+    Example::
+
+        settings = PressureVelocityAlgorithmNeoN.create(algorithm_type="PIMPLE").config
+    """
 
     algorithm_type: str
 
