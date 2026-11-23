@@ -773,7 +773,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="s2">"Context"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Operations"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The runnable execution graph: ``execution_graph`` resolved with its model operations.</span>
 
-<span class="sd">        Reported to the installed execution observer before it is returned.</span>
+<span class="sd">        Use it to run a solver; call ``execution_graph`` directly only to inspect the</span>
+<span class="sd">        unresolved steps. Reported to the installed execution observer before it is</span>
+<span class="sd">        returned; each call resolves anew.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            solver.resolve_operations(ctx).run(ctx)</span>
 <span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">execution_observer</span>  <span class="c1"># noqa: PLC0415</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAGResolver</span>  <span class="c1"># noqa: PLC0415</span>

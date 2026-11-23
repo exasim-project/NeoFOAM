@@ -671,11 +671,22 @@
 <p>The Context object holds the state of the framework at a given point in time.
 It contains fields and models that are used by various components of the framework.</p>
 <p>The relevant fields or models are injected into the operations</p>
+<p><code class="docutils literal notranslate"><span class="pre">loops</span></code> holds the running loops, outermost first. <code class="docutils literal notranslate"><span class="pre">run_every_pass</span></code> names
+<code class="docutils literal notranslate"><span class="pre">final</span></code> operations that also run in every other pass, e.g. to watch them
+while debugging.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.context.Context.mark_final">
 <span class="sig-name descname"><span class="pre">mark_final</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">final</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#Context.mark_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.Context.mark_final" title="Link to this definition">¶</a></dt>
-<dd><p>Mark the pass the innermost loop is about to run as its last; call from its test.</p>
-<p>The next pass is not final again until the test marks it.</p>
+<dd><p>Mark the pass the innermost loop is about to run as its last.</p>
+<p>Call it from that loop’s test, when the test knows the coming pass ends the
+loop; a loop that never calls it never runs its <code class="docutils literal notranslate"><span class="pre">final</span></code> operations. The
+mark lasts one pass: the next is not final until the test marks it again.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">converged_test</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">mark_final</span><span class="p">(</span><span class="n">residual</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">iteration</span> <span class="o">&lt;</span> <span class="n">max_passes</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py attribute">
@@ -698,8 +709,15 @@ It contains fields and models that are used by various components of the framewo
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">LoopEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#LoopEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.LoopEntry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>A running loop, an entry of <code class="xref py py-attr docutils literal notranslate"><span class="pre">Context.loops</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">iteration</span></code> counts passes from 0; <code class="docutils literal notranslate"><span class="pre">final</span></code> is set by the loop’s test
-(<a class="reference internal" href="#neofoam.framework.context.Context.mark_final" title="neofoam.framework.context.Context.mark_final"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Context.mark_final()</span></code></a>).</p>
+<p>Read it from an operation or loop test that depends on the current pass; for
+a run-once or last-pass operation prefer the <code class="docutils literal notranslate"><span class="pre">first</span></code>/<code class="docutils literal notranslate"><span class="pre">final</span></code> marks.
+Immutable: <code class="docutils literal notranslate"><span class="pre">iteration</span></code> counts passes from 0 and the running loop replaces its
+entry each pass; <code class="docutils literal notranslate"><span class="pre">final</span></code> is set by the loop’s test (<a class="reference internal" href="#neofoam.framework.context.Context.mark_final" title="neofoam.framework.context.Context.mark_final"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Context.mark_final()</span></code></a>).</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">first</span><span class="p">:</span>
+    <span class="n">store_old_iterate</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.final">
 <span class="sig-name descname"><span class="pre">final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.final" title="Link to this definition">¶</a></dt>
