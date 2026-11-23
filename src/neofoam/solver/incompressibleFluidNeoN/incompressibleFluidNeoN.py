@@ -146,7 +146,7 @@ def execution_graph(
         time_builder.step(algo_ops["turbulence_correct"])
         time_builder.step(writer_ops["write_output"])
         # Last in the loop: pure readers, so a CSV row and the time directory
-        # just written describe the same state (post_process, then insitu if declared).
+        # just written describe the same state.
         for op in post_ops:
             time_builder.step(op)
 

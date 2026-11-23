@@ -111,8 +111,8 @@ def tables_for_case(case_dir: Path) -> TableSet:
         tables_for_case(Path("cases/cavity")).tables
     """
     from neofoam.postprocess.config import (  # noqa: PLC0415  # cycle: config->table
+        _resolve_insitu,
         load_config,
-        resolve_insitu,
         resolve_table,
         spec_file,
     )
@@ -138,7 +138,7 @@ def tables_for_case(case_dir: Path) -> TableSet:
         duplicates = sorted({name for name in names if names.count(name) > 1})
         if duplicates:
             raise ValueError(f"postProcess: duplicate insitu entries {duplicates}")
-        tables.insitu = [resolve_insitu(spec) for spec in config.insitu]
+        tables.insitu = [_resolve_insitu(spec) for spec in config.insitu]
 
     return tables
 
