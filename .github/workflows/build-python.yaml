@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         openfoam-version: [ 2506] # 2406, 2412,
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
       fail-fast: false
     name: neofoam Python with OpenFOAM ${{ matrix.openfoam-version }}
     steps:
@@ -51,7 +51,7 @@ jobs:
   python-coverage:
     runs-on: ubuntu-24.04 # may use an older version to test
 
-    name: Test coverage with OpenFOAM 2506 and Python 3.10
+    name: Test coverage with OpenFOAM 2506 and Python 3.11
     steps:
       - uses: actions/checkout@v5
 
@@ -60,10 +60,10 @@ jobs:
         with:
           openfoam-version: 2506
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install test dependencies
         run: |
@@ -109,10 +109,10 @@ jobs:
       with:
         openfoam-version: 2506
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
     - name: Check types with ty
       run: |

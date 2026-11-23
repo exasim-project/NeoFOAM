@@ -103,8 +103,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Mirrors the wheel matrix. No 3.9: conda-forge has no nanobind for it.
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        # Mirrors the wheel matrix. Python 3.11 is the minimum.
+        python: ["3.11", "3.12", "3.13"]
         # openfoam is published for linux-64 and osx-arm64, but osx-arm64 is held back:
         # under clang, OpenFOAM's NoRepository template bodies (Enum.C, HashTable.C, List.C)
         # are parsed where their types are still incomplete, e.g.

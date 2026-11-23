@@ -64,8 +64,8 @@ if ! find "${SP_DIR}/neofoam" -name "neofoam_bindings*.so" -print -quit | grep -
     exit 1
 fi
 
-# The bindings resolve libnanobind.so from the bundled pybFoam through an $ORIGIN/../pybFoam
-# rpath, so a missing pybFoam is a broken package rather than a missing optional extra.
+# The bindings exchange types with the bundled pybFoam, so a missing pybFoam is a broken package
+# rather than a missing optional extra.
 if [[ ! -d "${SP_DIR}/pybFoam" ]]; then
     echo "The bundled pybFoam package is missing from ${SP_DIR}" >&2
     exit 1

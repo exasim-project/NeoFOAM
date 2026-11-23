@@ -53,6 +53,7 @@
 - Add a pure-Python NeoN turbulence family on the ModelSpec framework (`laminar`/`kEpsilon`/`SpalartAllmaras`/`kOmegaSST`), unifying the NeoN and pybFoam closures behind one runtime selection and wiring them into `incompressibleFluidNeoN`; steady SIMPLE runs match native `simpleFoam` on pitzDaily, backed by new `neofoam_bindings` for wall distance, the strain/vorticity/grad-dot-grad invariants, and the epsilon/omega wall-function near-wall cell treatment [#359](https://github.com/exasim-project/NeoFOAM/pull/359)
 
 ## Development
+- Require Python 3.11 and `nanobind>=3,<4`, link the bindings against static nanobind, and bundle pybFoam v0.7.0, so no `libnanobind` or `libpybFoamEmbed` shared library is needed [#497](https://github.com/exasim-project/NeoFOAM/pull/497)
 - Simplify and standardize the Python `test/` suite to `.claude/TEST_STYLE.md`: migrate solver/tools tests onto the casebuild pipeline, drop pybFoam/OpenFOAM `importorskip` guards (they are hard deps), load real committed case files instead of dict-as-string content, and align `test/framework`, `test/fields`, and `test/algorithms` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
