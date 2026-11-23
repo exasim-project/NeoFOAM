@@ -670,6 +670,14 @@ runtime so multiple solver runs never share mutable state.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.solver.runtime.</span></span><span class="sig-name descname"><span class="pre">Finalizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/solver/runtime.html#Finalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.runtime.Finalizer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
 <p>A model of <code class="docutils literal notranslate"><span class="pre">ctx.models</span></code> that releases what it holds once the time loop has ended.</p>
+<p>Implement it on a model that keeps a resource across steps (a session, an open
+file); a model with nothing to release needs nothing. <code class="docutils literal notranslate"><span class="pre">SolverRuntime.finalize</span></code>
+calls it once per run, on every rank. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Session</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.solver.runtime.Finalizer.finalize">
 <span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/runtime.html#Finalizer.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.runtime.Finalizer.finalize" title="Link to this definition">¶</a></dt>

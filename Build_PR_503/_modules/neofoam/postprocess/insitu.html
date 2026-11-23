@@ -697,6 +697,16 @@
 <span class="sd">    An entry is a spec until the run's first step: :class:`InSituRunner` runs a</span>
 <span class="sd">    private copy, so the state an implementation keeps between calls (a</span>
 <span class="sd">    session, an output counter) belongs to the run. Unknown keys are refused.</span>
+
+<span class="sd">    Subclass it to drive an external tool from a case; for a table of reduced</span>
+<span class="sd">    values use a :class:`~neofoam.postprocess.table.TableSet` table instead. Example::</span>
+
+<span class="sd">        @InSitu.register</span>
+<span class="sd">        class Snapshot(InSitu):</span>
+<span class="sd">            type: Literal["snapshot"] = "snapshot"</span>
+
+<span class="sd">            def execute(self, ctx: Context) -&gt; None:</span>
+<span class="sd">                render(ctx.fields["p"])</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -705,8 +715,15 @@
     <span class="c1"># a declared entry always has its name (InSituSpec requires it).</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 
+<div class="viewcode-block" id="InSitu.execute">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSitu.execute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<span class="w">        </span><span class="sd">"""Hand ``ctx`` to the tool: called on this entry's due steps, on every rank.</span>
+
+<span class="sd">        Every rank calls it at the same steps, so it may be collective.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
 
 <div class="viewcode-block" id="InSitu.finalize">
 <a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSitu.finalize">[docs]</a>
@@ -719,7 +736,14 @@
 <div class="viewcode-block" id="InSituEntry">
 <a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituEntry">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InSituEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A declared entry: the plugin and when it runs."""</span>
+<span class="w">    </span><span class="sd">"""A declared entry: the plugin and when it runs.</span>
+
+<span class="sd">    ``tables_for_case`` builds these from ``insitu:``; build one directly only to</span>
+<span class="sd">    drive an :class:`InSituRunner` without a case file. It is a spec, shared by</span>
+<span class="sd">    runs, so the runner copies it. Example::</span>
+
+<span class="sd">        InSituEntry(plugin, write_control)</span>
+<span class="sd">    """</span>
 
     <span class="n">plugin</span><span class="p">:</span> <span class="n">InSitu</span>
     <span class="n">write_control</span><span class="p">:</span> <span class="n">WriteControl</span></div>
@@ -729,12 +753,23 @@
 <div class="viewcode-block" id="InSituRunner">
 <a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituRunner">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InSituRunner</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The runtime state of the ``insitu`` operation: a private copy of every entry."""</span>
+<span class="w">    </span><span class="sd">"""The runtime state of the ``insitu`` operation: a private copy of every entry.</span>
+
+<span class="sd">    The ``postProcess`` model builds one per run when a case declares entries, so a</span>
+<span class="sd">    solver never constructs it. Its lifecycle is :meth:`execute` once per step, then</span>
+<span class="sd">    :meth:`finalize` once; both run on every rank. Example::</span>
+
+<span class="sd">        runner = InSituRunner(tables.insitu)</span>
+<span class="sd">        runner.execute(ctx)</span>
+<span class="sd">        runner.finalize()</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InSituEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">InSituEntry</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">plugin</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">e</span><span class="o">.</span><span class="n">write_control</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
+            <span class="n">InSituEntry</span><span class="p">(</span>
+                <span class="n">entry</span><span class="o">.</span><span class="n">plugin</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">entry</span><span class="o">.</span><span class="n">write_control</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span>
         <span class="p">]</span>
 
 <div class="viewcode-block" id="InSituRunner.execute">

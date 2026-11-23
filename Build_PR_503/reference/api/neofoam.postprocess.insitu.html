@@ -666,7 +666,7 @@
 <p>A case declares in-situ entries next to its tables (<code class="docutils literal notranslate"><span class="pre">insitu:</span></code> in
 <code class="docutils literal notranslate"><span class="pre">system/postProcess.yaml</span></code>); the <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model then steps an
 <code class="docutils literal notranslate"><span class="pre">insitu</span></code> operation after <code class="docutils literal notranslate"><span class="pre">post_process</span></code> that calls each entry’s
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">InSitu.execute()</span></code> on that entry’s write steps. NeoFOAM ships no entry
+<a class="reference internal" href="#neofoam.postprocess.insitu.InSitu.execute" title="neofoam.postprocess.insitu.InSitu.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">InSitu.execute()</span></code></a> on that entry’s write steps. NeoFOAM ships no entry
 type: a renderer (Catalyst, say) registers one from its own package:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@InSitu</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Catalyst</span><span class="p">(</span><span class="n">InSitu</span><span class="p">):</span>
@@ -685,10 +685,27 @@ type: a renderer (Catalyst, say) registers one from its own package:</p>
 <p>An entry is a spec until the run’s first step: <a class="reference internal" href="#neofoam.postprocess.insitu.InSituRunner" title="neofoam.postprocess.insitu.InSituRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">InSituRunner</span></code></a> runs a
 private copy, so the state an implementation keeps between calls (a
 session, an output counter) belongs to the run. Unknown keys are refused.</p>
+<p>Subclass it to drive an external tool from a case; for a table of reduced
+values use a <a class="reference internal" href="neofoam.postprocess.table.html#neofoam.postprocess.table.TableSet" title="neofoam.postprocess.table.TableSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">TableSet</span></code></a> table instead. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@InSitu</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Snapshot</span><span class="p">(</span><span class="n">InSitu</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"snapshot"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"snapshot"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"p"</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.insitu.InSitu.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/insitu.html#InSitu.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.insitu.InSitu.execute" title="Link to this definition">¶</a></dt>
+<dd><p>Hand <code class="docutils literal notranslate"><span class="pre">ctx</span></code> to the tool: called on this entry’s due steps, on every rank.</p>
+<p>Every rank calls it at the same steps, so it may be collective.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.postprocess.insitu.InSitu.finalize">
 <span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/insitu.html#InSitu.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.insitu.InSitu.finalize" title="Link to this definition">¶</a></dt>
-<dd><p>Release what <code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code> opened; called once, after the time loop.</p>
+<dd><p>Release what <a class="reference internal" href="#neofoam.postprocess.insitu.InSitu.execute" title="neofoam.postprocess.insitu.InSitu.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> opened; called once, after the time loop.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -710,6 +727,12 @@ session, an output counter) belongs to the run. Unknown keys are refused.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.insitu.</span></span><span class="sig-name descname"><span class="pre">InSituEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plugin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu" title="neofoam.postprocess.insitu.InSitu"><span class="pre">InSitu</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_control</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.WriteControl" title="neofoam.algorithms.field_writer.write_control.WriteControl"><span class="pre">WriteControl</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/insitu.html#InSituEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.insitu.InSituEntry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>A declared entry: the plugin and when it runs.</p>
+<p><code class="docutils literal notranslate"><span class="pre">tables_for_case</span></code> builds these from <code class="docutils literal notranslate"><span class="pre">insitu:</span></code>; build one directly only to
+drive an <a class="reference internal" href="#neofoam.postprocess.insitu.InSituRunner" title="neofoam.postprocess.insitu.InSituRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">InSituRunner</span></code></a> without a case file. It is a spec, shared by
+runs, so the runner copies it. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">InSituEntry</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">write_control</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.postprocess.insitu.InSituEntry.plugin">
 <span class="sig-name descname"><span class="pre">plugin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu" title="neofoam.postprocess.insitu.InSitu"><span class="pre">InSitu</span></a></span><a class="headerlink" href="#neofoam.postprocess.insitu.InSituEntry.plugin" title="Link to this definition">¶</a></dt>
@@ -729,6 +752,14 @@ session, an output counter) belongs to the run. Unknown keys are refused.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.insitu.</span></span><span class="sig-name descname"><span class="pre">InSituRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.postprocess.insitu.InSituEntry" title="neofoam.postprocess.insitu.InSituEntry"><span class="pre">InSituEntry</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/insitu.html#InSituRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.insitu.InSituRunner" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The runtime state of the <code class="docutils literal notranslate"><span class="pre">insitu</span></code> operation: a private copy of every entry.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model builds one per run when a case declares entries, so a
+solver never constructs it. Its lifecycle is <a class="reference internal" href="#neofoam.postprocess.insitu.InSituRunner.execute" title="neofoam.postprocess.insitu.InSituRunner.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> once per step, then
+<a class="reference internal" href="#neofoam.postprocess.insitu.InSituRunner.finalize" title="neofoam.postprocess.insitu.InSituRunner.finalize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">finalize()</span></code></a> once; both run on every rank. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">runner</span> <span class="o">=</span> <span class="n">InSituRunner</span><span class="p">(</span><span class="n">tables</span><span class="o">.</span><span class="n">insitu</span><span class="p">)</span>
+<span class="n">runner</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+<span class="n">runner</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.postprocess.insitu.InSituRunner.execute">
 <span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/insitu.html#InSituRunner.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.insitu.InSituRunner.execute" title="Link to this definition">¶</a></dt>
@@ -804,6 +835,7 @@ after the time loop (<code class="docutils literal notranslate"><span class="pre
             <ul>
 <li><a class="reference internal" href="#">neofoam.postprocess.insitu</a><ul>
 <li><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu"><code class="docutils literal notranslate"><span class="pre">InSitu</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu.execute"><code class="docutils literal notranslate"><span class="pre">InSitu.execute()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu.finalize"><code class="docutils literal notranslate"><span class="pre">InSitu.finalize()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu.model_config"><code class="docutils literal notranslate"><span class="pre">InSitu.model_config</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.insitu.InSitu.plugin_model"><code class="docutils literal notranslate"><span class="pre">InSitu.plugin_model</span></code></a></li>
