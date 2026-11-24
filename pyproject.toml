@@ -155,6 +155,13 @@ editable.rebuild = false
 
 [tool.scikit-build.cmake.define]
 NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
+# Build the block-structured AMReX engine + its bindings (blockamr) as part of the
+# same wheel: AMReX is fetched from source via CPM under SKBUILD, and _blockamr.so +
+# blockamr/*.py install alongside _neon, so `pip install .[all] -v` provides the
+# full incompressibleFluidBlockAMR stack in one interpreter. AMReX inherits NeoN's
+# Kokkos backend (CUDA when a CUDA compiler is found), so enabling it does not
+# change NeoN's own build.
+NeoN_WITH_AMREX = "ON"
 
 [tool.uv]
 no-build-isolation-package = ["neofoam"]
@@ -208,6 +215,8 @@ module = [
   "pybFoam.*",
   "neon",
   "neon.*",
+  "blockamr",
+  "blockamr.*",
   "neofoam.neofoam_bindings",
 ]
 ignore_missing_imports = true
