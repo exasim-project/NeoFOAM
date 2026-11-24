@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['residualmap_0',['ResidualMap',['../namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073',1,'NeoFOAM']]]
+  ['pdesolver_0',['PDESolver',['../namespaceNeoFOAM.html#ac6c705c531174e3db7514bee80618ae1',1,'NeoFOAM']]]
 ];

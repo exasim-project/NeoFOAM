@@ -1,19 +1,14 @@
 var searchData=
 [
-  ['read_0',['read',['../classNeoFOAM_1_1ForceCoeffs.html#abbba342c427c240bd52734b9e59dbeff',1,'NeoFOAM::ForceCoeffs::read()'],['../classNeoFOAM_1_1Forces.html#ac695a2319f5af5b5708707bbff6f02b0',1,'NeoFOAM::Forces::read()'],['../classNeoFOAM_1_1FunctionObjectIO.html#a0ac7b890d28e6afcf30c37c052a499a8',1,'NeoFOAM::FunctionObjectIO::read()'],['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator.html#ac82afed643409ea721268ebaf58e38cb',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperator::read()']]],
-  ['readers_2ehpp_1',['readers.hpp',['../readers_8hpp.html',1,'']]],
-  ['readopenfoammesh_2',['readOpenFOAMMesh',['../namespaceNeoFOAM.html#afb828727f0f7b23418e94e1c464d9dae',1,'NeoFOAM']]],
-  ['readorcreate_3',['readOrCreate',['../namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c',1,'NeoFOAM']]],
-  ['readsurfaceboundaryconditions_4',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
-  ['readvolboundaryconditions_5',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]],
-  ['registryname_6',['registryName',['../classNeoFOAM_1_1DatabaseWrapper.html#a294a3f7e57e3700663a52e4ef2afe71f',1,'NeoFOAM::DatabaseWrapper']]],
-  ['relaxownedls_7',['relaxOwnedLs',['../classNeoFOAM_1_1PDE.html#adb2db6a18334f46d42794e5b5aef0fdb',1,'NeoFOAM::PDE']]],
-  ['reportcontinuityerror_8',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]],
-  ['residualmap_9',['ResidualMap',['../namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073',1,'NeoFOAM']]],
-  ['resolvemesh_10',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]],
-  ['result_5f_11',['result_',['../classNeoFOAM_1_1Forces.html#a91834387ab747d791018d412341b3e98',1,'NeoFOAM::Forces']]],
-  ['rhoref_5f_12',['rhoRef_',['../classNeoFOAM_1_1Forces.html#a05985b1ca791ec6a86dd589f708a3233',1,'NeoFOAM::Forces']]],
-  ['rotateoldtimes_13',['rotateoldtimes',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ad151a477a7928654ac8116f7865165d0',1,'NeoFOAM::SpalartAllmarasDDES::rotateOldTimes()'],['../classNeoFOAM_1_1TurbulenceModel.html#a6af2db926d7eb7d289a1afc6b8df18e9',1,'NeoFOAM::TurbulenceModel::rotateOldTimes()'],['../classNeoFOAM_1_1Laminar.html#a995332ed6034abe073d56dcf2578d26e',1,'NeoFOAM::Laminar::rotateOldTimes()']]],
-  ['runtime_14',['RunTime',['../structNeoFOAM_1_1RunTime.html',1,'NeoFOAM']]],
-  ['runtime_2ehpp_15',['runTime.hpp',['../runTime_8hpp.html',1,'']]]
+  ['omega_5fwf_5fdefault_5fbeta1_0',['OMEGA_WF_DEFAULT_BETA1',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#ad063cfa67b2773d26f52ba8fd7b21f99',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
+  ['omega_5fwf_5fdefault_5fcmu_1',['OMEGA_WF_DEFAULT_CMU',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#ab568652eabda3484f1230e9d70eff55b',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
+  ['omega_5fwf_5fdefault_5fkappa_2',['OMEGA_WF_DEFAULT_KAPPA',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#a79b05a3da39e7e171857cfb014a6f530',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
+  ['omega_5fwf_5fomega_5fmax_3',['OMEGA_WF_OMEGA_MAX',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#a0b6cb2d36a5fb53f61f7960a207b9ddd',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
+  ['omegasourcefield_4',['omegaSourceField',['../classNeoFOAM_1_1KOmegaSST.html#a4575863206a00bd6bde5e2c0ebf839b4',1,'NeoFOAM::KOmegaSST']]],
+  ['omegawallfunction_5',['OmegaWallFunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction.html',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction'],['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction.html#ac0943294b58f4309efe67121dd9f4ebb',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction::OmegaWallFunction()']]],
+  ['omegawallfunction_2ehpp_6',['omegaWallFunction.hpp',['../omegaWallFunction_8hpp.html',1,'']]],
+  ['operator_26_7',['operator&amp;',['../namespaceNeoFOAM.html#a999e61dc6e0868f9fe6cd7e4ea91f917',1,'NeoFOAM']]],
+  ['operator_28_29_8',['operator()',['../classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f',1,'NeoFOAM::CreateFromFoamField']]],
+  ['operator_3d_3d_9',['operator==',['../namespaceNeoFOAM.html#adb3f301260a65dd30182893f75665a8a',1,'NeoFOAM::operator==(const NeoN::Vector&lt; NT &gt; &amp;nf, const Foam::Field&lt; OT &gt; &amp;of)'],['../namespaceNeoFOAM.html#ab57ab173a9df89dbffffcf9a42aa673d',1,'NeoFOAM::operator==(fvcc::VolumeField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvPatchField, Foam::volMesh &gt; &amp;of)'],['../namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805',1,'NeoFOAM::operator==(const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)']]],
+  ['outputdir_10',['outputDir',['../classNeoFOAM_1_1FunctionObjectIO.html#a598af1cff8c3269503ff0d2cc5c483b9',1,'NeoFOAM::FunctionObjectIO']]]
 ];

@@ -152,9 +152,7 @@ for i in range(3):
 # Drop the time_step cache and the provider runs again on the next call.
 resolver.clear_scope("time_step")
 kwargs = resolver.resolve_arguments(needs_counter, ctx)
-print(
-    f"after clear_scope: counter = {kwargs['counter']}, provider ran {sum(_call_log)}x"
-)
+print(f"after clear_scope: counter = {kwargs['counter']}, provider ran {sum(_call_log)}x")
 
 
 # %%
@@ -163,4 +161,4 @@ print(
 #
 # - :doc:`/explanation/parameter-injection` — the resolution algorithm
 #   in detail.
-# - :doc:`/reference/framework/dependency_resolver` — full API.
+# - :mod:`neofoam.framework.dependency_resolver` — full API.

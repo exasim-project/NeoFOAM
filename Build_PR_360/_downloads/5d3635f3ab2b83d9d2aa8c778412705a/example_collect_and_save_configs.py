@@ -81,9 +81,12 @@ for cls in schema:
 # ``.dicts`` and ``.fields`` properties filter the view so callers can
 # walk only one kind. The fields list reflects what the bound model
 # specs declare — ``pimple`` owns ``0/U`` / ``0/p``, ``boussinesq``
-# adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
+# adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``. Schema-only configs (the
+# turbulence coefficient blocks) have no file of their own — they
+# resolve out of ``constant/turbulenceProperties`` at load — so they
+# carry no ``io_config``.
 
-print("dict files:", sorted(cls.io_config.file for cls in schema.dicts))
+print("dict files:", sorted(cls.io_config.file for cls in schema.dicts if cls.io_config))
 print("0/* fields:", sorted(cls.io_config.file for cls in schema.fields))
 
 # %%
@@ -202,7 +205,7 @@ for cfg in hot_result.configs:
 
 # %%
 # Read and write ``0/<name>`` fields with ``load_fields`` / ``save_fields``
-# ------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # Dict configs that share a target file (``constant/transportProperties``,
 # ``system/fvSchemes``) need ``save_merged`` so multi-owner contributions
 # survive. Field files are single-owner per ``0/<name>``, so

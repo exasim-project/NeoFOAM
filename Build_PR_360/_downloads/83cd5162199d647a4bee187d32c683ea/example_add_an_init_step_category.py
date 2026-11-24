@@ -101,5 +101,5 @@ print(sorted(ctx.models))
 #
 # - :doc:`/explanation/three-stage-init` — where the router sits in
 #   the LOAD → RESOLVE → BUILD pipeline.
-# - :doc:`/reference/initialization/execution/context_builder` —
+# - :mod:`neofoam.framework.initialization.execution.context_builder` —
 #   ``CategoryRouter`` API.

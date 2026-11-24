@@ -25,7 +25,7 @@ If you haven't run a NeoFOAM case yet, do
 
 from pydantic import BaseModel, Field, ValidationError
 
-from neofoam.io import OF, JSON, YAML, BaseConfig, IOStrategy
+from neofoam.io import JSON, OF, YAML, BaseConfig, IOStrategy
 from neofoam.tutorial import clone_case
 
 # %%

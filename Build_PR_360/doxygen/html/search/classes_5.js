@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['laminar_0',['Laminar',['../classNeoFOAM_1_1Laminar.html',1,'NeoFOAM']]]
+  ['gaussviscousstress_0',['GaussViscousStress',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1GaussViscousStress.html',1,'NeoN::finiteVolume::cellCentred']]]
 ];

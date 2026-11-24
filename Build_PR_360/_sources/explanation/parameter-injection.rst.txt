@@ -69,6 +69,9 @@ applies these rules in order. The logic lives in
    * - ``Annotated[T, Depends(...)]``
      - resolved through the ``Depends`` system
      - mainly used by ``@solver.initializer``
+   * - ``BaseConfig`` subclass
+     - matched **by type** in the model's own ``runtime.config``
+     - ``coeffs: KEpsilonCoeffs`` (the closure's resolved coefficients)
    * - Bare typed parameter
      - ``ctx.fields[<param_name>]`` if the name is present
      - ``U: volVectorField`` (auto-filled from ``ctx.fields["U"]``)
@@ -76,7 +79,13 @@ applies these rules in order. The logic lives in
 The parameter *name* is the lookup key. The parameter *type* is the
 static contract the operation expects — the framework does not
 validate the actual type against the declared type at injection
-time.
+time. The one exception is a ``BaseConfig`` parameter: it is matched
+by *type* against ``runtime.config`` (the config instance itself, or
+one attribute of the ``SimpleNamespace`` a multi-config model holds),
+so its name is free. It composes with every row above — the
+``kEpsilon`` closure's operations take their ``coeffs:
+KEpsilonCoeffs`` next to ``Annotated[..., "models"]`` helpers in one
+signature.
 
 Missing entries
 ~~~~~~~~~~~~~~~

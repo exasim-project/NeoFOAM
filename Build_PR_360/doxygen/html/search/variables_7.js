@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['kappa_0',['kappa',['../structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#abe91604675cf9f21567d124937c483ad',1,'NeoFOAM::SpalartAllmarasDDES::Coefficients']]]
+  ['issurfacefield_0',['isSurfaceField',['../namespaceNeoFOAM_1_1detail.html#ab279b37af86eb68b39242b6bf49e208d',1,'NeoFOAM::detail']]],
+  ['isvolumefield_1',['isVolumeField',['../namespaceNeoFOAM_1_1detail.html#a5376cc046ea43727dbdeedf0f7b2614c',1,'NeoFOAM::detail']]],
+  ['iterationindex_2',['iterationIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f',1,'NeoFOAM::CreateFromFoamField']]]
 ];

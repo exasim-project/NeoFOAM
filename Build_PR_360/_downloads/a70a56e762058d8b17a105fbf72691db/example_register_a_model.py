@@ -28,7 +28,7 @@ from neofoam.framework.initialization import (
 from neofoam.framework.initialization.staged import LoadResult, StagedInitSpec
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
-from neofoam.io import IOStrategy, YAML, BaseConfig
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
 @IOStrategy(YAML("turbulence_config.yaml"))
@@ -139,4 +139,4 @@ def _solver_build(core_models: list[Any], optional_models: list[Any]) -> list[In
 #   with typed BC unions.
 # - :doc:`/explanation/model-structure` — why the ``Spec`` / ``Runtime``
 #   split exists.
-# - :doc:`/reference/model/index` — module API reference.
+# - :mod:`neofoam.framework.model` — module API reference.

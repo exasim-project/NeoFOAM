@@ -46,7 +46,7 @@ from pathlib import Path
 
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.model import Model
-from neofoam.io import IOStrategy, YAML
+from neofoam.io import YAML, IOStrategy
 
 
 def _here() -> None:
@@ -161,9 +161,7 @@ print("solution.solvers.U            :", solution.solvers.U)
 #    :language: yaml
 #    :caption: per_model_fvSchemes_bad.yaml
 
-shutil.copy(
-    HERE / "per_model_fvSchemes_bad.yaml", CASE_DIR / "per_model_fvSchemes_bad.yaml"
-)
+shutil.copy(HERE / "per_model_fvSchemes_bad.yaml", CASE_DIR / "per_model_fvSchemes_bad.yaml")
 try:
     PimpleFvSchemes.load(case_dir=CASE_DIR, file="per_model_fvSchemes_bad.yaml")
 except Exception as exc:

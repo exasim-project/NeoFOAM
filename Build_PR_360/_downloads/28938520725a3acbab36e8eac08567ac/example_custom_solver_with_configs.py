@@ -59,7 +59,7 @@ from neofoam.foam import fvSchemes
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
 def _here() -> None:
