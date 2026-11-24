@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# SPDX-License-Identifier: MIT
+
+name: GPU benchmarks
+
+# Weekly GPU benchmarks of develop on LRZ GitLab, kept out of ci.yaml so that PRs never hold a
+# runner for them. Results go to the NeoFOAM_develop branch of NeoFOAM-BenchmarkData, one folder
+# per date and commit (see ci/lrz-gitlab/benchmark.sh).
+on:
+  schedule:
+    - cron: "00 4 * * 0" # Sundays 04:00 UTC, before the weekly CI run at 08:00
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Benchmark NeoFOAM on GPU
+    if: github.repository == 'exasim-project/NeoFOAM'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440 # 24 hours
+    env:
+      LRZ_GROUP: greole
+      LRZ_HOST: gitlab-ce.lrz.de
+      REPO_NAME: ${{ github.event.repository.name }}
+      BRANCH: ${{ github.ref_name }}
+      MAX_WAIT_MINUTES: 1440
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
+      LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push commit to LRZ GitLab
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add lrz https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_GROUP}/${REPO_NAME}.git
+          git push --force lrz "HEAD:refs/heads/${BRANCH}"
+
+      # No cancel step: it would cancel the GPU tests of a concurrent push to the same branch.
+      # NEON_BRANCH also keeps the ci.yaml GPU job from cancelling this pipeline.
+      - name: Trigger LRZ GitLab CI pipeline for benchmarking
+        id: trigger
+        run: |
+          ./ci/github/trigger_pipeline.sh \
+            "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${REPO_NAME}" \
+            "variables[NEON_BRANCH]=develop" \
+            "variables[PR_NUMBER]=no-pr" \
+            "variables[BENCHMARK]=true"
+
+      - name: Wait for LRZ GitLab CI pipeline for benchmarking
+        run: ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}

@@ -22,7 +22,7 @@ GitHub CI is responsible for managing the overall NeoFOAM CI workflow.
 * Build and test NeoFOAM on **CPU** on Linux (clang, gcc) and macOS, and the Python package.
 * Push the source code and commit metadata to **LRZ GitLab**.
 * Cancel outdated pipelines on LRZ GitLab for the same branch.
-* Trigger new LRZ GitLab pipelines for GPU builds and benchmarks.
+* Trigger new LRZ GitLab pipelines for GPU builds, and weekly for benchmarks.
 
 .. note::
    The GitHub CI acts as the *control layer* for all NeoFOAM CI operations.
@@ -41,7 +41,10 @@ broken commit occupies as few of the organization's shared runners as possible:
 #. On pushes to ``develop``/``main``, the weekly run and manual runs: the Python tests on 3.12 and
    3.13.
 
-``build_doc.yaml`` deploys the documentation of merged PRs and release tags.
+``build_doc.yaml`` deploys the documentation of merged PRs and release tags, and
+``gpu_benchmark.yaml`` runs the GPU benchmarks of ``develop`` once a week. Their results are on the
+``NeoFOAM_develop`` branch of
+`NeoFOAM-BenchmarkData <https://github.com/exasim-project/NeoFOAM-BenchmarkData>`_.
 
 ------------------------------------
 Continuous Integration on LRZ GitLab
@@ -51,7 +54,7 @@ The LRZ GitLab CI handles GPU-related operations.
 **Responsibilities:**
 
 * Build and test NeoFOAM on **NVIDIA** and **AMD** GPUs on Linux.
-* Run benchmark jobs after successful build and test stages.
+* Run the weekly benchmark jobs of ``develop``.
 * Report the status and results back to GitHub for unified monitoring.
 
 .. _ci-neofoam-workflow:
@@ -67,7 +70,6 @@ The development workflow for NeoFOAM proceeds as follows:
 #. GitHub CI cancels all pending or running LRZ GitLab pipelines for that branch.
 #. GitHub CI triggers a **new LRZ GitLab pipeline**.
 #. LRZ GitLab CI builds and tests NeoFOAM on GPUs.
-#. *(Optional)* Benchmark jobs are executed after successful testing.
 #. The developer monitors all results directly on GitHub.
 
 .. _ci-neofoam-labels:
@@ -81,7 +83,6 @@ NeoFOAM’s GitHub repository uses labels to control the CI behavior.
 
 * ``skip-build`` — Skip all build-and-test jobs on both GitHub and LRZ GitLab.
 * ``skip-changelog`` — Skip the changelog check.
-* ``benchmark`` — Enable GPU benchmarking jobs after successful build-and-test jobs.
 * ``skip-validation`` — Skip the solver validation runs in the LRZ GitLab build-and-test job.
 * ``skip-nvidia``, ``skip-amd``, ``skip-intel`` — Skip the GPU jobs on the respective vendor's hardware.
 
@@ -102,7 +103,7 @@ The NeoFOAM CI system provides:
 * Transparent CPU and GPU build workflows.
 * Automatic synchronization between GitHub and LRZ GitLab.
 * Branch-aware pipeline handling and cancellation.
-* On-demand GPU benchmarking via PR labels.
+* Weekly GPU benchmarking of ``develop``.
 
 .. seealso::
 
