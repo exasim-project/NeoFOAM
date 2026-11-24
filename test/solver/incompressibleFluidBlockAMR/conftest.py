@@ -11,7 +11,6 @@
   in an isolated directory.
 """
 
-import os
 import shutil
 from pathlib import Path
 
@@ -20,8 +19,6 @@ import pytest
 # Gate the whole package on the native engine being importable.
 pytest.importorskip("neon")
 import blockamr  # noqa: E402
-
-os.environ.setdefault("AMREX_THE_ARENA_INIT_SIZE", "0")
 
 CASE_SRC = Path(__file__).parent / "cases" / "box"
 
@@ -35,8 +32,8 @@ def blockamr_session():
     ``amrex::Finalize`` frees the AMReX *arena allocator*'s device memory; when
     Kokkos has already dropped the context, that free aborts with ``CUDA error
     709: context is destroyed``. Since ``neofoam`` is always imported here, we
-    open the runtime but deliberately never run its finalizing ``__exit__`` — the
-    OS reclaims GPU memory at process exit. (Standalone ``blockamr`` still
+    open the runtime but deliberately never run its finalizing ``__exit__`` —
+    blockamr finalizes it at process exit. (Standalone ``blockamr`` still
     finalizes normally.)
     """
     blockamr.runtime().__enter__()
