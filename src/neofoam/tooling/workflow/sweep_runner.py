@@ -38,6 +38,7 @@ from typing import Any
 
 import yaml
 
+from neofoam.core.entry_points import load_plugins
 from neofoam.framework.solver.configurations import _snake_case, configurations
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.tools import PreprocessConfig
@@ -436,4 +437,5 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    load_plugins()
     raise SystemExit(main())

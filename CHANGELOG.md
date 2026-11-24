@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Add the `neofoam.plugins` and `neofoam.solvers` entry-point groups: separately installed packages can register plugins (models, post-processing nodes, ...) and add `neofoam solver <name>` commands; solvers load optional models from their bound families, so a plugin can add a new optional family [#461](https://github.com/exasim-project/NeoFOAM/pull/461)
 - Write the solver comparison test cases into `tmp_path` instead of the repository [#429](https://github.com/exasim-project/NeoFOAM/pull/429)
 - Make the steady `simpleFoam` parity tests tolerant of FMA round-off between pybFoam and prebuilt OpenFOAM [#495](https://github.com/exasim-project/NeoFOAM/pull/495)
 - Add a C++ test of the `slip` boundary reader against OpenFOAM [#481](https://github.com/exasim-project/NeoFOAM/pull/481)

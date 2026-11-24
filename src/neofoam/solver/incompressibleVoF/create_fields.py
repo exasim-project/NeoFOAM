@@ -37,8 +37,8 @@ from neofoam.framework.model import ModelRuntime
 from neofoam.postprocess import postProcess
 
 from .models.alpha_advection import advectionModel  # noqa: F401  (registers schemes)
-from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
+from .solver_spec import incompressibleVoF
 
 # OpenFOAM libraries native interFoam links but pybFoam does not, so their
 # runtime-selection entries (waveVelocity/waveAlpha) are otherwise unreachable —
@@ -85,7 +85,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     def load_config() -> LoadResult:
         # VoF always uses PIMPLE; detect (and warn on missing PIMPLE dict).
         pressure_model = PressureVelocityAlgorithm.detect_and_create()
-        optional_models = incompressibleVoFModel.detect_models(resolved_case_dir)
+        optional_models = incompressibleVoF.detect_optional_models(resolved_case_dir)
 
         # alpha-advection scheme is runtime-switchable (advectionScheme key in
         # system/fvSolution, default MULES); it runs first each outer corrector,
