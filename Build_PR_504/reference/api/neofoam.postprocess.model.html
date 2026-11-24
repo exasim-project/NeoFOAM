@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.postprocess.node" href="neofoam.postprocess.node.html"><link rel="prev" title="neofoam.postprocess.insitu" href="neofoam.postprocess.insitu.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.postprocess.node" href="neofoam.postprocess.node.html"><link rel="prev" title="neofoam.postprocess.config" href="neofoam.postprocess.config.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.postprocess.model.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -382,8 +382,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="neofoam.postprocess.html">neofoam.postprocess</a><input aria-label="Toggle navigation of neofoam.postprocess" checked="" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.actions.html">neofoam.postprocess.actions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.config.html">neofoam.postprocess.config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.insitu.html">neofoam.postprocess.insitu</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">neofoam.postprocess.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.node.html">neofoam.postprocess.node</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.postprocess.nodes.html">neofoam.postprocess.nodes</a><input aria-label="Toggle navigation of neofoam.postprocess.nodes" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -672,8 +672,8 @@ per table, both opened at the first write), and the model steps
 a CSV row and a time directory describe the same state. A case that declares no
 table gets an empty set and the operation does nothing (not even a
 <code class="docutils literal notranslate"><span class="pre">postProcessing/</span></code> directory).</p>
-<p>A case that declares <code class="docutils literal notranslate"><span class="pre">insitu</span></code> entries also gets the <code class="docutils literal notranslate"><span class="pre">insitu</span></code> operation after
-<code class="docutils literal notranslate"><span class="pre">post_process</span></code> (and its <a class="reference internal" href="neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituRunner" title="neofoam.postprocess.insitu.InSituRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">InSituRunner</span></code></a>
+<p>A case that declares <code class="docutils literal notranslate"><span class="pre">actions</span></code> also gets the <code class="docutils literal notranslate"><span class="pre">actions</span></code> operation after
+<code class="docutils literal notranslate"><span class="pre">post_process</span></code> (and its <a class="reference internal" href="neofoam.postprocess.actions.html#neofoam.postprocess.actions.ActionRunner" title="neofoam.postprocess.actions.ActionRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">ActionRunner</span></code></a>
 init step); without them neither exists. A solver steps every operation of the
 model, in order.</p>
 <dl class="py data">
@@ -705,15 +705,15 @@ earlier one (append) or starts from scratch (truncate):</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neofoam.postprocess.model.insitu">
-<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.model.</span></span><span class="sig-name descname"><span class="pre">insitu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/model.html#insitu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.model.insitu" title="Link to this definition">¶</a></dt>
-<dd><p>Hand the live Context to the due in-situ entries (on every rank).</p>
+<dt class="sig sig-object py" id="neofoam.postprocess.model.actions">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.model.</span></span><span class="sig-name descname"><span class="pre">actions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/model.html#actions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.model.actions" title="Link to this definition">¶</a></dt>
+<dd><p>Hand the live Context to the due actions (on every rank).</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.postprocess.model.operations">
 <span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.model.</span></span><span class="sig-name descname"><span class="pre">operations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operations" title="neofoam.framework.operations.Operations"><span class="pre">Operations</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/model.html#operations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.model.operations" title="Link to this definition">¶</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">post_process</span></code>, and <code class="docutils literal notranslate"><span class="pre">insitu</span></code> when the case declares in-situ entries.</p>
+<dd><p><code class="docutils literal notranslate"><span class="pre">post_process</span></code>, and <code class="docutils literal notranslate"><span class="pre">actions</span></code> when the case declares actions.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -738,14 +738,14 @@ earlier one (append) or starts from scratch (truncate):</p>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="neofoam.postprocess.insitu.html">
+          <a class="prev-page" href="neofoam.postprocess.config.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">neofoam.postprocess.insitu</div>
+                <div class="title">neofoam.postprocess.config</div>
                 
               </div>
             </a>
@@ -785,7 +785,7 @@ earlier one (append) or starts from scratch (truncate):</p>
 <li><a class="reference internal" href="#neofoam.postprocess.model.PostProcessor.write"><code class="docutils literal notranslate"><span class="pre">PostProcessor.write()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#neofoam.postprocess.model.insitu"><code class="docutils literal notranslate"><span class="pre">insitu()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.model.actions"><code class="docutils literal notranslate"><span class="pre">actions()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.model.operations"><code class="docutils literal notranslate"><span class="pre">operations()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.model.post_process"><code class="docutils literal notranslate"><span class="pre">post_process()</span></code></a></li>
 </ul>

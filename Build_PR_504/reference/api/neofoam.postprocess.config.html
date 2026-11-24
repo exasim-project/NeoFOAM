@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.postprocess.insitu" href="neofoam.postprocess.insitu.html"><link rel="prev" title="neofoam.postprocess" href="neofoam.postprocess.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.postprocess.model" href="neofoam.postprocess.model.html"><link rel="prev" title="neofoam.postprocess.actions" href="neofoam.postprocess.actions.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.postprocess.config.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -382,8 +382,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="neofoam.postprocess.html">neofoam.postprocess</a><input aria-label="Toggle navigation of neofoam.postprocess" checked="" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.actions.html">neofoam.postprocess.actions</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">neofoam.postprocess.config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.insitu.html">neofoam.postprocess.insitu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.model.html">neofoam.postprocess.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.postprocess.node.html">neofoam.postprocess.node</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.postprocess.nodes.html">neofoam.postprocess.nodes</a><input aria-label="Toggle navigation of neofoam.postprocess.nodes" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -673,6 +673,24 @@ are the same tree; <a class="reference internal" href="neofoam.io.dictfile.html#
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">resolve_table</span><span class="p">(</span><span class="n">load_config</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.config.ActionSpec">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.config.</span></span><span class="sig-name descname"><span class="pre">ActionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_control</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'interval':</span> <span class="pre">1,</span> <span class="pre">'write_control_type':</span> <span class="pre">'timeStep'}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/config.html#ActionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.config.ActionSpec" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>One declared action: its <code class="docutils literal notranslate"><span class="pre">type</span></code>, its cadence and the type’s own keys.</p>
+<p>Everything but <code class="docutils literal notranslate"><span class="pre">write_control</span></code> is the plugin’s and validated against the
+<code class="docutils literal notranslate"><span class="pre">Action</span></code> family at resolve time:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ActionSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"view"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"catalyst"</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">"U"</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.postprocess.config.ActionSpec.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow'}</span></span><a class="headerlink" href="#neofoam.postprocess.config.ActionSpec.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py data">
 <dt class="sig sig-object py" id="neofoam.postprocess.config.DEFAULT_WRITER">
 <span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.config.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_WRITER</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'type':</span> <span class="pre">'csv'}</span></span><a class="headerlink" href="#neofoam.postprocess.config.DEFAULT_WRITER" title="Link to this definition">¶</a></dt>
@@ -686,28 +704,10 @@ are the same tree; <a class="reference internal" href="neofoam.io.dictfile.html#
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.postprocess.config.InSituSpec">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.config.</span></span><span class="sig-name descname"><span class="pre">InSituSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_control</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'interval':</span> <span class="pre">1,</span> <span class="pre">'write_control_type':</span> <span class="pre">'timeStep'}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/config.html#InSituSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.config.InSituSpec" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
-<p>One declared in-situ entry: its <code class="docutils literal notranslate"><span class="pre">type</span></code>, its cadence and the type’s own keys.</p>
-<p>Everything but <code class="docutils literal notranslate"><span class="pre">write_control</span></code> is the plugin’s and validated against the
-<code class="docutils literal notranslate"><span class="pre">InSitu</span></code> family at resolve time:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">InSituSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"view"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"catalyst"</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">"U"</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.postprocess.config.InSituSpec.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow'}</span></span><a class="headerlink" href="#neofoam.postprocess.config.InSituSpec.model_config" title="Link to this definition">¶</a></dt>
-<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="neofoam.postprocess.config.PostProcessConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.config.</span></span><span class="sig-name descname"><span class="pre">PostProcessConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.postprocess.config.TableSpec" title="neofoam.postprocess.config.TableSpec"><span class="pre">TableSpec</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">insitu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.postprocess.config.InSituSpec" title="neofoam.postprocess.config.InSituSpec"><span class="pre">InSituSpec</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/config.html#PostProcessConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.config.PostProcessConfig" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.config.</span></span><span class="sig-name descname"><span class="pre">PostProcessConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.postprocess.config.TableSpec" title="neofoam.postprocess.config.TableSpec"><span class="pre">TableSpec</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.postprocess.config.ActionSpec" title="neofoam.postprocess.config.ActionSpec"><span class="pre">ActionSpec</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/config.html#PostProcessConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.config.PostProcessConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.base.BaseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code></a></p>
-<p>The case’s declared tables and in-situ entries; no file ⇒ neither.</p>
+<p>The case’s declared tables and actions; no file ⇒ neither.</p>
 <p>An unknown top-level key is refused rather than read as an empty declaration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.postprocess.config.PostProcessConfig.model_config">
@@ -772,23 +772,23 @@ it was declared in, not as a bare pydantic union error.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="neofoam.postprocess.insitu.html">
+          <a class="next-page" href="neofoam.postprocess.model.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam.postprocess.insitu</div>
+                <div class="title">neofoam.postprocess.model</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="neofoam.postprocess.html">
+          <a class="prev-page" href="neofoam.postprocess.actions.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">neofoam.postprocess</div>
+                <div class="title">neofoam.postprocess.actions</div>
                 
               </div>
             </a>
@@ -823,12 +823,12 @@ it was declared in, not as a bare pydantic union error.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.postprocess.config</a><ul>
-<li><a class="reference internal" href="#neofoam.postprocess.config.DEFAULT_WRITER"><code class="docutils literal notranslate"><span class="pre">DEFAULT_WRITER</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.config.DEFAULT_WRITE_CONTROL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_WRITE_CONTROL</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.config.InSituSpec"><code class="docutils literal notranslate"><span class="pre">InSituSpec</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.postprocess.config.InSituSpec.model_config"><code class="docutils literal notranslate"><span class="pre">InSituSpec.model_config</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.config.ActionSpec"><code class="docutils literal notranslate"><span class="pre">ActionSpec</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.config.ActionSpec.model_config"><code class="docutils literal notranslate"><span class="pre">ActionSpec.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.config.DEFAULT_WRITER"><code class="docutils literal notranslate"><span class="pre">DEFAULT_WRITER</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.config.DEFAULT_WRITE_CONTROL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_WRITE_CONTROL</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.config.PostProcessConfig"><code class="docutils literal notranslate"><span class="pre">PostProcessConfig</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.postprocess.config.PostProcessConfig.model_config"><code class="docutils literal notranslate"><span class="pre">PostProcessConfig.model_config</span></code></a></li>
 </ul>
