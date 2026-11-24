@@ -24,10 +24,7 @@ from neofoam.framework.config_injection import (
     _create_runtime_config_wrapper,
     _discover_configs_from_signature,
 )
-from neofoam.framework.dependency_resolver import (
-    DependencyResolver,
-    wrap_with_dependency_resolution,
-)
+from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
@@ -385,10 +382,12 @@ class ModelSpec:
             discovered = _discover_configs_from_signature(func)
             if discovered:
                 wrapped = _create_runtime_config_wrapper(
-                    func, discovered, runtime, _resolver(runtime)
+                    func, discovered, runtime, runtime.dependency_resolver
                 )
             else:
-                wrapped = wrap_with_dependency_resolution(func, runtime, _resolver(runtime))
+                wrapped = wrap_with_dependency_resolution(
+                    func, runtime, runtime.dependency_resolver
+                )
 
             op = Operation(
                 func=SequentialOp(wrapped),
@@ -436,21 +435,13 @@ class ModelSpec:
         """
         return list(self._build_func(self)) if self._build_func is not None else []
 
-    def build_operations_for(self, runtime: Any) -> list[Operation]:
-        """Build this spec's Operations with ``runtime`` as the ``self`` binding.
-
-        ``runtime`` is a ModelRuntime — or the bare spec itself for specs used
-        as their own runtime.
-        """
-        return self._build_operations_for(runtime)
-
     def wrap_operation(self, func: Callable[..., Any], runtime: Any) -> Callable[..., Any]:
         """Wrap ``func`` with the dependency resolution of ``runtime``.
 
         For ``@operation_collection`` bodies, which bypass the spec's default
         operation wrapping and must wrap each exposed operation themselves.
         """
-        return wrap_with_dependency_resolution(func, runtime, _resolver(runtime))
+        return wrap_with_dependency_resolution(func, runtime, runtime.dependency_resolver)
 
     # ------------------------------------------------------------------
     # Plugin registration
@@ -519,9 +510,3 @@ def _summary(doc: Optional[str]) -> str:
         return ""
     first = inspect.cleandoc(doc).split("\n\n", 1)[0]
     return " ".join(first.split())
-
-
-def _resolver(runtime: Any) -> DependencyResolver:
-    """The runtime's dependency resolver; a fresh one for a spec used as its own runtime."""
-    resolver = getattr(runtime, "dependency_resolver", None)
-    return resolver if isinstance(resolver, DependencyResolver) else DependencyResolver()

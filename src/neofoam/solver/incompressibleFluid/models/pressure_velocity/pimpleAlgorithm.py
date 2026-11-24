@@ -88,7 +88,7 @@ PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
 # Only the ``PIMPLE`` spelling is declared: a declared config is also written,
 # and ``control_factory`` ignores a ``PISO`` block once a ``PIMPLE`` one exists.
-# Loading is unaffected: this spec is used as its own runtime and never
+# Loading is unaffected: its runtime is built without ``instantiate`` and never
 # auto-loads its configs — ``control_factory`` still reads a pisoFoam case's
 # ``PISO`` block through the undeclared Piso classes.
 pimple.config(PimpleAlgorithmConfig)

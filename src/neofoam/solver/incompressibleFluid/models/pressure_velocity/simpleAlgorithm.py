@@ -75,7 +75,7 @@ SimpleFvSolution = simple.config(fvSolution)
 SimpleFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
 
 # Declared so ``configurations(solver)`` and the MCP export the key set.
-# Loading is unaffected: this spec is used as its own runtime and never
+# Loading is unaffected: its runtime is built without ``instantiate`` and never
 # auto-loads its configs — ``control_factory`` drives instantiation.
 simple.config(SimpleAlgorithmConfig)
 
