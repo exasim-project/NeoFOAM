@@ -25,7 +25,7 @@ def test_staged_init_registers_fields_and_state(blockamr_session, box_case):
     assert "projection_state" not in ctx.models
     assert ctx.models["nu"] > 0.0
     assert ctx.models["schemes"]
-    assert {"sol_U", "sol_p"} <= set(ctx.models)
+    assert {"sol_U", "sol_p", "ibm"} <= set(ctx.models)
 
     # The reused framework core models are present too.
     assert "solution_loop" in ctx.models

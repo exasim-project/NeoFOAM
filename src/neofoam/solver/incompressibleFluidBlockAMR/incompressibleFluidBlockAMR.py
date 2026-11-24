@@ -12,7 +12,7 @@ One time step is a Chorin fractional-step projection::
     set_time_step     # fold time-step constraints; push dt onto the state
     increment_time    # "Time = ..." print; advance the LoopState
     momentum          # interpolate -> MAC project -> momentum predictor
-    continuity        # pressure Poisson -> velocity correct
+    continuity        # pressure Poisson -> velocity correct -> IBM apply
     write_output      # PlotfileWriteHook writes an AMReX plotfile on write steps
 
 The outer time loop, write control, and field-writer are the reused framework

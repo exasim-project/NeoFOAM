@@ -46,7 +46,26 @@ def test_solvers_p_resolve_box():
         "atol": 1e-8,
         "maxIter": 200,
         "verbose": 0,
+        "bottomVerbose": 0,
     }
+    # empty ibm / bottomSolver are dropped from the resolved dict
+    assert "ibm" not in sol_p
+    assert "bottomSolver" not in sol_p
+
+
+def test_solvers_u_resolve_cylinder_keeps_ibm():
+    sol_U = USolutionConfig.load(case_dir=CASES / "cylinder").resolve()
+    assert sol_U["ibm"] == "directForcing"
+
+
+def test_solvers_u_resolve_box_has_no_ibm():
+    sol_U = USolutionConfig.load(case_dir=CASES / "box").resolve()
+    assert "ibm" not in sol_U
+
+
+def test_solvers_p_resolve_cylinder_keeps_bottomsolver():
+    sol_p = PSolutionConfig.load(case_dir=CASES / "cylinder").resolve()
+    assert sol_p["bottomSolver"] == "bicgstab"
 
 
 def test_config_schema_lists_new_configs():

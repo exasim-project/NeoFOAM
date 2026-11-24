@@ -10,11 +10,12 @@ OpenFOAM objectRegistry, so the case is described by a small set of validated
 * :class:`ControlDictConfig`  — ``system/controlDict`` time + write control
   (reuses :class:`~neofoam.algorithms.solution_loop.config.TimeControlConfig`).
 * :class:`MeshDictConfig`      — ``system/meshDict`` dict-driven Cartesian(+AMR)
-  mesh: domain box, cell counts, per-axis periodicity, optional refinement.
+  mesh: domain box, cell counts, per-axis periodicity, optional refinement and
+  embedded boundary.
 * :class:`FvSchemesConfig`     — ``system/fvSchemes`` discretisation scheme
   names (ddt/div/laplacian/grad), flattened to the DSL ``schemes`` dict.
 * :class:`USolutionConfig` / :class:`PSolutionConfig` — ``system/fvSolution``
-  per-field ``solvers.U`` / ``solvers.p`` linear-solver blocks.
+  per-field ``solvers.U`` / ``solvers.p`` linear-solver + IBM blocks.
 * :class:`BlockAMRSolutionConfig` — ``system/fvSolution`` (subdict ``blockAMR``)
   the engine's physical viscosity ``nu``.
 
@@ -25,7 +26,7 @@ Every field is a scalar / list of scalars so the OpenFOAM reader can parse it
 import re
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.io import OF, BaseConfig, IOStrategy
@@ -93,13 +94,31 @@ class RefinementConfig(BaseConfig):
     _parse_refRatio = field_validator("refRatio", mode="before")(_parse_of_list)
 
 
+class EmbeddedBoundaryConfig(BaseConfig):
+    """Optional embedded boundary. ``none`` for box/periodic cases.
+
+    ``cylinder`` is accepted by the schema but NOT supported by the vendored
+    ``blockamr`` engine on this branch (no EB bindings are compiled) — the
+    mesh factory raises :class:`NotImplementedError`. Cylinder/EB support is
+    deferred to the verification specs (02+).
+    """
+
+    type: str = "none"  # none | cylinder
+    center: Optional[List[float]] = None
+    radius: Optional[float] = None
+    axis: Optional[int] = None
+
+    _parse_center = field_validator("center", mode="before")(_parse_of_list)
+
+
 @IOStrategy(OF("system/meshDict"))
 class MeshDictConfig(BaseConfig):
     """``system/meshDict`` — dict-driven Cartesian(+AMR) mesh (no blockMeshDict).
 
     ``domain`` is the physical ``RealBox`` as ``[[xlo,ylo,zlo],[xhi,yhi,zhi]]``;
     ``nCell`` the coarse-level cell counts; ``periodicity`` the per-axis periodic
-    flags. ``refinement`` is optional.
+    flags. ``refinement`` / ``body`` are optional. ``eb`` is accepted as a
+    deprecated alias for ``body`` (geometry-only IBM rename).
     """
 
     domain: List[List[float]]
@@ -118,10 +137,20 @@ class MeshDictConfig(BaseConfig):
     refinement: RefinementConfig = Field(default_factory=RefinementConfig)
 
     _parse_lists = field_validator("domain", "nCell", "periodicity", mode="before")(_parse_of_list)
+    body: EmbeddedBoundaryConfig = Field(default_factory=EmbeddedBoundaryConfig)
     # Per-face velocity BC for non-periodic domains, keyed xlo/xhi/ylo/yhi/zlo/zhi;
     # each entry is an OpenFOAM-style patch spec ({"type": ..., "value": [...]})
     # mapped to a blockamr VectorBC. Empty for fully-periodic cases.
     boundary: Dict[str, Any] = Field(default_factory=dict, json_schema_extra={"i18n": "nf.patch"})
+
+    @model_validator(mode="before")
+    @classmethod
+    def _eb_alias(cls, data: Any) -> Any:
+        """Deprecated ``eb`` key/kwarg -> ``body`` (geometry-only IBM rename)."""
+        if isinstance(data, dict) and "eb" in data and "body" not in data:
+            data = dict(data)
+            data["body"] = data.pop("eb")
+        return data
 
 
 # The case wizard labels the "add a key" row of an open dictionary by this prefix.
@@ -168,20 +197,29 @@ class FieldSolutionConfig(BaseConfig):
     """One field's ``fvSolution.solvers[<field>]`` block.
 
     ``solver`` / ``rtol`` / ``atol`` / ``maxIter`` configure the field's MLMG
-    solve; ``verbose`` sets the AMReX MLMG residual-trace level (0 = quiet).
+    solve; ``bottomSolver`` optionally picks the MLMG bottom solver
+    (``cg`` | ``bicgstab`` | ``smoother`` | ...) — empty leaves AMReX's default
+    (a Krylov solver converging the nodal projection in ~5 V-cycles;
+    ``smoother`` is ~100x slower here). ``ibm`` selects the field's immersed-
+    boundary method (``directForcing``; empty = none).
+    ``verbose`` / ``bottomVerbose`` set the AMReX MLMG residual-trace level
+    (0 = quiet) for the solve and its bottom solver.
     """
 
     solver: str = "MLMG"
     rtol: float = Field(default=1e-10, gt=0.0)
     atol: float = Field(default=1e-8, gt=0.0)
     maxIter: int = Field(default=200, gt=0)
+    bottomSolver: str = ""
+    ibm: str = ""
     verbose: int = Field(default=0, ge=0)
+    bottomVerbose: int = Field(default=0, ge=0)
 
     def resolve(self) -> Dict[str, Any]:
         """Return the plain ``solution`` dict with empty-string entries dropped.
 
-        Unset string entries (empty string) are omitted so the DSL sees only
-        the keys that were actually configured.
+        Unset ``bottomSolver`` / ``ibm`` (empty string) are omitted so the DSL
+        sees only the keys that were actually configured.
         """
         return {k: v for k, v in self.model_dump().items() if v != ""}
 

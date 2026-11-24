@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| NeoFOAM: dict-driven Cartesian mesh — lid-driven cavity (Ghia et al. 1982)   |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      meshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Unit square [0,1]^2 in x-y, thin periodic slab in z — the Ghia (1982)
+// lid-cavity geometry. Cells are cubic (dx=dy=dz=1/16): the block-structured
+// MLMG needs near-cubic cells (a 2:1 z-aspect diverges the pressure solve).
+// z is homogeneous (periodic), so a 4-cell slab (extent 0.25 → dz=1/16=dx) is
+// a correct, 4x-cheaper stand-in for the full 16-cell cube.
+domain          ( ( 0 0 0 ) ( 1 1 0.25 ) );
+nCell           ( 16 16 4 );
+periodicity     ( false false true );
+
+refinement
+{
+    maxLevel    0;
+    refRatio    ( 2 2 2 );
+}
+
+// Closed cavity: no-slip walls, moving lid on yhi. Re = U*L/nu = 1*1/0.01 = 100.
+boundary
+{
+    xlo { type noSlip; }
+    xhi { type noSlip; }
+    ylo { type noSlip; }
+    yhi { type fixedValue; value ( 1 0 0 ); }   // lid
+}
+
+// ************************************************************************* //

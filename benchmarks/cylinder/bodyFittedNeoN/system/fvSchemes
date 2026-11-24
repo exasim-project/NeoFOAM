@@ -1,0 +1,52 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| Laminar PIMPLE schemes for the NeoN body-fitted cylinder. 'corrected'         |
+| laplacian/snGrad handle the O-grid non-orthogonality near the cylinder.       |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         Euler;
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+    grad(p)         Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+
+    div(phi,U)      Gauss linearUpwind grad(U);
+
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+    // NeoN has no 'corrected' non-orthogonal constructor yet; 'uncorrected'
+    // is the working NeoN cylinder scheme (see tutorials/cylinder2D).
+    default         Gauss linear uncorrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         uncorrected;
+}
+
+
+// ************************************************************************* //
