@@ -25,7 +25,7 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -41,14 +41,17 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         const PermutationApplicator applicator {exec};
 
         // Prepare expected results
-        // The original cell volumes of cell 0, 1, 2, 3
-        // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
+        // The original cell volumes
+        // cell 0: 1.0/3.0 * 1.0/3.0 * 0.1
+        // cell 1: 2.0/3.0 * 1.0/3.0 * 0.1
+        // cell 2:  1.0/3.0 * 2.0/3.0 * 0.1
+        // cell 3:  2.0/3.0 * 2.0/3.0 * 0.1
         const sizeType expectedCellCount {4};
         const std::vector<NeoN::scalar> expectedCellVolumes {
-            0.0222222222222222,
-            0.0444444444444444,
-            0.0111111111111111,
-            0.0222222222222222
+            2.0 / 3.0 * 1.0 / 3.0 * 0.1,
+            2.0 / 3.0 * 2.0 / 3.0 * 0.1,
+            1.0 / 3.0 * 1.0 / 3.0 * 0.1,
+            1.0 / 3.0 * 2.0 / 3.0 * 0.1
         };
 
         // --- Act ---
@@ -69,17 +72,17 @@ TEST_CASE("Applying permutation reorders cell-associated mesh data")
         const PermutationApplicator applicator {exec};
 
         // Prepare expected results
-        // The original cell centers of cell 0, 1, 2, 3
-        // cell 0: {0.166666666666667, 0.166666666666667, 0.05},
-        // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
-        // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
-        // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
+        // The original cell centers
+        // cell 0: {1.0/3.0 * 0.5, 1.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 1: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 2: {1.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 3: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5}
         const sizeType expectedCellCount {4};
         const std::vector<NeoN::Vec3> expectedCellCenters {
-            {0.666666666666667, 0.166666666666667, 0.05},
-            {0.666666666666667, 0.666666666666667, 0.05},
-            {0.166666666666667, 0.166666666666667, 0.05},
-            {0.166666666666667, 0.666666666666667, 0.05}
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5}
         };
 
         // --- Act ---
@@ -97,7 +100,7 @@ TEST_CASE("Applying permutation remaps connectivity")
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -170,7 +173,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -186,23 +189,23 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
         const PermutationApplicator applicator {exec};
 
         // Prepare expected results
-        // The original cell centers of cell 0, 1, 2, 3
-        // cell 0: {0.166666666666667, 0.166666666666667, 0.05},
-        // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
-        // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
-        // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
+        // The original cell centers
+        // cell 0: {1.0/3.0 * 0.5, 1.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 1: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 2: {1.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 3: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5}
         const std::vector<NeoN::Vec3> expectedFaceOwnerCenters {
-            {0.666666666666667, 0.166666666666667, 0.05},
-            {0.166666666666667, 0.166666666666667, 0.05},
-            {0.666666666666667, 0.166666666666667, 0.05},
-            {0.666666666666667, 0.666666666666667, 0.05}
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5}
         };
 
         const std::vector<NeoN::Vec3> expectedFaceNeighborCenters {
-            {0.166666666666667, 0.166666666666667, 0.05},
-            {0.166666666666667, 0.666666666666667, 0.05},
-            {0.666666666666667, 0.666666666666667, 0.05},
-            {0.166666666666667, 0.666666666666667, 0.05}
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5}
         };
 
         // --- Act ---
@@ -250,20 +253,20 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
 
         // Prepare expected results
         // The original cell centers of cell 0, 1, 2, 3
-        // cell 0: {0.166666666666667, 0.166666666666667, 0.05},
-        // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
-        // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
-        // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
+        // cell 0: {1.0/3.0 * 0.5, 1.0/3 * 0.5, 0.1 * 0.5},
+        // cell 1: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 2: {1.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5},
+        // cell 3: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5}
         // boundary face owners after reordering: {3, 1, 2, 3, 0, 1, 2, 0};
         const std::vector<NeoN::Vec3> expectedBoundaryFaceOwnerCenters {
-            {0.166666666666667, 0.666666666666667, 0.05},
-            {0.666666666666667, 0.666666666666667, 0.05},
-            {0.166666666666667, 0.166666666666667, 0.05},
-            {0.166666666666667, 0.666666666666667, 0.05},
-            {0.666666666666667, 0.166666666666667, 0.05},
-            {0.666666666666667, 0.666666666666667, 0.05},
-            {0.166666666666667, 0.166666666666667, 0.05},
-            {0.666666666666667, 0.166666666666667, 0.05}
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 + 2.0 / 3.0 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 * 0.5, 1.0 / 3 * 0.5, 0.1 * 0.5},
+            {1.0 / 3.0 + 2.0 / 3.0 * 0.5, 1.0 / 3.0 * 0.5, 0.1 * 0.5}
         };
 
         // --- Act ---
@@ -300,7 +303,7 @@ TEST_CASE("Applying permutation may change the direction of face normals")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -341,7 +344,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -406,7 +409,7 @@ TEST_CASE("Applying an incompatible permutation to a mesh throws an exception")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -427,7 +430,7 @@ TEST_CASE("Applying an incompatible permutation to a field throws an exception")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    // Create a 2x2x1 non-uniform mesh
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
     Foam::Time& runTime = *timePtr;
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
