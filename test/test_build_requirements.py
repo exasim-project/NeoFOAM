@@ -3,8 +3,8 @@
 
 """The nanobind pin of ``pyproject.toml``.
 
-The bindings resolve pybFoam's ``libnanobind.so`` at run time, so they need the ABI
-pybFoam was built with. A build with isolation reads ``[build-system]``, one without
+The bindings exchange types with pybFoam through nanobind's internals, so they need the
+ABI pybFoam was built with. A build with isolation reads ``[build-system]``, one without
 (``uv``, the ``dev`` extra) the environment: two places that must not drift apart.
 """
 
@@ -29,4 +29,4 @@ def test_nanobind_is_pinned_the_same_for_isolated_and_in_env_builds():
     isolated = _nanobind(project["build-system"]["requires"])
     in_env = _nanobind(project["project"]["optional-dependencies"]["dev"])
 
-    assert isolated == in_env == ["nanobind>=3.0.1,<3.1"]
+    assert isolated == in_env == ["nanobind>=3,<4"]

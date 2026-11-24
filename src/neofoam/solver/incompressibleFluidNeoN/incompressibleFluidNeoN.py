@@ -27,7 +27,6 @@ from neofoam.framework.operations import (
     Operations,
     StepBuilder,
 )
-from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
@@ -44,6 +43,7 @@ from .create_fields import create_init
 from .models.incompressibleFluidNeoNModel import incompressibleFluidNeoNModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.solution_loop import SolutionLoopPredicate
+from .solver_spec import incompressibleFluidNeoN as incompressibleFluidNeoN
 
 
 def _core_model(state: Any, spec_name: str) -> Any:
@@ -52,8 +52,6 @@ def _core_model(state: Any, spec_name: str) -> Any:
         m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
     )
 
-
-incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 
 # Declare the full config schema on the spec, case-free: the solver's own
 # configs plus the model families it owns. Viscosity carries no Python config

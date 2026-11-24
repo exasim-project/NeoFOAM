@@ -42,11 +42,11 @@ if [[ ! "${python_version}" =~ ^([0-9]+)\.([0-9]+) ]]; then
     exit 1
 fi
 
-# conda-forge builds nanobind only for python >=3.10, and the recipe needs it in host. Reject
-# here rather than let rattler-build fail much later with an opaque resolution error.
-if (( BASH_REMATCH[1] < 3 || (BASH_REMATCH[1] == 3 && BASH_REMATCH[2] < 10) )); then
-    echo "python ${python_version} is not supported by the conda package: conda-forge has no" >&2
-    echo "nanobind below python 3.10." >&2
+# NeoFOAM and the bundled pybFoam require python >=3.11. Reject here rather than let
+# rattler-build fail much later with an opaque resolution error.
+if (( BASH_REMATCH[1] < 3 || (BASH_REMATCH[1] == 3 && BASH_REMATCH[2] < 11) )); then
+    echo "python ${python_version} is not supported by the conda package: NeoFOAM requires" >&2
+    echo "python 3.11 or newer." >&2
     exit 1
 fi
 

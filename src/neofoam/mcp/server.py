@@ -33,6 +33,7 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from neofoam.core.entry_points import load_plugins
 from neofoam.mcp import tools
 from neofoam.mcp.dto import (
     CaseSpecDTO,
@@ -302,4 +303,5 @@ def registered_tool_names(server: FastMCP = mcp) -> set[str]:
 if __name__ == "__main__":
     # ``python -m neofoam.mcp.server`` — serve over stdio (default transport), for an
     # MCP client (Claude Code, etc.) to launch as a subprocess.
+    load_plugins()
     mcp.run()

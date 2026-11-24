@@ -51,9 +51,9 @@ from neofoam.turbulence.selection import select_turbulence_model
 
 from .configs import ControlDictConfig
 from .models.field_writer import fieldWriter, neon_writer_backend_steps
-from .models.incompressibleFluidNeoNModel import incompressibleFluidNeoNModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.solution_loop import neon_loop_backend_steps, solutionLoop
+from .solver_spec import incompressibleFluidNeoN
 
 # Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents. The
 # base solver subdicts AND the *Final subdicts so the final outer-corrector
@@ -93,7 +93,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     @spec_builder.load
     def load_config() -> LoadResult:
         pressure_model = PressureVelocityAlgorithmNeoN.detect_and_create()
-        optional_models = incompressibleFluidNeoNModel.detect_models(resolved_case_dir)
+        optional_models = incompressibleFluidNeoN.detect_optional_models(resolved_case_dir)
 
         # solutionLoop (advances time) and fieldWriter (persists fields) are
         # separate-concern Models, loaded here so their controlDict is validated

@@ -81,9 +81,8 @@ def load_summaries(path: Union[str, Path]) -> dict[int, dict[str, Any]]:
 
 def _epoch_us(iso_timestamp: str) -> float:
     """ISO-8601 span timestamp -> microseconds since the epoch (float)."""
-    # OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; the trailing
-    # ``Z`` is only accepted by ``fromisoformat`` from 3.11, so normalise it
-    # (the package targets 3.10).
+    # OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; normalise the
+    # trailing ``Z`` to an explicit UTC offset.
     dt = datetime.fromisoformat(iso_timestamp.replace("Z", "+00:00"))
     return dt.timestamp() * _US_PER_S
 

@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import pytest
 
+from neofoam.framework.solver.registry import (  # built-ins only: no installed plugin
+    _discover_solver_names as builtin_solver_names,
+)
 from neofoam.mcp import tools
-from neofoam.mcp.registry import list_solver_names, resolve_solver
+from neofoam.mcp.registry import resolve_solver
 from neofoam.ui.forms import build_field_forms, build_forms, build_mesh_forms
 
 
@@ -77,7 +80,7 @@ def test_section_headings_drop_the_synthesized_class_name(solver):
     assert solution["PIMPLE"]["title"] == "PIMPLE"
     assert solution["solvers"]["title"] == "solvers"
     # No private class name leaks anywhere, in any solver.
-    for name in list_solver_names():
+    for name in builtin_solver_names():
         for entry in build_forms(resolve_solver(name)):
             for path, title in _titles(entry.schema):
                 assert not title.startswith("_"), f"{name}/{entry.key}{path}: {title}"
@@ -179,7 +182,7 @@ def test_open_config_renders_as_named_cards_of_keywords(entry_key, prefix, label
     assert ADDER_TRANSLATIONS["nf.keyword.propertyNameLabel"] == "Keyword, e.g. cellZone"
 
 
-@pytest.mark.parametrize("solver_name", list_solver_names())
+@pytest.mark.parametrize("solver_name", builtin_solver_names())
 def test_every_add_a_key_row_of_the_wizard_is_labelled(solver_name):
     # An object that takes new keys and carries no `i18n` prefix would fall back to
     # JSONForms' "Property Name".
@@ -216,14 +219,14 @@ def test_adder_translations_cover_every_emitted_prefix():
     assert ADDER_TRANSLATIONS["nf.patch.propertyNameLabel"] == "Patch name, e.g. inlet"
     assert ADDER_TRANSLATIONS["nf.entry.propertyNameLabel"] == "Entry, e.g. div(phi,k)"
     assert ADDER_TRANSLATIONS["nf.option.propertyNameLabel"] == "Option, e.g. maxIter"
-    for name in list_solver_names():
+    for name in builtin_solver_names():
         for entry in build_forms(resolve_solver(name)):
             for prefix in _keyword_sites(entry.schema, "i18n").values():
                 assert f"{prefix}.propertyNameLabel" in ADDER_TRANSLATIONS
                 assert f"{prefix}.addLabel" in ADDER_TRANSLATIONS
 
 
-@pytest.mark.parametrize("solver_name", list_solver_names())
+@pytest.mark.parametrize("solver_name", builtin_solver_names())
 def test_only_scheme_sections_render_as_compact_rows(solver_name):
     # `nfCompact` switches a section to the one-row-per-entry renderer. It belongs on
     # the fvSchemes sections (every entry a scheme union) and nowhere else — BC maps and
@@ -265,7 +268,7 @@ _SCALAR_GRIDS = {
 }
 
 
-@pytest.mark.parametrize("solver_name", list_solver_names())
+@pytest.mark.parametrize("solver_name", builtin_solver_names())
 def test_objects_of_scalars_only_render_as_a_grid(solver_name):
     # `nfGrid` lays an object's controls side by side. It goes on every object of two or
     # more properties that are all a number, a checkbox or an enum (the algorithm
@@ -279,7 +282,7 @@ def test_objects_of_scalars_only_render_as_a_grid(solver_name):
 
 def _solver_blocks():
     """Every ``(id, block schema)`` under a ``solvers`` section, across all solvers."""
-    for name in list_solver_names():
+    for name in builtin_solver_names():
         for entry in build_forms(resolve_solver(name)):
             section = entry.schema.get("properties", {}).get("solvers")
             if entry.cls_name.endswith("fvSolution") and section:
@@ -385,7 +388,7 @@ def test_inline_refs_makes_every_schema_self_contained():
     # (nested discriminated unions) hard-froze the page that way.
     import json  # noqa: PLC0415
 
-    for name in list_solver_names():
+    for name in builtin_solver_names():
         for e in build_forms(resolve_solver(name)):
             text = json.dumps(e.schema)
             assert "$ref" not in text, f"{name}/{e.key} still contains a $ref"
@@ -423,7 +426,7 @@ def test_union_arm_discriminator_is_kept_in_the_data_but_not_rendered(solver):
     # JSONForms generates a control only for a property it can derive a JSON type for
     # (`type`/`enum`/`properties`/`items`), and fills a newly selected arm's data from
     # `default` — so exactly `const` + `default` hides the control and keeps the value.
-    for name in list_solver_names():
+    for name in builtin_solver_names():
         for entry in build_forms(resolve_solver(name)):
             for prop in _discriminators(entry.schema):
                 assert prop == {"const": prop["const"], "default": prop["const"]}, (
@@ -498,7 +501,7 @@ def test_bc_value_arm_collapses_to_text_but_type_union_stays(solver):
     assert fixed["properties"]["value"]["type"] == "string"
 
 
-@pytest.mark.parametrize("solver_name", list_solver_names())
+@pytest.mark.parametrize("solver_name", builtin_solver_names())
 def test_boundary_field_maps_render_as_patch_rows(solver_name):
     # `nfPatches` hands a `boundaryField` map to the bundled row renderer, which binds
     # each patch through the map's data: a patch named `wall.left` never enters a dotted

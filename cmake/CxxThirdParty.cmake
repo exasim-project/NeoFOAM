@@ -16,8 +16,8 @@ endif()
 
 # nanobind is not fetched here: NeoN's CxxThirdParty.cmake provides it whenever
 # NeoN_BUILD_PYTHON_BINDINGS is ON, taking it from the active Python environment
-# (NeoN_EXTERNAL_NANOBIND, set by the python-bindings preset) so this module, _neon and pybFoam
-# share one libnanobind ABI.
+# (NeoN_EXTERNAL_NANOBIND, set by the python-bindings preset) so this module, _neon and pybFoam are
+# built with one nanobind ABI and can exchange types.
 
 if(NEOFOAM_NEON_VIA_CPM)
   if(NOT DEFINED NEOFOAM_NEON_VERSION)

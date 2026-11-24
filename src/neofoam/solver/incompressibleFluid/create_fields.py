@@ -40,9 +40,9 @@ from neofoam.viscosity.config import TransportPropertiesConfig
 
 from .configs import ControlDictConfig
 from .models.field_writer import fieldWriter, writer_backend_steps
-from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import loop_backend_steps, solutionLoop
+from .solver_spec import incompressibleFluid
 
 
 def _add_viscosity_model(builder: InitializerBuilder, selected: Any, case_dir: Path) -> None:
@@ -137,7 +137,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     @spec_builder.load
     def load_config() -> LoadResult:
         pressure_model = PressureVelocityAlgorithm.detect_and_create()
-        optional_models = incompressibleFluidModel.detect_models(resolved_case_dir)
+        optional_models = incompressibleFluid.detect_optional_models(resolved_case_dir)
 
         # Detect the mesh-preprocessing pipeline up front (config-only — no
         # mesh is touched). ``--no-preprocess`` on the argv skips detection so

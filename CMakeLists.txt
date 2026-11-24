@@ -51,11 +51,7 @@ if(DEFINED SKBUILD)
   set(CMAKE_SKIP_BUILD_RPATH FALSE)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-  # $ORIGIN/../pybFoam reaches pybFoam's libnanobind.so: the bindings are built NB_SHARED but do NOT
-  # ship their own libnanobind.so; they resolve against pybFoam's by SONAME so the whole process
-  # shares ONE nanobind runtime/type registry with pybFoam (the pyOFTools pattern).
-  set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/lib" "$ORIGIN/../lib" "$ORIGIN/../../lib"
-                          "$ORIGIN/../pybFoam")
+  set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/lib" "$ORIGIN/../lib" "$ORIGIN/../../lib")
 endif()
 
 set(NEOFOAM_BENCHMARK_MODE
@@ -96,13 +92,12 @@ include(cmake/CxxThirdParty.cmake)
 
 # Bundle pybFoam into the wheel rather than depending on it from PyPI, where it is sdist-only and
 # would have to be compiled on every user's machine. Its own CMakeLists installs to `pybFoam/` when
-# SKBUILD is defined — exactly where the bindings' $ORIGIN/../pybFoam rpath below already points —
-# so the layout needs no overriding. The reason to build it here rather than alongside: our
-# NB_SHARED modules ship no libnanobind and resolve pybFoam's by SONAME, so the two must agree on
-# the nanobind version and ABI flags. Building both in one tree makes that true by construction
-# instead of by a version pin kept in step by hand.
+# SKBUILD is defined, so the layout needs no overriding. The reason to build it here rather than
+# alongside: our modules link nanobind statically and exchange types with pybFoam through nanobind's
+# shared internals, which are keyed by its ABI version. Building both in one tree makes that key
+# match by construction instead of by a version pin kept in step by hand.
 if(DEFINED SKBUILD)
-  cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG v0.5.3)
+  cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG v0.7.0)
 
   # pybFoam's own CMake installs only __init__.py and _version.py. Everything else in its wheel —
   # examples.py, the io/ subpackage, py.typed and the .pyi stubs — comes from its scikit-build-core
@@ -127,7 +122,7 @@ endif()
 # flat layout). _neon installs to site-packages/neon/ while the native libs live in neofoam/lib, so
 # point it at $ORIGIN/../neofoam/lib (+ $ORIGIN/../lib for camp/cpptrace, which leak to the root).
 if(DEFINED SKBUILD AND TARGET _neon)
-  set(_neon_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib;$ORIGIN/../pybFoam")
+  set(_neon_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib")
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
 endif()
 
