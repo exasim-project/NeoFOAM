@@ -322,16 +322,53 @@ TEST_CASE("fvSolution relaxation lookup")
         REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false) == NeoN::scalar(0.7));
     }
 
-    SECTION("the final iteration falls back to the base key")
+    SECTION("the final iteration does not fall back to the base key")
+    {
+        // OpenFOAM looks up only <field>Final on the final iteration (fvMatrix::relax,
+        // GeometricField::relax): with `U 0.7;` alone the final iteration is not relaxed.
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("equations"),
+                    NeoN::Dictionary({{std::string("U"), NeoN::scalar(0.7)}})},
+                   {std::string("fields"), NeoN::Dictionary({{std::string("p"), NeoN::scalar(0.3)}})
+                   }}
+              )}}
+        );
+        REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true).has_value());
+        REQUIRE_FALSE(NeoFOAM::lookupFieldRelaxation(fvSolution, "p", true).has_value());
+        // the other iterations are unaffected
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false) == NeoN::scalar(0.7));
+        REQUIRE(NeoFOAM::lookupFieldRelaxation(fvSolution, "p", false) == NeoN::scalar(0.3));
+    }
+
+    SECTION("a default entry applies on the final iteration when there is no Final key")
     {
         NeoN::Dictionary fvSolution(
             {{std::string("relaxationFactors"),
               NeoN::Dictionary(
                   {{std::string("equations"),
-                    NeoN::Dictionary({{std::string("U"), NeoN::scalar(0.7)}})}}
+                    NeoN::Dictionary(
+                        {{std::string("U"), NeoN::scalar(0.7)},
+                         {std::string("default"), NeoN::scalar(0.5)}}
+                    )}}
               )}}
         );
-        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true) == NeoN::scalar(0.7));
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true) == NeoN::scalar(0.5));
+    }
+
+    SECTION("a regex key covers the base and the Final name on the final iteration")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("equations"),
+                    NeoN::Dictionary({{std::string("\"(U|h).*\""), NeoN::scalar(0.8)}})}}
+              )}}
+        );
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false) == NeoN::scalar(0.8));
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true) == NeoN::scalar(0.8));
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "h", true) == NeoN::scalar(0.8));
     }
 
     SECTION("an int entry is coerced to scalar")
