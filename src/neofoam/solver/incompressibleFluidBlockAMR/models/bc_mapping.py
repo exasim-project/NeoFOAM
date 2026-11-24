@@ -10,6 +10,8 @@ The block-structured domain is a Cartesian box whose six faces are keyed
 * ``fixedValue``              → :func:`blockamr.bc.fixedValue` (Dirichlet)
 * ``noSlip``                  → :func:`blockamr.bc.noSlip`
 * ``zeroGradient`` / ``Neumann`` → :class:`blockamr.bc.NeumannBC`
+* ``slip`` / ``symmetry`` / ``symmetryPlane`` → :func:`blockamr.bc.slip`
+  (:class:`~blockamr.bc.SlipBC`: no penetration + zero tangential shear)
 
 Periodic faces need no entry: the engine skips them from ``geom.is_periodic()``.
 """
@@ -27,6 +29,7 @@ def map_patch(spec: Mapping[str, Any]) -> Any:
         NeumannBC,
         fixedValue,
         noSlip,
+        slip,
     )
 
     bc_type = spec.get("type")
@@ -43,6 +46,8 @@ def map_patch(spec: Mapping[str, Any]) -> Any:
         return noSlip()
     if bc_type in ("zeroGradient", "Neumann"):
         return NeumannBC()
+    if bc_type in ("slip", "symmetry", "symmetryPlane"):
+        return slip()
     raise ValueError(f"unknown/unsupported patch BC type {bc_type!r}")
 
 

@@ -14,7 +14,7 @@ init work dict.
 
 ``@build`` creates ``U`` / ``p`` / ``phi`` explicitly on the ``blockamr`` mesh
 and registers them as Context fields, alongside the values the equations need
-(``nu`` / ``schemes`` / ``sol_U`` / ``sol_p``). There is no solver
+(``nu`` / ``schemes`` / ``sol_U`` / ``sol_p`` / ``ibm``). There is no solver
 state object: the framework Context holds the fields and the framework
 ``LoopState`` (``ctx.time``) holds the clock.
 
@@ -22,7 +22,7 @@ The fractional step is exposed as two operations mirroring PIMPLE's ``momentum``
 / ``continuity`` split, each writing its own equation at the point of solve:
 ``momentum`` assembles ``UEqn`` and does interpolate → MAC-project φ → momentum
 predictor; ``continuity`` assembles ``pEqn`` and does pressure Poisson → velocity
-correct, leaving ``U`` divergence-free. Fields and values are
+correct → IBM apply, leaving ``U`` divergence-free. Fields and values are
 resolved from the Context at run time (``ctx.models`` / ``ctx.fields``), never
 captured in the operation closure — mirroring the op-closure-cycle rule.
 
@@ -38,6 +38,7 @@ from blockamr.bc import pressure_domain_bc
 from blockamr.dsl import Equation, exp, imp
 from blockamr.field import CellField, FaceField
 from blockamr.fillpatch import FillPatchCellConservative, FillPatchWithBC
+from blockamr.ibm import IBM
 from blockamr.operators.correct import correct
 from blockamr.operators.interpolate import interpolate
 from blockamr.operators.mac_project import mac_project
@@ -90,8 +91,9 @@ def build(config: Any) -> list[Any]:
     # fvSchemes: discretisation scheme NAMES — the engine's registry resolves
     # them when the operations assemble UEqn / pEqn.
     schemes: dict[str, Any] = config.fv_schemes_config.resolve()
-    # Per-field fvSolution.solvers[<field>] blocks: the MLMG
-    # rtol/atol/maxIter/verbosity of each solve.
+    # Per-field fvSolution.solvers[<field>] blocks. ``sol_U`` carries the
+    # velocity field's ``ibm`` method (empty on non-cylinder cases); ``sol_p``
+    # the pressure MLMG rtol/atol/maxIter/bottomSolver/verbosity.
     sol_U: dict[str, Any] = config.u_solution_config.resolve()
     sol_p: dict[str, Any] = config.p_solution_config.resolve()
 
@@ -136,6 +138,26 @@ def build(config: Any) -> list[Any]:
         phi.pressure_bc = context["_p_bc"]
         return phi
 
+    def make_ibm(context: dict[str, Any]) -> Any:
+        """Precompute every distinct IBM method's data; return ``U``'s method.
+
+        Immersed body: the geometry lives on ``mesh.body`` (set by the mesh
+        factory); the method is chosen per field via ``solution["ibm"]``. The
+        data is precomputed eagerly here, ready before the first solve.
+        """
+        methods: list[Any] = []
+        for sol in (sol_U, sol_p):
+            ibm_name = sol.get("ibm")
+            if ibm_name is not None:
+                method = IBM.lookup(ibm_name)
+                if method not in methods:
+                    methods.append(method)
+        if methods:
+            context["_blockamr_mesh"].build_ibm(methods)
+
+        u_ibm = sol_U.get("ibm")
+        return IBM.lookup(u_ibm) if u_ibm is not None else None
+
     return [
         lazy("_u_bc", make_u_bc, depends_on=["_mesh_cfg"]),
         lazy("_p_bc", make_p_bc, depends_on=["_u_bc", "_blockamr_mesh"]),
@@ -146,6 +168,11 @@ def build(config: Any) -> list[Any]:
         init_model("schemes", lambda _ctx: schemes),
         init_model("sol_U", lambda _ctx: sol_U),
         init_model("sol_p", lambda _ctx: sol_p),
+        init_model(
+            "ibm",
+            make_ibm,
+            depends_on=["_blockamr_mesh", "fields.U", "fields.p", "fields.phi"],
+        ),
     ]
 
 
@@ -200,16 +227,17 @@ def continuity(
     p: Annotated[Any, "fields"],
     schemes: Annotated[Any, "models"],
     sol_p: Annotated[Any, "models"],
+    ibm: Annotated[Any, "models"],
     ctx: Context,
 ) -> None:
     """Pressure projection — second half of the Chorin fractional step.
 
     Mirrors PIMPLE's ``continuity``: write and solve the pressure Poisson
-    equation and correct the predicted velocity by ``-dt·grad(p)`` so ``U`` is
-    divergence-free. Mutates ``U`` / ``p`` in place. ``pEqn`` is assembled here
-    with the *current* ``dt``, so the implicit Laplacian's sigma tracks a
-    changing time step without being patched after the fact. The clock is the
-    framework loop's — nothing to advance here.
+    equation, correct the predicted velocity by ``-dt·grad(p)`` so ``U`` is
+    divergence-free, and apply the immersed-boundary forcing. Mutates ``U`` /
+    ``p`` in place. ``pEqn`` is assembled here with the *current* ``dt``, so the
+    implicit Laplacian's sigma tracks a changing time step without being patched
+    after the fact. The clock is the framework loop's — nothing to advance here.
     """
     dt = ctx.time.delta_t
     t = ctx.time.value - dt
@@ -221,6 +249,12 @@ def continuity(
     pEqn.solve(dt=dt, t=t, solution=sol_p)
 
     correct(U, -dt * exp.grad(p))
+
+    # Carry from phase 04: solve() does NOT consume solution["ibm"] — direct
+    # forcing is applied once per step AFTER correct() (order matches the
+    # pre-refactor engine exactly, the Cd/Cl/St acceptance oracle).
+    if ibm is not None:
+        ibm.apply(U, dt, t, U.mesh.ibm_data(ibm))
 
 
 def _alias_operation(

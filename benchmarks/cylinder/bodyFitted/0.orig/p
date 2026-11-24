@@ -1,0 +1,48 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| Kinematic pressure. Fixed reference at the outlet; zero-gradient on the z     |
+| front/back faces (paired with the slip U).                                    |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 0.0;
+
+boundaryField
+{
+    cylinder
+    {
+        type            zeroGradient;
+    }
+    upper_wall
+    {
+        type            zeroGradient;
+    }
+    inlet
+    {
+        type            zeroGradient;
+    }
+    outlet
+    {
+        type            fixedValue;
+        value           uniform 0.0;
+    }
+    lower_wall
+    {
+        type            zeroGradient;
+    }
+    frontAndBack
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //
