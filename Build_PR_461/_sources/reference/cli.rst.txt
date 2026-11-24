@@ -24,7 +24,7 @@ Plugin packages
 ~~~~~~~~~~~~~~~
 
 A separately installed package extends neofoam through two entry-point groups
-(``src/neofoam/core/entry_points.py``):
+(``neofoam.core.entry_points``):
 
 .. code-block:: toml
 
