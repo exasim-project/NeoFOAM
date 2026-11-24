@@ -265,6 +265,7 @@ _SCALAR_GRIDS = {
         "dict:VofPimpleAlgorithmConfig": [""],
         "dict:DynamicMeshControls": [""],
     },
+    "incompressibleFluidBlockAMR": {},
 }
 
 
