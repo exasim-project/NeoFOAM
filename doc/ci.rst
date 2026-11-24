@@ -33,7 +33,8 @@ broken commit occupies as few of the organization's shared runners as possible:
 
 #. **Gate**: evaluates the event, the PR labels and the NeoN branch to build against.
 #. **Cheap checks** (no build, a few minutes): pre-commit (without mypy) and the changelog check.
-#. **First build**: Linux clang build and unit tests.
+   In parallel, the **first build**: Linux clang build and unit tests. It does not wait for the
+   cheap checks, so a formatting issue does not hold back the build results.
 #. Only once that passes: Linux gcc, macOS, IWYU followed by clang-tidy, the LRZ GPU pipeline, and
    the Python job. The Python job builds the package once and runs pytest with coverage, mypy and,
    on PRs, the documentation preview.
@@ -61,7 +62,7 @@ Development Workflow
 The development workflow for NeoFOAM proceeds as follows:
 
 #. A developer opens a pull request (PR) or pushes a commit to an existing PR on GitHub.
-#. GitHub CI runs the cheap checks, then builds and tests NeoFOAM on CPUs.
+#. GitHub CI runs the cheap checks and, in parallel, builds and tests NeoFOAM on CPUs.
 #. Once the first CPU build passes, GitHub CI pushes the same branch to LRZ GitLab.
 #. GitHub CI cancels all pending or running LRZ GitLab pipelines for that branch.
 #. GitHub CI triggers a **new LRZ GitLab pipeline**.

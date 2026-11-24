@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 # The jobs run in stages so that a broken commit occupies few runners:
-#   gate -> pre-commit (no build, ~2 min) -> Linux clang build and tests
+#   gate -> pre-commit and changelog (no build), and in parallel the Linux clang build and tests
 #        -> Linux gcc, macOS, IWYU/clang-tidy, Python 3.11 (tests, mypy, docs), LRZ GPU
 #        -> Python 3.12/3.13 (develop/main pushes, weekly run, dispatch)
 jobs:
@@ -154,9 +154,10 @@ jobs:
           changeLogPath: CHANGELOG.md
 
   # ---------------------------------------------------------------- first build
+  # Independent of pre-commit, so a formatting issue does not hold back the build results
   linux:
     name: Build and test NeoFOAM on CPU (${{ matrix.compiler.CC }})
-    needs: [gate, pre-commit]
+    needs: gate
     if: needs.gate.outputs.build == 'true'
     runs-on: ubuntu-24.04
     strategy:
