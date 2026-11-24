@@ -177,14 +177,23 @@ push_results() {
     git config user.email "gitlab-ci@users.noreply.github.com"
     git config user.name "GitLab CI"
 
-    git checkout "NeoFOAM_PR_${PR_NUMBER}" || git checkout -b "NeoFOAM_PR_${PR_NUMBER}"
-    mkdir -p "${RESULTS_DIR}"
-    cp -r ../${RESULTS_DIR}/* "${RESULTS_DIR}"
+    # The weekly develop run (PR_NUMBER=no-pr) keeps a history, one folder per date and commit,
+    # instead of overwriting the results of the previous week
+    local results_branch="NeoFOAM_PR_${PR_NUMBER}"
+    local results_path="${RESULTS_DIR}"
+    if [[ "${PR_NUMBER}" == "no-pr" ]]; then
+        results_branch="NeoFOAM_develop"
+        results_path="NeoFOAM/develop/$(date -u +%Y-%m-%d)_$(git -C .. rev-parse --short HEAD)/${CI_RUNNER_DESCRIPTION}"
+    fi
+
+    git checkout "${results_branch}" || git checkout -b "${results_branch}"
+    mkdir -p "${results_path}"
+    cp -r ../${RESULTS_DIR}/* "${results_path}"
 
     git add .
     git commit -m "Benchmarks from GitLab pipeline ${RUN_IDENTIFIER}" || echo "No changes to commit"
     git pull --rebase || true
-    git push origin "NeoFOAM_PR_${PR_NUMBER}"
+    git push origin "${results_branch}"
 }
 
 ### Main execution ###

@@ -28,6 +28,7 @@ concurrency:
 #   gate -> pre-commit and changelog (no build), and in parallel the Linux clang build and tests
 #        -> Linux gcc, macOS, IWYU/clang-tidy, Python 3.11 (tests, mypy, docs), LRZ GPU
 #        -> Python 3.12/3.13 (develop/main pushes, weekly run, dispatch)
+# The GPU benchmarks run weekly in gpu_benchmark.yaml.
 jobs:
   # Evaluates the event, the PR labels and the NeoN branch to build against once. Adding or
   # removing a label only restarts the builds for skip-build; skip-changelog only reruns the
@@ -42,7 +43,6 @@ jobs:
       changelog: ${{ steps.gate.outputs.changelog }}
       build: ${{ steps.gate.outputs.build }}
       python-all: ${{ steps.gate.outputs.python-all }}
-      benchmark: ${{ steps.gate.outputs.benchmark }}
       skip-nvidia: ${{ steps.gate.outputs.skip-nvidia }}
       skip-amd: ${{ steps.gate.outputs.skip-amd }}
       skip-intel: ${{ steps.gate.outputs.skip-intel }}
@@ -80,7 +80,6 @@ jobs:
             echo "changelog=$changelog"
             echo "build=$build"
             echo "python-all=$python_all"
-            echo "benchmark=$($is_pr && has benchmark && echo true || echo false)"
             echo "skip-nvidia=$(has skip-nvidia && echo true || echo false)"
             echo "skip-amd=$(has skip-amd && echo true || echo false)"
             echo "skip-intel=$(has skip-intel && echo true || echo false)"
@@ -554,40 +553,4 @@ jobs:
             "variables[SKIP_VALIDATION]=${{ needs.gate.outputs.skip-validation }}"
 
       - name: Wait for LRZ GitLab CI pipeline
-        run: ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
-
-  gpu-benchmark:
-    name: Benchmark NeoFOAM on GPU
-    needs: [gate, gpu]
-    if: needs.gate.outputs.benchmark == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 1440 # 24 hours
-    env:
-      LRZ_GROUP: greole
-      LRZ_HOST: gitlab-ce.lrz.de
-      REPO_NAME: ${{ github.event.repository.name }}
-      BRANCH: ${{ github.head_ref || github.ref_name }}
-      MAX_WAIT_MINUTES: 1440
-      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
-      LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Cancel running/pending LRZ GitLab CI pipelines
-        run: ./ci/github/cancel_triggered_pipelines.sh "${BRANCH}"
-
-      - name: Trigger LRZ GitLab CI pipeline for benchmarking
-        id: trigger
-        run: |
-          ./ci/github/trigger_pipeline.sh \
-            "${BRANCH}" \
-            "variables[TRIGGER_SOURCE]=${REPO_NAME}" \
-            "variables[SKIP_NVIDIA]=${{ needs.gate.outputs.skip-nvidia }}" \
-            "variables[SKIP_AMD]=${{ needs.gate.outputs.skip-amd }}" \
-            "variables[SKIP_INTEL]=${{ needs.gate.outputs.skip-intel }}" \
-            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
-            "variables[BENCHMARK]=true"
-
-      - name: Wait for LRZ GitLab CI pipeline for benchmarking
         run: ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
