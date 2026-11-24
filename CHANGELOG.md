@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Add the compressible `kOmegaSST::correct(U, phi, rho, ...)` with density-weighted k and omega equations, `TurbulenceModel::correctCompressible` and the Python binding `correct_compressible` [#459](https://github.com/exasim-project/NeoFOAM/pull/459)
 - Add `PressureControl`, a port of `Foam::pressureControl` (`pMin`/`pMax`, `pMinFactor`/`pMaxFactor`, `rhoMin`/`rhoMax`) with a Python binding; patches with the NeoN `mixed` attribute count as value-fixing [#457](https://github.com/exasim-project/NeoFOAM/pull/457)
 - Optionally translate `freestreamVelocity`/`freestreamPressure` to NeoN's flow-direction BCs (`set_faithful_freestream`) [#458](https://github.com/exasim-project/NeoFOAM/pull/458)
 - Map the `waveTransmissive`, `pressureInletOutletVelocity` and scalar-`sine` `uniformFixedValue` patch types in the NeoN case reader (the latter to NeoN's `sineFixedValue`); any other `uniformFixedValue` Function1 is approximated as zeroGradient with a warning. Needs NeoN [#626](https://github.com/exasim-project/NeoN/pull/626), [#627](https://github.com/exasim-project/NeoN/pull/627) and [#629](https://github.com/exasim-project/NeoN/pull/629)
