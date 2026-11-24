@@ -681,13 +681,20 @@ neofoam<span class="w"> </span>solver<span class="w"> </span>incompressiblefluid
 <code class="docutils literal notranslate"><span class="pre">incompressiblefluidneon</span></code> (NeoN backend).</p>
 <section id="plugin-packages">
 <h3>Plugin packages<a class="headerlink" href="#plugin-packages" title="Link to this heading">¶</a></h3>
-<p>A separately installed package extends neofoam through two entry-point groups
-(<code class="docutils literal notranslate"><span class="pre">neofoam.core.entry_points</span></code>):</p>
+<p>A separately installed package extends neofoam through four entry-point groups
+(<code class="docutils literal notranslate"><span class="pre">neofoam.core.entry_points</span></code>; <code class="docutils literal notranslate"><span class="pre">neofoam.ui.steps</span></code> is read by
+<code class="docutils literal notranslate"><span class="pre">neofoam.ui.plugins</span></code>):</p>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"neofoam.plugins"</span><span class="k">]</span>
 <span class="n">mdao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.models"</span><span class="w">        </span><span class="c1"># module; importing it registers models</span>
 
 <span class="k">[project.entry-points.</span><span class="s2">"neofoam.solvers"</span><span class="k">]</span>
 <span class="n">mdaofluid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.solver:run"</span><span class="w">   </span><span class="c1"># run(argv) -&gt; neofoam solver mdaofluid</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"neofoam.region_solvers"</span><span class="k">]</span>
+<span class="n">mdaosolid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.region:mdaosolid"</span><span class="w">   </span><span class="c1"># SolverSpec, found by name</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"neofoam.ui.steps"</span><span class="k">]</span>
+<span class="n">mdaostep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.ui:make_step"</span><span class="w">   </span><span class="c1"># factory of an extra wizard step</span>
 </pre></div>
 </div>
 <p>The CLI imports every <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module before running a command, so a
@@ -699,6 +706,8 @@ trust.</p>
 <p>Solver commands are lower-case: an entry point <code class="docutils literal notranslate"><span class="pre">myFluid</span></code> runs as
 <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">myfluid</span></code>, like the built-in solvers. A plugin solver whose
 lower-cased name matches another solver command is refused.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">neofoam.region_solvers</span></code> spec is found by the solver registry; a built-in
+solver of the same name takes precedence.</p>
 </section>
 <section id="adding-a-new-kind-of-model">
 <h3>Adding a new kind of model<a class="headerlink" href="#adding-a-new-kind-of-model" title="Link to this heading">¶</a></h3>

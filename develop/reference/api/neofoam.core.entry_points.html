@@ -668,7 +668,7 @@
 <p>Entry-point groups through which a separately installed package extends neofoam.</p>
 <p>Use it when the extension lives in its own repository (e.g. <code class="docutils literal notranslate"><span class="pre">neofoam_mdao</span></code>);
 code inside neofoam registers directly with <a class="reference internal" href="neofoam.core.plugin_system.html#neofoam.core.plugin_system.PluginSystem" title="neofoam.core.plugin_system.PluginSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">PluginSystem</span></code></a>.</p>
-<p>Two groups are read:</p>
+<p>Four groups extend neofoam; <a class="reference internal" href="neofoam.ui.plugins.html#module-neofoam.ui.plugins" title="neofoam.ui.plugins"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.ui.plugins</span></code></a> reads the last, this module the rest:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> — each entry point names a <strong>module</strong>. Importing it runs its
 registrations (<code class="docutils literal notranslate"><span class="pre">Model(...).register_with(viscosityModel)</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;Node.register</span></code>,
@@ -679,6 +679,10 @@ A module can also bind a new optional family with <code class="docutils literal 
 solver’s load step detects it through <code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_optional_models</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">neofoam.solvers</span></code> — each entry point names a <code class="docutils literal notranslate"><span class="pre">run(argv:</span> <span class="pre">list[str])</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>
 callable, exposed as <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">&lt;lower-cased</span> <span class="pre">entry</span> <span class="pre">point</span> <span class="pre">name&gt;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neofoam.region_solvers</span></code> — each entry point names a <code class="docutils literal notranslate"><span class="pre">SolverSpec</span></code>, which
+<a class="reference internal" href="neofoam.framework.solver.registry.html#neofoam.framework.solver.registry.resolve_solver" title="neofoam.framework.solver.registry.resolve_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_solver()</span></code></a> finds by name. A built-in
+solver of the same name takes precedence.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neofoam.ui.steps</span></code> — each entry point names a factory of an extra wizard step.</p></li>
 </ul>
 <p>A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.</p>
@@ -690,6 +694,9 @@ starts, so install only plugin packages you trust.</p>
 
 <span class="p">[</span><span class="n">project</span><span class="o">.</span><span class="n">entry</span><span class="o">-</span><span class="n">points</span><span class="o">.</span><span class="s2">"neofoam.solvers"</span><span class="p">]</span>
 <span class="n">mdaofluid</span> <span class="o">=</span> <span class="s2">"neofoam_mdao.solver:run"</span>
+
+<span class="p">[</span><span class="n">project</span><span class="o">.</span><span class="n">entry</span><span class="o">-</span><span class="n">points</span><span class="o">.</span><span class="s2">"neofoam.region_solvers"</span><span class="p">]</span>
+<span class="n">mdaosolid</span> <span class="o">=</span> <span class="s2">"neofoam_mdao.region:mdaosolid"</span>
 </pre></div>
 </div>
 <dl class="py function">
@@ -706,6 +713,19 @@ module while it runs.</p>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">load_plugins</span><span class="p">()</span>
 <span class="n">spec</span> <span class="o">=</span> <span class="n">resolve_solver</span><span class="p">(</span><span class="s2">"incompressibleFluid"</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.core.entry_points.region_solver_entry_points">
+<span class="sig-prename descclassname"><span class="pre">neofoam.core.entry_points.</span></span><span class="sig-name descname"><span class="pre">region_solver_entry_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">EntryPoint</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/core/entry_points.html#region_solver_entry_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.core.entry_points.region_solver_entry_points" title="Link to this definition">¶</a></dt>
+<dd><p>Return the installed <code class="docutils literal notranslate"><span class="pre">neofoam.region_solvers</span></code> entry points without loading them.</p>
+<p>Use it to inspect the raw entry points, including any a built-in solver shadows; use
+<a class="reference internal" href="neofoam.framework.solver.registry.html#neofoam.framework.solver.registry.resolve_solver" title="neofoam.framework.solver.registry.resolve_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_solver()</span></code></a> to get a spec by name.</p>
+<p>Imports no plugin code.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="n">region_solver_entry_points</span><span class="p">()]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -782,6 +802,7 @@ register models.</p>
             <ul>
 <li><a class="reference internal" href="#">neofoam.core.entry_points</a><ul>
 <li><a class="reference internal" href="#neofoam.core.entry_points.load_plugins"><code class="docutils literal notranslate"><span class="pre">load_plugins()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.core.entry_points.region_solver_entry_points"><code class="docutils literal notranslate"><span class="pre">region_solver_entry_points()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.core.entry_points.solver_entry_points"><code class="docutils literal notranslate"><span class="pre">solver_entry_points()</span></code></a></li>
 </ul>
 </li>

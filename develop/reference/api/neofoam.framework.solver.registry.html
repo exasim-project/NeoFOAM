@@ -665,27 +665,51 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.solver.registry">
 <span id="neofoam-framework-solver-registry"></span><h1>neofoam.framework.solver.registry<a class="headerlink" href="#module-neofoam.framework.solver.registry" title="Link to this heading">¶</a></h1>
-<p>Solver-name registry — filesystem-discovered, not hand-maintained.</p>
+<p>Solver-name registry — discovered from the package layout and entry points.</p>
 <p>Domain-level solver discovery: a solver is any package <code class="docutils literal notranslate"><span class="pre">neofoam.solver.&lt;name&gt;</span></code>
 carrying a module <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.py</span></code> that exports a <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;</span></code> spec object (the convention
 every solver package follows, e.g. <code class="docutils literal notranslate"><span class="pre">incompressibleFluid/incompressibleFluid.py</span></code> →
 <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>). New solvers register automatically by following that layout;
 there is no per-solver line to add here.</p>
-<p>Importing a solver spec pulls <code class="docutils literal notranslate"><span class="pre">pybFoam</span></code> (the native bindings), so discovery is
-<strong>filesystem-only</strong> (no spec import) and <a class="reference internal" href="#neofoam.framework.solver.registry.resolve_solver" title="neofoam.framework.solver.registry.resolve_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_solver()</span></code></a> imports the spec lazily
-(pulling <code class="docutils literal notranslate"><span class="pre">pybFoam</span></code>) only when actually called. This lives in <code class="docutils literal notranslate"><span class="pre">framework</span></code> rather than
+<p>Importing a solver spec pulls <code class="docutils literal notranslate"><span class="pre">pybFoam</span></code> (the native bindings), so discovery reads only
+the package layout and the installed entry-point metadata (no spec import) and
+<a class="reference internal" href="#neofoam.framework.solver.registry.resolve_solver" title="neofoam.framework.solver.registry.resolve_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_solver()</span></code></a> imports the spec lazily (pulling <code class="docutils literal notranslate"><span class="pre">pybFoam</span></code>) only when actually
+called. This lives in <code class="docutils literal notranslate"><span class="pre">framework</span></code> rather than
 in a frontend package so both the MCP host (<code class="docutils literal notranslate"><span class="pre">neofoam.mcp.registry</span></code> re-exports it) and
 the tooling/sweep runners depend on the framework, not on each other.</p>
+<p>Separately installed packages add solvers through the <code class="docutils literal notranslate"><span class="pre">neofoam.region_solvers</span></code> entry
+point group (<a class="reference internal" href="neofoam.core.entry_points.html#module-neofoam.core.entry_points" title="neofoam.core.entry_points"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.core.entry_points</span></code></a>). A built-in solver of the same name wins;
+two entry points sharing another name with different targets raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">resolve_solver</span><span class="p">(</span><span class="n">list_solver_names</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.framework.solver.registry.list_solver_names">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.solver.registry.</span></span><span class="sig-name descname"><span class="pre">list_solver_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/registry.html#list_solver_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.registry.list_solver_names" title="Link to this definition">¶</a></dt>
-<dd><p>Registered solver names (discovered from disk — pulls no pybFoam).</p>
+<dd><p>List the registered solver names, built-in and from installed packages.</p>
+<p>Use it to show or check solver names; use <a class="reference internal" href="#neofoam.framework.solver.registry.resolve_solver" title="neofoam.framework.solver.registry.resolve_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_solver()</span></code></a> to get a spec.</p>
+<p>Loads no spec. The names are sorted and unique. Two entry points that
+give a non-built-in name different targets raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">available</span> <span class="o">=</span> <span class="s2">"incompressibleFluid"</span> <span class="ow">in</span> <span class="n">list_solver_names</span><span class="p">()</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.framework.solver.registry.resolve_solver">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.solver.registry.</span></span><span class="sig-name descname"><span class="pre">resolve_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/registry.html#resolve_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.registry.resolve_solver" title="Link to this definition">¶</a></dt>
-<dd><p>Resolve a registered solver spec by name; unknown name fails fast.</p>
+<dd><p>Return the solver spec registered under <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>Use it when a case or tool selects a solver by name; use <a class="reference internal" href="#neofoam.framework.solver.registry.list_solver_names" title="neofoam.framework.solver.registry.list_solver_names"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_solver_names()</span></code></a>
+to see the names without loading a spec.</p>
+<p>A built-in solver wins over an entry point of the same name and is resolved without
+reading entry points. For any other name, an unknown name or two entry points that
+give one name different targets raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">resolve_solver</span><span class="p">(</span><span class="s2">"incompressibleFluid"</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
