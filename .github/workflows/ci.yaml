@@ -1,0 +1,592 @@
+name: CI
+run-name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  schedule:
+    - cron: "00 8 * * 0" # weekly full run, Sundays 10 AM CEST (08:00 UTC)
+  workflow_dispatch:
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  OMPI_MCA_rmaps_base_oversubscribe: 1
+
+# A label event that does not change what CI builds (see the gate) runs in its own group, so it
+# does not cancel the build of the same PR that is already running.
+concurrency:
+  group: >
+    ${{ github.workflow }}-
+    ${{ github.event_name }}-
+    ${{ github.event.pull_request.number || github.ref_name }}
+    ${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'skip-build' && format('-label-{0}', github.event.label.name) || '' }}
+  cancel-in-progress: true
+
+# The jobs run in stages so that a broken commit occupies few runners:
+#   gate -> pre-commit (no build, ~2 min) -> Linux clang build and tests
+#        -> Linux gcc, macOS, IWYU/clang-tidy, Python 3.11 (tests, mypy, docs), LRZ GPU
+#        -> Python 3.12/3.13 (develop/main pushes, weekly run, dispatch)
+jobs:
+  # Evaluates the event, the PR labels and the NeoN branch to build against once. Adding or
+  # removing a label only restarts the builds for skip-build; skip-changelog only reruns the
+  # changelog check, and the other labels take effect on the next push. It is the only job with
+  # the repository check: every other job needs it, so in forks of the repository nothing runs.
+  gate:
+    name: Gate
+    if: github.repository == 'exasim-project/NeoFOAM'
+    runs-on: ubuntu-latest
+    outputs:
+      lint: ${{ steps.gate.outputs.lint }}
+      changelog: ${{ steps.gate.outputs.changelog }}
+      build: ${{ steps.gate.outputs.build }}
+      python-all: ${{ steps.gate.outputs.python-all }}
+      benchmark: ${{ steps.gate.outputs.benchmark }}
+      skip-nvidia: ${{ steps.gate.outputs.skip-nvidia }}
+      skip-amd: ${{ steps.gate.outputs.skip-amd }}
+      skip-intel: ${{ steps.gate.outputs.skip-intel }}
+      skip-validation: ${{ steps.gate.outputs.skip-validation }}
+      neon-branch: ${{ steps.neon.outputs.branch }}
+    steps:
+      - name: Evaluate event and labels
+        id: gate
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          LABEL_EVENT: ${{ github.event.action == 'labeled' || github.event.action == 'unlabeled' }}
+          LABEL: ${{ github.event.label.name }}
+        run: |
+          has() { jq -e --arg l "$1" '(. // []) | index($l) != null' <<<"${LABELS:-[]}" >/dev/null; }
+          is_pr=$([[ "$GITHUB_EVENT_NAME" == pull_request ]] && echo true || echo false)
+
+          # Only skip-build changes what is built; keep in sync with the concurrency group
+          rebuild=true
+          if [[ "$LABEL_EVENT" == true && "$LABEL" != skip-build ]]; then rebuild=false; fi
+
+          changelog=false
+          if $is_pr && ! has skip-changelog &&
+             { $rebuild || [[ "$LABEL" == skip-changelog ]]; }; then
+            changelog=true
+          fi
+
+          lint=$rebuild
+          build=$rebuild
+          if $is_pr && has skip-build; then build=false; fi
+          # Python 3.12/3.13 only outside PRs; PRs test 3.11
+          python_all=$([[ "$build" == true ]] && ! $is_pr && echo true || echo false)
+
+          {
+            echo "lint=$lint"
+            echo "changelog=$changelog"
+            echo "build=$build"
+            echo "python-all=$python_all"
+            echo "benchmark=$($is_pr && has benchmark && echo true || echo false)"
+            echo "skip-nvidia=$(has skip-nvidia && echo true || echo false)"
+            echo "skip-amd=$(has skip-amd && echo true || echo false)"
+            echo "skip-intel=$(has skip-intel && echo true || echo false)"
+            echo "skip-validation=$(has skip-validation && echo true || echo false)"
+          } | tee -a "$GITHUB_OUTPUT"
+
+      - name: Determine NeoN branch
+        id: neon
+        if: steps.gate.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          NEON_REPO="exasim-project/NeoN"
+
+          # Prefer a NeoN branch with the same name as this NeoFOAM branch (coordinated PRs), but
+          # only while it still has commits that are NOT yet in develop. A same-named branch already
+          # merged into / contained in develop is stale and would build against an outdated NeoN
+          # API, so fall back to develop then.
+          NEON_BRANCH="develop"
+          if git ls-remote --exit-code --heads "https://github.com/${NEON_REPO}" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+            # compare develop...<branch>: 'behind'/'identical' => branch fully contained in develop
+            NEON_STATUS=$(gh api "repos/${NEON_REPO}/compare/develop...${NEOFOAM_BRANCH}" --jq '.status // empty' || echo "")
+            echo "compare(develop...${NEOFOAM_BRANCH}) status: ${NEON_STATUS:-<unknown>}"
+            if [ "$NEON_STATUS" != "behind" ] && [ "$NEON_STATUS" != "identical" ]; then
+              NEON_BRANCH="$NEOFOAM_BRANCH"
+            fi
+          fi
+          echo "Resolved NeoN ref: $NEON_BRANCH"
+          echo "branch=$NEON_BRANCH" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------- cheap checks, no build
+  pre-commit:
+    name: Pre-commit run
+    needs: gate
+    if: needs.gate.outputs.lint == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      # mypy needs the installed package, i.e. a full build; it runs in the Python job instead
+      - name: Run pre-commit on all files
+        run: SKIP=type-check pre-commit run --all --color always --verbose
+
+      - name: Check for TODO DONT MERGE notes
+        if: ${{ !cancelled() }}
+        run: |
+          NTODOS="$(grep -r 'TODO DONT MERGE' --exclude-dir=.github | wc -l)"
+          echo "Found $NTODOS TODO DONT MERGE notes"
+          ! grep -q -r "TODO DONT MERGE" --exclude-dir=.github
+
+  changelog:
+    name: Changelog check
+    needs: gate
+    if: needs.gate.outputs.changelog == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: CHANGELOG.md
+
+  # ---------------------------------------------------------------- first build
+  linux:
+    name: Build and test NeoFOAM on CPU (${{ matrix.compiler.CC }})
+    needs: [gate, pre-commit]
+    if: needs.gate.outputs.build == 'true'
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        compiler:
+          - CC: clang
+            CXX: clang++
+    env:
+      NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+    steps: &linux-steps
+      - name: Checkout NeoFOAM
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2406
+
+      - name: Install dependencies
+        uses: gerlero/apt-install@v1
+        with:
+          packages: >-
+            ninja-build
+            clang-19
+            libomp-19-dev
+            python3
+            python3-dev
+            build-essential
+            libopenmpi-dev
+            openmpi-bin
+
+      - name: Get versions
+        run: |
+          clang --version
+          ninja --version
+          cmake --version
+
+      - name: Install python dependencies
+        run: pip install foamlib pandas pydantic defusedxml
+
+      - name: Build NeoFOAM
+        run: |
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          cmake --preset develop \
+            -DNeoN_DEVEL_TOOLS=OFF \
+            -DNeoN_BUILD_TESTS=OFF \
+            -DNEOFOAM_WITH_MPI=ON \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler.CXX }} \
+            -DCMAKE_C_COMPILER=${{ matrix.compiler.CC }} \
+            -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
+            -DNEOFOAM_BUILD_BENCHMARKS=ON
+          cmake --build --preset develop
+
+      - name: Execute unit tests of NeoFOAM
+        run: |
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          ctest --preset develop -E bench --output-on-failure
+
+  # ---------------------------------------------------------------- after the first build
+  linux-gcc:
+    name: Build and test NeoFOAM on CPU (${{ matrix.compiler.CC }})
+    needs: [gate, linux]
+    if: needs.gate.outputs.build == 'true'
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        compiler:
+          - CC: gcc
+            CXX: g++
+    env:
+      NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+    steps: *linux-steps
+
+  macos:
+    name: Build and test NeoFOAM on macOS
+    needs: [gate, linux]
+    if: needs.gate.outputs.build == 'true'
+    runs-on: macos-14
+    env:
+      NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+    steps:
+      - name: Checkout NeoFOAM
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          # v2406's Foam::ispanstream(std::string_view) constructor is broken
+          # under libc++/Apple Clang (initializes its std::istream base via
+          # statements in the constructor body instead of a member-initializer
+          # list). Try a newer release in case it's since been fixed upstream,
+          # since neither patching OpenFOAM's own headers nor switching to
+          # GCC (confirmed to break linking against these Apple-Clang-built
+          # libraries with ABI/undefined-symbol errors) are viable long-term.
+          openfoam-version: 2512
+
+      - name: Install dependencies
+        run: brew install ninja
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Get versions
+        run: |
+          clang --version
+          ninja --version
+          cmake --version
+
+      - name: Install python dependencies
+        run: pip install foamlib pandas pydantic defusedxml
+
+      - name: Build NeoFOAM
+        run: |
+          # Pin find_package(MPI) to OpenFOAM's own bundled Open MPI wrapper
+          # compilers (already first on PATH from the "Set up OpenFOAM" step)
+          # rather than letting it resolve to some other Open MPI. OpenFOAM's
+          # prebuilt libPstream/libOpenFOAM are linked against its bundled
+          # MPI; if NeoFOAM/NeoN link against a different Open MPI build,
+          # two incompatible MPI runtimes end up in the same process and
+          # MPI_Init segfaults at run time.
+          cmake --preset develop \
+            -DNeoN_DEVEL_TOOLS=OFF \
+            -DNeoN_BUILD_TESTS=OFF \
+            -DNEOFOAM_WITH_MPI=ON \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_PREFIX_PATH=$(brew --prefix) \
+            -DMPI_C_COMPILER=$(command -v mpicc) \
+            -DMPI_CXX_COMPILER=$(command -v mpicxx) \
+            -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
+            -DNEOFOAM_BUILD_BENCHMARKS=OFF
+          cmake --build --preset develop
+
+      - name: Execute unit tests of NeoFOAM
+        run: ctest --preset develop -E bench --output-on-failure
+
+  iwyu:
+    name: Build with IWYU
+    needs: [gate, linux]
+    if: needs.gate.outputs.build == 'true'
+    runs-on: ubuntu-24.04
+    env:
+      NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add repos
+        run: |
+          sudo add-apt-repository 'deb https://dl.openfoam.com/repos/deb noble main'
+          sudo apt-key add .github/workflows/pubkey.gpg
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install \
+             ninja-build \
+             iwyu \
+             clang-16 \
+             libomp-16-dev \
+             libopenmpi-dev \
+             openmpi-bin \
+             openfoam2406-dev
+
+      - name: Create Compilation Database
+        run: |
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          CC=clang \
+          CXX=clang++ \
+          cmake --preset develop \
+            -DNEOFOAM_DEVEL_TOOLS=OFF \
+            -DNEOFOAM_BUILD_BENCHMARKS=OFF \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
+            -DNEOFOAM_ENABLE_IWYU=ON
+          cmake --build --preset develop
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: build
+
+  clang-tidy:
+    name: Clang-tidy Check
+    needs: iwyu
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Add repos
+        run: |
+          sudo add-apt-repository 'deb https://dl.openfoam.com/repos/deb noble main'
+          sudo apt-key add .github/workflows/pubkey.gpg
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install \
+             clang-tidy-16 \
+             libomp-16-dev \
+             libopenmpi-dev \
+             openmpi-bin \
+             openfoam2406-dev
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: build
+
+      - name: Run clang-tidy
+        run: |
+          # Create list of .cpp files belonging to this repository
+          git ls-files | grep -E "\.(cpp)" > pattern
+          # Create list of .cpp files that are in this repository and part of the
+          # compilation database
+          # also filters out " at the begin and end of the filename
+          jq ".[] | .file" build/develop/compile_commands.json \
+            | sed 's/^"\(.*\)"$/\1/' \
+            | grep -F -f pattern - > files
+          # run clang-tidy on all specified files
+          grep -v "examples/" files > files_wo_examples
+          run-clang-tidy-16 -fix -extra-arg=-w -p build/develop -j $(nproc) \
+            -header-filter='.*/include/NeoFOAM/.*' \
+            $(cat files_wo_examples)
+
+      - name: Check for fixes
+        run: |
+          if [[ $(git ls-files -m | wc -l) -eq 0 ]]; then
+            exit 0
+          fi
+          echo "There are fixes available from clang-tidy."
+          echo "Please use your local clang-tidy or apply the following patch:"
+          git diff -p
+          exit 1
+
+  # The Python package is a full C++ build, so one job builds it once and runs every check that
+  # needs it: pytest with coverage, mypy and, on PRs, the documentation preview.
+  python:
+    name: Python 3.11 (tests, coverage, mypy, docs)
+    needs: [gate, linux]
+    if: needs.gate.outputs.build == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # docs preview on gh-pages
+      pull-requests: write # docs preview comment
+    env:
+      PR_NUMBER: ${{ github.event.number }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: System packages for the docs
+        run: sudo apt-get update && sudo apt-get install -y doxygen texlive-font-utils
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2506
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: pyvista/setup-headless-display-action@v3
+
+      - name: Install NeoFOAM
+        id: install
+        run: pip install -v .[all]
+
+      # The checks below run even if an earlier one fails, as long as the install succeeded
+      - name: Test with pytest
+        run: pytest --cov=neofoam --cov-report=xml --cov-report=term
+
+      - name: Check types with mypy
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: poe type_check
+
+      - name: Build docs
+        id: docs
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && github.event_name == 'pull_request' }}
+        run: |
+          sphinx-build -b html ./doc ./docs_build/
+          cp -r doc/_build/ docs_build/doxygen
+          touch ./docs_build/.nojekyll
+
+      # Fork PRs get a read-only token and cannot deploy
+      - name: Deploy PR docs preview
+        if: >-
+          ${{ !cancelled() && steps.docs.outcome == 'success' &&
+              !github.event.pull_request.head.repo.fork &&
+              github.event.pull_request.user.login != 'dependabot[bot]' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs_build
+          target-folder: Build_PR_${{ env.PR_NUMBER }}
+
+      - name: Comment PR
+        if: >-
+          ${{ !cancelled() && steps.docs.outcome == 'success' &&
+              !github.event.pull_request.head.repo.fork &&
+              github.event.pull_request.user.login != 'dependabot[bot]' }}
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Deployed test documentation to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}
+          comment_tag: build_url
+
+  python-versions:
+    name: Python ${{ matrix.python-version }}
+    needs: [gate, python]
+    if: needs.gate.outputs.python-all == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2506
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install NeoFOAM
+        run: pip install -v .[all]
+
+      - name: Test with pytest
+        run: pytest
+
+  # ---------------------------------------------------------------- GPU (LRZ GitLab)
+  # Fork PRs get no secrets, so they cannot trigger the LRZ pipeline.
+  gpu:
+    name: Build and test NeoFOAM on GPU
+    needs: [gate, linux]
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440 # 24 hours
+    env:
+      LRZ_GROUP: greole
+      LRZ_HOST: gitlab-ce.lrz.de
+      REPO_NAME: ${{ github.event.repository.name }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      MAX_WAIT_MINUTES: 1440
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
+      LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push commit to LRZ GitLab
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add lrz https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_GROUP}/${REPO_NAME}.git
+          git fetch origin "${BRANCH}"
+          git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          git reset --hard "origin/${BRANCH}"
+          git push --force lrz "HEAD:refs/heads/${BRANCH}"
+
+      - name: Cancel running/pending LRZ GitLab CI pipelines
+        if: ${{ github.event_name != 'push' }}
+        run: ./ci/github/cancel_triggered_pipelines.sh "${BRANCH}"
+
+      - name: Trigger LRZ GitLab CI pipeline
+        id: trigger
+        run: |
+          ./ci/github/trigger_pipeline.sh \
+            "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${REPO_NAME}" \
+            "variables[BENCHMARK]=false" \
+            "variables[SKIP_NVIDIA]=${{ needs.gate.outputs.skip-nvidia }}" \
+            "variables[SKIP_AMD]=${{ needs.gate.outputs.skip-amd }}" \
+            "variables[SKIP_INTEL]=${{ needs.gate.outputs.skip-intel }}" \
+            "variables[SKIP_VALIDATION]=${{ needs.gate.outputs.skip-validation }}"
+
+      - name: Wait for LRZ GitLab CI pipeline
+        run: ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
+
+  gpu-benchmark:
+    name: Benchmark NeoFOAM on GPU
+    needs: [gate, gpu]
+    if: needs.gate.outputs.benchmark == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440 # 24 hours
+    env:
+      LRZ_GROUP: greole
+      LRZ_HOST: gitlab-ce.lrz.de
+      REPO_NAME: ${{ github.event.repository.name }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      MAX_WAIT_MINUTES: 1440
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
+      LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cancel running/pending LRZ GitLab CI pipelines
+        run: ./ci/github/cancel_triggered_pipelines.sh "${BRANCH}"
+
+      - name: Trigger LRZ GitLab CI pipeline for benchmarking
+        id: trigger
+        run: |
+          ./ci/github/trigger_pipeline.sh \
+            "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${REPO_NAME}" \
+            "variables[SKIP_NVIDIA]=${{ needs.gate.outputs.skip-nvidia }}" \
+            "variables[SKIP_AMD]=${{ needs.gate.outputs.skip-amd }}" \
+            "variables[SKIP_INTEL]=${{ needs.gate.outputs.skip-intel }}" \
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
+            "variables[BENCHMARK]=true"
+
+      - name: Wait for LRZ GitLab CI pipeline for benchmarking
+        run: ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}

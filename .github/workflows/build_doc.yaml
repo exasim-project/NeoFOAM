@@ -3,9 +3,11 @@ name: Build documentation
 env:
   PR_NUMBER: ${{ github.event.number }}
 
+# PR previews are built by the Python job of ci.yaml, which reuses its build of the package. This
+# workflow deploys the docs of merged PRs (develop, main) and of release tags.
 on:
   pull_request:
-    types: [opened, synchronize, closed]
+    types: [closed]
 
   push:
     tags:
@@ -13,6 +15,7 @@ on:
 
 jobs:
   build:
+    if: github.event_name == 'push' || github.event.pull_request.merged
     runs-on: ubuntu-latest
 
     steps:
@@ -48,15 +51,7 @@ jobs:
         cp -r doc/_build/ docs_build/doxygen
         touch ./docs_build/.nojekyll
 
-    # 1. PREVIEW BUILD (per PR)
-    - name: Deploy PR Build
-      if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.merged && github.event.pull_request.user.login != 'dependabot[bot]' }}
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: docs_build
-        target-folder: Build_PR_${{ env.PR_NUMBER }}
-
-    # 2. VERSIONED BUILD (tags)
+    # 1. VERSIONED BUILD (tags)
     - name: Deploy Versioned Build
       if: ${{ github.ref_type == 'tag' }}
       uses: JamesIves/github-pages-deploy-action@v4
@@ -64,7 +59,7 @@ jobs:
         folder: docs_build
         target-folder: ${{ github.ref_name }}
 
-    # 3. DEPLOY FOR MAIN (stable)
+    # 2. DEPLOY FOR MAIN (stable)
     - name: Deploy Main
       if: >
         github.event.pull_request.merged &&
@@ -74,7 +69,7 @@ jobs:
         folder: docs_build
         target-folder: main
 
-    # 4. DEPLOY FOR DEVELOP (dev preview)
+    # 3. DEPLOY FOR DEVELOP (dev preview)
     - name: Deploy Develop
       if: >
         github.event.pull_request.merged &&
@@ -83,15 +78,3 @@ jobs:
       with:
         folder: docs_build
         target-folder: develop
-
-    - name: Comment PR
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
-      uses: thollander/actions-comment-pull-request@v2
-      with:
-        message: |
-          Deployed test documentation to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}
-        comment_tag: build_url
-
-    - name: Echo Build PR URL
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
-      run: echo "Deploy to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}"
