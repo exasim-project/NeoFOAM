@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/_modules/neofoam/postprocess/insitu.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/_modules/neofoam/postprocess/actions.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>neofoam.postprocess.insitu - NeoFOAM documentation</title>
+        <title>neofoam.postprocess.actions - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -381,8 +381,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/api/neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.html">neofoam.postprocess</a><input aria-label="Toggle navigation of neofoam.postprocess" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.actions.html">neofoam.postprocess.actions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.config.html">neofoam.postprocess.config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.insitu.html">neofoam.postprocess.insitu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.model.html">neofoam.postprocess.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.node.html">neofoam.postprocess.node</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.nodes.html">neofoam.postprocess.nodes</a><input aria-label="Toggle navigation of neofoam.postprocess.nodes" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -653,23 +653,25 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for neofoam.postprocess.insitu</h1><div class="highlight"><pre>
+          <h1>Source code for neofoam.postprocess.actions</h1><div class="highlight"><pre>
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
 <span class="c1"># NB: no ``from __future__ import annotations`` — Context injection matches</span>
 <span class="c1"># ``param.annotation is Context`` literally (see field_writer.py).</span>
 
-<span class="sd">"""The InSitu plugin family: hand the live solver state to an in-situ tool.</span>
+<span class="sd">"""The Action plugin family: run something on the live simulation state.</span>
 
-<span class="sd">A case declares in-situ entries next to its tables (``insitu:`` in</span>
-<span class="sd">``system/postProcess.yaml``); the ``postProcess`` model then steps an</span>
-<span class="sd">``insitu`` operation after ``post_process`` that calls each entry's</span>
-<span class="sd">:meth:`InSitu.execute` on that entry's write steps. NeoFOAM ships no entry</span>
-<span class="sd">type: a renderer (Catalyst, say) registers one from its own package::</span>
+<span class="sd">Tables save reduced values to disk; an action runs on the live state at chosen</span>
+<span class="sd">time steps, for example live visualization through Catalyst. A case declares</span>
+<span class="sd">actions next to its tables (``actions:`` in ``system/postProcess.yaml``); the</span>
+<span class="sd">``postProcess`` model then steps an ``actions`` operation after ``post_process``</span>
+<span class="sd">that calls each action's :meth:`Action.execute` on its write steps. NeoFOAM</span>
+<span class="sd">ships no action type: a renderer (Catalyst, say) registers one from its own</span>
+<span class="sd">package::</span>
 
-<span class="sd">    @InSitu.register</span>
-<span class="sd">    class Catalyst(InSitu):</span>
+<span class="sd">    @Action.register</span>
+<span class="sd">    class Catalyst(Action):</span>
 <span class="sd">        type: Literal["catalyst"] = "catalyst"</span>
 
 <span class="sd">        def execute(self, ctx: Context) -&gt; None: ...</span>
@@ -688,21 +690,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span>
 
 
-<div class="viewcode-block" id="InSitu">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSitu">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"insitu"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">InSitu</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Plugin interface: one in-situ tool, called with the live Context.</span>
+<div class="viewcode-block" id="Action">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.Action">[docs]</a>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"action"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Action</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Plugin interface: one action on the live simulation state ("in situ" in HPC terms).</span>
 
-<span class="sd">    An entry is a spec until the run's first step: :class:`InSituRunner` runs a</span>
+<span class="sd">    An entry is a spec until the run's first step: :class:`ActionRunner` runs a</span>
 <span class="sd">    private copy, so the state an implementation keeps between calls (a</span>
 <span class="sd">    session, an output counter) belongs to the run. Unknown keys are refused.</span>
 
 <span class="sd">    Subclass it to drive an external tool from a case; for a table of reduced</span>
 <span class="sd">    values use a :class:`~neofoam.postprocess.table.TableSet` table instead. Example::</span>
 
-<span class="sd">        @InSitu.register</span>
-<span class="sd">        class Snapshot(InSitu):</span>
+<span class="sd">        @Action.register</span>
+<span class="sd">        class Snapshot(Action):</span>
 <span class="sd">            type: Literal["snapshot"] = "snapshot"</span>
 
 <span class="sd">            def execute(self, ctx: Context) -&gt; None:</span>
@@ -712,11 +714,11 @@
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="c1"># A default only because the family's wrapper model inherits the base's fields;</span>
-    <span class="c1"># a declared entry always has its name (InSituSpec requires it).</span>
+    <span class="c1"># a declared entry always has its name (ActionSpec requires it).</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 
-<div class="viewcode-block" id="InSitu.execute">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSitu.execute">[docs]</a>
+<div class="viewcode-block" id="Action.execute">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.Action.execute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Hand ``ctx`` to the tool: called on this entry's due steps, on every rank.</span>
 
@@ -725,55 +727,55 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
-<div class="viewcode-block" id="InSitu.finalize">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSitu.finalize">[docs]</a>
+<div class="viewcode-block" id="Action.finalize">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.Action.finalize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Release what :meth:`execute` opened; called once, after the time loop."""</span></div>
 </div>
 
 
 
-<div class="viewcode-block" id="InSituEntry">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituEntry">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InSituEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="ActionEntry">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.ActionEntry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ActionEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A declared entry: the plugin and when it runs.</span>
 
-<span class="sd">    ``tables_for_case`` builds these from ``insitu:``; build one directly only to</span>
-<span class="sd">    drive an :class:`InSituRunner` without a case file. It is a spec, shared by</span>
+<span class="sd">    ``tables_for_case`` builds these from ``actions:``; build one directly only to</span>
+<span class="sd">    drive an :class:`ActionRunner` without a case file. It is a spec, shared by</span>
 <span class="sd">    runs, so the runner copies it. Example::</span>
 
-<span class="sd">        InSituEntry(plugin, write_control)</span>
+<span class="sd">        ActionEntry(plugin, write_control)</span>
 <span class="sd">    """</span>
 
-    <span class="n">plugin</span><span class="p">:</span> <span class="n">InSitu</span>
+    <span class="n">plugin</span><span class="p">:</span> <span class="n">Action</span>
     <span class="n">write_control</span><span class="p">:</span> <span class="n">WriteControl</span></div>
 
 
 
-<div class="viewcode-block" id="InSituRunner">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituRunner">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InSituRunner</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The runtime state of the ``insitu`` operation: a private copy of every entry.</span>
+<div class="viewcode-block" id="ActionRunner">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.ActionRunner">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ActionRunner</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The runtime state of the ``actions`` operation: a private copy of every entry.</span>
 
 <span class="sd">    The ``postProcess`` model builds one per run when a case declares entries, so a</span>
 <span class="sd">    solver never constructs it. Its lifecycle is :meth:`execute` once per step, then</span>
 <span class="sd">    :meth:`finalize` once; both run on every rank. Example::</span>
 
-<span class="sd">        runner = InSituRunner(tables.insitu)</span>
+<span class="sd">        runner = ActionRunner(tables.actions)</span>
 <span class="sd">        runner.execute(ctx)</span>
 <span class="sd">        runner.finalize()</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InSituEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ActionEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">InSituEntry</span><span class="p">(</span>
+            <span class="n">ActionEntry</span><span class="p">(</span>
                 <span class="n">entry</span><span class="o">.</span><span class="n">plugin</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">entry</span><span class="o">.</span><span class="n">write_control</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span>
         <span class="p">]</span>
 
-<div class="viewcode-block" id="InSituRunner.execute">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituRunner.execute">[docs]</a>
+<div class="viewcode-block" id="ActionRunner.execute">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.ActionRunner.execute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Call every entry due at this step."""</span>
         <span class="k">for</span> <span class="n">plugin</span><span class="p">,</span> <span class="n">write_control</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">:</span>
@@ -781,8 +783,8 @@
                 <span class="n">plugin</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InSituRunner.finalize">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.insitu.html#neofoam.postprocess.insitu.InSituRunner.finalize">[docs]</a>
+<div class="viewcode-block" id="ActionRunner.finalize">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.actions.html#neofoam.postprocess.actions.ActionRunner.finalize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Finalize every entry (collective, like :meth:`execute`).</span>
 

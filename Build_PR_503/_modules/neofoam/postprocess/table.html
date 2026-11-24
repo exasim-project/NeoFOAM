@@ -381,8 +381,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/api/neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.html">neofoam.postprocess</a><input aria-label="Toggle navigation of neofoam.postprocess" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.actions.html">neofoam.postprocess.actions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.config.html">neofoam.postprocess.config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.insitu.html">neofoam.postprocess.insitu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.model.html">neofoam.postprocess.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.node.html">neofoam.postprocess.node</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.nodes.html">neofoam.postprocess.nodes</a><input aria-label="Toggle navigation of neofoam.postprocess.nodes" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -672,7 +672,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.field_writer.write_control</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalWriteControl</span><span class="p">,</span> <span class="n">WriteControl</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.insitu</span><span class="w"> </span><span class="kn">import</span> <span class="n">InSituEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.actions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ActionEntry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.writers</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvWriter</span><span class="p">,</span> <span class="n">TableWriter</span>
 
@@ -717,8 +717,8 @@
 <span class="sd">    ``write_control`` sets the cadence every table without its own inherits</span>
 <span class="sd">    (default: every step) and ``writer`` the output format (default: CSV);</span>
 <span class="sd">    ``case_dir`` is filled by :func:`tables_for_case` so the model knows where to</span>
-<span class="sd">    write. ``insitu`` holds the case's in-situ entries</span>
-<span class="sd">    (:mod:`~neofoam.postprocess.insitu`), stepped after the tables.</span>
+<span class="sd">    write. ``actions`` holds the case's actions</span>
+<span class="sd">    (:mod:`~neofoam.postprocess.actions`), stepped after the tables.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -732,7 +732,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_writer</span> <span class="o">=</span> <span class="n">writer</span> <span class="ow">or</span> <span class="n">CsvWriter</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">=</span> <span class="n">case_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Table</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">insitu</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InSituEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ActionEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 <div class="viewcode-block" id="TableSet.table">
 <a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.table.html#neofoam.postprocess.table.TableSet.table">[docs]</a>
@@ -773,7 +773,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">tables_for_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TableSet</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Every table a case declares: the script's first, then the spec file's.</span>
 
-<span class="sd">    The script runs first so the nodes (and in-situ types) it registers are</span>
+<span class="sd">    The script runs first so the nodes (and action types) it registers are</span>
 <span class="sd">    selectable by ``type`` from the spec file. A name declared by both front</span>
 <span class="sd">    doors raises, naming both origins. Neither file present ⇒ an empty set (the</span>
 <span class="sd">    ``postProcess`` model then does nothing)::</span>
@@ -781,7 +781,7 @@
 <span class="sd">        tables_for_case(Path("cases/cavity")).tables</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415  # cycle: config-&gt;table</span>
-        <span class="n">_resolve_insitu</span><span class="p">,</span>
+        <span class="n">_resolve_action</span><span class="p">,</span>
         <span class="n">load_config</span><span class="p">,</span>
         <span class="n">resolve_table</span><span class="p">,</span>
         <span class="n">spec_file</span><span class="p">,</span>
@@ -804,11 +804,11 @@
         <span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="n">declared</span> <span class="o">=</span> <span class="p">[</span><span class="n">resolve_table</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">tables</span><span class="p">]</span>
         <span class="n">_extend</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">origins</span><span class="p">,</span> <span class="n">declared</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">spec_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)))</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">insitu</span><span class="p">]</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">actions</span><span class="p">]</span>
         <span class="n">duplicates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">})</span>
         <span class="k">if</span> <span class="n">duplicates</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"postProcess: duplicate insitu entries </span><span class="si">{</span><span class="n">duplicates</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">tables</span><span class="o">.</span><span class="n">insitu</span> <span class="o">=</span> <span class="p">[</span><span class="n">_resolve_insitu</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">insitu</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"postProcess: duplicate action entries </span><span class="si">{</span><span class="n">duplicates</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">tables</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="n">_resolve_action</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">actions</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">tables</span></div>
 

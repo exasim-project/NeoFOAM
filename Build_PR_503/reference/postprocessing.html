@@ -382,8 +382,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="api/neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.postprocess.html">neofoam.postprocess</a><input aria-label="Toggle navigation of neofoam.postprocess" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/neofoam.postprocess.actions.html">neofoam.postprocess.actions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.postprocess.config.html">neofoam.postprocess.config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/neofoam.postprocess.insitu.html">neofoam.postprocess.insitu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.postprocess.model.html">neofoam.postprocess.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.postprocess.node.html">neofoam.postprocess.node</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="api/neofoam.postprocess.nodes.html">neofoam.postprocess.nodes</a><input aria-label="Toggle navigation of neofoam.postprocess.nodes" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -1285,22 +1285,23 @@ points. It raises a <code class="docutils literal notranslate"><span class="pre"
 aggregator, or run that case serially.</p>
 </div>
 </section>
-<section id="in-situ-entries">
-<h2>In-situ entries<a class="headerlink" href="#in-situ-entries" title="Link to this heading">¶</a></h2>
-<p>Besides tables, the spec file can hand the live solver state to an in-situ tool
-(a renderer such as Catalyst, a steering client) through <code class="docutils literal notranslate"><span class="pre">insitu</span></code> entries:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">insitu</span><span class="p">:</span>
+<section id="actions">
+<h2>Actions<a class="headerlink" href="#actions" title="Link to this heading">¶</a></h2>
+<p>Tables save reduced values to disk. An <strong>action</strong> runs on the live simulation
+state at chosen time steps, for example live visualization through Catalyst. A
+case declares its actions in the same spec file:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">actions</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">view</span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalyst</span><span class="w">          </span><span class="c1"># registered by the tool's own package</span>
 <span class="w">    </span><span class="nt">write_control</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">write_control_type</span><span class="p">:</span><span class="w"> </span><span class="nv">timeStep</span><span class="p p-Indicator">,</span><span class="nt"> interval</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">}</span>
 <span class="w">    </span><span class="nt">field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">U</span><span class="w">                </span><span class="c1"># every other key belongs to the type</span>
 </pre></div>
 </div>
-<p>A case that declares an entry gets an <code class="docutils literal notranslate"><span class="pre">insitu</span></code> operation, stepped right after
-<code class="docutils literal notranslate"><span class="pre">post_process</span></code>, which calls each entry on its own write steps (the same
-<code class="docutils literal notranslate"><span class="pre">write_control</span></code> policies as a table, default every step); without entries the
-operation does not exist. NeoFOAM ships no entry type: a type is an
-<code class="docutils literal notranslate"><span class="pre">&#64;InSitu.register</span></code> subclass with a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code> discriminator and an
+<p>A case that declares an action gets an <code class="docutils literal notranslate"><span class="pre">actions</span></code> operation, stepped right after
+<code class="docutils literal notranslate"><span class="pre">post_process</span></code>, which calls each action on its own write steps (the same
+<code class="docutils literal notranslate"><span class="pre">write_control</span></code> policies as a table, default every step); without actions the
+operation does not exist. NeoFOAM ships no action type: a type is an
+<code class="docutils literal notranslate"><span class="pre">&#64;Action.register</span></code> subclass with a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code> discriminator and an
 <code class="docutils literal notranslate"><span class="pre">execute(ctx)</span></code> taking the live <a class="reference internal" href="api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><code class="xref py py-class docutils literal notranslate"><span class="pre">Context</span></code></a>
 (optionally a <code class="docutils literal notranslate"><span class="pre">finalize()</span></code>, called once after the time loop), registered by
 importing its module — from the tool that drives the run, or from the case’s
@@ -1308,18 +1309,18 @@ importing its module — from the tool that drives the run, or from the case’s
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">InSitu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span>
 
-<span class="nd">@InSitu</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">PrintTime</span><span class="p">(</span><span class="n">InSitu</span><span class="p">):</span>
+<span class="nd">@Action</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PrintTime</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"printTime"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"printTime"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Decomposed, every rank calls every entry at the same steps, so <code class="docutils literal notranslate"><span class="pre">execute</span></code> may be
-collective. The entry the operation runs is a private copy of the declaration, so
+<p>Decomposed, every rank calls every action at the same steps, so <code class="docutils literal notranslate"><span class="pre">execute</span></code> may be
+collective. The action the operation runs is a private copy of the declaration, so
 state it keeps between calls belongs to the run.</p>
 </section>
 <section id="try-it">
@@ -1412,7 +1413,7 @@ head<span class="w"> </span>-3<span class="w"> </span>postProcessing/kinetic_ene
 </ul>
 </li>
 <li><a class="reference internal" href="#write-cadence-and-output">Write cadence and output</a></li>
-<li><a class="reference internal" href="#in-situ-entries">In-situ entries</a></li>
+<li><a class="reference internal" href="#actions">Actions</a></li>
 <li><a class="reference internal" href="#try-it">Try it</a></li>
 </ul>
 </li>

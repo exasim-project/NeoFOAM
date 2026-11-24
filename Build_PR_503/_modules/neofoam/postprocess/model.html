@@ -381,8 +381,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/api/neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.html">neofoam.postprocess</a><input aria-label="Toggle navigation of neofoam.postprocess" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.actions.html">neofoam.postprocess.actions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.config.html">neofoam.postprocess.config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.insitu.html">neofoam.postprocess.insitu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.model.html">neofoam.postprocess.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.node.html">neofoam.postprocess.node</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.postprocess.nodes.html">neofoam.postprocess.nodes</a><input aria-label="Toggle navigation of neofoam.postprocess.nodes" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -671,8 +671,8 @@
 <span class="sd">table gets an empty set and the operation does nothing (not even a</span>
 <span class="sd">``postProcessing/`` directory).</span>
 
-<span class="sd">A case that declares ``insitu`` entries also gets the ``insitu`` operation after</span>
-<span class="sd">``post_process`` (and its :class:`~neofoam.postprocess.insitu.InSituRunner`</span>
+<span class="sd">A case that declares ``actions`` also gets the ``actions`` operation after</span>
+<span class="sd">``post_process`` (and its :class:`~neofoam.postprocess.actions.ActionRunner`</span>
 <span class="sd">init step); without them neither exists. A solver steps every operation of the</span>
 <span class="sd">model, in order.</span>
 <span class="sd">"""</span>
@@ -690,7 +690,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.insitu</span><span class="w"> </span><span class="kn">import</span> <span class="n">InSituRunner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.actions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ActionRunner</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span><span class="p">,</span> <span class="n">Pipeline</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableSet</span><span class="p">,</span> <span class="n">tables_for_case</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.writers.writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableWriter</span>
@@ -801,12 +801,12 @@
         <span class="k">return</span> <span class="n">PostProcessor</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">base_path</span><span class="p">)</span>
 
     <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">"post_processor"</span><span class="p">,</span> <span class="n">create_processor</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="n">tables</span><span class="o">.</span><span class="n">insitu</span><span class="p">:</span>
-        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="s2">"insitu"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">InSituRunner</span><span class="p">(</span><span class="n">tables</span><span class="o">.</span><span class="n">insitu</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">tables</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="s2">"actions"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ActionRunner</span><span class="p">(</span><span class="n">tables</span><span class="o">.</span><span class="n">actions</span><span class="p">)))</span>
     <span class="k">return</span> <span class="n">steps</span>
 
 
-<span class="c1"># -- operations: append a row per due table, then the in-situ entries --------</span>
+<span class="c1"># -- operations: append a row per due table, then the actions ----------------</span>
 <span class="c1"># Stepped last in the solver's time loop; builder-insertion order already puts</span>
 <span class="c1"># them after every field-mutating op and after the writer, so no ``depends_on``.</span>
 <div class="viewcode-block" id="post_process">
@@ -818,11 +818,11 @@
 
 
 
-<div class="viewcode-block" id="insitu">
-<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.model.html#neofoam.postprocess.model.insitu">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">insitu</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Hand the live Context to the due in-situ entries (on every rank)."""</span>
-    <span class="n">runner</span><span class="p">:</span> <span class="n">InSituRunner</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"insitu"</span><span class="p">]</span>
+<div class="viewcode-block" id="actions">
+<a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.model.html#neofoam.postprocess.model.actions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hand the live Context to the due actions (on every rank)."""</span>
+    <span class="n">runner</span><span class="p">:</span> <span class="n">ActionRunner</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"actions"</span><span class="p">]</span>
     <span class="n">runner</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
 
@@ -831,10 +831,10 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.postprocess.model.html#neofoam.postprocess.model.operations">[docs]</a>
 <span class="nd">@postProcess</span><span class="o">.</span><span class="n">operation_collection</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""``post_process``, and ``insitu`` when the case declares in-situ entries."""</span>
+<span class="w">    </span><span class="sd">"""``post_process``, and ``actions`` when the case declares actions."""</span>
     <span class="n">functions</span> <span class="o">=</span> <span class="p">[</span><span class="n">post_process</span><span class="p">]</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">insitu</span><span class="p">:</span>
-        <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">insitu</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+        <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span>
     <span class="n">resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">Operations</span><span class="p">(</span>
         <span class="p">[</span>
