@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.field_metadata.html">neofoam.core.field_metadata</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
@@ -449,6 +450,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-33" name="toctree-checkbox-33" role="switch" type="checkbox"/><label for="toctree-checkbox-33"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -473,6 +475,7 @@
 </ul>
 </li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_settings.html">neofoam.solver.incompressibleFluidNeoN.solver_settings</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-36" name="toctree-checkbox-36" role="switch" type="checkbox"/><label for="toctree-checkbox-36"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -503,6 +506,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -717,10 +721,10 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControlDictConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.field_writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">fieldWriter</span><span class="p">,</span> <span class="n">neon_writer_backend_steps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.models.incompressibleFluidNeoNModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluidNeoNModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.pressure_velocity.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PressureVelocityAlgorithmNeoN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.solution_loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">neon_loop_backend_steps</span><span class="p">,</span> <span class="n">solutionLoop</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.solver_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_neon_solver_settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.solver_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluidNeoN</span>
 
 <span class="c1"># Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents. The</span>
 <span class="c1"># base solver subdicts AND the *Final subdicts so the final outer-corrector</span>
@@ -769,7 +773,7 @@
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
         <span class="n">pressure_model</span> <span class="o">=</span> <span class="n">PressureVelocityAlgorithmNeoN</span><span class="o">.</span><span class="n">detect_and_create</span><span class="p">()</span>
-        <span class="n">optional_models</span> <span class="o">=</span> <span class="n">incompressibleFluidNeoNModel</span><span class="o">.</span><span class="n">detect_models</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)</span>
+        <span class="n">optional_models</span> <span class="o">=</span> <span class="n">incompressibleFluidNeoN</span><span class="o">.</span><span class="n">detect_optional_models</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)</span>
 
         <span class="c1"># solutionLoop (advances time) and fieldWriter (persists fields) are</span>
         <span class="c1"># separate-concern Models, loaded here so their controlDict is validated</span>

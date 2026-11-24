@@ -264,6 +264,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.core.field_metadata.html">neofoam.core.field_metadata</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
@@ -450,6 +451,7 @@
 <li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-33" name="toctree-checkbox-33" role="switch" type="checkbox"/><label for="toctree-checkbox-33"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -474,6 +476,7 @@
 </ul>
 </li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.solver_settings.html">neofoam.solver.incompressibleFluidNeoN.solver_settings</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-36" name="toctree-checkbox-36" role="switch" type="checkbox"/><label for="toctree-checkbox-36"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -504,6 +507,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -727,6 +731,9 @@ registration leaves <code class="docutils literal notranslate"><span class="pre"
 <dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.instantiate">
 <span class="sig-name descname"><span class="pre">instantiate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime" title="neofoam.framework.solver.runtime.SolverRuntime"><span class="pre">SolverRuntime</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.instantiate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.instantiate" title="Link to this definition">¶</a></dt>
 <dd><p>Create a fresh SolverRuntime for one run of this solver.</p>
+<p>An empty <code class="docutils literal notranslate"><span class="pre">argv</span></code> gets a program name: OpenFOAM’s <code class="docutils literal notranslate"><span class="pre">argList</span></code> reads
+<code class="docutils literal notranslate"><span class="pre">argv[0]</span></code> unconditionally and segfaults on an empty list (e.g.
+<code class="docutils literal notranslate"><span class="pre">run()</span></code> called from Python without arguments).</p>
 </dd></dl>
 
 <dl class="py property">
