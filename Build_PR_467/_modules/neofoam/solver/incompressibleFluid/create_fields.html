@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -440,6 +441,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -463,6 +465,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -493,6 +496,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -694,9 +698,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControlDictConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.field_writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">fieldWriter</span><span class="p">,</span> <span class="n">writer_backend_steps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.models.incompressibleFluidModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluidModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.pressure_velocity.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PressureVelocityAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.solution_loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">loop_backend_steps</span><span class="p">,</span> <span class="n">solutionLoop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.solver_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_viscosity_model</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">InitializerBuilder</span><span class="p">,</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -793,7 +797,7 @@
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
         <span class="n">pressure_model</span> <span class="o">=</span> <span class="n">PressureVelocityAlgorithm</span><span class="o">.</span><span class="n">detect_and_create</span><span class="p">()</span>
-        <span class="n">optional_models</span> <span class="o">=</span> <span class="n">incompressibleFluidModel</span><span class="o">.</span><span class="n">detect_models</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)</span>
+        <span class="n">optional_models</span> <span class="o">=</span> <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">detect_optional_models</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)</span>
 
         <span class="c1"># Detect the mesh-preprocessing pipeline up front (config-only — no</span>
         <span class="c1"># mesh is touched). ``--no-preprocess`` on the argv skips detection so</span>
