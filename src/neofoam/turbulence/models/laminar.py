@@ -60,7 +60,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         rt = ctx["models.neon_runtime"]
         surf = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
-        return surf.interpolate(ctx["models.nu_vol"])  # nuEff = surf(nu), nut = 0
+        return surf.interpolate(ctx["models.nu_vol"], name="nuEff")  # nuEff = surf(nu), nut = 0
 
     return [
         init_field("nut", create_nut, depends_on=["models.neon_runtime"]),

@@ -139,7 +139,9 @@ def build(config: SimpleNamespace) -> list[InitStep]:
         return nut
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
-        return ctx["models.kEpsilon_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
+        return ctx["models.kEpsilon_surf"].interpolate(
+            ctx["fields.nut"] + ctx["models.nu_vol"], name="nuEff"
+        )
 
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
@@ -257,7 +259,7 @@ def correct_epsilon(
     # references (not ownership) to their operand fields, so a temporary consumed
     # inline would be GC'd before solve() and read freed memory.
     diffusivity = nut / coeffs.sigmaEps + nu_vol
-    d_eps = kEpsilon_surf.interpolate(diffusivity)
+    d_eps = kEpsilon_surf.interpolate(diffusivity, name="DepsilonEff")
     # C1 GbyNu Cmu k, not C1 G eps/k: same while nut == Cmu k^2/eps (v2406), but
     # with no division by a bounded k.
     production = coeffs.C1 * GbyNu * coeffs.Cmu * k
@@ -314,7 +316,7 @@ def correct_k(
     # Bind operands to locals (operator-operand lifetime — see correct_epsilon).
     eps_over_k = epsilon / k
     diffusivity = nut / coeffs.sigmak + nu_vol
-    d_k = kEpsilon_surf.interpolate(diffusivity)
+    d_k = kEpsilon_surf.interpolate(diffusivity, name="DkEff")
     k_eqn = nfb.PDESolverScalar(
         nn.imp.ddt(k)
         + nn.imp.div(phi, k)
@@ -350,7 +352,9 @@ def correct_nut(
     nut.assign(coeffs.Cmu * (k * k) / epsilon)
     # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
     nfb.correct_scalar_bc_ctx(nut, k, nu_vol, kEpsilon_nearWallDist)
-    return FieldUpdates({"nut": nut, "nuEff": kEpsilon_surf.interpolate(nut + nu_vol)})
+    return FieldUpdates(
+        {"nut": nut, "nuEff": kEpsilon_surf.interpolate(nut + nu_vol, name="nuEff")}
+    )
 
 
 @kEpsilon.operation(name="kEpsilonCorrect", fallback=True)

@@ -194,7 +194,9 @@ def build(config: SimpleNamespace) -> list[InitStep]:
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
-        return ctx["models.komega_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
+        return ctx["models.komega_surf"].interpolate(
+            ctx["fields.nut"] + ctx["models.nu_vol"], name="nuEff"
+        )
 
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
@@ -348,7 +350,7 @@ def correct_omega(
     nn.rotate_old_times(omega)
     nu = nfb.read_transport_viscosity(neon_runtime)
     d_omega = komega_surf.interpolate(
-        _blend(komega_F1, coeffs.alphaOmega1, coeffs.alphaOmega2) * nut + nu
+        _blend(komega_F1, coeffs.alphaOmega1, coeffs.alphaOmega2) * nut + nu, name="DomegaEff"
     )
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(omega)
@@ -398,7 +400,9 @@ def correct_k(
     """k transport: ddt + div - laplacian == Pk - SuSp - Sp(betaStar*omega, k) (new omega)."""
     nn.rotate_old_times(k)
     nu = nfb.read_transport_viscosity(neon_runtime)
-    d_k = komega_surf.interpolate(_blend(komega_F1, coeffs.alphaK1, coeffs.alphaK2) * nut + nu)
+    d_k = komega_surf.interpolate(
+        _blend(komega_F1, coeffs.alphaK1, coeffs.alphaK2) * nut + nu, name="DkEff"
+    )
     eps_by_k = coeffs.betaStar * omega  # epsilonByk, uses the updated omega
     # Pk = min(G, c1*betaStar*k*omega) — kOmegaSSTBase::Pk(G), evaluated here (after
     # the omega solve) so the near-wall log-law G is capped against the *pinned*
@@ -448,7 +452,7 @@ def correct_nut(
     nut.assign(_correct_nut(coeffs, k, omega, _f2(coeffs, k, omega, y, nu), s2))
     # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
     nfb.correct_scalar_bc_ctx(nut, k, nu_vol, komega_nearWallDist)
-    return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol)})
+    return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol, name="nuEff")})
 
 
 @kOmegaSST.operation(name="kOmegaSSTCorrect", fallback=True)

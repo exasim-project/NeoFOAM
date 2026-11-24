@@ -155,7 +155,9 @@ def build(config: SimpleNamespace) -> list[InitStep]:
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
-        return ctx["models.sa_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
+        return ctx["models.sa_surf"].interpolate(
+            ctx["fields.nut"] + ctx["models.nu_vol"], name="nuEff"
+        )
 
     return [
         init_field("nuTilda", read_nutilda, depends_on=["models.neon_runtime"]),
@@ -237,7 +239,7 @@ def correct_nutilda(
     #             - Sp(Cw1*fw*nuTilda/y^2, nuTilda)  (implicit sink; coeff frozen)
     explicit = (c.Cb2 / c.sigmaNut) * mag_sqr_grad + c.Cb1 * Stilda * nuTilda
     sink_coeff = _cw1(c) * fw * nuTilda / (y**2.0)
-    d_eff = sa_surf.interpolate((nuTilda + nu_vol) / c.sigmaNut)
+    d_eff = sa_surf.interpolate((nuTilda + nu_vol) / c.sigmaNut, name="DnuTildaEff")
 
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(nuTilda)
@@ -274,7 +276,7 @@ def correct_nut(
     nut.assign(nuTilda * _fv1(coeffs, nuTilda / nu))
     # nutUSpaldingWallFunction sets nut's wall faces from (U, nu, nearWallDist).
     nfb.correct_scalar_bc_ctx_u(nut, U, nu_vol, sa_nearWallDist)
-    return FieldUpdates({"nut": nut, "nuEff": sa_surf.interpolate(nut + nu_vol)})
+    return FieldUpdates({"nut": nut, "nuEff": sa_surf.interpolate(nut + nu_vol, name="nuEff")})
 
 
 @spalartAllmaras.operation(name="spalartAllmarasCorrect", fallback=True)
