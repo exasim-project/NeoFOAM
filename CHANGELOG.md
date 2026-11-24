@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Expose the he<->T boundary mapping to Python (`create_scalar_field_with_boundary_types` builds an energy field with `fixedEnergy`/`gradientEnergy` patches, `map_energy_boundary_from_temperature` maps T's boundary onto it) [#443](https://github.com/exasim-project/NeoFOAM/pull/443)
 - Write the solver comparison test cases into `tmp_path` instead of the repository [#429](https://github.com/exasim-project/NeoFOAM/pull/429)
 - Make the steady `simpleFoam` parity tests tolerant of FMA round-off between pybFoam and prebuilt OpenFOAM [#495](https://github.com/exasim-project/NeoFOAM/pull/495)
 - Add a C++ test of the `slip` boundary reader against OpenFOAM [#481](https://github.com/exasim-project/NeoFOAM/pull/481)
