@@ -24,8 +24,8 @@ Plugin packages
 ~~~~~~~~~~~~~~~
 
 A separately installed package extends neofoam through four entry-point groups
-(``src/neofoam/core/entry_points.py``; ``neofoam.ui.steps`` is read by
-``src/neofoam/ui/plugins/__init__.py``):
+(``neofoam.core.entry_points``; ``neofoam.ui.steps`` is read by
+``neofoam.ui.plugins``):
 
 .. code-block:: toml
 
@@ -44,7 +44,9 @@ A separately installed package extends neofoam through four entry-point groups
 The CLI imports every ``neofoam.plugins`` module before running a command, so a
 plugin can add to any ``PluginSystem`` family (viscosity models, post-processing
 nodes, …). The sweep runner, MCP server and UI module entry points load them too.
-A plugin that fails to import aborts the command.
+A plugin that fails to import aborts the command. Every installed plugin module
+is imported when a neofoam process starts, so install only plugin packages you
+trust.
 
 Solver commands are lower-case: an entry point ``myFluid`` runs as
 ``neofoam solver myfluid``, like the built-in solvers. A plugin solver whose

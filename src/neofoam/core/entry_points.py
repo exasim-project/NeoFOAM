@@ -25,6 +25,9 @@ Four groups extend neofoam; :mod:`neofoam.ui.plugins` reads the last, this modul
 A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.
 
+Every installed ``neofoam.plugins`` module is imported when a neofoam process
+starts, so install only plugin packages you trust.
+
 Example ``pyproject.toml`` of a plugin package::
 
     [project.entry-points."neofoam.plugins"]

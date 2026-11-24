@@ -165,6 +165,22 @@ def test_plugin_solver_is_registered_under_its_lower_cased_name(
     assert result.exit_code == 0, result.output
 
 
+def test_plugin_solver_that_fails_to_import_names_its_entry_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    broken = metadata.EntryPoint(name="broken", value="no_such_module:run", group=SOLVER_GROUP)
+    monkeypatch.setattr(
+        metadata, "entry_points", lambda group: [broken] if group == SOLVER_GROUP else []
+    )
+    solvers = _solver_group("icofoam")
+    _add_plugin_solvers(solvers)
+
+    result = CliRunner().invoke(solvers, ["broken"])
+
+    assert isinstance(result.exception, RuntimeError)
+    assert "'broken' (no_such_module:run) failed to load" in str(result.exception)
+
+
 @pytest.mark.parametrize("name", ["icofoam", "icoFoam"])
 def test_plugin_solver_may_not_shadow_a_builtin_solver(
     monkeypatch: pytest.MonkeyPatch, name: str
