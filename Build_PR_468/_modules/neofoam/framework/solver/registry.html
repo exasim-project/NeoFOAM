@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -441,6 +442,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -464,6 +466,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -494,6 +497,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -657,7 +661,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Solver-name registry — filesystem-discovered, not hand-maintained.</span>
+<span class="sd">"""Solver-name registry — discovered from the package layout and entry points.</span>
 
 <span class="sd">Domain-level solver discovery: a solver is any package ``neofoam.solver.&lt;name&gt;``</span>
 <span class="sd">carrying a module ``&lt;name&gt;.py`` that exports a ``&lt;name&gt;`` spec object (the convention</span>
@@ -665,20 +669,31 @@
 <span class="sd">``incompressibleFluid``). New solvers register automatically by following that layout;</span>
 <span class="sd">there is no per-solver line to add here.</span>
 
-<span class="sd">Importing a solver spec pulls ``pybFoam`` (the native bindings), so discovery is</span>
-<span class="sd">**filesystem-only** (no spec import) and :func:`resolve_solver` imports the spec lazily</span>
-<span class="sd">(pulling ``pybFoam``) only when actually called. This lives in ``framework`` rather than</span>
+<span class="sd">Importing a solver spec pulls ``pybFoam`` (the native bindings), so discovery reads only</span>
+<span class="sd">the package layout and the installed entry-point metadata (no spec import) and</span>
+<span class="sd">:func:`resolve_solver` imports the spec lazily (pulling ``pybFoam``) only when actually</span>
+<span class="sd">called. This lives in ``framework`` rather than</span>
 <span class="sd">in a frontend package so both the MCP host (``neofoam.mcp.registry`` re-exports it) and</span>
 <span class="sd">the tooling/sweep runners depend on the framework, not on each other.</span>
+
+<span class="sd">Separately installed packages add solvers through the ``neofoam.region_solvers`` entry</span>
+<span class="sd">point group (:mod:`neofoam.core.entry_points`). A built-in solver of the same name wins;</span>
+<span class="sd">two entry points sharing another name with different targets raise ``ValueError``.</span>
+
+<span class="sd">Example::</span>
+
+<span class="sd">    spec = resolve_solver(list_solver_names()[0])</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">metadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">neofoam.solver</span>  <span class="c1"># empty package __init__ — imports no pybFoam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.entry_points</span><span class="w"> </span><span class="kn">import</span> <span class="n">region_solver_entry_points</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_discover_solver_names</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -698,23 +713,66 @@
     <span class="k">return</span> <span class="n">names</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_plugin_solvers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">EntryPoint</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Region solvers of installed packages by name, unloaded; conflicting targets raise."""</span>
+    <span class="n">built_in</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_discover_solver_names</span><span class="p">())</span>
+    <span class="n">solvers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">EntryPoint</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="n">region_solver_entry_points</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">entry_point</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">built_in</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">solvers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">entry_point</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">first</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">entry_point</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"region solver </span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has conflicting targets: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> and </span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">solvers</span>
+
+
 <div class="viewcode-block" id="list_solver_names">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.mcp.registry.html#neofoam.framework.solver.registry.list_solver_names">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_solver_names</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Registered solver names (discovered from disk — pulls no pybFoam)."""</span>
-    <span class="k">return</span> <span class="n">_discover_solver_names</span><span class="p">()</span></div>
+<span class="w">    </span><span class="sd">"""List the registered solver names, built-in and from installed packages.</span>
+
+<span class="sd">    Use it to show or check solver names; use :func:`resolve_solver` to get a spec.</span>
+
+<span class="sd">    Loads no spec. The names are sorted and unique. Two entry points that</span>
+<span class="sd">    give a non-built-in name different targets raise ``ValueError``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        available = "incompressibleFluid" in list_solver_names()</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="o">*</span><span class="n">_discover_solver_names</span><span class="p">(),</span> <span class="o">*</span><span class="n">_plugin_solvers</span><span class="p">()})</span></div>
 
 
 
 <div class="viewcode-block" id="resolve_solver">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.mcp.registry.html#neofoam.framework.solver.registry.resolve_solver">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_solver</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Resolve a registered solver spec by name; unknown name fails fast."""</span>
+<span class="w">    </span><span class="sd">"""Return the solver spec registered under ``name``.</span>
+
+<span class="sd">    Use it when a case or tool selects a solver by name; use :func:`list_solver_names`</span>
+<span class="sd">    to see the names without loading a spec.</span>
+
+<span class="sd">    A built-in solver wins over an entry point of the same name and is resolved without</span>
+<span class="sd">    reading entry points. For any other name, an unknown name or two entry points that</span>
+<span class="sd">    give one name different targets raise ``ValueError``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        spec = resolve_solver("incompressibleFluid")</span>
+<span class="sd">    """</span>
     <span class="n">known</span> <span class="o">=</span> <span class="n">_discover_solver_names</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown solver </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; known solvers: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">known</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">"neofoam.solver.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">"neofoam.solver.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">plugins</span> <span class="o">=</span> <span class="n">_plugin_solvers</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plugins</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"unknown solver </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; known solvers: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">({</span><span class="o">*</span><span class="n">known</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">plugins</span><span class="p">}))</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span></div>
 
 </pre></div>
         </article>

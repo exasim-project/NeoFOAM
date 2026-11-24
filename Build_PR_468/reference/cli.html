@@ -264,6 +264,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -442,6 +443,7 @@
 <li class="toctree-l6"><a class="reference internal" href="api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -465,6 +467,7 @@
 <li class="toctree-l6"><a class="reference internal" href="api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -495,6 +498,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -676,6 +680,104 @@ neofoam<span class="w"> </span>solver<span class="w"> </span>incompressiblefluid
 <p>Available solvers: <code class="docutils literal notranslate"><span class="pre">icofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">pimplefoam</span></code>, <code class="docutils literal notranslate"><span class="pre">incompressiblefluid</span></code>,
 <code class="docutils literal notranslate"><span class="pre">incompressiblevof</span></code> (pybFoam backend); <code class="docutils literal notranslate"><span class="pre">neoicofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">neopimplefoam</span></code>,
 <code class="docutils literal notranslate"><span class="pre">incompressiblefluidneon</span></code> (NeoN backend).</p>
+<section id="plugin-packages">
+<h3>Plugin packages<a class="headerlink" href="#plugin-packages" title="Link to this heading">¶</a></h3>
+<p>A separately installed package extends neofoam through four entry-point groups
+(<code class="docutils literal notranslate"><span class="pre">neofoam.core.entry_points</span></code>; <code class="docutils literal notranslate"><span class="pre">neofoam.ui.steps</span></code> is read by
+<code class="docutils literal notranslate"><span class="pre">neofoam.ui.plugins</span></code>):</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"neofoam.plugins"</span><span class="k">]</span>
+<span class="n">mdao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.models"</span><span class="w">        </span><span class="c1"># module; importing it registers models</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"neofoam.solvers"</span><span class="k">]</span>
+<span class="n">mdaofluid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.solver:run"</span><span class="w">   </span><span class="c1"># run(argv) -&gt; neofoam solver mdaofluid</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"neofoam.region_solvers"</span><span class="k">]</span>
+<span class="n">mdaosolid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.region:mdaosolid"</span><span class="w">   </span><span class="c1"># SolverSpec, found by name</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"neofoam.ui.steps"</span><span class="k">]</span>
+<span class="n">mdaostep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_mdao.ui:make_step"</span><span class="w">   </span><span class="c1"># factory of an extra wizard step</span>
+</pre></div>
+</div>
+<p>The CLI imports every <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module before running a command, so a
+plugin can add to any <code class="docutils literal notranslate"><span class="pre">PluginSystem</span></code> family (viscosity models, post-processing
+nodes, …). The sweep runner, MCP server and UI module entry points load them too.
+A plugin that fails to import aborts the command. Every installed plugin module
+is imported when a neofoam process starts, so install only plugin packages you
+trust.</p>
+<p>Solver commands are lower-case: an entry point <code class="docutils literal notranslate"><span class="pre">myFluid</span></code> runs as
+<code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">myfluid</span></code>, like the built-in solvers. A plugin solver whose
+lower-cased name matches another solver command is refused.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">neofoam.region_solvers</span></code> spec is found by the solver registry; a built-in
+solver of the same name takes precedence.</p>
+</section>
+<section id="adding-a-new-kind-of-model">
+<h3>Adding a new kind of model<a class="headerlink" href="#adding-a-new-kind-of-model" title="Link to this heading">¶</a></h3>
+<p>A new member of a family a solver already binds needs only a registration:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Model</span><span class="p">(</span><span class="s2">"Carreau"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">viscosityModel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A new <em>optional</em> family is bound to a solver with <code class="docutils literal notranslate"><span class="pre">solver.models(family)</span></code>. The
+family provides <code class="docutils literal notranslate"><span class="pre">all_specs()</span></code> (its members, for the config schema) and
+<code class="docutils literal notranslate"><span class="pre">detect_models(case_dir)</span></code> (the members active for a case):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"model_type"</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">radiationModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Optional radiation models; zero or more run per case."""</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">all_specs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">]:</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">"radiationModel"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">get_model_instance</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelRuntime</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">),</span> <span class="n">instance_id</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">all_specs</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">run_detect</span><span class="p">()</span>
+        <span class="p">]</span>
+
+
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/radiationProperties"</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RadiationConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The radiation model selected by the case."""</span>
+
+    <span class="n">radiationModel</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="n">radiationP1</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"radiationP1"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">radiationModel</span><span class="p">)</span>
+<span class="n">radiationP1</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">RadiationConfig</span><span class="p">)</span>
+
+
+<span class="nd">@radiationP1</span><span class="o">.</span><span class="n">detect</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">radiation_is_enabled</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"constant/radiationProperties"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+
+
+<span class="nd">@radiationP1</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_radiation</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"radiation_steps.log"</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span> <span class="k">as</span> <span class="n">log</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"solved</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">models</span><span class="p">(</span><span class="n">radiationModel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Limits:</p>
+<ul class="simple">
+<li><p>Supported by <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>, <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> and
+<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code>, whose load steps call <code class="docutils literal notranslate"><span class="pre">detect_optional_models</span></code>. The
+script solvers (<code class="docutils literal notranslate"><span class="pre">icofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">pimplefoam</span></code>, <code class="docutils literal notranslate"><span class="pre">neoicofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">neopimplefoam</span></code>)
+have no solver spec. A plugin solver must call it in its own load step.</p></li>
+<li><p>Each active member needs <code class="docutils literal notranslate"><span class="pre">&#64;config</span></code> or <code class="docutils literal notranslate"><span class="pre">&#64;load</span></code>, or it cannot be instantiated.</p></li>
+<li><p>Bound families load after the solver’s own optional family, in binding order.</p></li>
+<li><p>Operations must fit the solver’s execution graph: <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> and <code class="docutils literal notranslate"><span class="pre">before</span></code>
+name operations of that solver. <code class="docutils literal notranslate"><span class="pre">momentum</span></code> exists in all three loops; most
+other names and the fields available differ per solver.</p></li>
+<li><p>Only optional families are extensible this way. The load steps select their
+required families directly, so <code class="docutils literal notranslate"><span class="pre">models(family,</span> <span class="pre">required=True)</span></code> adds a family
+to the schema but does not run it.</p></li>
+</ul>
+</section>
 </section>
 <section id="executor-selection-and-gpu-initialization">
 <h2>Executor selection and GPU initialization<a class="headerlink" href="#executor-selection-and-gpu-initialization" title="Link to this heading">¶</a></h2>
@@ -794,7 +896,11 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a><ul>
-<li><a class="reference internal" href="#solvers-neofoam-solver">Solvers — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span></code></a></li>
+<li><a class="reference internal" href="#solvers-neofoam-solver">Solvers — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span></code></a><ul>
+<li><a class="reference internal" href="#plugin-packages">Plugin packages</a></li>
+<li><a class="reference internal" href="#adding-a-new-kind-of-model">Adding a new kind of model</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#executor-selection-and-gpu-initialization">Executor selection and GPU initialization</a></li>
 <li><a class="reference internal" href="#preprocessing-neofoam-preprocess">Preprocessing — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">preprocess</span></code></a></li>
 <li><a class="reference internal" href="#mcp-server-neofoam-mcp">MCP server — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">mcp</span></code></a></li>

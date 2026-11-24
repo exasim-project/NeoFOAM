@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -441,6 +442,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -464,6 +466,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -494,6 +497,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -693,8 +697,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">postProcess</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.alpha_advection</span><span class="w"> </span><span class="kn">import</span> <span class="n">advectionModel</span>  <span class="c1"># noqa: F401  (registers schemes)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.models.incompressibleVoFModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleVoFModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.pressure_velocity.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PressureVelocityAlgorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.solver_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleVoF</span>
 
 <span class="c1"># OpenFOAM libraries native interFoam links but pybFoam does not, so their</span>
 <span class="c1"># runtime-selection entries (waveVelocity/waveAlpha) are otherwise unreachable —</span>
@@ -731,6 +735,12 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span><span class="o">.</span><span class="n">outputTime</span><span class="p">())</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_steps</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The steps of the runtime's ``@build`` alone, without field synthesis."""</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">build</span><span class="p">(</span><span class="n">runtime</span><span class="p">))</span> <span class="k">if</span> <span class="n">build</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+
+
 <div class="viewcode-block" id="create_init">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleVoF.create_fields.html#neofoam.solver.incompressibleVoF.create_fields.create_init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
@@ -743,7 +753,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
         <span class="c1"># VoF always uses PIMPLE; detect (and warn on missing PIMPLE dict).</span>
         <span class="n">pressure_model</span> <span class="o">=</span> <span class="n">PressureVelocityAlgorithm</span><span class="o">.</span><span class="n">detect_and_create</span><span class="p">()</span>
-        <span class="n">optional_models</span> <span class="o">=</span> <span class="n">incompressibleVoFModel</span><span class="o">.</span><span class="n">detect_models</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)</span>
+        <span class="n">optional_models</span> <span class="o">=</span> <span class="n">incompressibleVoF</span><span class="o">.</span><span class="n">detect_optional_models</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">)</span>
 
         <span class="c1"># alpha-advection scheme is runtime-switchable (advectionScheme key in</span>
         <span class="c1"># system/fvSolution, default MULES); it runs first each outer corrector,</span>
@@ -791,23 +801,16 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="c1"># Register the core models under their solver-facing names, then run</span>
-        <span class="c1"># each spec's @build to emit the field/model InitSteps it owns (phi,</span>
-        <span class="c1"># mixture, alpha1/alpha2, rho, rhoPhi from alpha-advection; U, p_rgh, gh,</span>
-        <span class="c1"># ghf, p, pimple_control, pressure_reference from PIMPLE). The bare</span>
-        <span class="c1"># ModelSpec is not a BuildsInitSteps runtime, so add_core_models only</span>
-        <span class="c1"># registers it — the @build steps are added explicitly here.</span>
-        <span class="c1"># postProcess *is* a ModelRuntime, so add_core_models runs its @build for</span>
-        <span class="c1"># it (emitting models.post_processor) — unlike the two bare specs above.</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="p">(</span><span class="s2">"alpha_advection"</span><span class="p">,</span> <span class="n">alpha_model</span><span class="p">),</span>
-                <span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">),</span>
-                <span class="p">(</span><span class="s2">"post_process_model"</span><span class="p">,</span> <span class="n">post_process_model</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span><span class="n">alpha_model</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">):</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">build_steps</span><span class="p">())</span>
+        <span class="c1"># Not add_core_models for alpha-advection and PIMPLE: its run_build would</span>
+        <span class="c1"># synthesize their schema-only field declarations, while each @build</span>
+        <span class="c1"># reads or creates those fields itself (phi, mixture, alpha1/alpha2, rho,</span>
+        <span class="c1"># rhoPhi from alpha-advection; U, p_rgh, gh, ghf, p, pimple_control,</span>
+        <span class="c1"># pressure_reference from PIMPLE).</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"alpha_advection"</span><span class="p">,</span> <span class="n">alpha_model</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">"post_process_model"</span><span class="p">,</span> <span class="n">post_process_model</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">runtime</span> <span class="ow">in</span> <span class="p">(</span><span class="n">alpha_model</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">):</span>
+            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_build_steps</span><span class="p">(</span><span class="n">runtime</span><span class="p">))</span>
 
         <span class="c1"># Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">create_turbulence</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
