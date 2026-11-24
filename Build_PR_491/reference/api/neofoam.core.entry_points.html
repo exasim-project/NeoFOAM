@@ -442,6 +442,7 @@
 <li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -465,6 +466,7 @@
 <li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -495,6 +497,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -671,7 +674,9 @@ code inside neofoam registers directly with <a class="reference internal" href="
 registrations (<code class="docutils literal notranslate"><span class="pre">Model(...).register_with(viscosityModel)</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;Node.register</span></code>,
 …), so a plugin can add to <em>any</em> PluginSystem family. <a class="reference internal" href="#neofoam.core.entry_points.load_plugins" title="neofoam.core.entry_points.load_plugins"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_plugins()</span></code></a>
 imports them all; every <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> process entry point calls it before building
-models or schemas.</p></li>
+models or schemas.
+A module can also bind a new optional family with <code class="docutils literal notranslate"><span class="pre">solver.models(family)</span></code>; the
+solver’s load step detects it through <code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_optional_models</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">neofoam.solvers</span></code> — each entry point names a <code class="docutils literal notranslate"><span class="pre">run(argv:</span> <span class="pre">list[str])</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>
 callable, exposed as <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">&lt;lower-cased</span> <span class="pre">entry</span> <span class="pre">point</span> <span class="pre">name&gt;</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">neofoam.region_solvers</span></code> — each entry point names a <code class="docutils literal notranslate"><span class="pre">SolverSpec</span></code>, which
@@ -681,6 +686,8 @@ solver of the same name takes precedence.</p></li>
 </ul>
 <p>A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.</p>
+<p>Every installed <code class="docutils literal notranslate"><span class="pre">neofoam.plugins</span></code> module is imported when a neofoam process
+starts, so install only plugin packages you trust.</p>
 <p>Example <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> of a plugin package:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">project</span><span class="o">.</span><span class="n">entry</span><span class="o">-</span><span class="n">points</span><span class="o">.</span><span class="s2">"neofoam.plugins"</span><span class="p">]</span>
 <span class="n">mdao</span> <span class="o">=</span> <span class="s2">"neofoam_mdao.models"</span>
