@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -442,6 +443,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -465,6 +467,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -495,6 +498,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -681,10 +685,7 @@
     <span class="n">_create_runtime_config_wrapper</span><span class="p">,</span>
     <span class="n">_discover_configs_from_signature</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DependencyResolver</span><span class="p">,</span>
-    <span class="n">wrap_with_dependency_resolution</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span><span class="p">,</span> <span class="n">Schedule</span>
 
@@ -1084,10 +1085,12 @@
             <span class="n">discovered</span> <span class="o">=</span> <span class="n">_discover_configs_from_signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">discovered</span><span class="p">:</span>
                 <span class="n">wrapped</span> <span class="o">=</span> <span class="n">_create_runtime_config_wrapper</span><span class="p">(</span>
-                    <span class="n">func</span><span class="p">,</span> <span class="n">discovered</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">_resolver</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span>
+                    <span class="n">func</span><span class="p">,</span> <span class="n">discovered</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">dependency_resolver</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">_resolver</span><span class="p">(</span><span class="n">runtime</span><span class="p">))</span>
+                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
+                    <span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">dependency_resolver</span>
+                <span class="p">)</span>
 
             <span class="n">op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">wrapped</span><span class="p">),</span>
@@ -1140,17 +1143,6 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span></div>
 
 
-<div class="viewcode-block" id="ModelSpec.build_operations_for">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.viscosity.viscosityModel.html#neofoam.framework.model.spec.ModelSpec.build_operations_for">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_operations_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build this spec's Operations with ``runtime`` as the ``self`` binding.</span>
-
-<span class="sd">        ``runtime`` is a ModelRuntime — or the bare spec itself for specs used</span>
-<span class="sd">        as their own runtime.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_operations_for</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span></div>
-
-
 <div class="viewcode-block" id="ModelSpec.wrap_operation">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.viscosity.viscosityModel.html#neofoam.framework.model.spec.ModelSpec.wrap_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">wrap_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -1159,7 +1151,7 @@
 <span class="sd">        For ``@operation_collection`` bodies, which bypass the spec's default</span>
 <span class="sd">        operation wrapping and must wrap each exposed operation themselves.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">_resolver</span><span class="p">(</span><span class="n">runtime</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">dependency_resolver</span><span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1226,12 +1218,6 @@
 <span class="w">    </span><span class="sd">"""Factory: create a named ModelSpec."""</span>
     <span class="k">return</span> <span class="n">ModelSpec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DependencyResolver</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The runtime's dependency resolver; a fresh one for a spec used as its own runtime."""</span>
-    <span class="n">resolver</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">runtime</span><span class="p">,</span> <span class="s2">"dependency_resolver"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">resolver</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolver</span><span class="p">,</span> <span class="n">DependencyResolver</span><span class="p">)</span> <span class="k">else</span> <span class="n">DependencyResolver</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_func_doc</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
