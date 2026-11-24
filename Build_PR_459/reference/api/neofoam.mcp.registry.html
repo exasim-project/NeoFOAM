@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=6a4ff913" />
     
@@ -264,6 +264,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -441,6 +442,7 @@
 <li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -464,6 +466,7 @@
 <li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -494,6 +497,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -669,13 +673,29 @@ should import from the framework directly.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.mcp.registry.list_solver_names">
 <span class="sig-prename descclassname"><span class="pre">neofoam.mcp.registry.</span></span><span class="sig-name descname"><span class="pre">list_solver_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/registry.html#list_solver_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.mcp.registry.list_solver_names" title="Link to this definition">¶</a></dt>
-<dd><p>Registered solver names (discovered from disk — pulls no pybFoam).</p>
+<dd><p>List the registered solver names, built-in and from installed packages.</p>
+<p>Use it to show or check solver names; use <a class="reference internal" href="#neofoam.mcp.registry.resolve_solver" title="neofoam.mcp.registry.resolve_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_solver()</span></code></a> to get a spec.</p>
+<p>Loads no spec. The names are sorted and unique. Two entry points that
+give a non-built-in name different targets raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">available</span> <span class="o">=</span> <span class="s2">"incompressibleFluid"</span> <span class="ow">in</span> <span class="n">list_solver_names</span><span class="p">()</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.mcp.registry.resolve_solver">
 <span class="sig-prename descclassname"><span class="pre">neofoam.mcp.registry.</span></span><span class="sig-name descname"><span class="pre">resolve_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/registry.html#resolve_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.mcp.registry.resolve_solver" title="Link to this definition">¶</a></dt>
-<dd><p>Resolve a registered solver spec by name; unknown name fails fast.</p>
+<dd><p>Return the solver spec registered under <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>Use it when a case or tool selects a solver by name; use <a class="reference internal" href="#neofoam.mcp.registry.list_solver_names" title="neofoam.mcp.registry.list_solver_names"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_solver_names()</span></code></a>
+to see the names without loading a spec.</p>
+<p>A built-in solver wins over an entry point of the same name and is resolved without
+reading entry points. For any other name, an unknown name or two entry points that
+give one name different targets raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">resolve_solver</span><span class="p">(</span><span class="s2">"incompressibleFluid"</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -754,6 +774,6 @@ should import from the framework directly.</p>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../_static/design-tabs.js?v=fcb327ea"></script>
     </body>
 </html>

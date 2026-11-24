@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=6a4ff913" />
     
@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -440,6 +441,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -463,6 +465,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -493,6 +496,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -665,6 +669,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
@@ -1070,11 +1075,11 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operation_collection_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operation_collection_func</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Operations</span><span class="p">):</span>
-                <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">result</span>  <span class="c1"># type: ignore[no-any-return]</span>
+            <span class="n">collected</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Operations</span><span class="p">)</span> <span class="k">else</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_describe</span><span class="p">(</span><span class="n">collected</span><span class="p">,</span> <span class="p">{})</span>
 
         <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">docs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span>
             <span class="n">discovered</span> <span class="o">=</span> <span class="n">_discover_configs_from_signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">discovered</span><span class="p">:</span>
@@ -1098,7 +1103,23 @@
                     <span class="n">fallback</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fallback"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
                 <span class="p">),</span>
             <span class="p">)</span>
+            <span class="n">docs</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)]</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span>
             <span class="n">ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_describe</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_describe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">docs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Label ops with this model as their domain and their docstring summary.</span>
+
+<span class="sd">        Only fills what the op left unset. The resolver matches on</span>
+<span class="sd">        ``operation_name``, so the domain changes no scheduling; it groups the</span>
+<span class="sd">        op in graph views, telemetry spans and tools such as a DAG stepper.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span>
+            <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">domain_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">meta</span><span class="o">.</span><span class="n">domain_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                <span class="n">meta</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">_summary</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">))</span> <span class="ow">or</span> <span class="n">_func_doc</span><span class="p">(</span><span class="n">op</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">ops</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1203,6 +1224,19 @@
 <span class="w">    </span><span class="sd">"""Factory: create a named ModelSpec."""</span>
     <span class="k">return</span> <span class="n">ModelSpec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_func_doc</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="s2">"func"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s2">"__doc__"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_summary</span><span class="p">(</span><span class="n">doc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The first paragraph of a docstring, on one line."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">doc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">""</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">cleandoc</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">first</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
 </pre></div>
         </article>
       </div>
@@ -1240,7 +1274,7 @@
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../../../_static/design-tabs.js?v=fcb327ea"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 
