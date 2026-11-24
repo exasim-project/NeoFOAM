@@ -266,7 +266,13 @@ def _plugin_solver_command(entry_point: metadata.EntryPoint) -> Callable[[typer.
     def command(ctx: typer.Context) -> None:
         _reject_postprocess(ctx.args)
         argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
-        entry_point.load()(argv)
+        try:
+            run = entry_point.load()
+        except Exception as exc:
+            raise RuntimeError(
+                f"neofoam solver {entry_point.name!r} ({entry_point.value}) failed to load: {exc}"
+            ) from exc
+        run(argv)
 
     return command
 
