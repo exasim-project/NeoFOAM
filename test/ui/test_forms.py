@@ -7,8 +7,11 @@ from __future__ import annotations
 
 from neofoam.agent.case_fill import build_case_output_model
 from neofoam.agent.case_forms import INPUT_KEYS
+from neofoam.framework.solver.registry import (  # built-ins only: no installed plugin
+    _discover_solver_names as builtin_solver_names,
+)
 from neofoam.mcp import tools
-from neofoam.mcp.registry import list_solver_names, resolve_solver
+from neofoam.mcp.registry import resolve_solver
 from neofoam.ui.forms import (
     build_field_forms,
     build_forms,
@@ -168,7 +171,7 @@ def test_build_field_forms_are_whole_field_dict_entries(solver):
 def test_state_var_names_are_js_identifiers():
     # trame evaluates state var names as Vue expressions: `form_alpha.water…` reads as
     # a member access on an undefined `form_alpha` and the panel renders empty.
-    for name in list_solver_names():
+    for name in builtin_solver_names():
         for entry in build_forms(resolve_solver(name)):
             for var in (entry.state_key, schema_key(entry), uischema_key(entry)):
                 assert var.isidentifier(), f"{name}: {var!r}"

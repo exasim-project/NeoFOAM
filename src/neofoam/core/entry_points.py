@@ -6,7 +6,7 @@
 Use it when the extension lives in its own repository (e.g. ``neofoam_mdao``);
 code inside neofoam registers directly with :class:`~neofoam.core.plugin_system.PluginSystem`.
 
-Two groups are read:
+Four groups extend neofoam; :mod:`neofoam.ui.plugins` reads the last, this module the rest:
 
 * ``neofoam.plugins`` — each entry point names a **module**. Importing it runs its
   registrations (``Model(...).register_with(viscosityModel)``, ``@Node.register``,
@@ -17,6 +17,10 @@ Two groups are read:
   solver's load step detects it through ``SolverSpec.detect_optional_models``.
 * ``neofoam.solvers`` — each entry point names a ``run(argv: list[str]) -> None``
   callable, exposed as ``neofoam solver <lower-cased entry point name>``.
+* ``neofoam.region_solvers`` — each entry point names a ``SolverSpec``, which
+  :func:`~neofoam.framework.solver.registry.resolve_solver` finds by name. A built-in
+  solver of the same name takes precedence.
+* ``neofoam.ui.steps`` — each entry point names a factory of an extra wizard step.
 
 A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.
@@ -31,14 +35,25 @@ Example ``pyproject.toml`` of a plugin package::
 
     [project.entry-points."neofoam.solvers"]
     mdaofluid = "neofoam_mdao.solver:run"
+
+    [project.entry-points."neofoam.region_solvers"]
+    mdaosolid = "neofoam_mdao.region:mdaosolid"
 """
 
 from importlib import metadata
 
-__all__ = ["PLUGIN_GROUP", "SOLVER_GROUP", "load_plugins", "solver_entry_points"]
+__all__ = [
+    "PLUGIN_GROUP",
+    "REGION_SOLVER_GROUP",
+    "SOLVER_GROUP",
+    "load_plugins",
+    "region_solver_entry_points",
+    "solver_entry_points",
+]
 
 PLUGIN_GROUP = "neofoam.plugins"
 SOLVER_GROUP = "neofoam.solvers"
+REGION_SOLVER_GROUP = "neofoam.region_solvers"
 
 
 def load_plugins() -> None:
@@ -80,3 +95,18 @@ def solver_entry_points() -> list[metadata.EntryPoint]:
         names = [entry_point.name for entry_point in solver_entry_points()]
     """
     return list(metadata.entry_points(group=SOLVER_GROUP))
+
+
+def region_solver_entry_points() -> list[metadata.EntryPoint]:
+    """Return the installed ``neofoam.region_solvers`` entry points without loading them.
+
+    Use it to inspect the raw entry points, including any a built-in solver shadows; use
+    :func:`~neofoam.framework.solver.registry.resolve_solver` to get a spec by name.
+
+    Imports no plugin code.
+
+    Example::
+
+        names = [entry_point.name for entry_point in region_solver_entry_points()]
+    """
+    return list(metadata.entry_points(group=REGION_SOLVER_GROUP))
