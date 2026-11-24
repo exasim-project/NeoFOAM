@@ -23,7 +23,7 @@ Every field is a scalar / list of scalars so the OpenFOAM reader can parse it
 """
 
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import Field, field_validator
 
@@ -70,9 +70,18 @@ class ControlDictConfig(TimeControlConfig):
 
     Inherits the time-stepping + write schema from
     :class:`~neofoam.algorithms.solution_loop.config.TimeControlConfig`.
+    ``executor`` (``CPU`` | ``GPU``, case-insensitive) states where the engine
+    must run; unset takes the build's device. The blockamr build fixes it, so
+    :func:`run` rejects a mismatch instead of silently running elsewhere.
     """
 
     application: str = "incompressibleFluidBlockAMR"
+    executor: Optional[Literal["CPU", "GPU"]] = None
+
+    @field_validator("executor", mode="before")
+    @classmethod
+    def _upper_executor(cls, value: Any) -> Any:
+        return value.upper() if isinstance(value, str) else value
 
 
 class RefinementConfig(BaseConfig):

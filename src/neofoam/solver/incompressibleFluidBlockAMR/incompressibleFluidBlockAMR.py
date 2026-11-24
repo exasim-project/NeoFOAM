@@ -130,6 +130,13 @@ def run(
     # by never importing it at module scope.
     import blockamr  # noqa: PLC0415
 
+    executor = ControlDictConfig.load(case_dir=Path(".")).executor
+    if executor is not None and executor != blockamr.executor():
+        raise ValueError(
+            f"controlDict executor {executor} is not available: this blockamr build runs "
+            f"on the {blockamr.executor()} (the executor is fixed when AMReX is built)"
+        )
+
     redirect = log_file is not None
     saved_fd: Optional[int] = None
     if redirect:
@@ -160,8 +167,8 @@ def run(
         # the AMReX arena allocator's device memory, which aborts with
         # ``CUDA error 709: context is destroyed`` when the co-loaded NeoN
         # Kokkos-CUDA runtime has already dropped the shared CUDA context
-        # (neofoam always co-loads NeoN). Leaving AMReX un-finalized lets the OS
-        # reclaim GPU memory at process exit instead. ``__enter__`` is depth-
+        # (neofoam always co-loads NeoN). blockamr finalizes a runtime left open
+        # at process exit instead. ``__enter__`` is depth-
         # guarded, so a second ``run()`` in one process reuses the session.
         already_initialized = getattr(blockamr, "initialized", lambda: False)()
         if not already_initialized:

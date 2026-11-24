@@ -12,7 +12,13 @@ import pytest
 
 pytest.importorskip("neon")
 
+import blockamr  # noqa: E402
+
 from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
+from neofoam.solver.incompressibleFluidBlockAMR.configs import ControlDictConfig  # noqa: E402
+
+# The executor the blockamr build cannot run on (a GPU build has no host path).
+_UNAVAILABLE = {"GPU": "cpu", "CPU": "gpu"}
 
 
 def test_run_smoke_finishes_without_nans(blockamr_session, box_case):
@@ -47,3 +53,13 @@ def test_run_smoke_finishes_without_nans(blockamr_session, box_case):
             div_val = contrib if div_val is None else div_val + contrib
         max_div = max(max_div, float(np.max(np.abs(div_val))))
     assert max_div < 1e-6
+
+
+def test_run_rejects_an_executor_the_build_cannot_run(blockamr_session, box_case):
+    control = ControlDictConfig.load(case_dir=box_case)
+    control.model_copy(update={"executor": _UNAVAILABLE[blockamr.executor()]}).save(
+        case_dir=box_case
+    )
+
+    with pytest.raises(ValueError, match="controlDict executor"):
+        run(["incompressibleFluidBlockAMR"])

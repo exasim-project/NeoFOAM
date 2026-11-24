@@ -18,6 +18,7 @@ from neofoam.solver.incompressibleFluidBlockAMR.config_schema import (  # noqa: 
     config_classes,
 )
 from neofoam.solver.incompressibleFluidBlockAMR.configs import (  # noqa: E402
+    ControlDictConfig,
     FvSchemesConfig,
     PSolutionConfig,
     USolutionConfig,
@@ -53,3 +54,14 @@ def test_config_schema_lists_new_configs():
     assert FvSchemesConfig in classes
     assert USolutionConfig in classes
     assert PSolutionConfig in classes
+
+
+def test_controldict_executor_defaults_to_the_build():
+    assert ControlDictConfig.load(case_dir=CASES / "box").executor is None
+
+
+@pytest.mark.parametrize("entry, expected", [("cpu", "CPU"), ("GPU", "GPU")])
+def test_controldict_executor_is_case_insensitive(tmp_path, entry, expected):
+    control = ControlDictConfig.load(case_dir=CASES / "box")
+    control.model_copy(update={"executor": entry}).save(case_dir=tmp_path)
+    assert ControlDictConfig.load(case_dir=tmp_path).executor == expected
