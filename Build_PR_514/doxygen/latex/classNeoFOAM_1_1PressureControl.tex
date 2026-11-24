@@ -1,0 +1,129 @@
+\doxysection{Neo\+FOAM\+::Pressure\+Control Class Reference}
+\hypertarget{classNeoFOAM_1_1PressureControl}{}\label{classNeoFOAM_1_1PressureControl}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+
+
+Pressure limits of the compressible solvers, as Open\+FOAM\textquotesingle{}s Foam\+::pressure\+Control.  
+
+
+
+
+{\ttfamily \#include $<$pressure\+Control.\+hpp$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1PressureControl_a29e2963f8e042cf8e8d32f6ec6302832}{Pressure\+Control}} (const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&p, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&rho, const \mbox{\hyperlink{structNeoFOAM_1_1PressureLimitSettings}{Pressure\+Limit\+Settings}} \&settings)
+\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1PressureControl_ad8b12e9c4a3e17cef4df4ec9ed2db359}{active}} () const
+\begin{DoxyCompactList}\small\item\em True if p\+Min and/or p\+Max is set. \doxylink{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c}{limit()} returns this value. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1PressureControl_aa85937406d9835e6ef9c141a49bf050b}{limits\+Min}} () const
+\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1PressureControl_ad8c5288a215fc1a1d4b3333a22165830}{limits\+Max}} () const
+\item 
+Neo\+N\+::scalar \mbox{\hyperlink{classNeoFOAM_1_1PressureControl_a544f91b6bf98bf210067a4cff30e0c09}{p\+Min}} () const
+\item 
+Neo\+N\+::scalar \mbox{\hyperlink{classNeoFOAM_1_1PressureControl_a3e44153a557d54f56177d5404a019a72}{p\+Max}} () const
+\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c}{limit}} (Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&p) const
+\begin{DoxyCompactList}\small\item\em Clip the internal values of p to \mbox{[}p\+Min, p\+Max\mbox{]}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Pressure limits of the compressible solvers, as Open\+FOAM\textquotesingle{}s Foam\+::pressure\+Control. 
+
+Resolves the limits like pressure\+Control\textquotesingle{}s constructor with p\+Ref\+Required = false (what rho\+Pimple\+Foam uses)\+: an absolute p\+Min/p\+Max pair wins; otherwise p\+Max (p\+Min) is the explicit value, p\+Max\+Factor (p\+Min\+Factor) times the largest (smallest) boundary value of p over the patches that fix its value (Open\+FOAM counts every mixed patch as fixing it, which \doxylink{namespaceNeoN}{NeoN} flags with the {\ttfamily mixed} boundary attribute when its version has it), or, for backward compatibility, the pressure belonging to rho\+Max (rho\+Min) at the reference density. The factor and rho forms need at least one value-\/fixing p patch and throw otherwise, as Open\+FOAM does.
+
+\doxylink{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c}{limit()} then clips p where it leaves \mbox{[}p\+Min, p\+Max\mbox{]}, like pressure\+Control\+::limit(). The caller re-\/evaluates p\textquotesingle{}s boundary conditions afterwards when \doxylink{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c}{limit()} returns true. 
+
+Definition at line \mbox{\hyperlink{pressureControl_8hpp_source_l00038}{38}} of file \mbox{\hyperlink{pressureControl_8hpp_source}{pressure\+Control.\+hpp}}.
+
+
+
+\label{doc-constructors}
+\Hypertarget{classNeoFOAM_1_1PressureControl_doc-constructors}
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1PressureControl_a29e2963f8e042cf8e8d32f6ec6302832}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!PressureControl@{PressureControl}}
+\index{PressureControl@{PressureControl}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{PressureControl()}{PressureControl()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_a29e2963f8e042cf8e8d32f6ec6302832} 
+Neo\+FOAM\+::\+Pressure\+Control\+::\+Pressure\+Control (\begin{DoxyParamCaption}\item[{const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{p}{, }\item[{const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{rho}{, }\item[{const \mbox{\hyperlink{structNeoFOAM_1_1PressureLimitSettings}{Pressure\+Limit\+Settings}} \&}]{settings}{}\end{DoxyParamCaption})}
+
+
+
+\label{doc-func-members}
+\Hypertarget{classNeoFOAM_1_1PressureControl_doc-func-members}
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1PressureControl_ad8b12e9c4a3e17cef4df4ec9ed2db359}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!active@{active}}
+\index{active@{active}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{active()}{active()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_ad8b12e9c4a3e17cef4df4ec9ed2db359} 
+bool Neo\+FOAM\+::\+Pressure\+Control\+::active (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+True if p\+Min and/or p\+Max is set. \doxylink{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c}{limit()} returns this value. 
+
+
+
+Definition at line \mbox{\hyperlink{pressureControl_8hpp_source_l00049}{49}} of file \mbox{\hyperlink{pressureControl_8hpp_source}{pressure\+Control.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!limit@{limit}}
+\index{limit@{limit}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{limit()}{limit()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_a6a27951f2a60f6c01acf4a6d2573c95c} 
+bool Neo\+FOAM\+::\+Pressure\+Control\+::limit (\begin{DoxyParamCaption}\item[{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{p}{}\end{DoxyParamCaption}) const}
+
+
+
+Clip the internal values of p to \mbox{[}p\+Min, p\+Max\mbox{]}. 
+
+The extremes are taken over the internal AND boundary values, as Open\+FOAM\textquotesingle{}s max(p) does, and p is only touched when one of them is outside the limits. Boundary values are left alone\+: the caller evaluates p\textquotesingle{}s boundary conditions afterwards, which is what recomputes them (a value-\/fixing patch keeps its value, as Open\+FOAM\textquotesingle{}s assignment to it is a no-\/op).
+
+\begin{DoxyReturn}{Returns}
+true if limits are configured (even if nothing was clipped), like Open\+FOAM. 
+\end{DoxyReturn}
+\Hypertarget{classNeoFOAM_1_1PressureControl_ad8c5288a215fc1a1d4b3333a22165830}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!limitsMax@{limitsMax}}
+\index{limitsMax@{limitsMax}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{limitsMax()}{limitsMax()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_ad8c5288a215fc1a1d4b3333a22165830} 
+bool Neo\+FOAM\+::\+Pressure\+Control\+::limits\+Max (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pressureControl_8hpp_source_l00052}{52}} of file \mbox{\hyperlink{pressureControl_8hpp_source}{pressure\+Control.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PressureControl_aa85937406d9835e6ef9c141a49bf050b}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!limitsMin@{limitsMin}}
+\index{limitsMin@{limitsMin}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{limitsMin()}{limitsMin()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_aa85937406d9835e6ef9c141a49bf050b} 
+bool Neo\+FOAM\+::\+Pressure\+Control\+::limits\+Min (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pressureControl_8hpp_source_l00051}{51}} of file \mbox{\hyperlink{pressureControl_8hpp_source}{pressure\+Control.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PressureControl_a3e44153a557d54f56177d5404a019a72}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!pMax@{pMax}}
+\index{pMax@{pMax}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{pMax()}{pMax()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_a3e44153a557d54f56177d5404a019a72} 
+Neo\+N\+::scalar Neo\+FOAM\+::\+Pressure\+Control\+::p\+Max (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pressureControl_8hpp_source_l00054}{54}} of file \mbox{\hyperlink{pressureControl_8hpp_source}{pressure\+Control.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PressureControl_a544f91b6bf98bf210067a4cff30e0c09}\index{NeoFOAM::PressureControl@{NeoFOAM::PressureControl}!pMin@{pMin}}
+\index{pMin@{pMin}!NeoFOAM::PressureControl@{NeoFOAM::PressureControl}}
+\doxysubsubsection{\texorpdfstring{pMin()}{pMin()}}
+{\footnotesize\ttfamily \label{classNeoFOAM_1_1PressureControl_a544f91b6bf98bf210067a4cff30e0c09} 
+Neo\+N\+::scalar Neo\+FOAM\+::\+Pressure\+Control\+::p\+Min (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pressureControl_8hpp_source_l00053}{53}} of file \mbox{\hyperlink{pressureControl_8hpp_source}{pressure\+Control.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/auxiliary/\mbox{\hyperlink{pressureControl_8hpp}{pressure\+Control.\+hpp}}\end{DoxyCompactItemize}
