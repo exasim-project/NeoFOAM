@@ -252,7 +252,7 @@ TEST_CASE("Applying permutation preserves face-cell connectivity")
         const PermutationApplicator applicator {exec};
 
         // Prepare expected results
-        // The original cell centers of cell 0, 1, 2, 3
+        // The original cell centers
         // cell 0: {1.0/3.0 * 0.5, 1.0/3 * 0.5, 0.1 * 0.5},
         // cell 1: {1.0/3.0 + 2.0/3.0 * 0.5, 1.0/3.0 * 0.5, 0.1 * 0.5},
         // cell 2: {1.0/3.0 * 0.5, 1.0/3.0 + 2.0/3.0 * 0.5, 0.1 * 0.5},
@@ -440,8 +440,6 @@ TEST_CASE("Applying an incompatible permutation to a field throws an exception")
     auto ofT = NeoFOAM::indexVolScalarField(runTime, mesh, "T");
     auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
 
-    const std::vector<NeoN::scalar> expectedScalarField {0.0, 1.0, 2.0, 3.0};
-
     // --- Arrange ---
     // Prepare an incompatible permutation and the applicator
     const std::vector<Permutation::IndexType> oldToNew {2, 0, 1};
@@ -451,5 +449,68 @@ TEST_CASE("Applying an incompatible permutation to a field throws an exception")
 
     // --- Act & Assert ---
     REQUIRE_THROWS_AS(applicator.apply(prepared, nfT), std::invalid_argument);
+}
+
+TEST_CASE("Applying a permutation to a volume field reorders cell-associated physical field")
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    // Create a block mesh of dimension (1 1 0.1) with (2 2 1) blocks and simple grading (2 2 1)
+    Foam::Time& runTime = *timePtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
+    SECTION("Applying a permutation reorders volume scalar field " + execName)
+    {
+        // Create a cell-centered scalar field on the mesh
+        auto ofT = NeoFOAM::indexVolScalarField(runTime, mesh, "T");
+        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
+
+        // --- Arrange ---
+        // Prepare an incompatible permutation and the applicator
+        const std::vector<Permutation::IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+        const PermutationApplicator applicator {exec};
+
+        // The original field T: {0.0, 1.0, 2.0, 3.0}
+        const std::vector<NeoN::scalar> expectedScalarField {1.0, 3.0, 0.0, 2.0};
+
+        // --- Act ---
+        applicator.apply(prepared, nfT);
+
+        // --- Assert ---
+        REQUIRE_THAT(nfT.internalVector(), Equals(expectedScalarField, ApproxScalar {1e-12}));
+    }
+
+    SECTION("Applying a permutation reorders volume vector field " + execName)
+    {
+        // Create a cell-centered scalar field on the mesh
+        auto ofU = NeoFOAM::indexVolVectorField(runTime, mesh, "U");
+        auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
+
+        // --- Arrange ---
+        // Prepare an incompatible permutation and the applicator
+        const std::vector<Permutation::IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+        const PermutationApplicator applicator {exec};
+
+        // The original field U:
+        // {{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {2.0, 2.0, 2.0}, {3.0, 3.0, 3.0}}}
+        const std::vector<NeoN::Vec3> expectedVectorField {
+            {1.0, 1.0, 1.0},
+            {3.0, 3.0, 3.0},
+            {0.0, 0.0, 0.0},
+            {2.0, 2.0, 2.0}
+        };
+
+        // --- Act ---
+        applicator.apply(prepared, nfU);
+
+        // --- Assert ---
+        REQUIRE_THAT(nfU.internalVector(), Equals(expectedVectorField, ApproxVector {1e-12}));
+    }
 }
 TEST_CASE("Applying permutation preserves field-cell association") {}

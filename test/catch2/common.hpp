@@ -527,8 +527,6 @@ auto indexVolScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Fo
 /** @brief Create a volVectorField with random component values in [1, 2]. */
 auto indexVolVectorField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
 {
-    std::mt19937 gen(42);
-    std::uniform_real_distribution<> dis(1.0, 2.0);
     return createIndexedField<Foam::volVectorField>(
         runTime,
         mesh,

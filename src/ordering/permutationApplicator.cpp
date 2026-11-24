@@ -128,6 +128,8 @@ void PermutationApplicator::apply(
 ) const
 {
     validateCompatibility(permutation, field);
+
+    reorderCellData(permutation, field.internalVector());
 }
 
 // Explicit instantiations of the apply function for field
