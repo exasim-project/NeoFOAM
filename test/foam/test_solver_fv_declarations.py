@@ -18,6 +18,8 @@ from neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgor
     SimpleNeoNFvSchemes,
     SimpleNeoNFvSolution,
 )
+from neofoam.turbulence.models.kEpsilon import KEpsilonFvSchemes
+from neofoam.turbulence.models.realizableKE import RealizableKEFvSchemes
 
 
 @pytest.mark.parametrize(
@@ -136,6 +138,14 @@ def test_control_entries_declare_their_level(
     ref = schema["properties"][section]["$ref"].rsplit("/", 1)[1]
     props = schema["$defs"][ref]["properties"]
     assert {key: prop.get("nfLevel") for key, prop in props.items()} == levels
+
+
+@pytest.mark.parametrize("key", ["grad(epsilon)", "grad(k)"])
+@pytest.mark.parametrize(
+    "spec_slice", [KEpsilonFvSchemes, RealizableKEFvSchemes], ids=lambda c: c.__name__
+)
+def test_epsilon_closure_declares_the_gradient_openfoam_reads(spec_slice: Any, key: str) -> None:
+    assert key in spec_slice.form_defaults()["gradSchemes"]
 
 
 def test_pybfoam_slice_uses_the_openfoam_plugins() -> None:

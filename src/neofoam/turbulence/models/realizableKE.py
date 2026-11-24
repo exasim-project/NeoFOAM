@@ -46,10 +46,11 @@ def load(case_dir: Path, _instance_id: Optional[str]) -> TurbulencePropertiesCon
     field="epsilon",
     ddt="ddt(epsilon)",
     div="div(phi,epsilon)",
+    grad="grad(epsilon)",
     laplacian="laplacian(DepsilonEff,epsilon)",
 )
 @RealizableKEFvSchemes.add(
-    field="k", ddt="ddt(k)", div="div(phi,k)", laplacian="laplacian(DkEff,k)"
+    field="k", ddt="ddt(k)", div="div(phi,k)", grad="grad(k)", laplacian="laplacian(DkEff,k)"
 )
 @RealizableKEFvSolution.add("epsilon", "k", final_required=False)
 def correct(

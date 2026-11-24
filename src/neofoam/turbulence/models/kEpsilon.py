@@ -230,6 +230,7 @@ def production(
     field="epsilon",
     ddt="ddt(epsilon)",
     div="div(phi,epsilon)",
+    grad="grad(epsilon)",
     laplacian="laplacian(DepsilonEff,epsilon)",
 )
 @KEpsilonFvSolution.add("epsilon", final_required=False)
@@ -285,7 +286,9 @@ def correct_epsilon(
 
 
 @kEpsilon.operation(name="kEpsilonCorrectK")
-@KEpsilonFvSchemes.add(field="k", ddt="ddt(k)", div="div(phi,k)", laplacian="laplacian(DkEff,k)")
+@KEpsilonFvSchemes.add(
+    field="k", ddt="ddt(k)", div="div(phi,k)", grad="grad(k)", laplacian="laplacian(DkEff,k)"
+)
 @KEpsilonFvSolution.add("k", final_required=False)
 def correct_k(
     self: Any,
