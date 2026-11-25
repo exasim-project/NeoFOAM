@@ -221,6 +221,7 @@ jobs:
             -c conda-forge
             neon-pde=*=cpu_openmpi*
             openmpi=4.1.*=external_*
+            pip
           init-shell: none
           post-cleanup: none
 
@@ -239,6 +240,7 @@ jobs:
             {
               echo "package=$package"
               echo "cmake-args=-DNEOFOAM_USE_INSTALLED_NEON=ON -DCMAKE_PREFIX_PATH=$NEON_PREFIX"
+              echo "pip-args=-Ccmake.define.NEOFOAM_USE_INSTALLED_NEON=ON -Ccmake.define.CMAKE_PREFIX_PATH=$NEON_PREFIX"
             } >> "$GITHUB_OUTPUT"
           elif [[ "$NEON_PACKAGE" == failure ]]; then
             echo "::warning::Could not install the neon-pde package, building NeoN from source"
@@ -474,8 +476,10 @@ jobs:
 
   # The Python package is a full C++ build, so one job builds it once and runs every check that
   # needs it: pytest with coverage, mypy and, on PRs, the documentation preview.
+  # Runs on the Python 3.12 of the NeoN package's environment, the Python version of its Open MPI
+  # build, which also provides the neon module. python-versions covers 3.11 and 3.13.
   python:
-    name: Python 3.11 (tests, coverage, mypy, docs)
+    name: Python 3.12 (tests, coverage, mypy, docs)
     needs: [gate, linux]
     if: needs.gate.outputs.build == 'true'
     runs-on: ubuntu-24.04
@@ -484,6 +488,8 @@ jobs:
       pull-requests: write # docs preview comment
     env:
       PR_NUMBER: ${{ github.event.number }}
+      NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+      NEON_FROM_PACKAGE: true
     steps:
       - uses: actions/checkout@v5
         with:
@@ -497,16 +503,25 @@ jobs:
         with:
           openfoam-version: 2506
 
-      - name: Set up Python 3.11
+      - *install-neon
+      - *neon-args
+
+      - name: Use the Python of the NeoN environment
+        if: steps.neon-args.outputs.package != ''
+        run: echo "${{ runner.temp }}/micromamba/envs/neon/bin" >> "$GITHUB_PATH"
+
+      # Without the package, NeoN and its bindings are built from the submodule
+      - name: Set up Python 3.12
+        if: steps.neon-args.outputs.package == ''
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - uses: pyvista/setup-headless-display-action@v3
 
       - name: Install NeoFOAM
         id: install
-        run: pip install -v .[all]
+        run: pip install -v .[all] ${{ steps.neon-args.outputs.pip-args }}
 
       # The checks below run even if an earlier one fails, as long as the install succeeded
       - name: Test with pytest
@@ -554,7 +569,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.11", "3.13"]
     steps:
       - uses: actions/checkout@v5
 
