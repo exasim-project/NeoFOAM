@@ -202,7 +202,8 @@ jobs:
       # With NEON_FROM_PACKAGE, NeoN comes from the nightly neon-pde conda package instead of being
       # built here. The nightlies are built from NeoN develop, so a matching NeoN branch is still
       # built from source. openmpi=*=external_* makes the package use the system Open MPI, which
-      # OpenFOAM links too. If nothing resolves, the build below falls back to building NeoN.
+      # OpenFOAM links too; conda-forge only publishes the 4.1 external builds under the
+      # mpi-external label. If nothing resolves, the build below falls back to building NeoN.
       # Shared with the IWYU job.
       - &install-neon
         name: Install NeoN from prefix.dev
@@ -216,6 +217,7 @@ jobs:
           create-args: >-
             --override-channels
             -c https://prefix.dev/exasim-project/nightlies
+            -c conda-forge/label/mpi-external
             -c conda-forge
             neon-pde=*=cpu_openmpi*
             openmpi=4.1.*=external_*
@@ -432,6 +434,7 @@ jobs:
           create-args: >-
             --override-channels
             -c https://prefix.dev/exasim-project/nightlies
+            -c conda-forge/label/mpi-external
             -c conda-forge
             ${{ needs.iwyu.outputs.neon-package }}
             openmpi=4.1.*=external_*
