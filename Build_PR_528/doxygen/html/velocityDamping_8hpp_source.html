@@ -95,11 +95,11 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> LinearSystemType, <span class="keyword">typename</span> VolumeFieldType&gt;</div>
 <div class="foldopen" id="foldopen00051" data-start="{" data-end="}">
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a72161ef3ce7998aa7ac9c452656084ce">   51</a></span>NeoN::label <a class="code hl_function" href="namespaceNeoFOAM.html#a72161ef3ce7998aa7ac9c452656084ce">applyVelocityDamping</a>(</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#aca8e5369391e08afdc881d14e3309957">   51</a></span>NeoN::label <a class="code hl_function" href="namespaceNeoFOAM.html#aca8e5369391e08afdc881d14e3309957">applyVelocityDamping</a>(</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    LinearSystemType&amp; ls,</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keyword">const</span> VolumeFieldType&amp; U,</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    NeoN::scalar UMax,</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    NeoN::scalar C = 1.0</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    NeoN::scalar c = 1.0</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>)</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>{</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="comment">// The segregated momentum system (PDE&lt;Vec3&gt;) has scalar coefficients; a coupled Vec3</span></div>
@@ -131,7 +131,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            {</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>                <span class="comment">// scale = sqr(cbrt(V)) -- V^(2/3), not V.</span></div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>                <span class="keyword">const</span> NeoN::scalar cbrtV = Kokkos::cbrt(volV[celli]);</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                matrix.values[ma.diagIdx(celli)] += C * cbrtV * cbrtV * (magU - UMax);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                matrix.values[ma.diagIdx(celli)] += c * cbrtV * cbrtV * (magU - UMax);</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>                ++count;</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            }</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        },</div>
@@ -144,7 +144,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a72161ef3ce7998aa7ac9c452656084ce"><div class="ttname"><a href="namespaceNeoFOAM.html#a72161ef3ce7998aa7ac9c452656084ce">NeoFOAM::applyVelocityDamping</a></div><div class="ttdeci">NeoN::label applyVelocityDamping(LinearSystemType &amp;ls, const VolumeFieldType &amp;U, NeoN::scalar UMax, NeoN::scalar C=1.0)</div><div class="ttdoc">Port of OpenFOAM's fv::velocityDampingConstraint (fvOptions).</div><div class="ttdef"><b>Definition</b> <a href="velocityDamping_8hpp_source.html#l00051">velocityDamping.hpp:51</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_aca8e5369391e08afdc881d14e3309957"><div class="ttname"><a href="namespaceNeoFOAM.html#aca8e5369391e08afdc881d14e3309957">NeoFOAM::applyVelocityDamping</a></div><div class="ttdeci">NeoN::label applyVelocityDamping(LinearSystemType &amp;ls, const VolumeFieldType &amp;U, NeoN::scalar UMax, NeoN::scalar c=1.0)</div><div class="ttdoc">Port of OpenFOAM's fv::velocityDampingConstraint (fvOptions).</div><div class="ttdef"><b>Definition</b> <a href="velocityDamping_8hpp_source.html#l00051">velocityDamping.hpp:51</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

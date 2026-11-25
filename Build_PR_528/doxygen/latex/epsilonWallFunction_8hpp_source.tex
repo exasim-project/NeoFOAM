@@ -26,18 +26,18 @@
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00023}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4267beb89012123297bdde36c1dd3e5}{00023}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4267beb89012123297bdde36c1dd3e5}{EPSILON\_WF\_DEFAULT\_CMU}}\ =\ 0.09;}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00024}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a89aef11d96966f503aacd3f56379a13b}{00024}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a89aef11d96966f503aacd3f56379a13b}{EPSILON\_WF\_DEFAULT\_KAPPA}}\ =\ 0.41;}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00025}00025\ }
-\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00037}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a120167fa099bf5cc1dacc7367e1cc66e}{00037}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a120167fa099bf5cc1dacc7367e1cc66e}{setEpsilonWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00037}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a2b3a302605f8be74924d6c02292b44b9}{00037}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a2b3a302605f8be74924d6c02292b44b9}{setEpsilonWallFunction}}(}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00038}00038\ \ \ \ \ Field<scalar>\&\ epsilon,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00039}00039\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ k,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00040}00040\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ nu,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00041}00041\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ nearWallDist,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00042}00042\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00043}00043\ \ \ \ \ std::pair<localIdx,\ localIdx>\ range,}
-\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00044}00044\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00044}00044\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cmu,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00045}00045\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00046}00046\ )}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00047}00047\ \{}
-\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu75\ =\ Kokkos::pow(Cmu,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0.75));}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu75\ =\ Kokkos::pow(cmu,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0.75));}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00049}00049\ }
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00050}00050\ \ \ \ \ \textcolor{keyword}{auto}\ kInternal\ =\ k.internalVector().view();}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00051}00051\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nearWallBoundary\ =\ nearWallDist.boundaryData().value().view();}
@@ -98,7 +98,7 @@
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00120}00120\ \ \ \ \ \textcolor{keywordtype}{void}}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00121}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974}{00121}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector,\ \textcolor{keyword}{const}\ fvcc::BoundaryContext\&\ ctx)\ \textcolor{keyword}{final}}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00122}00122\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a120167fa099bf5cc1dacc7367e1cc66e}{detail::setEpsilonWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a2b3a302605f8be74924d6c02292b44b9}{detail::setEpsilonWallFunction}}(}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ domainVector,}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}k"{}}),}
 \DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nu"{}}),}

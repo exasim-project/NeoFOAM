@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.html"><link rel="prev" title="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html">
 
-    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
@@ -299,12 +299,14 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.execution_observer.html">neofoam.framework.execution_observer</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -687,16 +689,30 @@ subdict only).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleFluidNeoN/models/pressure_velocity/base.html#PressureVelocityAlgorithmNeoN.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create" title="Link to this definition">¶</a></dt>
-<dd><p>Programmatically create a pressure-velocity algorithm model.</p>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.model.runtime.html#neofoam.framework.model.runtime.ModelRuntime" title="neofoam.framework.model.runtime.ModelRuntime"><span class="pre">ModelRuntime</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleFluidNeoN/models/pressure_velocity/base.html#PressureVelocityAlgorithmNeoN.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create" title="Link to this definition">¶</a></dt>
+<dd><p>Programmatically create a pressure-velocity algorithm runtime.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.detect_and_create">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">detect_and_create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleFluidNeoN/models/pressure_velocity/base.html#PressureVelocityAlgorithmNeoN.detect_and_create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.detect_and_create" title="Link to this definition">¶</a></dt>
-<dd><p>Detect algorithm from fvSolution and prime its state.</p>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">detect_and_create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.model.runtime.html#neofoam.framework.model.runtime.ModelRuntime" title="neofoam.framework.model.runtime.ModelRuntime"><span class="pre">ModelRuntime</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleFluidNeoN/models/pressure_velocity/base.html#PressureVelocityAlgorithmNeoN.detect_and_create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.detect_and_create" title="Link to this definition">¶</a></dt>
+<dd><p>Detect the algorithm from fvSolution: a fresh runtime of its spec.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocitySettingsNeoN">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.</span></span><span class="sig-name descname"><span class="pre">PressureVelocitySettingsNeoN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleFluidNeoN/models/pressure_velocity/base.html#PressureVelocitySettingsNeoN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocitySettingsNeoN" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>One run’s settings, kept off the spec that regions and runs share.</p>
+<p>Use it as the <code class="docutils literal notranslate"><span class="pre">config</span></code> of a NeoN pressure-velocity runtime; obtain it through
+<a class="reference internal" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create" title="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">PressureVelocityAlgorithmNeoN.create()</span></code></a> or <code class="docutils literal notranslate"><span class="pre">detect_and_create</span></code> instead of
+building one. Frozen, so it is safe to read from any thread.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">settings</span> <span class="o">=</span> <span class="n">PressureVelocityAlgorithmNeoN</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">algorithm_type</span><span class="o">=</span><span class="s2">"PIMPLE"</span><span class="p">)</span><span class="o">.</span><span class="n">config</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -763,6 +779,7 @@ subdict only).</p>
 <li><a class="reference internal" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.detect_and_create"><code class="docutils literal notranslate"><span class="pre">PressureVelocityAlgorithmNeoN.detect_and_create()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocitySettingsNeoN"><code class="docutils literal notranslate"><span class="pre">PressureVelocitySettingsNeoN</span></code></a></li>
 </ul>
 </li>
 </ul>

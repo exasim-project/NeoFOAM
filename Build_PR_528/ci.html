@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Using Kokkos Tools" href="debugProfileTools.html"><link rel="prev" title="Schema introspection" href="explanation/schema-introspection.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/ci.html">
 
-    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>Continuous Integration - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
@@ -299,12 +299,14 @@
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.framework.execution_observer.html">neofoam.framework.execution_observer</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -701,15 +703,23 @@ cheap checks, so a formatting issue does not hold back the build results.</p></l
 <li><p>Only once that passes: Linux gcc, macOS, IWYU followed by clang-tidy, the LRZ GPU pipeline, and
 the Python job. The Python job builds the package once and runs pytest with coverage, mypy and,
 on PRs, the documentation preview.</p></li>
-<li><p>On pushes to <code class="docutils literal notranslate"><span class="pre">develop</span></code>/<code class="docutils literal notranslate"><span class="pre">main</span></code>, the weekly run and manual runs: the Python tests on 3.12 and
-3.13.</p></li>
+<li><p>After the Python job: the Python tests on 3.11 and 3.13, on every PR and push that builds.</p></li>
 </ol>
-<p>The Linux gcc build does not build NeoN itself when it tests against NeoN <code class="docutils literal notranslate"><span class="pre">develop</span></code>: it installs
-the Open MPI flavour of the nightly <code class="docutils literal notranslate"><span class="pre">neon-pde</span></code> conda package from
-<a class="reference external" href="https://prefix.dev/channels/exasim-project/nightlies">exasim-project/nightlies</a> and configures
-NeoFOAM with <code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_USE_INSTALLED_NEON=ON</span></code>. That NeoN is a Release build of <code class="docutils literal notranslate"><span class="pre">develop</span></code> from
-the last night, while the clang build compiles the current <code class="docutils literal notranslate"><span class="pre">develop</span></code> with Kokkos debug checks. If
-the package cannot be installed, the gcc build falls back to building NeoN and warns.</p>
+<p>The Linux builds (clang and gcc), IWYU and the Python job do not build NeoN themselves when they
+test against NeoN <code class="docutils literal notranslate"><span class="pre">develop</span></code>: they install the Open MPI flavour of the nightly <code class="docutils literal notranslate"><span class="pre">neon-pde</span></code> conda
+package from <a class="reference external" href="https://prefix.dev/channels/exasim-project/nightlies">exasim-project/nightlies</a> and
+configure NeoFOAM with <code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_USE_INSTALLED_NEON=ON</span></code>. The clang and IWYU builds install the clang-built
+package (<code class="docutils literal notranslate"><span class="pre">cpu_openmpi_clang_py312_*</span></code>), gcc and the Python job the GCC-built one: GCC and clang 18+ mangle C++20
+requires-clauses differently, so clang-compiled code cannot link a GCC-built NeoN. clang-tidy installs the same package as
+the IWYU build, whose compilation database it uses. The Python job runs on the package
+environment’s Python 3.12 (the Python version of the Open MPI build), which also provides the
+<code class="docutils literal notranslate"><span class="pre">neon</span></code> module; NeoFOAM’s bindings then take nanobind from the Python build environment, the same
+nanobind ABI the package’s <code class="docutils literal notranslate"><span class="pre">_neon</span></code> was built with. If the package cannot be installed, these
+builds fall back to building NeoN and warn.</p>
+<p>That NeoN is a Release build of <code class="docutils literal notranslate"><span class="pre">develop</span></code> from the last night. To test against the current
+<code class="docutils literal notranslate"><span class="pre">develop</span></code> with the <code class="docutils literal notranslate"><span class="pre">develop</span></code> preset’s Kokkos debug and bounds checks, set the
+<code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> label: every build of the PR then builds NeoN from source. A NeoN branch with
+the same name as the PR’s branch is always built from source.</p>
 <p><code class="docutils literal notranslate"><span class="pre">build_doc.yaml</span></code> deploys the documentation of merged PRs and release tags, and
 <code class="docutils literal notranslate"><span class="pre">gpu_benchmark.yaml</span></code> runs the GPU benchmarks of <code class="docutils literal notranslate"><span class="pre">develop</span></code> once a week. Their results are on the
 <code class="docutils literal notranslate"><span class="pre">NeoFOAM_develop</span></code> branch of
@@ -744,12 +754,14 @@ the package cannot be installed, the gcc build falls back to building NeoN and w
 <p><strong>Relevant Labels:</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-build</span></code> — Skip all build-and-test jobs on both GitHub and LRZ GitLab.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> — Build NeoN from source with debug options instead of installing the nightly
+conda package.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-changelog</span></code> — Skip the changelog check.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-validation</span></code> — Skip the solver validation runs in the LRZ GitLab build-and-test job.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-nvidia</span></code>, <code class="docutils literal notranslate"><span class="pre">skip-amd</span></code>, <code class="docutils literal notranslate"><span class="pre">skip-intel</span></code> — Skip the GPU jobs on the respective vendor’s hardware.</p></li>
 </ul>
 <p>These labels allow developers to customize the CI process according to their needs.</p>
-<p>Adding or removing <code class="docutils literal notranslate"><span class="pre">skip-build</span></code> restarts CI, and adding or removing <code class="docutils literal notranslate"><span class="pre">skip-changelog</span></code> reruns the
+<p>Adding or removing <code class="docutils literal notranslate"><span class="pre">skip-build</span></code> or <code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> restarts CI, and adding or removing <code class="docutils literal notranslate"><span class="pre">skip-changelog</span></code> reruns the
 changelog check. Any other label, including the ones above, takes effect on the next push, so
 labelling a PR does not restart its builds.</p>
 </section>

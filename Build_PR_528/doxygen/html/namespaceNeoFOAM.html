@@ -198,10 +198,10 @@ Functions</h2></td></tr>
 <tr class="separator:a62eb8e5a163de38a7fbebd7a25c7b624"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d9937816ddfe9d997066890d86705a3" id="r_a0d9937816ddfe9d997066890d86705a3"><td class="memItemLeft" align="right" valign="top">nnfvcc::SurfaceField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a0d9937816ddfe9d997066890d86705a3">flux</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;volField)</td></tr>
 <tr class="separator:a0d9937816ddfe9d997066890d86705a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72161ef3ce7998aa7ac9c452656084ce" id="r_a72161ef3ce7998aa7ac9c452656084ce"><td class="memTemplParams" colspan="2">template&lt;typename LinearSystemType , typename VolumeFieldType &gt; </td></tr>
-<tr class="memitem:a72161ef3ce7998aa7ac9c452656084ce"><td class="memTemplItemLeft" align="right" valign="top">NeoN::label&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a72161ef3ce7998aa7ac9c452656084ce">applyVelocityDamping</a> (LinearSystemType &amp;ls, const VolumeFieldType &amp;U, NeoN::scalar UMax, NeoN::scalar C=1.0)</td></tr>
-<tr class="memdesc:a72161ef3ce7998aa7ac9c452656084ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Port of OpenFOAM's fv::velocityDampingConstraint (fvOptions).  <br /></td></tr>
-<tr class="separator:a72161ef3ce7998aa7ac9c452656084ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca8e5369391e08afdc881d14e3309957" id="r_aca8e5369391e08afdc881d14e3309957"><td class="memTemplParams" colspan="2">template&lt;typename LinearSystemType , typename VolumeFieldType &gt; </td></tr>
+<tr class="memitem:aca8e5369391e08afdc881d14e3309957"><td class="memTemplItemLeft" align="right" valign="top">NeoN::label&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aca8e5369391e08afdc881d14e3309957">applyVelocityDamping</a> (LinearSystemType &amp;ls, const VolumeFieldType &amp;U, NeoN::scalar UMax, NeoN::scalar c=1.0)</td></tr>
+<tr class="memdesc:aca8e5369391e08afdc881d14e3309957"><td class="mdescLeft">&#160;</td><td class="mdescRight">Port of OpenFOAM's fv::velocityDampingConstraint (fvOptions).  <br /></td></tr>
+<tr class="separator:aca8e5369391e08afdc881d14e3309957"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6cbdfd4b2fffd39d6929b34f32cb586f" id="r_a6cbdfd4b2fffd39d6929b34f32cb586f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a6cbdfd4b2fffd39d6929b34f32cb586f">bound</a> (NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;vsf, const NeoN::scalar lowerBound, <a class="el" href="structNeoFOAM_1_1BoundCache.html">BoundCache</a> &amp;cache)</td></tr>
 <tr class="memdesc:a6cbdfd4b2fffd39d6929b34f32cb586f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bound a scalar field from below, following OpenFOAM's Foam::bound().  <br /></td></tr>
 <tr class="separator:a6cbdfd4b2fffd39d6929b34f32cb586f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -505,8 +505,8 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
 
 </div>
 </div>
-<a id="a72161ef3ce7998aa7ac9c452656084ce" name="a72161ef3ce7998aa7ac9c452656084ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72161ef3ce7998aa7ac9c452656084ce">&#9670;&#160;</a></span>applyVelocityDamping()</h2>
+<a id="aca8e5369391e08afdc881d14e3309957" name="aca8e5369391e08afdc881d14e3309957"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca8e5369391e08afdc881d14e3309957">&#9670;&#160;</a></span>applyVelocityDamping()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -535,7 +535,7 @@ template&lt;typename LinearSystemType , typename VolumeFieldType &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">NeoN::scalar&#160;</td>
-          <td class="paramname"><em>C</em> = <code>1.0</code>&#160;</td>
+          <td class="paramname"><em>c</em> = <code>1.0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -558,7 +558,7 @@ diag[c] += C * scale * (|U_c| - UMax)      for cells with |U_c| &gt; UMax
     <tr><td class="paramname">ls</td><td>The assembled (and relaxed) linear system; its diagonal is modified in place. </td></tr>
     <tr><td class="paramname">U</td><td>The velocity field whose current internal values decide which cells are damped. </td></tr>
     <tr><td class="paramname">UMax</td><td>Velocity magnitude above which damping engages. </td></tr>
-    <tr><td class="paramname">C</td><td>Upstream's <code>C</code> coefficient (default 1, as in fv::velocityDampingConstraint). </td></tr>
+    <tr><td class="paramname">c</td><td>Upstream's <code>C</code> coefficient (default 1, as in fv::velocityDampingConstraint). </td></tr>
   </table>
   </dd>
 </dl>
