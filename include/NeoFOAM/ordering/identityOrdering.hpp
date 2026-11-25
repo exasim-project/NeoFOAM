@@ -13,6 +13,10 @@ class IdentityOrdering
 
 public:
 
-    [[nodiscard]] Permutation compute(std::size_t size) const;
+    [[nodiscard]] Permutation compute(std::size_t size) const
+    {
+        return Permutation::identity(size);
+    }
+
 };
 } // namespace NeoFOAM::ordering
