@@ -304,6 +304,7 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -685,7 +686,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span><span class="p">,</span> <span class="n">Schedule</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span><span class="p">,</span> <span class="n">Hook</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>
@@ -926,12 +927,14 @@
         <span class="n">before</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">fallback</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Decorator to register a model operation.</span>
 
 <span class="sd">        ``fallback=True`` marks the op as belonging to the model's *fallback*</span>
 <span class="sd">        backend (partitioned by :meth:`ModelRuntime.fallback_operations`); by</span>
-<span class="sd">        default an op is native.</span>
+<span class="sd">        default an op is native. ``schedule`` limits it to the first or final pass of</span>
+<span class="sd">        the wrapping loops around it.</span>
 <span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -944,6 +947,8 @@
                         <span class="s2">"before"</span><span class="p">:</span> <span class="n">before</span><span class="p">,</span>
                         <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                         <span class="s2">"fallback"</span><span class="p">:</span> <span class="n">fallback</span><span class="p">,</span>
+                        <span class="s2">"first"</span><span class="p">:</span> <span class="n">schedule</span><span class="o">.</span><span class="n">first</span><span class="p">,</span>
+                        <span class="s2">"final"</span><span class="p">:</span> <span class="n">schedule</span><span class="o">.</span><span class="n">final</span><span class="p">,</span>
                     <span class="p">},</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -1098,6 +1103,8 @@
                     <span class="n">depends_on</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"depends_on"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
                     <span class="n">before</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"before"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
                     <span class="n">fallback</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fallback"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                    <span class="n">first</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"first"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                    <span class="n">final</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"final"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
                 <span class="p">),</span>
             <span class="p">)</span>
             <span class="n">docs</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)]</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span>

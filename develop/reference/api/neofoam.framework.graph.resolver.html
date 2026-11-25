@@ -305,6 +305,7 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -684,6 +685,14 @@
 </div>
 <p>The topological sorter is injected (DIP seam); default is
 <code class="xref py py-class docutils literal notranslate"><span class="pre">NetworkxTopologicalSorter</span></code>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.graph.resolver.DAGResolver.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">StepBuilder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operations" title="neofoam.framework.operations.Operations"><span class="pre">Operations</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">StepBuilder</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/resolver.html#DAGResolver.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.resolver.DAGResolver.resolve" title="Link to this definition">¶</a></dt>
+<dd><p>The operations of <code class="docutils literal notranslate"><span class="pre">builder</span></code> and <code class="docutils literal notranslate"><span class="pre">additional_ops</span></code>, ordered in their scopes.</p>
+<p>Additional wrapping loops (<code class="docutils literal notranslate"><span class="pre">metadata.wraps</span></code>) are placed afterwards, in
+the order given (<a class="reference internal" href="neofoam.framework.graph.wrapping.html#module-neofoam.framework.graph.wrapping" title="neofoam.framework.graph.wrapping"><code class="xref py py-mod docutils literal notranslate"><span class="pre">wrapping</span></code></a>).</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py exception">
@@ -752,7 +761,10 @@
             <ul>
 <li><a class="reference internal" href="#">neofoam.framework.graph.resolver</a><ul>
 <li><a class="reference internal" href="#neofoam.framework.graph.resolver.CyclicDependencyError"><code class="docutils literal notranslate"><span class="pre">CyclicDependencyError</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.graph.resolver.DAGResolver"><code class="docutils literal notranslate"><span class="pre">DAGResolver</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.graph.resolver.DAGResolver"><code class="docutils literal notranslate"><span class="pre">DAGResolver</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.graph.resolver.DAGResolver.resolve"><code class="docutils literal notranslate"><span class="pre">DAGResolver.resolve()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.framework.graph.resolver.MissingDependencyError"><code class="docutils literal notranslate"><span class="pre">MissingDependencyError</span></code></a></li>
 </ul>
 </li>

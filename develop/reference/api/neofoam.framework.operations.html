@@ -305,6 +305,7 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -673,6 +674,12 @@
 <p>A concrete operation class that wraps a function with metadata.</p>
 <p>Stores an <code class="xref py py-class docutils literal notranslate"><span class="pre">OperationMetadata</span></code> instance as the single source of
 truth for name, numbering, dependencies, and visualisation hints.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.operations.Operation.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/operations.html#Operation.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.operations.Operation.run" title="Link to this definition">¶</a></dt>
+<dd><p>Run on <code class="docutils literal notranslate"><span class="pre">ctx</span></code>, unless its <code class="docutils literal notranslate"><span class="pre">first</span></code>/<code class="docutils literal notranslate"><span class="pre">final</span></code> mark skips this pass.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py attribute">
@@ -688,6 +695,12 @@ truth for name, numbering, dependencies, and visualisation hints.</p>
 <p>Unified container for Operation objects.</p>
 <p>Supports flexible add (single, list, or another Operations),
 suboperation management, iteration, indexing, and batch execution.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.operations.Operations.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/operations.html#Operations.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.operations.Operations.run" title="Link to this definition">¶</a></dt>
+<dd><p>Run the operations on <code class="docutils literal notranslate"><span class="pre">ctx</span></code>; <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if <code class="docutils literal notranslate"><span class="pre">ctx.run_every_pass</span></code> is invalid.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -748,9 +761,15 @@ suboperation management, iteration, indexing, and batch execution.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.framework.operations</a><ul>
-<li><a class="reference internal" href="#neofoam.framework.operations.Operation"><code class="docutils literal notranslate"><span class="pre">Operation</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.operations.Operation"><code class="docutils literal notranslate"><span class="pre">Operation</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.operations.Operation.run"><code class="docutils literal notranslate"><span class="pre">Operation.run()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.framework.operations.OperationCollection"><code class="docutils literal notranslate"><span class="pre">OperationCollection</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.operations.Operations"><code class="docutils literal notranslate"><span class="pre">Operations</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.operations.Operations"><code class="docutils literal notranslate"><span class="pre">Operations</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.operations.Operations.run"><code class="docutils literal notranslate"><span class="pre">Operations.run()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
