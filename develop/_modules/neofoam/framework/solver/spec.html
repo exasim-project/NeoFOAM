@@ -298,6 +298,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.execution_observer.html">neofoam.framework.execution_observer</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
@@ -919,8 +920,12 @@
 
 <div class="viewcode-block" id="SolverSpec.instantiate">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.instantiate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.</span>
 
 <span class="sd">        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads</span>
 <span class="sd">        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.</span>
@@ -930,6 +935,7 @@
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">argv</span><span class="o">=</span><span class="n">argv</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">"neofoam"</span><span class="p">],</span>
+            <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
