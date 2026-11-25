@@ -36,6 +36,7 @@ from neofoam.algorithms.field_writer.writer import FieldWriter, NullFieldHook
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import InitStep, model
 from neofoam.framework.model import Model
+from neofoam.framework.types import Schedule
 
 fieldWriter = Model("fieldWriter")
 
@@ -67,7 +68,7 @@ def build(config: WriteControlConfig) -> list[InitStep]:
 # places it after every field-mutating op (pressure-velocity, viscosity and
 # turbulence correction); no explicit ``depends_on`` is needed and a generic
 # writer must not name a specific solver's correction op.
-@fieldWriter.operation()
+@fieldWriter.operation(schedule=Schedule(final=True))
 def write_output(self: Any, ctx: Context) -> None:
     """Write the flagged fields on write steps; optionally report step timing.
 

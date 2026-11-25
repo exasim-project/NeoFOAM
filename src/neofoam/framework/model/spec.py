@@ -26,7 +26,7 @@ from neofoam.framework.config_injection import (
 )
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.operations import Operation, Operations, SequentialOp
-from neofoam.framework.types import OperationMetadata, OperationNumber
+from neofoam.framework.types import OperationMetadata, OperationNumber, Schedule
 
 from .extension import Extension, Hook
 from .runtime import ModelRuntime
@@ -242,12 +242,14 @@ class ModelSpec:
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
         fallback: bool = False,
+        schedule: Schedule = Schedule(),
     ) -> Callable[..., Any]:
         """Decorator to register a model operation.
 
         ``fallback=True`` marks the op as belonging to the model's *fallback*
         backend (partitioned by :meth:`ModelRuntime.fallback_operations`); by
-        default an op is native.
+        default an op is native. ``schedule`` limits it to the first or final pass of
+        the wrapping loops around it.
         """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -260,6 +262,8 @@ class ModelSpec:
                         "before": before,
                         "name": name or func.__name__,
                         "fallback": fallback,
+                        "first": schedule.first,
+                        "final": schedule.final,
                     },
                 )
             )
@@ -401,6 +405,8 @@ class ModelSpec:
                     depends_on=metadata["depends_on"] or [],
                     before=metadata["before"] or [],
                     fallback=metadata.get("fallback", False),
+                    first=metadata.get("first", False),
+                    final=metadata.get("final", False),
                 ),
             )
             docs[id(op)] = func.__doc__

@@ -64,10 +64,49 @@ class OpType(Enum):
     OPERATION = "operation"
 
 
+@dataclass(frozen=True)
+class Placement:
+    """Where the resolver places a wrapping loop (``OperationMetadata.wraps``).
+
+    Without ``operations`` the loop wraps the whole time-step body; with them, the
+    named operations and everything downstream of them in their scope
+    (:mod:`~neofoam.framework.graph.wrapping`). Use it for a loop contributed from
+    outside the solver; a solver's own loop belongs in its ``StepBuilder``. Frozen.
+
+    Example::
+
+        OperationMetadata(op_name="couple", wraps=Placement(operations=("solve_T",)))
+    """
+
+    operations: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
+class Schedule:
+    """In which pass of its wrapping loops a decorated operation runs.
+
+    By default it runs in every pass; ``first`` (``final``) limits it to the first
+    (final) pass. Use it with the ``operation`` decorators of solvers and models.
+    Marking both is rejected when the operation is built. Frozen.
+
+    Example::
+
+        @solver.operation(depends_on=["p"], schedule=Schedule(first=True))
+    """
+
+    first: bool = False
+    final: bool = False
+
+
 @dataclass
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated
-    functions and DAG nodes."""
+    functions and DAG nodes.
+
+    ``wraps`` makes the operation a wrapping loop and says where the resolver places
+    it; ``first`` (``final``) runs it only in the first (final) pass of the wrapping
+    loops around it.
+    """
 
     op_name: str | None = None
 
@@ -85,11 +124,21 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
+    wraps: Placement | None = None
+    first: bool = False
+    final: bool = False
 
     # DAG visualization properties
     shape: str = "box"
     color: str | None = None
     used_by: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.first and self.final:
+            raise ValueError(
+                f"operation {self.op_name} is marked first and final; an operation runs "
+                "in the first or in the final pass of its wrapping loops, not both"
+            )
 
     @property
     def is_operation(self) -> bool:
@@ -105,6 +154,7 @@ class OperationMetadata:
 
     @property
     def name(self) -> str | None:
+        """``[<domain>.]<op>``."""
         if self.op_name is None:
             return None
         if self.domain_name:
