@@ -32,15 +32,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
     float epsilonII = 1e-13;
     Foam::Time& runTime = *timePtr;
 
-    auto [execName, exec] = GENERATE(allAvailableExecutor());
-#if defined(NEON_ENABLE_SYCL)
-    // Ginkgo's SYCL backend does not implement the distributed index map (build_mapping and
-    // map_to_local are GKO_NOT_IMPLEMENTED), so the distributed solves cannot run on the GPU.
-    if (std::holds_alternative<NeoN::GPUExecutor>(exec))
-    {
-        SKIP("distributed Ginkgo solves are not supported on SYCL");
-    }
-#endif
+    auto [execName, exec] = GENERATE(distributedSolverExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;

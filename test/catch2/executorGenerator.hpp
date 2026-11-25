@@ -65,3 +65,21 @@ Catch::Generators::GeneratorWrapper<std::pair<std::string, NeoN::Executor>> allA
         Catch::Detail::make_unique<ExecutorGenerator>()
     );
 }
+
+// Ginkgo's SYCL backend does not implement the distributed index map (build_mapping and
+// map_to_local are GKO_NOT_IMPLEMENTED), so the distributed solves cannot run on the SYCL GPU
+// executor. Leave it out rather than SKIP: a SKIP marks the whole test case as skipped, and Catch2
+// then fails the run because no test case passed.
+Catch::Generators::GeneratorWrapper<std::pair<std::string, NeoN::Executor>>
+distributedSolverExecutor()
+{
+#if defined(NEON_ENABLE_SYCL)
+    return Catch::Generators::filter(
+        [](const std::pair<std::string, NeoN::Executor>& exec)
+        { return !std::holds_alternative<NeoN::GPUExecutor>(exec.second); },
+        allAvailableExecutor()
+    );
+#else
+    return allAvailableExecutor();
+#endif
+}
