@@ -27,7 +27,7 @@ concurrency:
 # The jobs run in stages so that a broken commit occupies few runners:
 #   gate -> pre-commit and changelog (no build), and in parallel the Linux clang build and tests
 #        -> Linux gcc, macOS, IWYU/clang-tidy, Python 3.12 (tests, mypy, docs), LRZ GPU
-#        -> Python 3.11/3.13 (develop/main pushes, weekly run, dispatch)
+#        -> Python 3.11/3.13 (tests only)
 # The GPU benchmarks run weekly in gpu_benchmark.yaml.
 jobs:
   # Evaluates the event, the PR labels and the NeoN branch to build against once. Adding or
@@ -79,8 +79,8 @@ jobs:
           lint=$rebuild
           build=$rebuild
           if $is_pr && has skip-build; then build=false; fi
-          # Python 3.11/3.13 only outside PRs; PRs test 3.12
-          python_all=$([[ "$build" == true ]] && ! $is_pr && echo true || echo false)
+          # Python 3.11/3.13 run wherever the builds do, PRs included
+          python_all=$build
 
           {
             echo "lint=$lint"
