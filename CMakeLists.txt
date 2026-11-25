@@ -96,6 +96,20 @@ if(NEOFOAM_USE_INSTALLED_NEON)
     message(FATAL_ERROR "OpenFOAM needs NeoN_DEFINE_DP_LABEL=${NeoN_DEFINE_DP_LABEL} but the "
                         "installed NeoN was built with ${_neon_dp_label}")
   endif()
+  # Otherwise NeoN's CxxThirdParty.cmake provides nanobind. Take it from the Python environment, as
+  # NeoN_EXTERNAL_NANOBIND and pybFoam do. The installed NeoN brings its own _neon module, which
+  # shares types with these bindings only if both use the same nanobind ABI.
+  if(NEOFOAM_BUILD_PYTHON_BINDINGS)
+    find_package(
+      Python
+      COMPONENTS Interpreter Development.Module
+      REQUIRED)
+    execute_process(
+      COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      OUTPUT_VARIABLE nanobind_ROOT)
+    find_package(nanobind CONFIG REQUIRED)
+  endif()
 elseif(NOT DEFINED NEOFOAM_NEON_DIR)
   if(EXISTS ${PROJECT_SOURCE_DIR}/src/NeoN/CMakeLists.txt AND NOT DEFINED NEOFOAM_NEON_VERSION)
     message(STATUS "src/NeoN/CMakeLists.txt found, using NeoN")
