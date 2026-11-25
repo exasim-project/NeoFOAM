@@ -53,7 +53,8 @@ class Context(BaseModel):
 
     ``loops`` holds the running loops, outermost first. ``run_every_pass`` names
     ``final`` operations that also run in every other pass, e.g. to watch them
-    while debugging.
+    while debugging. ``region`` is set by ``SolverRuntime.initialize``; ``None`` for
+    a single-region case.
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -68,6 +69,7 @@ class Context(BaseModel):
     write_fields: set[str] = Field(default_factory=set)
     loops: list[LoopEntry] = Field(default_factory=list)
     run_every_pass: set[str] = Field(default_factory=set)
+    region: Optional[str] = None
 
     def mark_final(self, final: bool = True) -> None:
         """Mark the pass the innermost loop is about to run as its last.

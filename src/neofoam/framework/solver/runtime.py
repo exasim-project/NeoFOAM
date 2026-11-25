@@ -39,11 +39,13 @@ class SolverRuntime:
     Owns per-instance state (models, configs, argv). All decorator-
     registered callables live on the spec; this object provides the
     public execution API (initialize, execution_graph, operations).
+    ``region`` is ``None`` for a single-region case.
     """
 
     spec: "SolverSpec"
     name: str
     argv: list[Any] = field(default_factory=list)
+    region: Optional[str] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
@@ -86,8 +88,10 @@ class SolverRuntime:
     # ------------------------------------------------------------------
 
     def initialize(self) -> "Context":
-        """Execute the registered initialization step."""
-        return self.spec._run_initialize(self)
+        """Execute the registered initialization step; the context gets the runtime's region."""
+        ctx = self.spec._run_initialize(self)
+        ctx.region = self.region
+        return ctx
 
     def execution_graph(
         self, domain_name: Optional[str] = None, ctx: Optional["Context"] = None

@@ -22,9 +22,16 @@ class StagedInitRunner:
     lives here, not on the spec — keeping the spec hashable and reusable.
     """
 
-    def __init__(self, spec: StagedInitSpec, *, argv: Optional[list[str]] = None) -> None:
+    def __init__(
+        self,
+        spec: StagedInitSpec,
+        *,
+        argv: Optional[list[str]] = None,
+        region: Optional[str] = None,
+    ) -> None:
         self._spec = spec
         self.argv: list[str] = argv or []
+        self.region = region
         self.core_models: list[Any] = []
         self.optional_models: list[Any] = []
         self.preprocess_tools: list[Any] = []
@@ -68,4 +75,4 @@ class StagedInitRunner:
         self.run_resolve(config)
 
         lazy_inits = self.run_build()
-        return execute_initialization(lazy_inits)
+        return execute_initialization(lazy_inits, region=self.region)
