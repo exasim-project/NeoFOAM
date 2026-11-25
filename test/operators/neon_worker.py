@@ -36,6 +36,11 @@ Operator notes:
   ``add_consistent_flux_correction`` the same way ``fvc::snGrad`` reads it,
   without disturbing the schemes every other op shares. Applied to a zeroed
   ``phiHbyA``, so the result is the correction term alone.
+- the buoyancy helpers (``sn_grad``, ``mag_sf``, ``create_gh``/``create_ghf``,
+  ``constrain_pressure``, ``update_velocity_buoyant``) answer with internal faces
+  followed by the boundary faces; ``snGrad`` swaps a copy of the mapped dictionary
+  with the requested ``snGradSchemes/default`` into the runtime for the one call,
+  since ``sn_grad`` reads the runtime's schemes as ``fvc::snGrad`` does.
 - all results are copied to host; every NeoN object stays local to
   ``serve`` so teardown happens before ``nn.finalize()``.
 """
@@ -63,6 +68,13 @@ def _to_numpy(vec: Any) -> np.ndarray:
     return np.asarray(vec.copy_to_host())
 
 
+def _surface(field: Any) -> np.ndarray:
+    """Internal faces followed by the boundary faces."""
+    return np.concatenate(
+        [_to_numpy(field.internal_vector()), _to_numpy(field.boundary_data_value())]
+    )
+
+
 def serve(case_dir: Path, executor: str) -> None:
     """Read the case once, then serve requests.
 
@@ -82,6 +94,7 @@ def serve(case_dir: Path, executor: str) -> None:
         "U": nfb.read_vector_volume_field(rt, "U"),
         "rAU": nfb.read_scalar_volume_field(rt, "rAU"),
         "rAtU": nfb.read_scalar_volume_field(rt, "rAtU"),
+        "p_rgh": nfb.read_scalar_volume_field(rt, "p_rgh"),
         "Gamma": nfb.create_uniform_surface_field(rt, "Gamma", 1.0),
         "phi": nfb.create_phi(rt, "U"),
     }
@@ -134,6 +147,51 @@ def serve(case_dir: Path, executor: str) -> None:
         )
         return _to_numpy(phi_hbya.internal_vector())
 
+    def with_sn_grad_scheme(scheme: str) -> Any:
+        """A copy of the mapped dictionary whose snGradSchemes/default is ``scheme``."""
+        schemes = nn.Dictionary(fv_schemes)
+        sn_grad_schemes = nn.Dictionary()
+        sn_grad_schemes.insert_string("default", scheme)
+        schemes.insert_dict("snGradSchemes", sn_grad_schemes)
+        return schemes
+
+    def sn_grad(scheme: str) -> np.ndarray:
+        """``nfb.sn_grad(T)`` with ``scheme`` as the runtime's snGradSchemes default."""
+        staged = rt.fv_schemes_dict
+        rt.fv_schemes_dict = with_sn_grad_scheme(scheme)
+        try:
+            return _surface(nfb.sn_grad(rt, fields["T"]))
+        finally:
+            rt.fv_schemes_dict = staged
+
+    def linear() -> Any:
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
+
+    def buoyancy_flux() -> Any:
+        """``flux(U) + flux(U)*interpolate(T)``: the OpenFOAM worker's phiHbyA."""
+        return nfb.flux(fields["U"]) + nfb.flux(fields["U"]) * linear().interpolate(fields["T"])
+
+    def constrain_pressure() -> np.ndarray:
+        """The boundary snGrad of p_rgh once constrain_pressure set its walls' gradient."""
+        rauf = linear().interpolate(fields["rAU"])
+        nfb.constrain_pressure(fields["p_rgh"], fields["U"], buoyancy_flux(), rauf)
+        return _to_numpy(nfb.sn_grad(rt, fields["p_rgh"]).boundary_data_value())
+
+    def constrain_pressure_foreign_mesh() -> None:
+        """constrain_pressure with a phiHbyA on another mesh: must raise."""
+        mesh = nn.create_single_cell_mesh(nn.SerialExecutor())
+        foreign = nn.ScalarSurfaceField(nn.SerialExecutor(), "phiHbyA", mesh)
+        rauf = linear().interpolate(fields["rAU"])
+        nfb.constrain_pressure(fields["p_rgh"], fields["U"], foreign, rauf)
+
+    def update_velocity_buoyant() -> np.ndarray:
+        """``U + rAU*reconstruct(flux(U)*snGrad(T)/rAUf)`` into a fresh copy of U."""
+        rauf = linear().interpolate(fields["rAU"])
+        numerator = nfb.flux(fields["U"]) * nfb.sn_grad(rt, fields["T"])
+        corrected = nfb.read_vector_volume_field(rt, "U")
+        nfb.update_velocity_buoyant(fields["U"], fields["rAU"], numerator, rauf, corrected)
+        return _to_numpy(corrected.internal_vector())
+
     def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
         interp = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
         return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
@@ -151,6 +209,23 @@ def serve(case_dir: Path, executor: str) -> None:
         ("field.reload", ("rAtU",)): lambda s, d: reload_field(
             "rAtU", lambda: nfb.read_scalar_volume_field(rt, "rAtU")
         ),
+        ("field.reload", ("p_rgh",)): lambda s, d: reload_field(
+            "p_rgh", lambda: nfb.read_scalar_volume_field(rt, "p_rgh")
+        ),
+        ("snGrad", ("T",)): lambda s, d: sn_grad(s),
+        ("magSf", ()): lambda s, d: _surface(nfb.mag_sf(rt)),
+        ("gh", ()): lambda s, d: np.concatenate(
+            [
+                _to_numpy(nfb.create_gh(rt).internal_vector()),
+                _to_numpy(nfb.create_gh(rt).boundary_data_value()),
+            ]
+        ),
+        ("ghf", ()): lambda s, d: _surface(nfb.create_ghf(rt)),
+        ("constrainPressure", ("p_rgh", "U", "rAU", "T")): lambda s, d: constrain_pressure(),
+        ("constrainPressure.foreignMesh", ("p_rgh", "U", "rAU")): lambda s, d: (
+            constrain_pressure_foreign_mesh()
+        ),
+        ("updateVelocityBuoyant", ("U", "rAU", "T")): lambda s, d: update_velocity_buoyant(),
         ("flux.update", ("U",)): lambda s, d: reload_field("phi", lambda: nfb.create_phi(rt, "U")),
         ("interpolate", ("T",)): interpolate_t,
         ("flux", ("U",)): lambda s, d: _to_numpy(nfb.flux(fields["U"]).internal_vector()),

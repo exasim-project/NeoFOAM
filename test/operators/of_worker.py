@@ -27,6 +27,15 @@ Operator notes:
   the ``incompressibleFluid`` solver writes it, with ``T`` standing in for the
   pressure. ``fvc.snGrad`` takes the requested scheme inline, so ``corrected``
   / ``uncorrected`` need no fvSchemes staging.
+- ``fvc.snGrad(T)`` and ``mesh.magSf`` / ``mesh.Cf``: internal faces followed by the
+  ``walls`` faces, NeoN's surface layout (the case has the one patch).
+- ``constrainPressure``: ``constrainPressure(p_rgh, U, phiHbyA, rAUf)`` with
+  ``phiHbyA = flux(U) + flux(U)*interpolate(T)`` standing in for a buoyancy flux
+  (one that differs from ``Sf & U`` on the walls), answered with the ``walls``
+  snGrad of ``p_rgh`` (its fixedFluxPressure gradient). ``_unit`` makes the
+  dimensions of these stand-ins check out without changing a value.
+- ``updateVelocityBuoyant``: ``U + rAU*reconstruct(flux(U)*snGrad(T)/rAUf)``, the
+  buoyant velocity corrector with ``U`` standing in for HbyA.
 - ``fvm.*`` return the assembled matrix applied to the current field,
   ``M & psi``. ``operator&`` is not bound, but per component
   ``M & psi == A()*psi - H()`` (the component-average boundary-diagonal terms
@@ -66,6 +75,34 @@ def _internal(result: Any) -> np.ndarray:
     return np.asarray(result.ref().internalField())
 
 
+def _with_walls(field: Any) -> np.ndarray:
+    """Internal faces followed by the ``walls`` faces: NeoN's surface-field layout."""
+    return np.concatenate([np.asarray(field.internalField()), np.asarray(field["walls"])])
+
+
+def _unit(dimensions: Any) -> Any:
+    """A 1 with ``dimensions``: T stands in for quantities of other units, the values stay."""
+    return pyf.dimensionedScalar("unit", dimensions, 1.0)
+
+
+def _constrain_pressure(p_rgh: Any, u: Any, rau: Any, t: Any, mesh: Any) -> np.ndarray:
+    """The fixedFluxPressure gradient constrainPressure sets on the walls."""
+    rauf = pyf.surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rau))
+    flux_unit = _unit(pyf.dimless / pyf.dimTemperature)
+    phi_hbya = pyf.surfaceScalarField(
+        pyf.Word("phiHbyA"), fvc.flux(u) + fvc.flux(u) * fvc.interpolate(t) * flux_unit
+    )
+    pyf.constrainPressure(p_rgh, u, phi_hbya, rauf)
+    p_rgh.correctBoundaryConditions()
+    return np.asarray(fvc.snGrad(p_rgh).ref()["walls"])
+
+
+def _update_velocity_buoyant(u: Any, rau: Any, t: Any) -> np.ndarray:
+    """``U + rAU*reconstruct(flux(U)*snGrad(T)/rAUf)``, U standing in for HbyA."""
+    numerator = fvc.flux(u) * fvc.snGrad(t) * _unit(pyf.dimLength / pyf.dimTemperature)
+    return _internal(u + rau * fvc.reconstruct(numerator / fvc.interpolate(rau)))
+
+
 def _matrix_apply(matrix: Any, psi: Any) -> np.ndarray:
     """M & psi from the bound accessors: A()*psi - H() (per unit volume)."""
     a = _internal(matrix.A())
@@ -82,12 +119,17 @@ def _generate_mesh(case_dir: Path, runtime: Any) -> None:
     gc.collect()
 
 
-def _set_field(field: Any, values: np.ndarray | None) -> None:
-    """Copy pushed values into the field and persist 0/<name> for neon."""
+def _set_field(field: Any, values: np.ndarray | None, correct: bool = True) -> None:
+    """Copy pushed values into the field and persist 0/<name> for neon.
+
+    ``correct=False`` for a fixedFluxPressure field, which may not evaluate its
+    boundary before constrainPressure gave it a gradient.
+    """
     assert values is not None
     view = np.asarray(field.internalField())
     view[:] = values.reshape(view.shape)
-    field.correctBoundaryConditions()
+    if correct:
+        field.correctBoundaryConditions()
     pyf.write(field)
 
 
@@ -109,6 +151,7 @@ def run(case_dir: Path) -> None:
     gamma = volScalarField.read_field(mesh, "Gamma")
     rau = volScalarField.read_field(mesh, "rAU")
     ratu = volScalarField.read_field(mesh, "rAtU")
+    p_rgh = volScalarField.read_field(mesh, "p_rgh")
     phi = pyf.createPhi(u)
     centres = np.array(mesh.C().internalField())
 
@@ -119,11 +162,22 @@ def run(case_dir: Path) -> None:
         ("field.get", ("Gamma",)): lambda s, d: np.array(gamma.internalField()),
         ("field.get", ("rAU",)): lambda s, d: np.array(rau.internalField()),
         ("field.get", ("rAtU",)): lambda s, d: np.array(ratu.internalField()),
+        ("field.get", ("p_rgh",)): lambda s, d: np.array(p_rgh.internalField()),
         ("field.set", ("T",)): lambda s, d: _set_field(t, d),
         ("field.set", ("U",)): lambda s, d: _set_field(u, d),
         ("field.set", ("Gamma",)): lambda s, d: _set_field(gamma, d),
         ("field.set", ("rAU",)): lambda s, d: _set_field(rau, d),
         ("field.set", ("rAtU",)): lambda s, d: _set_field(ratu, d),
+        ("field.set", ("p_rgh",)): lambda s, d: _set_field(p_rgh, d, correct=False),
+        ("mesh.Cf", ()): lambda s, d: _with_walls(mesh.Cf()),
+        ("mesh.magSf", ()): lambda s, d: _with_walls(mesh.magSf()),
+        ("fvc.snGrad", ("T",)): lambda s, d: _with_walls(fvc.snGrad(t, scheme=s).ref()),
+        ("constrainPressure", ("p_rgh", "U", "rAU", "T")): lambda s, d: _constrain_pressure(
+            p_rgh, u, rau, t, mesh
+        ),
+        ("updateVelocityBuoyant", ("U", "rAU", "T")): lambda s, d: _update_velocity_buoyant(
+            u, rau, t
+        ),
         ("flux.update", ("U",)): lambda s, d: phi.assign(fvc.flux(u)),
         ("fvc.interpolate", ("T",)): lambda s, d: _internal(fvc.interpolate(t)),
         ("fvc.flux", ("U",)): lambda s, d: _internal(fvc.flux(u)),

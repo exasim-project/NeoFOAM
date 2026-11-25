@@ -199,31 +199,50 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "set_ref_cell",
-        [](nf::RunTime& rt, const std::string& fieldName, const std::string& pisoDict
-        ) -> std::tuple<int, double, bool>
+        [](nf::RunTime& rt,
+           const std::string& fieldName,
+           const std::string& pisoDict,
+           const std::string& solvedFieldName) -> std::tuple<int, double, bool>
         {
-            // Read OF field temporarily just to check needReference
-            Foam::volScalarField ofField(
-                Foam::IOobject(
-                    fieldName,
-                    rt.mesh.time().timeName(),
-                    rt.mesh,
-                    Foam::IOobject::MUST_READ,
-                    Foam::IOobject::NO_WRITE,
-                    Foam::IOobject::NO_REGISTER
-                ),
-                rt.mesh
+            // Read the OF fields temporarily just to check needReference
+            auto readField = [&rt](const std::string& name)
+            {
+                return Foam::volScalarField(
+                    Foam::IOobject(
+                        name,
+                        rt.mesh.time().timeName(),
+                        rt.mesh,
+                        Foam::IOobject::MUST_READ,
+                        Foam::IOobject::NO_WRITE,
+                        Foam::IOobject::NO_REGISTER
+                    ),
+                    rt.mesh
+                );
+            };
+            const Foam::volScalarField ofField(readField(fieldName));
+            // A Boussinesq solver references p (pRefCell/pRefValue) but solves for p_rgh,
+            // whose boundary conditions decide whether a reference is needed.
+            const Foam::volScalarField solvedField(
+                readField(solvedFieldName.empty() ? fieldName : solvedFieldName)
             );
             Foam::label refCell = 0;
             Foam::scalar refValue = 0.0;
-            Foam::setRefCell(ofField, rt.mesh.solutionDict().subDict(pisoDict), refCell, refValue);
-            bool needs = ofField.needReference() && refCell >= 0;
+            Foam::setRefCell(
+                ofField,
+                solvedField,
+                rt.mesh.solutionDict().subDict(pisoDict),
+                refCell,
+                refValue
+            );
+            bool needs = solvedField.needReference() && refCell >= 0;
             return {static_cast<int>(refCell), refValue, needs};
         },
         "runtime"_a,
         "field_name"_a = std::string("p"),
         "piso_dict"_a = std::string("PISO"),
-        "Get (refCell, refValue, needsReference) from fvSolution"
+        "solved_field_name"_a = std::string(),
+        "Get (refCell, refValue, needsReference) from fvSolution: the <field_name>RefCell/"
+        "RefValue entries, needed when solved_field_name (default field_name) needs a reference"
     );
 
     // -------------------------------------------------------------------

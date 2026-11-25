@@ -100,6 +100,39 @@ void registerPressureVelocityCoupling(nb::module_& m)
     );
 
     m.def(
+        "constrain_pressure",
+        [](fvcc::VolumeField<NeoN::scalar>& p_rgh,
+           const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
+           const fvcc::SurfaceField<NeoN::scalar>& rAUf)
+        { nf::constrainPressure(p_rgh, U, phiHbyA, rAUf); },
+        "p_rgh"_a,
+        "U"_a,
+        "phiHbyA"_a,
+        "rAUf"_a,
+        "OpenFOAM's constrainPressure (rho 1, no MRF): set the refGrad of every "
+        "fixedFluxPressure patch to (phiHbyA - (Sf & U))/(magSf*rAUf), so the projection "
+        "cancels the wall-normal flux, then correct p_rgh's boundary."
+    );
+
+    m.def(
+        "update_velocity_buoyant",
+        [](const fvcc::VolumeField<NeoN::Vec3>& hByA,
+           const fvcc::VolumeField<NeoN::scalar>& rAU,
+           const fvcc::SurfaceField<NeoN::scalar>& numeratorFlux,
+           const fvcc::SurfaceField<NeoN::scalar>& rAUf,
+           fvcc::VolumeField<NeoN::Vec3>& U)
+        { nf::updateVelocityBuoyant(hByA, rAU, numeratorFlux, rAUf, U); },
+        "hByA"_a,
+        "rAU"_a,
+        "numerator_flux"_a,
+        "rAUf"_a,
+        "U"_a,
+        "Buoyant velocity corrector U = HbyA + rAU*reconstruct(numerator_flux/rAUf), with "
+        "numerator_flux = phig - p_rghEqn.flux(); sets the internal cells only."
+    );
+
+    m.def(
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const nf::PDE<NeoN::scalar>& pEqn,

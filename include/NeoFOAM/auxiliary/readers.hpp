@@ -295,6 +295,14 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  dict.insert("fixedValue", type_primitive_t {});
              }},
             {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+            // The Boussinesq p_rgh outlet p_rgh = p - rhok*gh: rhok changes with T, so the
+            // Boussinesq model imposes it (set_patch_fixed_values) at start and after every
+            // rhok update.
+            {"prghPressure", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+            // The Jayatilleke thermal wall function: the Boussinesq model computes the wall
+            // alphat from k, nu and the wall distance.
+            {"alphatJayatillekeWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("calculated")); }},
             {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
             {"extrapolatedCalculated",
              [](auto& dict) { dict.insert("type", std::string("calculated")); }},

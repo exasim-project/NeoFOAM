@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
+#include <stdexcept>
+#include <string>
+
 #include "NeoN/NeoN.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/reconstruct.hpp"
 
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
 #include "Kokkos_Core.hpp"
@@ -33,6 +37,116 @@ void constrainHbyA(
             );
         }
     }
+}
+
+namespace
+{
+
+// The kernels index every operand with the first one's face and cell numbers, so fields of
+// another mesh (another region of a multi-region case) would be read out of bounds.
+void requireSameMesh(
+    const NeoN::UnstructuredMesh& mesh,
+    const NeoN::UnstructuredMesh& other,
+    const std::string& caller,
+    const std::string& operand
+)
+{
+    if (&mesh != &other)
+    {
+        throw std::invalid_argument(caller + ": " + operand + " lives on another mesh");
+    }
+}
+
+} // namespace
+
+void constrainPressure(
+    nnfvcc::VolumeField<scalar>& p_rgh,
+    const nnfvcc::VolumeField<Vec3>& U,
+    const nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::SurfaceField<scalar>& rAUf
+)
+{
+    const auto& mesh = p_rgh.mesh();
+    requireSameMesh(mesh, U.mesh(), "constrain_pressure", "U");
+    requireSameMesh(mesh, phiHbyA.mesh(), "constrain_pressure", "phiHbyA");
+    requireSameMesh(mesh, rAUf.mesh(), "constrain_pressure", "rAUf");
+    auto refGrad = p_rgh.boundaryData().refGrad().view();
+    const auto [phiHbyABc, uBc, rAUfBc, sfBc, magSfBc] = views(
+        phiHbyA.boundaryData().value(),
+        U.boundaryData().value(),
+        rAUf.boundaryData().value(),
+        mesh.boundaryMesh().faceNormals(),
+        mesh.boundaryMesh().faceAreas()
+    );
+
+    const auto& pBCs = p_rgh.boundaryConditions();
+    for (auto patchi = 0; patchi < pBCs.size(); ++patchi)
+    {
+        if (pBCs[patchi].name() != "fixedFluxPressure")
+        {
+            continue;
+        }
+        parallelFor(
+            p_rgh.exec(),
+            p_rgh.boundaryData().range(patchi),
+            NEON_LAMBDA(const size_t bfacei) {
+                // geometricOneField / NullMRF branch: rho == 1, MRF.relative == identity.
+                refGrad[bfacei] = (phiHbyABc[bfacei] - (sfBc[bfacei] & uBc[bfacei]))
+                                / (magSfBc[bfacei] * rAUfBc[bfacei]);
+            },
+            "constrainPressure"
+        );
+    }
+
+    p_rgh.correctBoundaryConditions();
+}
+
+void updateVelocityBuoyant(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::SurfaceField<scalar>& numeratorFlux,
+    const nnfvcc::SurfaceField<scalar>& rAUf,
+    nnfvcc::VolumeField<Vec3>& u
+)
+{
+    const auto exec = u.exec();
+    const auto& mesh = u.mesh();
+    requireSameMesh(mesh, hByA.mesh(), "update_velocity_buoyant", "hByA");
+    requireSameMesh(mesh, rAU.mesh(), "update_velocity_buoyant", "rAU");
+    requireSameMesh(mesh, numeratorFlux.mesh(), "update_velocity_buoyant", "numerator_flux");
+    requireSameMesh(mesh, rAUf.mesh(), "update_velocity_buoyant", "rAUf");
+
+    // scaledFlux = numeratorFlux / rAUf, the fvc::reconstruct argument. rAUf interpolates the
+    // inverse momentum diagonal, which is positive, so the division needs no guard.
+    auto sBCs = nnfvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh);
+    auto scaledFlux = nnfvcc::SurfaceField<scalar>(exec, "scaledFlux", mesh, sBCs);
+    auto [sfIn, sfBc] = views(scaledFlux.internalVector(), scaledFlux.boundaryData().value());
+    const auto [numIn, numBc, rAUfIn, rAUfBc] = views(
+        numeratorFlux.internalVector(),
+        numeratorFlux.boundaryData().value(),
+        rAUf.internalVector(),
+        rAUf.boundaryData().value()
+    );
+    NeoN::parallelFor(
+        exec,
+        {0, mesh.nInternalFaces()},
+        NEON_LAMBDA(const NeoN::localIdx facei) { sfIn[facei] = numIn[facei] / rAUfIn[facei]; },
+        "updateVelocityBuoyantInternal"
+    );
+    NeoN::parallelFor(
+        exec,
+        {0, scaledFlux.boundaryData().value().size()},
+        NEON_LAMBDA(const NeoN::localIdx bfacei) { sfBc[bfacei] = numBc[bfacei] / rAUfBc[bfacei]; },
+        "updateVelocityBuoyantBoundary"
+    );
+
+    auto uCorr = nnfvcc::reconstruct(scaledFlux);
+
+    auto [iHbyA, iRAU, iCorr] =
+        views(hByA.internalVector(), rAU.internalVector(), uCorr.internalVector());
+    u.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
+        return iHbyA[celli] + iRAU[celli] * iCorr[celli];
+    });
 }
 
 nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
@@ -211,10 +325,6 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 }
 
 
-namespace
-{
-
-/* @brief The snGradSchemes entry for fieldName, mirroring fvc::snGrad's lookup. */
 NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::string& fieldName)
 {
     if (fvSchemes.contains("snGradSchemes"))
@@ -238,7 +348,16 @@ NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::strin
     return NeoN::TokenList({std::string("corrected")});
 }
 
-} // namespace
+nnfvcc::SurfaceField<scalar>
+snGrad(const nnfvcc::VolumeField<scalar>& field, const NeoN::Dictionary& fvSchemes)
+{
+    auto scheme = nnfvcc::FaceNormalGradient<scalar>(
+        field.exec(),
+        field.mesh(),
+        readSnGradScheme(fvSchemes, field.name)
+    );
+    return scheme.faceNormalGrad(field);
+}
 
 void addConsistentFluxCorrection(
     nnfvcc::SurfaceField<scalar>& phiHbyA,
