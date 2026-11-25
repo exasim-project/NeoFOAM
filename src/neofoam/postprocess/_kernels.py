@@ -32,4 +32,9 @@ def __getattr__(name: str) -> Any:
             "neofoam.neofoam_bindings is not built in this interpreter — install "
             "the package (pip install .) instead of importing it from src/"
         )
+    # The kernels copy even numpy input into NeoN vectors, so Kokkos has to be up;
+    # since Kokkos 5.1 it aborts otherwise. A host solver never starts NeoN itself.
+    from neofoam.solver.neon_runtime import ensure_neon_initialized  # noqa: PLC0415
+
+    ensure_neon_initialized(["neofoam-postprocess"])
     return getattr(bindings.postprocess, name)
