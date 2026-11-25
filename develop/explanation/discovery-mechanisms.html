@@ -734,9 +734,9 @@ selection.</strong></p>
 <p>The solver registers a known list of specs via
 <code class="docutils literal notranslate"><span class="pre">StagedInit.register_core_models([...])</span></code>. At LOAD time, exactly one
 of them is selected — typically by reading a case file directly — and
-added to <code class="docutils literal notranslate"><span class="pre">LoadResult.core_models</span></code>. The solver pulls the chosen spec
-out of <code class="docutils literal notranslate"><span class="pre">state.core_models</span></code> by index when building its execution
-graph.</p>
+its runtime is added to <code class="docutils literal notranslate"><span class="pre">LoadResult.core_models</span></code>. The solver pulls
+that runtime out of <code class="docutils literal notranslate"><span class="pre">state.core_models</span></code> by index when building its
+execution graph.</p>
 <p>This is the right mechanism when:</p>
 <ul class="simple">
 <li><p>The component is mandatory; <em>some</em> variant has to run.</p></li>
@@ -748,8 +748,8 @@ each other.</p></li>
 </ul>
 <p>In <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>, the pressure-velocity algorithm uses this
 mechanism. <code class="docutils literal notranslate"><span class="pre">PressureVelocityAlgorithm.detect_and_create()</span></code> reads
-<code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> exactly once and returns the right spec; the
-<code class="docutils literal notranslate"><span class="pre">execution_graph</span></code> step then pulls it out of
+<code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> exactly once and returns a fresh runtime of the
+right spec; the <code class="docutils literal notranslate"><span class="pre">execution_graph</span></code> step then pulls it out of
 <code class="docutils literal notranslate"><span class="pre">self.state.core_models[0]</span></code>.</p>
 <section id="decision-tree">
 <h3>Decision tree<a class="headerlink" href="#decision-tree" title="Link to this heading">¶</a></h3>

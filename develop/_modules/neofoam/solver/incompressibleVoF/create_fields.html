@@ -734,6 +734,12 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span><span class="o">.</span><span class="n">outputTime</span><span class="p">())</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_steps</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The steps of the runtime's ``@build`` alone, without field synthesis."""</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">build</span><span class="p">(</span><span class="n">runtime</span><span class="p">))</span> <span class="k">if</span> <span class="n">build</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+
+
 <div class="viewcode-block" id="create_init">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleVoF.create_fields.html#neofoam.solver.incompressibleVoF.create_fields.create_init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
@@ -794,23 +800,16 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="c1"># Register the core models under their solver-facing names, then run</span>
-        <span class="c1"># each spec's @build to emit the field/model InitSteps it owns (phi,</span>
-        <span class="c1"># mixture, alpha1/alpha2, rho, rhoPhi from alpha-advection; U, p_rgh, gh,</span>
-        <span class="c1"># ghf, p, pimple_control, pressure_reference from PIMPLE). The bare</span>
-        <span class="c1"># ModelSpec is not a BuildsInitSteps runtime, so add_core_models only</span>
-        <span class="c1"># registers it — the @build steps are added explicitly here.</span>
-        <span class="c1"># postProcess *is* a ModelRuntime, so add_core_models runs its @build for</span>
-        <span class="c1"># it (emitting models.post_processor) — unlike the two bare specs above.</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="p">(</span><span class="s2">"alpha_advection"</span><span class="p">,</span> <span class="n">alpha_model</span><span class="p">),</span>
-                <span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">),</span>
-                <span class="p">(</span><span class="s2">"post_process_model"</span><span class="p">,</span> <span class="n">post_process_model</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span><span class="n">alpha_model</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">):</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">build_steps</span><span class="p">())</span>
+        <span class="c1"># Not add_core_models for alpha-advection and PIMPLE: its run_build would</span>
+        <span class="c1"># synthesize their schema-only field declarations, while each @build</span>
+        <span class="c1"># reads or creates those fields itself (phi, mixture, alpha1/alpha2, rho,</span>
+        <span class="c1"># rhoPhi from alpha-advection; U, p_rgh, gh, ghf, p, pimple_control,</span>
+        <span class="c1"># pressure_reference from PIMPLE).</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"alpha_advection"</span><span class="p">,</span> <span class="n">alpha_model</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">"post_process_model"</span><span class="p">,</span> <span class="n">post_process_model</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">runtime</span> <span class="ow">in</span> <span class="p">(</span><span class="n">alpha_model</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">):</span>
+            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_build_steps</span><span class="p">(</span><span class="n">runtime</span><span class="p">))</span>
 
         <span class="c1"># Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">create_turbulence</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>

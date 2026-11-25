@@ -667,9 +667,9 @@
 <span id="neofoam-solver-incompressiblevof-models-pressure-velocity-base"></span><h1>neofoam.solver.incompressibleVoF.models.pressure_velocity.base<a class="headerlink" href="#module-neofoam.solver.incompressibleVoF.models.pressure_velocity.base" title="Link to this heading">¶</a></h1>
 <p>Pressure-velocity coupling dispatcher for incompressibleVoF solver.</p>
 <p>VoF solvers always use PIMPLE (interFoam does not support SIMPLE or PISO).
-This module detects the PIMPLE dict from <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> and primes the
-PIMPLE <code class="docutils literal notranslate"><span class="pre">ModelSpec</span></code> with VoF-aware state attributes. Ported to the
-SolverSpec/ModelSpec API in <code class="docutils literal notranslate"><span class="pre">stack/python_arch</span></code>.</p>
+This module detects the PIMPLE dict from <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> and returns a
+fresh runtime of the PIMPLE spec. Ported to the SolverSpec/ModelSpec API in
+<code class="docutils literal notranslate"><span class="pre">stack/python_arch</span></code>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleVoF.models.pressure_velocity.base.PressureVelocityAlgorithm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.incompressibleVoF.models.pressure_velocity.base.</span></span><span class="sig-name descname"><span class="pre">PressureVelocityAlgorithm</span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleVoF/models/pressure_velocity/base.html#PressureVelocityAlgorithm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleVoF.models.pressure_velocity.base.PressureVelocityAlgorithm" title="Link to this definition">¶</a></dt>
@@ -685,8 +685,8 @@ symmetric with the incompressibleFluid dispatcher.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleVoF.models.pressure_velocity.base.PressureVelocityAlgorithm.detect_and_create">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">detect_and_create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleVoF/models/pressure_velocity/base.html#PressureVelocityAlgorithm.detect_and_create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleVoF.models.pressure_velocity.base.PressureVelocityAlgorithm.detect_and_create" title="Link to this definition">¶</a></dt>
-<dd><p>Detect the algorithm from fvSolution and return the PIMPLE spec.</p>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">detect_and_create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.model.runtime.html#neofoam.framework.model.runtime.ModelRuntime" title="neofoam.framework.model.runtime.ModelRuntime"><span class="pre">ModelRuntime</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleVoF/models/pressure_velocity/base.html#PressureVelocityAlgorithm.detect_and_create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleVoF.models.pressure_velocity.base.PressureVelocityAlgorithm.detect_and_create" title="Link to this definition">¶</a></dt>
+<dd><p>Detect the algorithm from fvSolution: a fresh runtime of the PIMPLE spec.</p>
 </dd></dl>
 
 </dd></dl>

@@ -883,14 +883,11 @@
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_loop_backend_steps</span><span class="p">())</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_writer_backend_steps</span><span class="p">())</span>
 
-        <span class="c1"># PIMPLE is passed to add_core_models so it lands in</span>
-        <span class="c1"># models.pressure_velocity. Its InitSteps come straight from the</span>
-        <span class="c1"># ModelSpec (used as both spec and "runtime", no instantiate). The</span>
-        <span class="c1"># field declarations are NOT synthesized (that path is pybFoam-only):</span>
-        <span class="c1"># the spec's @build emits the NeoN U/p/phi reads itself.</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)])</span>
-        <span class="k">if</span> <span class="n">pressure_model</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pressure_model</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">pressure_model</span><span class="p">))</span>
+        <span class="c1"># Not add_core_models: its run_build would synthesize the field declarations, a</span>
+        <span class="c1"># pybFoam-only path; the spec's @build emits the NeoN U/p/phi reads itself.</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pressure_model</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pressure_model</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">pressure_model</span><span class="p">))</span>
 
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init_model</span><span class="p">(</span><span class="s2">"nu_vol"</span><span class="p">,</span> <span class="n">create_nu_vol</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]))</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>

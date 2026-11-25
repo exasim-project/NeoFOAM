@@ -741,7 +741,7 @@
 <span class="c1"># ``configurations(solver)`` so the case wizard / agent fills the case scaffold.</span>
 <span class="c1"># Operations extend these via ``@PimpleFvSchemes.add(...)`` /</span>
 <span class="c1"># ``@PimpleFvSolution.add(...)`` below. Declaring them does not change the solve:</span>
-<span class="c1"># ``ModelSpec.build_steps`` runs only the ``@pimple.build`` function, never the</span>
+<span class="c1"># ``create_fields`` runs only the ``@pimple.build`` function, never the</span>
 <span class="c1"># field/config declarations, so the fields are still read by ``@build`` at run</span>
 <span class="c1"># time exactly as before.</span>
 <span class="n">PimpleFvSchemes</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSchemes</span><span class="p">)</span>
@@ -753,7 +753,7 @@
 <span class="n">PimpleFvSolution</span><span class="o">.</span><span class="n">add_controls</span><span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="n">pRefCell</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">pRefValue</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
 <span class="c1"># Declared so ``configurations(solver)`` and the MCP export the key set.</span>
-<span class="c1"># Loading is unaffected: this spec is used as its own runtime and never</span>
+<span class="c1"># Loading is unaffected: its runtime is built without ``instantiate`` and never</span>
 <span class="c1"># auto-loads its configs — ``control_factory`` drives instantiation.</span>
 <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">VofPimpleAlgorithmConfig</span><span class="p">)</span>
 <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">DynamicMeshControls</span><span class="p">)</span>

@@ -673,7 +673,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam.turbulence</span><span class="w"> </span><span class="kn">import</span> <span class="n">singlePhaseTransportModel</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields.synthesis</span><span class="w"> </span><span class="kn">import</span> <span class="n">synthesize_init_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">new_mesh</span><span class="p">,</span> <span class="n">refuse_mesh_refinement</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConfigContext</span><span class="p">,</span>
@@ -833,7 +832,7 @@
         <span class="c1"># part of the schema set. Their instances are not loaded here: the</span>
         <span class="c1"># OpenFOAM reader does not yet parse the typed scheme values</span>
         <span class="c1"># (``DivScheme`` …) / ``dict`` solver entries those slices carry.</span>
-        <span class="n">core_models</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">pressure_model</span><span class="p">,</span>
             <span class="n">solution_loop_model</span><span class="p">,</span>
             <span class="n">field_writer_model</span><span class="p">,</span>
@@ -928,15 +927,7 @@
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">writer_backend_steps</span><span class="p">(</span><span class="n">ControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">)))</span>
 
         <span class="c1"># PIMPLE is passed to add_core_models so it lands in models.pressure_velocity.</span>
-        <span class="c1"># Its lazy field/model InitSteps come straight from the ModelSpec (used here</span>
-        <span class="c1"># as both spec and "runtime", no instantiate). Mirror ModelRuntime.run_build:</span>
-        <span class="c1"># synthesise the ``pimple.field(...)`` declarations (``U`` / ``p``) *first*,</span>
-        <span class="c1"># then the ``@build`` steps (``phi``, pimpleControl, …) which depend on them.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)])</span>
-        <span class="k">for</span> <span class="n">decl</span> <span class="ow">in</span> <span class="n">pressure_model</span><span class="o">.</span><span class="n">field_decls</span><span class="p">:</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">synthesize_init_step</span><span class="p">(</span><span class="n">decl</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">pressure_model</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pressure_model</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">pressure_model</span><span class="p">))</span>
 
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
             <span class="n">init_model</span><span class="p">(</span>

@@ -709,7 +709,6 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvSchemes</span><span class="p">,</span> <span class="n">fvSolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundExtension</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1174,18 +1173,10 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">wrapped_rotate</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
-        <span class="n">rotate_and_report</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">_dependency_resolver</span>
-    <span class="p">)</span>
-    <span class="n">wrapped_momentum</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
-        <span class="n">momentum</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">_dependency_resolver</span>
-    <span class="p">)</span>
-    <span class="n">wrapped_continuity</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
-        <span class="n">continuity</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">_dependency_resolver</span>
-    <span class="p">)</span>
-    <span class="n">wrapped_turbulence</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
-        <span class="n">turbulence_correct</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">_dependency_resolver</span>
-    <span class="p">)</span>
+    <span class="n">wrapped_rotate</span> <span class="o">=</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">rotate_and_report</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+    <span class="n">wrapped_momentum</span> <span class="o">=</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+    <span class="n">wrapped_continuity</span> <span class="o">=</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">continuity</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+    <span class="n">wrapped_turbulence</span> <span class="o">=</span> <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">turbulence_correct</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_rotate</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">"rotate_and_report"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
