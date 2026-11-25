@@ -704,6 +704,12 @@ on PRs, the documentation preview.</p></li>
 <li><p>On pushes to <code class="docutils literal notranslate"><span class="pre">develop</span></code>/<code class="docutils literal notranslate"><span class="pre">main</span></code>, the weekly run and manual runs: the Python tests on 3.12 and
 3.13.</p></li>
 </ol>
+<p>The Linux gcc build does not build NeoN itself when it tests against NeoN <code class="docutils literal notranslate"><span class="pre">develop</span></code>: it installs
+the Open MPI flavour of the nightly <code class="docutils literal notranslate"><span class="pre">neon-pde</span></code> conda package from
+<a class="reference external" href="https://prefix.dev/channels/exasim-project/nightlies">exasim-project/nightlies</a> and configures
+NeoFOAM with <code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_USE_INSTALLED_NEON=ON</span></code>. That NeoN is a Release build of <code class="docutils literal notranslate"><span class="pre">develop</span></code> from
+the last night, while the clang build compiles the current <code class="docutils literal notranslate"><span class="pre">develop</span></code> with Kokkos debug checks. If
+the package cannot be installed, the gcc build falls back to building NeoN and warns.</p>
 <p><code class="docutils literal notranslate"><span class="pre">build_doc.yaml</span></code> deploys the documentation of merged PRs and release tags, and
 <code class="docutils literal notranslate"><span class="pre">gpu_benchmark.yaml</span></code> runs the GPU benchmarks of <code class="docutils literal notranslate"><span class="pre">develop</span></code> once a week. Their results are on the
 <code class="docutils literal notranslate"><span class="pre">NeoFOAM_develop</span></code> branch of
