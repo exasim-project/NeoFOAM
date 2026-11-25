@@ -175,6 +175,7 @@ jobs:
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
+      NEON_PACKAGE_BUILD: cpu_openmpi_clang_py*
     steps: &linux-steps
       - name: Checkout NeoFOAM
         uses: actions/checkout@v4
@@ -214,7 +215,9 @@ jobs:
       # is a Release build, so only a source build gets the develop preset's Kokkos debug and bounds
       # checks, and it tests the current NeoN develop rather than last night's. openmpi=*=external_* makes the package use the system Open MPI, which
       # OpenFOAM links too; conda-forge only publishes the 4.1 external builds under the
-      # mpi-external label. If nothing resolves, the build below falls back to building NeoN.
+      # mpi-external label. NEON_PACKAGE_BUILD picks the GCC or the clang build of the package:
+      # clang 18+ and GCC mangle C++20 requires-clauses differently, so the clang job needs the
+      # clang build. If nothing resolves, the build below falls back to building NeoN.
       # Shared with the IWYU job.
       - &install-neon
         name: Install NeoN from prefix.dev
@@ -230,7 +233,7 @@ jobs:
             -c https://prefix.dev/exasim-project/nightlies
             -c conda-forge/label/mpi-external
             -c conda-forge
-            neon-pde=*=cpu_openmpi*
+            neon-pde=*=${{ env.NEON_PACKAGE_BUILD }}
             openmpi=4.1.*=external_*
             pip
           init-shell: none
@@ -290,6 +293,7 @@ jobs:
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
+      NEON_PACKAGE_BUILD: cpu_openmpi_py*
     steps: *linux-steps
 
   macos:
@@ -368,6 +372,9 @@ jobs:
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
+      # clang 16 does not mangle requires-clauses, like GCC 13; the GCC build still exports
+      # those names
+      NEON_PACKAGE_BUILD: cpu_openmpi_py*
     outputs:
       neon-package: ${{ steps.neon-args.outputs.package }}
     steps:
@@ -501,6 +508,7 @@ jobs:
       PR_NUMBER: ${{ github.event.number }}
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
+      NEON_PACKAGE_BUILD: cpu_openmpi_py*
     steps:
       - uses: actions/checkout@v5
         with:
