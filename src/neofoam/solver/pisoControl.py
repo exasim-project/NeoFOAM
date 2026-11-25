@@ -73,3 +73,11 @@ class PisoControl:
     def final_non_orthogonal_iter(self) -> bool:
         """Return True on the final non-orthogonal corrector iteration."""
         return self._corr_non_orth == self._n_non_orth + 1
+
+    def final_inner_iter(self) -> bool:
+        """Return True on the final non-orthogonal pass of the final PISO corrector.
+
+        OpenFOAM's ``pisoControl::finalInnerIter``: the pass whose pressure solve
+        takes the ``<p>Final`` solver settings.
+        """
+        return self._corr_piso == self._n_corr and self.final_non_orthogonal_iter()

@@ -36,6 +36,8 @@ class PressureVelocitySettingsNeoN:
     """
 
     algorithm_type: str
+    #: Set by the boussinesq model's resolve: dispatch the PIMPLE ``p_rgh`` arms.
+    use_boussinesq: bool = False
 
 
 def _runtime(spec: ModelSpec, algorithm_type: str) -> ModelRuntime:

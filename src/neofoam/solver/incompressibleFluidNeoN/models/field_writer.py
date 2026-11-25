@@ -43,7 +43,8 @@ __all__ = [
 class NeoNWriteHook(FieldHook):
     """Persist NeoN fields via the NeoN writers (a :class:`FieldHook`).
 
-    Receives only the fields flagged ``write=True`` (``p`` / ``U``), dispatched
+    Receives only the fields flagged ``write=True`` (``p`` / ``U``, with buoyancy
+    ``T`` / ``p_rgh`` / ``alphat``), dispatched
     by name to the scalar/vector writer; the turbulence model rides along so
     its own fields land on disk too. The ``NeoNTimeSync`` backend has already
     synced ``Foam::Time``, so everything lands in the right time directory.
@@ -52,7 +53,7 @@ class NeoNWriteHook(FieldHook):
     field_hook_type: Literal["neon"] = "neon"
     runtime: Any = None  # the NeoN RunTime adapter
     turbulence: Any = None  # the turbulence handle (NeoNHandle)
-    scalar_names: tuple[str, ...] = ("p",)
+    scalar_names: tuple[str, ...] = ("p", "p_rgh", "alphat", "T")
     vector_names: tuple[str, ...] = ("U",)
 
     def write_fields(self, fields: Mapping[str, Any]) -> None:

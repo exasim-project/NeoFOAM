@@ -73,6 +73,11 @@ _MAPPED_SOLVER_DICTS = (
     "nuTildaFinal",
     "omega",
     "omegaFinal",
+    # the Boussinesq model's energy equation and p_rgh corrector
+    "T",
+    "TFinal",
+    "p_rgh",
+    "p_rghFinal",
 )
 
 

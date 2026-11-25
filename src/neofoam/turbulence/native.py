@@ -113,6 +113,12 @@ class NeoNHandle:
             )
         return self._ctx.fields[name]
 
+    def has_field(self, name: str) -> bool:
+        """Whether the model owns a field ``name`` (``k`` for a k-epsilon closure, …)."""
+        if self._ctx is None:
+            raise RuntimeError("validate() must be called before has_field()")
+        return name in self._ctx.fields
+
     def nut(self) -> Any:
         """The eddy viscosity ``nut`` (volume field) the model maintains."""
         return self.field("nut")
