@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterator, Union
 
 from neofoam import telemetry
+from neofoam.framework import execution_observer
 from neofoam.framework.context import Context, LoopEntry
 
 from .types import OperationMetadata, OperationNumber
@@ -51,6 +52,7 @@ class Operation:
     metadata: OperationMetadata = field(default_factory=OperationMetadata)
     level: int = 0
     sub_operations: list["Operation"] = field(default_factory=list)
+    run_if: Callable[[Context], bool] | None = None
 
     # --- Convenience accessors delegating to metadata ---
 
@@ -102,11 +104,25 @@ class Operation:
         return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
-        """Run on ``ctx``, unless its ``first``/``final`` mark skips this pass."""
+        """Run on ``ctx``, unless its ``first``/``final`` mark or ``run_if`` skips this pass."""
         if (self.metadata.first or self.metadata.final or ctx.run_every_pass) and self._skipped(
             ctx
         ):
             return None
+        # after the pass check: a skipped pass must not evaluate a condition with side effects
+        if self.run_if is not None and not self.run_if(ctx):
+            return None
+        # loops report their predicate evaluations instead (_loop_test)
+        observer = None if self.operation_type == "iterative" else execution_observer.current()
+        if observer is not None:
+            observer.before_operation(self, ctx)
+        result = self._execute_in_span(ctx)
+        if observer is not None:
+            observer.after_operation(self, ctx)
+        return result
+
+    def _execute_in_span(self, ctx: Context) -> Any:
+        """Execute, inside a telemetry span when telemetry is active."""
         if not telemetry.is_active():
             return self._execute(ctx)
         with telemetry.span(
@@ -115,6 +131,15 @@ class Operation:
             domain=self.metadata.domain_name,
         ):
             return self._execute(ctx)
+
+    def _loop_test(self, ctx: Context, iteration: int) -> bool:
+        observer = execution_observer.current()
+        if observer is None:
+            return bool(self.func(ctx))
+        observer.before_loop_test(self, ctx, iteration)
+        result = bool(self.func(ctx))
+        observer.after_loop_test(self, ctx, iteration, result)
+        return result
 
     def _skipped(self, ctx: Context) -> bool:
         """Whether the pass of the wrapping loops around the operation skips it."""
@@ -147,7 +172,8 @@ class Operation:
         loops.append(LoopEntry(self.name, 0, wrapping))
         try:
             iteration = 0
-            while self.func(ctx):
+            # the observer counts the passes from 1
+            while self._loop_test(ctx, iteration + 1):
                 for op in self.sub_operations:
                     op.run(ctx)
                 iteration += 1

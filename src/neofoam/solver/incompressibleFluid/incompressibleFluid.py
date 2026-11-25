@@ -11,6 +11,7 @@ are omitted in this minimal version. The main iteration loop is owned by the
 injectable stability constraints, and the write decision.
 """
 
+import dataclasses
 import os
 import sys
 from pathlib import Path
@@ -20,13 +21,11 @@ from pybFoam import Info, dictionary
 
 from neofoam import telemetry
 from neofoam.framework.context import Context
-from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     Operations,
-    SequentialOp,
     StepBuilder,
 )
 from neofoam.framework.tools import PreprocessConfig
@@ -87,19 +86,18 @@ def _core_model(state: Any, spec_name: str) -> Any:
     )
 
 
+def _turb_corr_open(ctx: Context) -> bool:
+    control = ctx.models.get("pimple_control")
+    return control is None or bool(control.turbCorr())
+
+
 def _under_turb_corr(op: Operation) -> Operation:
     """Gate a transport/turbulence correction with pimpleFoam's ``turbCorr()``.
 
     ``simpleFoam`` has no such gate, so a case that built a
     :class:`SimpleControl` runs the op unconditionally.
     """
-
-    def gated(ctx: Context) -> None:
-        control = ctx.models.get("pimple_control")
-        if control is None or control.turbCorr():
-            op.run(ctx)
-
-    return Operation(func=SequentialOp(gated), metadata=op.metadata)
+    return dataclasses.replace(op, run_if=_turb_corr_open)
 
 
 # Declare the full config schema on the spec, case-free: the solver's own
@@ -231,12 +229,7 @@ def run(
 
             Info("Starting time loop")
 
-            builder, model_ops = solver.execution_graph(ctx=ctx)
-
-            resolver = DAGResolver()
-            resolved = resolver.resolve(builder, model_ops)
-
-            resolved.operations.run(ctx)
+            solver.resolve_operations(ctx).run(ctx)
 
             Info("End")
         return ctx

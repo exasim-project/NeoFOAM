@@ -19,6 +19,7 @@ import pytest
 
 from neofoam.algorithms.solution_loop.control import PimpleControl, SimpleControl
 from neofoam.framework.context import Context
+from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
 from neofoam.solver.incompressibleFluid.incompressibleFluid import _under_turb_corr
@@ -66,3 +67,57 @@ def test_gate_keeps_the_wrapped_operation_name() -> None:
     # the resolver places model ops by name; wrapping must stay invisible to it
     gated = _under_turb_corr(_counting_op([]))
     assert gated.operation_name == "of_correct_turbulence"
+
+
+class _TurbCorrGate:
+    def __init__(self, is_open: bool) -> None:
+        self.is_open = is_open
+        self.evaluations = 0
+
+    def turbCorr(self) -> bool:
+        self.evaluations += 1
+        return self.is_open
+
+
+class _OperationEvents(ExecutionObserver):
+    def __init__(self) -> None:
+        self.events: list[str] = []
+
+    def before_operation(self, op: Operation, ctx: Context) -> None:
+        self.events.append("before")
+
+    def after_operation(self, op: Operation, ctx: Context) -> None:
+        self.events.append("after")
+
+
+@pytest.mark.parametrize(
+    ("is_open", "expected_events", "expected_calls"),
+    [
+        (True, ["before", "after"], ["correct"]),
+        (False, [], []),
+    ],
+    ids=["gate_open", "gate_closed"],
+)
+def test_gate_reports_only_a_correction_that_ran(
+    is_open: bool, expected_events: list[str], expected_calls: list[str]
+) -> None:
+    control = _TurbCorrGate(is_open)
+    calls: list[str] = []
+    observer = _OperationEvents()
+    gated = _under_turb_corr(_counting_op(calls))
+
+    with observe(observer):
+        gated.run(Context(fields={}, models={"pimple_control": control}))
+
+    assert (observer.events, calls, control.evaluations) == (expected_events, expected_calls, 1)
+
+
+def test_gate_without_pimple_control_reports_one_run() -> None:
+    calls: list[str] = []
+    observer = _OperationEvents()
+    gated = _under_turb_corr(_counting_op(calls))
+
+    with observe(observer):
+        gated.run(Context(fields={}, models={}))
+
+    assert (observer.events, calls) == (["before", "after"], ["correct"])
