@@ -66,7 +66,7 @@
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
 ## Fixes
-- Initialize NeoN/Kokkos before the post-processing builds NeoN cell geometry, so a NeoN-path pipeline on a host solver such as `incompressibleFluid` no longer aborts with Kokkos >= 5.1 ("execution space is being constructed before initialize()") [#528](https://github.com/exasim-project/NeoFOAM/pull/528)
+- Initialize NeoN/Kokkos before the post-processing kernels run and before NeoN cell geometry is built, so post-processing on a host solver such as `incompressibleFluid` no longer aborts with Kokkos >= 5.1 ("execution space is being constructed before initialize()") [#528](https://github.com/exasim-project/NeoFOAM/pull/528)
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
 - Distributed/restart robustness: preserve OpenFOAM BC types and promote vector BC components on read for restart; default the smoothSolver preconditioner to diagonal (avoids a ParIc FPE on the non-symmetric momentum matrix) [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
 - Build the Python bindings (`_neon`, `neofoam_bindings`) with nanobind `NB_SHARED` so they share one nanobind runtime with pybFoam — fixes cross-module type exchange (e.g. `create_adapter_run_time` rejecting pybFoam's `Foam::Time` in CI, where the static-nanobind modules got isolated type registries) [#348](https://github.com/exasim-project/NeoFOAM/pull/348)
