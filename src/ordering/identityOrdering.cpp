@@ -3,10 +3,10 @@
 
 #include "NeoFOAM/ordering/identityOrdering.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 Permutation IdentityOrdering::compute(std::size_t size) const
 {
     return Permutation::identity(size);
 }
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering

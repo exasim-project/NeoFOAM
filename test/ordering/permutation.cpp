@@ -18,8 +18,8 @@
 namespace
 {
 
-using NeoFOAM::Permutation;
-using NeoFOAM::PreparedPermutation;
+using NeoFOAM::ordering::Permutation;
+using NeoFOAM::ordering::PreparedPermutation;
 using IndexType = Permutation::IndexType;
 using Catch::Matchers::RangeEquals;
 

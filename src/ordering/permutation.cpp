@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 
 Permutation::Permutation(std::vector<IndexType> oldToNew)
@@ -128,4 +128,4 @@ bool Permutation::isIdentity() const noexcept
     return true;
 }
 
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering

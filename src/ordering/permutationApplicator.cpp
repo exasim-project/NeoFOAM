@@ -9,7 +9,7 @@ namespace
 template<typename T>
 void reorderCellData(
     const NeoN::Executor& exec,
-    const NeoFOAM::PreparedPermutation& permutation,
+    const NeoFOAM::ordering::PreparedPermutation& permutation,
     NeoN::Vector<T>& data
 )
 {
@@ -33,7 +33,7 @@ void reorderCellData(
 
 void remapConnectivity(
     const NeoN::Executor& exec,
-    const NeoFOAM::PreparedPermutation& permutation,
+    const NeoFOAM::ordering::PreparedPermutation& permutation,
     NeoN::UnstructuredMesh& mesh
 )
 {
@@ -101,7 +101,7 @@ void remapConnectivity(
 }
 } // anonymous namespace
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 // --- Definitions of public member functions ---
 void PermutationApplicator::apply(
@@ -192,4 +192,4 @@ void PermutationApplicator::remapConnectivity(
     ::remapConnectivity(exec_, permutation, mesh);
 }
 
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering

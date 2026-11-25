@@ -6,7 +6,7 @@
 #include "NeoFOAM/ordering/permutation.hpp"
 #include <cstddef>
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 class IdentityOrdering
 {
@@ -15,4 +15,4 @@ public:
 
     [[nodiscard]] Permutation compute(std::size_t size) const;
 };
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering

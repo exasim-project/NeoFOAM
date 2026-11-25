@@ -9,7 +9,7 @@
 #include <span>
 #include <vector>
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 /**
  * @brief Represents a bijective mapping between an old and a new index space.
@@ -161,4 +161,4 @@ private:
     std::vector<IndexType> oldToNew_;
     std::vector<IndexType> newToOld_;
 };
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering

@@ -12,8 +12,8 @@
 
 namespace
 {
-using NeoFOAM::IdentityOrdering;
-using NeoFOAM::Permutation;
+using NeoFOAM::ordering::IdentityOrdering;
+using NeoFOAM::ordering::Permutation;
 using IndexType = Permutation::IndexType;
 } // namespace
 

@@ -6,7 +6,7 @@
 #include "NeoN/NeoN.hpp"
 #include "NeoFOAM/ordering/preparedPermutation.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 /**
  * @brief Applies cell permutations to mesh and cell-associated data.
@@ -135,4 +135,4 @@ private:
     remapConnectivity(const PreparedPermutation& permutation, NeoN::UnstructuredMesh& mesh) const;
 };
 
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering

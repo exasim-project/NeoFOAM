@@ -13,9 +13,9 @@
 namespace
 {
 using NeoN::sizeType;
-using NeoFOAM::Permutation;
-using NeoFOAM::PreparedPermutation;
-using NeoFOAM::PermutationApplicator;
+using NeoFOAM::ordering::Permutation;
+using NeoFOAM::ordering::PreparedPermutation;
+using NeoFOAM::ordering::PermutationApplicator;
 using IndexType = Permutation::IndexType;
 }
 

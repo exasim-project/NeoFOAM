@@ -6,7 +6,7 @@
 #include "NeoN/NeoN.hpp"
 #include "NeoFOAM/ordering/permutation.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::ordering
 {
 class PreparedPermutation
 {
@@ -61,4 +61,4 @@ private:
     NeoN::Array<IndexType> newToOld_;
     bool isIdentity_;
 };
-} // namespace NeoFOAM
+} // namespace NeoFOAM::ordering
