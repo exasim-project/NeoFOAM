@@ -1,3 +1,5 @@
+# Version 0.4.0 (unreleased)
+
 # Version 0.3.0 (unreleased)
 - Add the `neofoam.region_solvers` entry-point group: the solver registry lists and resolves solvers of separately installed packages [#491](https://github.com/exasim-project/NeoFOAM/pull/491)
 - Add the `neofoam.plugins` and `neofoam.solvers` entry-point groups: separately installed packages can register plugins (models, post-processing nodes, ...) and add `neofoam solver <name>` commands; solvers load optional models from their bound families, so a plugin can add a new optional family [#461](https://github.com/exasim-project/NeoFOAM/pull/461)
