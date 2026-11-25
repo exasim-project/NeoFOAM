@@ -1,0 +1,65 @@
+\doxysection{velocity\+Damping.\+hpp}
+\hypertarget{velocityDamping_8hpp_source}{}\label{velocityDamping_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/velocityDamping.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/velocityDamping.hpp}}
+\mbox{\hyperlink{velocityDamping_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00003}00003\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00009}00009\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00010}00010\ \{}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00011}00011\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00050}00050\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LinearSystemType,\ \textcolor{keyword}{typename}\ VolumeFieldType>}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00051}\mbox{\hyperlink{namespaceNeoFOAM_a72161ef3ce7998aa7ac9c452656084ce}{00051}}\ NeoN::label\ \mbox{\hyperlink{namespaceNeoFOAM_a72161ef3ce7998aa7ac9c452656084ce}{applyVelocityDamping}}(}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00052}00052\ \ \ \ \ LinearSystemType\&\ ls,}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{keyword}{const}\ VolumeFieldType\&\ U,}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00054}00054\ \ \ \ \ NeoN::scalar\ UMax,}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00055}00055\ \ \ \ \ NeoN::scalar\ C\ =\ 1.0}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00056}00056\ )}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00057}00057\ \{}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{comment}{//\ The\ segregated\ momentum\ system\ (PDE<Vec3>)\ has\ scalar\ coefficients;\ a\ coupled\ Vec3}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{comment}{//\ matrix\ would\ need\ the\ boost\ on\ every\ diagonal\ component.}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00060}00060\ \ \ \ \ \textcolor{keyword}{static\_assert}(}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ std::is\_same\_v<}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ std::remove\_cv\_t<std::remove\_reference\_t<\textcolor{keyword}{decltype}(ls.matrix().values().view()[0])>>,}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::scalar>,}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}applyVelocityDamping\ expects\ a\ scalar-\/coefficient\ (segregated)\ linear\ system"{}}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00065}00065\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00067}00067\ \ \ \ \ \textcolor{keyword}{auto}\ lsView\ =\ ls.view();}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00068}00068\ \ \ \ \ \textcolor{keyword}{auto}\&\ matrix\ =\ lsView.matrix;}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00069}00069\ \ \ \ \ \textcolor{comment}{//\ Same\ addressing\ the\ relaxation\ kernel\ uses:\ diagIdx(celli)\ maps\ a\ cell\ to}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00070}00070\ \ \ \ \ \textcolor{comment}{//\ its\ diagonal\ slot\ in\ the\ CSR\ values\ array.}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00071}00071\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ ma\ =\ ls.faceToMatrixAddress()-\/>view(ls.matrix().sparsity()-\/>rowOffs().view());}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00072}00072\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ uV\ =\ U.internalVector().view();}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00073}00073\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ volV\ =\ U.mesh().cellVolumes().view();}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00075}00075\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nCells\ =\ \textcolor{keyword}{static\_cast<}NeoN::localIdx\textcolor{keyword}{>}(uV.size());}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00077}00077\ \ \ \ \ NeoN::label\ nDamped\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00078}00078\ \ \ \ \ NeoN::parallelReduce(}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ U.exec(),}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \{0,\ nCells\},}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ NeoN::localIdx\ celli,\ NeoN::label\&\ count)\ \{}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ magU\ =\ NeoN::mag(uV[celli]);}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (magU\ >\ UMax)}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ scale\ =\ sqr(cbrt(V))\ -\/-\/\ V\string^(2/3),\ not\ V.}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ cbrtV\ =\ Kokkos::cbrt(volV[celli]);}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ matrix.values[ma.diagIdx(celli)]\ +=\ C\ *\ cbrtV\ *\ cbrtV\ *\ (magU\ -\/\ UMax);}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ nDamped}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00092}00092\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00094}00094\ \ \ \ \ \textcolor{keywordflow}{return}\ nDamped;}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00095}00095\ \}}
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{velocityDamping_8hpp_source_l00097}00097\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
