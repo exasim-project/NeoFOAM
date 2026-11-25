@@ -132,9 +132,7 @@ easiest way to see what the solver does. From
 
         # Pressure-velocity algorithm (pimple/simple/piso) chosen at LOAD
         algorithm_model = self.state.core_models[0]
-        algo_ops = Operations(
-            algorithm_model._build_operations_for(algorithm_model)
-        )
+        algo_ops = Operations(algorithm_model.operations)
 
         time_loop_op = Operation(
             func=IterativeOp(TimeLoop()),
