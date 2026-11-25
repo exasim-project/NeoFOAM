@@ -22,7 +22,10 @@ set_property(
 target_link_libraries(NeoFOAM_public_api INTERFACE NeoN::NeoN NeoN::NeoN_public_api)
 
 if(NEOFOAM_WITH_MPI)
-  target_link_libraries(NeoN_public_api INTERFACE MPI::MPI_CXX)
+  # An installed NeoN::NeoN_public_api already links MPI
+  if(TARGET NeoN_public_api)
+    target_link_libraries(NeoN_public_api INTERFACE MPI::MPI_CXX)
+  endif()
   target_link_libraries(NeoFOAM_public_api INTERFACE MPI::MPI_CXX)
 endif()
 

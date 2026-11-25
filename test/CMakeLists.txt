@@ -128,7 +128,7 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
   target_link_libraries(
     ${NEOFOAM_COMMAND}
     PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
-    PRIVATE NeoN NeoFOAM)
+    PRIVATE NeoN::NeoN NeoFOAM)
 
   if(WIN32)
     set_target_properties(

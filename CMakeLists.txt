@@ -20,6 +20,8 @@ option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_WITH_MPI "Enable MPI support" ON)
+option(NEOFOAM_USE_INSTALLED_NEON
+       "Use an installed NeoN (find_package), e.g. the neon-pde conda package" OFF)
 option(NEOFOAM_ENABLE_KOKKOS_TOOLS "Enable Kokkos Tools" OFF)
 
 option(NEOFOAM_BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
@@ -75,7 +77,26 @@ include(cmake/KokkosTools.cmake)
 set(NeoN_WITH_MPI
     ${NEOFOAM_WITH_MPI}
     CACHE BOOL "" FORCE)
-if(NOT DEFINED NEOFOAM_NEON_DIR)
+if(NEOFOAM_USE_INSTALLED_NEON)
+  find_package(NeoN CONFIG REQUIRED)
+  message(STATUS "using installed NeoN from ${NeoN_DIR}")
+  # Both change NeoN's public API, so they have to match what NeoN was built with. NeoNConfig.cmake
+  # sets NeoN_WITH_MPI, the label width is a compile definition of NeoN::NeoN_public_api.
+  if(NOT (NeoN_WITH_MPI AND NEOFOAM_WITH_MPI) AND (NeoN_WITH_MPI OR NEOFOAM_WITH_MPI))
+    message(FATAL_ERROR "NEOFOAM_WITH_MPI=${NEOFOAM_WITH_MPI} but the installed NeoN was built "
+                        "with NeoN_WITH_MPI=${NeoN_WITH_MPI}")
+  endif()
+  get_target_property(_neon_definitions NeoN::NeoN_public_api INTERFACE_COMPILE_DEFINITIONS)
+  if("NeoN_DP_LABEL=1" IN_LIST _neon_definitions)
+    set(_neon_dp_label ON)
+  else()
+    set(_neon_dp_label OFF)
+  endif()
+  if(NOT _neon_dp_label STREQUAL NeoN_DEFINE_DP_LABEL)
+    message(FATAL_ERROR "OpenFOAM needs NeoN_DEFINE_DP_LABEL=${NeoN_DEFINE_DP_LABEL} but the "
+                        "installed NeoN was built with ${_neon_dp_label}")
+  endif()
+elseif(NOT DEFINED NEOFOAM_NEON_DIR)
   if(EXISTS ${PROJECT_SOURCE_DIR}/src/NeoN/CMakeLists.txt AND NOT DEFINED NEOFOAM_NEON_VERSION)
     message(STATUS "src/NeoN/CMakeLists.txt found, using NeoN")
     add_subdirectory(src/NeoN)

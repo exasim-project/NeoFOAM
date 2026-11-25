@@ -199,10 +199,41 @@ jobs:
       - name: Install python dependencies
         run: pip install foamlib pandas pydantic defusedxml
 
+      # With NEON_FROM_PACKAGE, NeoN comes from the nightly neon-pde conda package instead of being
+      # built here. The nightlies are built from NeoN develop, so a matching NeoN branch is still
+      # built from source. openmpi=*=external_* makes the package use the system Open MPI, which
+      # OpenFOAM links too. If nothing resolves, the build below falls back to building NeoN.
+      - name: Install NeoN from prefix.dev
+        id: neon
+        if: env.NEON_FROM_PACKAGE == 'true' && env.NEON_BRANCH == 'develop'
+        continue-on-error: true
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-root-path: ${{ runner.temp }}/micromamba
+          environment-name: neon
+          create-args: >-
+            --override-channels
+            -c https://prefix.dev/exasim-project/nightlies
+            -c conda-forge
+            neon-pde=*=cpu_openmpi*
+            openmpi=4.1.*=external_*
+          init-shell: none
+          post-cleanup: none
+
       - name: Build NeoFOAM
+        env:
+          NEON_PACKAGE: ${{ steps.neon.outcome }}
+          NEON_PREFIX: ${{ runner.temp }}/micromamba/envs/neon
         run: |
+          neon_args=()
+          if [[ "$NEON_PACKAGE" == success ]]; then
+            basename "$NEON_PREFIX"/conda-meta/neon-pde-*.json .json
+            neon_args=(-DNEOFOAM_USE_INSTALLED_NEON=ON "-DCMAKE_PREFIX_PATH=$NEON_PREFIX")
+          elif [[ "$NEON_PACKAGE" == failure ]]; then
+            echo "::warning::Could not install the neon-pde package, building NeoN from source"
+          fi
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          cmake --preset develop \
+          cmake --preset develop "${neon_args[@]}" \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_WITH_MPI=ON \
@@ -231,6 +262,7 @@ jobs:
             CXX: g++
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+      NEON_FROM_PACKAGE: true
     steps: *linux-steps
 
   macos:
