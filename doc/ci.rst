@@ -38,8 +38,7 @@ broken commit occupies as few of the organization's shared runners as possible:
 #. Only once that passes: Linux gcc, macOS, IWYU followed by clang-tidy, the LRZ GPU pipeline, and
    the Python job. The Python job builds the package once and runs pytest with coverage, mypy and,
    on PRs, the documentation preview.
-#. On pushes to ``develop``/``main``, the weekly run and manual runs: the Python tests on 3.11 and
-   3.13.
+#. After the Python job: the Python tests on 3.11 and 3.13, on every PR and push that builds.
 
 The Linux builds (clang and gcc), IWYU and the Python job do not build NeoN themselves when they
 test against NeoN ``develop``: they install the Open MPI flavour of the nightly ``neon-pde`` conda
