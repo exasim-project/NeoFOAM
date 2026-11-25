@@ -21,17 +21,18 @@ concurrency:
     ${{ github.workflow }}-
     ${{ github.event_name }}-
     ${{ github.event.pull_request.number || github.ref_name }}
-    ${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.event.label.name != 'skip-build' && format('-label-{0}', github.event.label.name) || '' }}
+    ${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && !contains(fromJSON('["skip-build", "neon_from_source"]'), github.event.label.name) && format('-label-{0}', github.event.label.name) || '' }}
   cancel-in-progress: true
 
 # The jobs run in stages so that a broken commit occupies few runners:
 #   gate -> pre-commit and changelog (no build), and in parallel the Linux clang build and tests
-#        -> Linux gcc, macOS, IWYU/clang-tidy, Python 3.11 (tests, mypy, docs), LRZ GPU
-#        -> Python 3.12/3.13 (develop/main pushes, weekly run, dispatch)
+#        -> Linux gcc, macOS, IWYU/clang-tidy, Python 3.12 (tests, mypy, docs), LRZ GPU
+#        -> Python 3.11/3.13 (develop/main pushes, weekly run, dispatch)
 # The GPU benchmarks run weekly in gpu_benchmark.yaml.
 jobs:
   # Evaluates the event, the PR labels and the NeoN branch to build against once. Adding or
-  # removing a label only restarts the builds for skip-build; skip-changelog only reruns the
+  # removing a label only restarts the builds for skip-build and neon_from_source; skip-changelog
+  # only reruns the
   # changelog check, and the other labels take effect on the next push. It is the only job with
   # the repository check: every other job needs it, so in forks of the repository nothing runs.
   gate:
@@ -48,6 +49,7 @@ jobs:
       skip-intel: ${{ steps.gate.outputs.skip-intel }}
       skip-validation: ${{ steps.gate.outputs.skip-validation }}
       neon-branch: ${{ steps.neon.outputs.branch }}
+      neon-from-package: ${{ steps.gate.outputs.neon-from-package }}
     steps:
       - name: Evaluate event and labels
         id: gate
@@ -59,9 +61,14 @@ jobs:
           has() { jq -e --arg l "$1" '(. // []) | index($l) != null' <<<"${LABELS:-[]}" >/dev/null; }
           is_pr=$([[ "$GITHUB_EVENT_NAME" == pull_request ]] && echo true || echo false)
 
-          # Only skip-build changes what is built; keep in sync with the concurrency group
+          # Only these labels change what is built; keep in sync with the concurrency group
           rebuild=true
-          if [[ "$LABEL_EVENT" == true && "$LABEL" != skip-build ]]; then rebuild=false; fi
+          if [[ "$LABEL_EVENT" == true ]]; then
+            case "$LABEL" in
+              skip-build|neon_from_source) ;;
+              *) rebuild=false ;;
+            esac
+          fi
 
           changelog=false
           if $is_pr && ! has skip-changelog &&
@@ -72,7 +79,7 @@ jobs:
           lint=$rebuild
           build=$rebuild
           if $is_pr && has skip-build; then build=false; fi
-          # Python 3.12/3.13 only outside PRs; PRs test 3.11
+          # Python 3.11/3.13 only outside PRs; PRs test 3.12
           python_all=$([[ "$build" == true ]] && ! $is_pr && echo true || echo false)
 
           {
@@ -84,6 +91,7 @@ jobs:
             echo "skip-amd=$(has skip-amd && echo true || echo false)"
             echo "skip-intel=$(has skip-intel && echo true || echo false)"
             echo "skip-validation=$(has skip-validation && echo true || echo false)"
+            echo "neon-from-package=$($is_pr && has neon_from_source && echo false || echo true)"
           } | tee -a "$GITHUB_OUTPUT"
 
       - name: Determine NeoN branch
@@ -166,6 +174,7 @@ jobs:
             CXX: clang++
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+      NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
     steps: &linux-steps
       - name: Checkout NeoFOAM
         uses: actions/checkout@v4
@@ -201,7 +210,9 @@ jobs:
 
       # With NEON_FROM_PACKAGE, NeoN comes from the nightly neon-pde conda package instead of being
       # built here. The nightlies are built from NeoN develop, so a matching NeoN branch is still
-      # built from source. openmpi=*=external_* makes the package use the system Open MPI, which
+      # built from source, as is every build of a PR with the neon_from_source label: the package
+      # is a Release build, so only a source build gets the develop preset's Kokkos debug and bounds
+      # checks, and it tests the current NeoN develop rather than last night's. openmpi=*=external_* makes the package use the system Open MPI, which
       # OpenFOAM links too; conda-forge only publishes the 4.1 external builds under the
       # mpi-external label. If nothing resolves, the build below falls back to building NeoN.
       # Shared with the IWYU job.
@@ -278,7 +289,7 @@ jobs:
             CXX: g++
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
-      NEON_FROM_PACKAGE: true
+      NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
     steps: *linux-steps
 
   macos:
@@ -356,7 +367,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
-      NEON_FROM_PACKAGE: true
+      NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
     outputs:
       neon-package: ${{ steps.neon-args.outputs.package }}
     steps:
@@ -489,7 +500,7 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
-      NEON_FROM_PACKAGE: true
+      NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
     steps:
       - uses: actions/checkout@v5
         with:
