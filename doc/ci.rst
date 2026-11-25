@@ -41,12 +41,13 @@ broken commit occupies as few of the organization's shared runners as possible:
 #. On pushes to ``develop``/``main``, the weekly run and manual runs: the Python tests on 3.12 and
    3.13.
 
-The Linux gcc build does not build NeoN itself when it tests against NeoN ``develop``: it installs
+The Linux gcc and IWYU builds do not build NeoN themselves when they test against NeoN ``develop``: they install
 the Open MPI flavour of the nightly ``neon-pde`` conda package from
 `exasim-project/nightlies <https://prefix.dev/channels/exasim-project/nightlies>`_ and configures
-NeoFOAM with ``-DNEOFOAM_USE_INSTALLED_NEON=ON``. That NeoN is a Release build of ``develop`` from
+NeoFOAM with ``-DNEOFOAM_USE_INSTALLED_NEON=ON``. clang-tidy installs the same package as the IWYU
+build, whose compilation database it uses. That NeoN is a Release build of ``develop`` from
 the last night, while the clang build compiles the current ``develop`` with Kokkos debug checks. If
-the package cannot be installed, the gcc build falls back to building NeoN and warns.
+the package cannot be installed, these builds fall back to building NeoN and warn.
 
 ``build_doc.yaml`` deploys the documentation of merged PRs and release tags, and
 ``gpu_benchmark.yaml`` runs the GPU benchmarks of ``develop`` once a week. Their results are on the

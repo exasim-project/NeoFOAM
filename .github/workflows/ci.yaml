@@ -203,7 +203,9 @@ jobs:
       # built here. The nightlies are built from NeoN develop, so a matching NeoN branch is still
       # built from source. openmpi=*=external_* makes the package use the system Open MPI, which
       # OpenFOAM links too. If nothing resolves, the build below falls back to building NeoN.
-      - name: Install NeoN from prefix.dev
+      # Shared with the IWYU job.
+      - &install-neon
+        name: Install NeoN from prefix.dev
         id: neon
         if: env.NEON_FROM_PACKAGE == 'true' && env.NEON_BRANCH == 'develop'
         continue-on-error: true
@@ -220,20 +222,30 @@ jobs:
           init-shell: none
           post-cleanup: none
 
-      - name: Build NeoFOAM
+      # The CMake arguments for the installed NeoN, and the exact package for the clang-tidy job
+      - &neon-args
+        name: Select NeoN
+        id: neon-args
         env:
           NEON_PACKAGE: ${{ steps.neon.outcome }}
           NEON_PREFIX: ${{ runner.temp }}/micromamba/envs/neon
         run: |
-          neon_args=()
           if [[ "$NEON_PACKAGE" == success ]]; then
-            basename "$NEON_PREFIX"/conda-meta/neon-pde-*.json .json
-            neon_args=(-DNEOFOAM_USE_INSTALLED_NEON=ON "-DCMAKE_PREFIX_PATH=$NEON_PREFIX")
+            meta=("$NEON_PREFIX"/conda-meta/neon-pde-*.json)
+            package="$(jq -r '"\(.name)==\(.version)=\(.build)"' "${meta[0]}")"
+            echo "Using $package"
+            {
+              echo "package=$package"
+              echo "cmake-args=-DNEOFOAM_USE_INSTALLED_NEON=ON -DCMAKE_PREFIX_PATH=$NEON_PREFIX"
+            } >> "$GITHUB_OUTPUT"
           elif [[ "$NEON_PACKAGE" == failure ]]; then
             echo "::warning::Could not install the neon-pde package, building NeoN from source"
           fi
+
+      - name: Build NeoFOAM
+        run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          cmake --preset develop "${neon_args[@]}" \
+          cmake --preset develop ${{ steps.neon-args.outputs.cmake-args }} \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_WITH_MPI=ON \
@@ -340,6 +352,9 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
+      NEON_FROM_PACKAGE: true
+    outputs:
+      neon-package: ${{ steps.neon-args.outputs.package }}
     steps:
       - uses: actions/checkout@v4
 
@@ -360,12 +375,15 @@ jobs:
              openmpi-bin \
              openfoam2406-dev
 
+      - *install-neon
+      - *neon-args
+
       - name: Create Compilation Database
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
           CC=clang \
           CXX=clang++ \
-          cmake --preset develop \
+          cmake --preset develop ${{ steps.neon-args.outputs.cmake-args }} \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
             -DNEOFOAM_BUILD_BENCHMARKS=OFF \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -402,6 +420,23 @@ jobs:
              libopenmpi-dev \
              openmpi-bin \
              openfoam2406-dev
+
+      # The compilation database of the IWYU build points into its NeoN package, if it used one, so
+      # install the same package at the same path
+      - name: Install NeoN from prefix.dev
+        if: needs.iwyu.outputs.neon-package != ''
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-root-path: ${{ runner.temp }}/micromamba
+          environment-name: neon
+          create-args: >-
+            --override-channels
+            -c https://prefix.dev/exasim-project/nightlies
+            -c conda-forge
+            ${{ needs.iwyu.outputs.neon-package }}
+            openmpi=4.1.*=external_*
+          init-shell: none
+          post-cleanup: none
 
       - uses: actions/download-artifact@v4
         with:
