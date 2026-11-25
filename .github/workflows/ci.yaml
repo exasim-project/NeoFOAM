@@ -374,9 +374,8 @@ jobs:
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
-      # clang 16 does not mangle requires-clauses, like GCC 13; the GCC build still exports
-      # those names
-      NEON_PACKAGE_BUILD: cpu_openmpi_py*
+      # CC=clang is the runner's clang 18, which needs the clang build like the clang job
+      NEON_PACKAGE_BUILD: cpu_openmpi_clang_py*
     outputs:
       neon-package: ${{ steps.neon-args.outputs.package }}
     steps:
