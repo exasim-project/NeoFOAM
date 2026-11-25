@@ -41,11 +41,11 @@ inline void setEpsilonWallFunction(
     const fvcc::VolumeField<scalar>& nearWallDist,
     const UnstructuredMesh& mesh,
     std::pair<localIdx, localIdx> range,
-    scalar Cmu,
+    scalar cmu,
     scalar kappa
 )
 {
-    const scalar Cmu75 = Kokkos::pow(Cmu, scalar(0.75));
+    const scalar Cmu75 = Kokkos::pow(cmu, scalar(0.75));
 
     auto kInternal = k.internalVector().view();
     const auto nearWallBoundary = nearWallDist.boundaryData().value().view();
