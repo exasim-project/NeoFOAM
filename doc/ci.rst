@@ -44,7 +44,9 @@ broken commit occupies as few of the organization's shared runners as possible:
 The Linux builds (clang and gcc), IWYU and the Python job do not build NeoN themselves when they
 test against NeoN ``develop``: they install the Open MPI flavour of the nightly ``neon-pde`` conda
 package from `exasim-project/nightlies <https://prefix.dev/channels/exasim-project/nightlies>`_ and
-configure NeoFOAM with ``-DNEOFOAM_USE_INSTALLED_NEON=ON``. clang-tidy installs the same package as
+configure NeoFOAM with ``-DNEOFOAM_USE_INSTALLED_NEON=ON``. The clang build installs the clang-built
+package (``cpu_openmpi_clang_py312_*``), the others the GCC-built one: GCC and clang 18+ mangle C++20
+requires-clauses differently, so clang-compiled code cannot link a GCC-built NeoN. clang-tidy installs the same package as
 the IWYU build, whose compilation database it uses. The Python job runs on the package
 environment's Python 3.12 (the Python version of the Open MPI build), which also provides the
 ``neon`` module; NeoFOAM's bindings then take nanobind from the Python build environment, the same
