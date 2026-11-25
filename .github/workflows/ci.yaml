@@ -253,7 +253,9 @@ jobs:
             echo "Using $package"
             {
               echo "package=$package"
-              echo "cmake-args=-DNEOFOAM_USE_INSTALLED_NEON=ON -DCMAKE_PREFIX_PATH=$NEON_PREFIX"
+              # The prefix path would also make CMake pick the environment's Python, which lacks
+              # the packages installed for the system Python (the benchmark suite needs them)
+              echo "cmake-args=-DNEOFOAM_USE_INSTALLED_NEON=ON -DCMAKE_PREFIX_PATH=$NEON_PREFIX -DPython_EXECUTABLE=$(command -v python3)"
               echo "pip-args=-Ccmake.define.NEOFOAM_USE_INSTALLED_NEON=ON -Ccmake.define.CMAKE_PREFIX_PATH=$NEON_PREFIX"
             } >> "$GITHUB_OUTPUT"
           elif [[ "$NEON_PACKAGE" == failure ]]; then
