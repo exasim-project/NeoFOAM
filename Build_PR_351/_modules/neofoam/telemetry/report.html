@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6a4ff913" />
     
@@ -263,6 +263,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.core.case_module.html">neofoam.core.case_module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.core.entry_points.html">neofoam.core.entry_points</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
@@ -440,6 +441,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleFluid.solver_spec.html">neofoam.solver.incompressibleFluid.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -463,6 +465,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleFluidNeoN.solver_spec.html">neofoam.solver.incompressibleFluidNeoN.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -493,6 +496,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.solver.incompressibleVoF.solver_spec.html">neofoam.solver.incompressibleVoF.solver_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
@@ -743,9 +747,8 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_epoch_us</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""ISO-8601 span timestamp -&gt; microseconds since the epoch (float)."""</span>
-    <span class="c1"># OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; the trailing</span>
-    <span class="c1"># ``Z`` is only accepted by ``fromisoformat`` from 3.11, so normalise it</span>
-    <span class="c1"># (the package targets 3.10).</span>
+    <span class="c1"># OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; normalise the</span>
+    <span class="c1"># trailing ``Z`` to an explicit UTC offset.</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Z"</span><span class="p">,</span> <span class="s2">"+00:00"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="n">_US_PER_S</span>
 
@@ -944,7 +947,7 @@
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
-    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../../../_static/design-tabs.js?v=fcb327ea"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 
