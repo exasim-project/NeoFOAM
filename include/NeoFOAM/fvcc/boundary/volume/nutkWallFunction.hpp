@@ -30,12 +30,12 @@ inline constexpr scalar NUTK_WF_DEFAULT_E = 9.8;
  * Foam::wallFunctionCoefficients solves yPlusLam = log(max(E·yPlusLam, 1))/κ by fixed-point
  * iteration from 11; ~11.53 for the default κ=0.41, E=9.8.
  */
-inline scalar nutkYPlusLam(scalar kappa, scalar E)
+inline scalar nutkYPlusLam(scalar kappa, scalar e)
 {
     scalar ypl = scalar(11);
     for (int i = 0; i < 10; ++i)
     {
-        ypl = Kokkos::log(Kokkos::max(E * ypl, scalar(1))) / kappa;
+        ypl = Kokkos::log(Kokkos::max(e * ypl, scalar(1))) / kappa;
     }
     return ypl;
 }
@@ -64,12 +64,12 @@ inline void setNutkWallFunction(
     const fvcc::VolumeField<scalar>& nearWallDist,
     const UnstructuredMesh& mesh,
     std::pair<localIdx, localIdx> range,
-    scalar Cmu,
+    scalar cmu,
     scalar kappa,
     scalar E
 )
 {
-    const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
+    const scalar Cmu25 = Kokkos::pow(cmu, scalar(0.25));
     // The STEPWISE viscous/log switch-over point; see nutkYPlusLam.
     const scalar yPlusLam = nutkYPlusLam(kappa, E);
 

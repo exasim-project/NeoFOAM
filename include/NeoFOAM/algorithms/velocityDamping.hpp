@@ -44,7 +44,7 @@ namespace NeoFOAM
  * @param ls    The assembled (and relaxed) linear system; its diagonal is modified in place.
  * @param U     The velocity field whose current internal values decide which cells are damped.
  * @param UMax  Velocity magnitude above which damping engages.
- * @param C     Upstream's `C` coefficient (default 1, as in fv::velocityDampingConstraint).
+ * @param c     Upstream's `C` coefficient (default 1, as in fv::velocityDampingConstraint).
  * @return Number of cells damped on THIS rank (caller reduces across ranks for reporting).
  */
 template<typename LinearSystemType, typename VolumeFieldType>
@@ -52,7 +52,7 @@ NeoN::label applyVelocityDamping(
     LinearSystemType& ls,
     const VolumeFieldType& U,
     NeoN::scalar UMax,
-    NeoN::scalar C = 1.0
+    NeoN::scalar c = 1.0
 )
 {
     // The segregated momentum system (PDE<Vec3>) has scalar coefficients; a coupled Vec3
@@ -84,7 +84,7 @@ NeoN::label applyVelocityDamping(
             {
                 // scale = sqr(cbrt(V)) -- V^(2/3), not V.
                 const NeoN::scalar cbrtV = Kokkos::cbrt(volV[celli]);
-                matrix.values[ma.diagIdx(celli)] += C * cbrtV * cbrtV * (magU - UMax);
+                matrix.values[ma.diagIdx(celli)] += c * cbrtV * cbrtV * (magU - UMax);
                 ++count;
             }
         },
