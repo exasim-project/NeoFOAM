@@ -50,7 +50,6 @@ from neofoam.fields import (
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.foam.algorithm_configs import SimpleAlgorithmConfig
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
@@ -76,7 +75,7 @@ SimpleFvSolution = simple.config(fvSolution)
 SimpleFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
 
 # Declared so ``configurations(solver)`` and the MCP export the key set.
-# Loading is unaffected: this spec is used as its own runtime and never
+# Loading is unaffected: its runtime is built without ``instantiate`` and never
 # auto-loads its configs — ``control_factory`` drives instantiation.
 simple.config(SimpleAlgorithmConfig)
 
@@ -317,10 +316,8 @@ def collected_operations(self: Any) -> Operations:
         )
     )
 
-    wrapped_momentum = wrap_with_dependency_resolution(momentum, self, simple._dependency_resolver)
-    wrapped_continuity = wrap_with_dependency_resolution(
-        continuity, self, simple._dependency_resolver
-    )
+    wrapped_momentum = simple.wrap_operation(momentum, self)
+    wrapped_continuity = simple.wrap_operation(continuity, self)
 
     model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(

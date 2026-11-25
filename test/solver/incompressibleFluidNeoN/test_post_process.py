@@ -153,20 +153,12 @@ def _core_model(spec_name: str, op_names: list[str]) -> ModelRuntime:
     )
 
 
-def _algorithm_model(op_names: list[str]) -> Any:
-    """The pressure-velocity spec, which the graph step uses as its own runtime."""
-    operations = _operations(op_names)
-    return SimpleNamespace(
-        spec=SimpleNamespace(name="pimpleNeoN"),
-        _build_operations_for=lambda _self: operations,
-    )
-
-
 def test_the_time_loop_ends_with_write_output_then_post_process() -> None:
     state = SimpleNamespace(
         core_models=[
-            _algorithm_model(
-                ["rotate_and_report", "inner_loop", "momentum", "continuity", "turbulence_correct"]
+            _core_model(
+                "PimpleNeoN",
+                ["rotate_and_report", "inner_loop", "momentum", "continuity", "turbulence_correct"],
             ),
             _core_model("solutionLoop", ["set_time_step", "increment_time"]),
             _core_model("fieldWriter", ["write_output"]),

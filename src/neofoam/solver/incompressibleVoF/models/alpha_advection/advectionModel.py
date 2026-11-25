@@ -15,7 +15,7 @@ Mirrors :mod:`neofoam.viscosity.viscosityModel`. Each member is a
 the solver entrypoint stays agnostic to which scheme is active.
 """
 
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -56,13 +56,14 @@ class advectionModel(BaseModel):
         return None
 
     @classmethod
-    def detect_and_create(cls) -> Any:
+    def detect_and_create(cls) -> ModelRuntime:
         """Select the active advection scheme for the case in the cwd.
 
         The core-model-family hook: reads the ``advectionScheme`` key from
-        ``system/fvSolution`` and returns the matching registered spec (MULES
-        fallback on unknown/absent).
+        ``system/fvSolution`` and returns a fresh runtime of the matching
+        registered spec (MULES fallback on unknown/absent).
         """
         from .selection import select_from_case  # noqa: PLC0415  # circular: .selection
 
-        return select_from_case()
+        spec = select_from_case()
+        return ModelRuntime(spec=spec, name=spec.name, config=None)

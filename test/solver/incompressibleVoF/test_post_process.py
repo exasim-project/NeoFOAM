@@ -174,12 +174,6 @@ def _operation(name: str) -> Operation:
     return Operation(func=SequentialOp(lambda _ctx: None), metadata=OperationMetadata(op_name=name))
 
 
-def _core_spec(name: str, op_names: list[str]) -> SimpleNamespace:
-    """A bare core-model spec as the graph step reads it: a name and named ops."""
-    operations = [_operation(op_name) for op_name in op_names]
-    return SimpleNamespace(name=name, build_operations_for=lambda _self: operations)
-
-
 def _core_runtime(spec_name: str, op_names: list[str]) -> SimpleNamespace:
     """An instantiated core model as the graph step reads it (``ModelRuntime``)."""
     return SimpleNamespace(
@@ -192,8 +186,8 @@ def _core_runtime(spec_name: str, op_names: list[str]) -> SimpleNamespace:
 def test_the_time_loop_ends_with_write_output_then_post_process() -> None:
     state = SimpleNamespace(
         core_models=[
-            _core_spec("MULES", ["alpha_advection"]),
-            _core_spec("Pimple", ["inner_loop", "mesh_update", "momentum", "continuity"]),
+            _core_runtime("MULES", ["alpha_advection"]),
+            _core_runtime("Pimple", ["inner_loop", "mesh_update", "momentum", "continuity"]),
             _core_runtime("postProcess", ["post_process"]),
         ],
         optional_models=[],

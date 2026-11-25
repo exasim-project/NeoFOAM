@@ -10,11 +10,12 @@ Created by ModelSpec.instantiate(). Never shared between solver runs.
 from __future__ import annotations
 
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from neofoam.fields.synthesis import synthesize_init_step
+from neofoam.framework.dependency_resolver import DependencyResolver
 from neofoam.io import BaseConfig
 
 if TYPE_CHECKING:
@@ -29,14 +30,15 @@ class ModelRuntime:
     """
     One instantiation of a ModelSpec with its own loaded config.
 
-    Owns per-instance state (config, name). All stage execution
-    delegates to the spec, passing config explicitly so state never
-    leaks between runs.
+    Owns per-instance state (config, name, the dependency resolver of its
+    operations). All stage execution delegates to the spec, passing config
+    explicitly so state never leaks between runs.
     """
 
     spec: "ModelSpec"
     name: str  # unique: "<spec.name>_<instance_id>"
     config: Any  # loaded config — updated during RESOLVE
+    dependency_resolver: DependencyResolver = field(default_factory=DependencyResolver, repr=False)
 
     def run_resolve(self, ctx: "ConfigContext") -> None:
         """Call spec's resolve func; store the returned updated config."""

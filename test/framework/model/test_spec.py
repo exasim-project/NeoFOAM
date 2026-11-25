@@ -301,3 +301,10 @@ def test_run_build_handles_specs_without_build_func() -> None:
     rt = ModelRuntime(spec=spec, name="only_fields", config=None)
     steps = rt.run_build()
     assert [s.name for s in steps] == ["fields.T"]
+
+
+def test_wrap_operation_rejects_a_runtime_without_a_dependency_resolver() -> None:
+    spec = Model("needs_a_runtime")
+
+    with pytest.raises(AttributeError, match="dependency_resolver"):
+        spec.wrap_operation(lambda: None, SimpleNamespace())

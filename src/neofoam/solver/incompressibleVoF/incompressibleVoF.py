@@ -104,15 +104,12 @@ def time_loop(ctx: Context) -> bool:
     return bool(ctx.models["runtime"].run())
 
 
-def _core_spec(state: Any, names: set[str]) -> Any:
-    """Find a core-model spec by name (order-independent lookup)."""
-    return next(m for m in state.core_models if m.name in names)
-
-
-def _core_model(state: Any, spec_name: str) -> Any:
-    """Find an instantiated core-model runtime by its spec name."""
+def _core_model(state: Any, *spec_names: str) -> Any:
+    """Find an instantiated core-model runtime by one of its spec names."""
     return next(
-        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
+        m
+        for m in state.core_models
+        if getattr(getattr(m, "spec", None), "name", None) in spec_names
     )
 
 
@@ -157,14 +154,13 @@ def execution_graph(
     builder = StepBuilder()
 
     # Core models, looked up by spec name (order-independent): the active
-    # alpha-advection scheme and PIMPLE. Each spec is used as its own runtime
-    # binding for operation building.
-    alpha_model = _core_spec(self.state, set(advectionModel.registered_names()))
-    pimple_model = _core_spec(
-        self.state, {spec.name for spec in PressureVelocityAlgorithm.all_specs()}
+    # alpha-advection scheme and PIMPLE.
+    alpha_model = _core_model(self.state, *advectionModel.registered_names())
+    pimple_model = _core_model(
+        self.state, *(spec.name for spec in PressureVelocityAlgorithm.all_specs())
     )
-    alpha_ops = Operations(alpha_model.build_operations_for(alpha_model))
-    pimple_ops = Operations(pimple_model.build_operations_for(pimple_model))
+    alpha_ops = Operations(alpha_model.operations)
+    pimple_ops = Operations(pimple_model.operations)
     post_ops = Operations(_core_model(self.state, "postProcess").operations)
 
     # Solver-owned time-loop operations.

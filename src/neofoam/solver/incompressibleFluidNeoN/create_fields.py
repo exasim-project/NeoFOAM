@@ -222,14 +222,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         builder.extend(neon_loop_backend_steps())
         builder.extend(neon_writer_backend_steps())
 
-        # PIMPLE is passed to add_core_models so it lands in
-        # models.pressure_velocity. Its InitSteps come straight from the
-        # ModelSpec (used as both spec and "runtime", no instantiate). The
-        # field declarations are NOT synthesized (that path is pybFoam-only):
-        # the spec's @build emits the NeoN U/p/phi reads itself.
-        builder.add_core_models([("pressure_velocity", pressure_model)])
-        if pressure_model._build_func is not None:
-            builder.extend(pressure_model._build_func(pressure_model))
+        # Not add_core_models: its run_build would synthesize the field declarations, a
+        # pybFoam-only path; the spec's @build emits the NeoN U/p/phi reads itself.
+        builder.add_model("pressure_velocity", pressure_model)
+        if pressure_model.spec._build_func is not None:
+            builder.extend(pressure_model.spec._build_func(pressure_model))
 
         builder.add(init_model("nu_vol", create_nu_vol, depends_on=["_neon_runtime"]))
         builder.add(

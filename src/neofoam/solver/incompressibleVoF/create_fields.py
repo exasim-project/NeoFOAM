@@ -75,6 +75,12 @@ class _FoamTimeStepView:
         return bool(self._runtime.outputTime())
 
 
+def _build_steps(runtime: ModelRuntime) -> list[InitStep]:
+    """The steps of the runtime's ``@build`` alone, without field synthesis."""
+    build = runtime.spec._build_func
+    return list(build(runtime)) if build is not None else []
+
+
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     """Build a fresh :class:`StagedInitRunner` for incompressibleVoF."""
     load_libraries(EXTRA_LIBRARIES)
@@ -133,23 +139,16 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             )
         )
 
-        # Register the core models under their solver-facing names, then run
-        # each spec's @build to emit the field/model InitSteps it owns (phi,
-        # mixture, alpha1/alpha2, rho, rhoPhi from alpha-advection; U, p_rgh, gh,
-        # ghf, p, pimple_control, pressure_reference from PIMPLE). The bare
-        # ModelSpec is not a BuildsInitSteps runtime, so add_core_models only
-        # registers it — the @build steps are added explicitly here.
-        # postProcess *is* a ModelRuntime, so add_core_models runs its @build for
-        # it (emitting models.post_processor) — unlike the two bare specs above.
-        builder.add_core_models(
-            [
-                ("alpha_advection", alpha_model),
-                ("pressure_velocity", pressure_model),
-                ("post_process_model", post_process_model),
-            ]
-        )
-        for spec in (alpha_model, pressure_model):
-            builder.extend(spec.build_steps())
+        # Not add_core_models for alpha-advection and PIMPLE: its run_build would
+        # synthesize their schema-only field declarations, while each @build
+        # reads or creates those fields itself (phi, mixture, alpha1/alpha2, rho,
+        # rhoPhi from alpha-advection; U, p_rgh, gh, ghf, p, pimple_control,
+        # pressure_reference from PIMPLE).
+        builder.add_model("alpha_advection", alpha_model)
+        builder.add_model("pressure_velocity", pressure_model)
+        builder.add_core_models([("post_process_model", post_process_model)])
+        for runtime in (alpha_model, pressure_model):
+            builder.extend(_build_steps(runtime))
 
         # Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).
         def create_turbulence(ctx: dict[str, Any]) -> Any:

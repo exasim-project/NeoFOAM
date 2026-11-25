@@ -6,7 +6,7 @@
 VoF always uses PIMPLE (interFoam has no SIMPLE/PISO support), so unlike the
 incompressibleFluid dispatcher this one only ever has a single family member.
 ``all_specs`` is case-free; ``detect_and_create`` reads ``system/fvSolution``
-and warns (but still returns the PIMPLE spec) when no PIMPLE dict is found
+and warns (but still returns a PIMPLE runtime) when no PIMPLE dict is found
 there.
 
 The "missing PIMPLE dict" case is derived from the real damBreakPorousBaffle
@@ -40,7 +40,7 @@ def test_detect_and_create_returns_pimple_for_the_real_interfoam_case(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(_CASES / "interFoam_damBreakPorousBaffle")
-    assert PressureVelocityAlgorithm.detect_and_create() is pimple
+    assert PressureVelocityAlgorithm.detect_and_create().spec is pimple
 
 
 def test_detect_and_create_warns_and_still_returns_pimple_without_a_PIMPLE_dict(
@@ -57,4 +57,4 @@ def test_detect_and_create_warns_and_still_returns_pimple_without_a_PIMPLE_dict(
     monkeypatch.chdir(tmp_path)
     with pytest.warns(UserWarning, match="No PIMPLE dict found"):
         result = PressureVelocityAlgorithm.detect_and_create()
-    assert result is pimple
+    assert result.spec is pimple

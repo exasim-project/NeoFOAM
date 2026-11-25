@@ -82,7 +82,7 @@ pimple = Model("Pimple")
 # ``configurations(solver)`` so the case wizard / agent fills the case scaffold.
 # Operations extend these via ``@PimpleFvSchemes.add(...)`` /
 # ``@PimpleFvSolution.add(...)`` below. Declaring them does not change the solve:
-# ``ModelSpec.build_steps`` runs only the ``@pimple.build`` function, never the
+# ``create_fields`` runs only the ``@pimple.build`` function, never the
 # field/config declarations, so the fields are still read by ``@build`` at run
 # time exactly as before.
 PimpleFvSchemes = pimple.config(fvSchemes)
@@ -94,7 +94,7 @@ PimpleFvSolution = pimple.config(fvSolution)
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
 # Declared so ``configurations(solver)`` and the MCP export the key set.
-# Loading is unaffected: this spec is used as its own runtime and never
+# Loading is unaffected: its runtime is built without ``instantiate`` and never
 # auto-loads its configs — ``control_factory`` drives instantiation.
 pimple.config(VofPimpleAlgorithmConfig)
 pimple.config(DynamicMeshControls)

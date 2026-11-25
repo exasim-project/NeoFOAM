@@ -69,7 +69,7 @@ class PorosityPropertiesConfig(BaseConfig):
 
 
 # Declared so the switch is part of this model's exported schema set; loading is
-# unaffected — this spec is used as its own runtime and never auto-loads its
+# unaffected — its runtime is built without ``instantiate`` and never auto-loads its
 # configs, the guarded read below drives instantiation.
 iso_advector.config(PorosityPropertiesConfig)
 
