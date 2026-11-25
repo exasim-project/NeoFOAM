@@ -104,6 +104,7 @@ class NeonCellGeometry:
     def __init__(self, mesh: Any, executor: Any) -> None:
         import neon  # noqa: PLC0415  # NeoN is only needed on the NeoN path
 
+        _ensure_kokkos()
         centres = np.asarray(mesh.C().internalField())
         self._positions = neon.VectorVector(executor, [neon.Vec3(*centre) for centre in centres])
         self._volumes = neon.ScalarVector(executor, np.asarray(mesh.V(), dtype=float))
@@ -129,11 +130,26 @@ _NEON_CELL_GEOMETRIES: dict[tuple[int, str], tuple[Any, NeonCellGeometry]] = {}
 _RELEASE_REGISTERED = False
 
 
+def _ensure_kokkos() -> None:
+    """Initialize NeoN/Kokkos if no NeoN solver has done so yet.
+
+    A host solver (``incompressibleFluid``) can feed a NeoN-path pipeline without
+    ever starting NeoN; since Kokkos 5.1 creating a NeoN vector then aborts the
+    process ("execution space is being constructed before initialize()").
+    """
+    from neofoam.solver.neon_runtime import ensure_neon_initialized  # noqa: PLC0415
+
+    ensure_neon_initialized(["neofoam-postprocess"])
+
+
 def neon_cell_geometry(mesh: Any, executor: Any) -> NeonCellGeometry:
     """The cells of *mesh* on *executor*, built on first use and kept afterwards."""
     key = (id(mesh), repr(executor))
     cached = _NEON_CELL_GEOMETRIES.get(key)
     if cached is None:
+        # Before the release hook: atexit runs last-registered-first, so Kokkos'
+        # finalize, registered on initialization, has to come first to run last.
+        _ensure_kokkos()
         _release_the_cache_before_kokkos_finalizes()
         cached = (mesh, NeonCellGeometry(mesh, executor))
         _NEON_CELL_GEOMETRIES[key] = cached
