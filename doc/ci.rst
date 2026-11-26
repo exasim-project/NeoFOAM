@@ -98,6 +98,11 @@ NeoFOAM’s GitHub repository uses labels to control the CI behavior.
 **Relevant Labels:**
 
 * ``skip-build`` — Skip all build-and-test jobs on both GitHub and LRZ GitLab.
+
+Pull requests that only change documentation (``doc/``, ``LICENSES/``, Markdown and
+reStructuredText files or ``CITATION.cff``) skip the build-and-test jobs automatically, here and on
+LRZ GitLab. The Python 3.12 job still installs the package and builds the documentation preview,
+without pytest and mypy.
 * ``neon_from_source`` — Build NeoN from source with debug options instead of installing the nightly
   conda package.
 * ``skip-changelog`` — Skip the changelog check.
