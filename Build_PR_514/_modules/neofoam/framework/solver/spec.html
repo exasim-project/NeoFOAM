@@ -298,12 +298,14 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.execution_observer.html">neofoam.framework.execution_observer</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -681,11 +683,10 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DependencyResolver</span><span class="p">,</span>
     <span class="n">wrap_with_dependency_resolution</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">OperationCollection</span><span class="p">,</span> <span class="n">SequentialOp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span><span class="p">,</span> <span class="n">Schedule</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverRuntime</span>
 
@@ -714,7 +715,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Context</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_config_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
@@ -887,8 +887,13 @@
         <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">before</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Decorator to register a solver operation."""</span>
+<span class="w">        </span><span class="sd">"""Decorator to register a solver operation.</span>
+
+<span class="sd">        ``schedule`` limits it to the first or final pass of the wrapping loops around</span>
+<span class="sd">        it.</span>
+<span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -899,6 +904,8 @@
                         <span class="s2">"depends_on"</span><span class="p">:</span> <span class="n">depends_on</span><span class="p">,</span>
                         <span class="s2">"before"</span><span class="p">:</span> <span class="n">before</span><span class="p">,</span>
                         <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                        <span class="s2">"first"</span><span class="p">:</span> <span class="n">schedule</span><span class="o">.</span><span class="n">first</span><span class="p">,</span>
+                        <span class="s2">"final"</span><span class="p">:</span> <span class="n">schedule</span><span class="o">.</span><span class="n">final</span><span class="p">,</span>
                     <span class="p">},</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -913,8 +920,12 @@
 
 <div class="viewcode-block" id="SolverSpec.instantiate">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.instantiate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.</span>
 
 <span class="sd">        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads</span>
 <span class="sd">        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.</span>
@@ -924,6 +935,7 @@
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">argv</span><span class="o">=</span><span class="n">argv</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">"neofoam"</span><span class="p">],</span>
+            <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -936,7 +948,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No initialize function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">dependency_resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">"self"</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span> <span class="ow">and</span> <span class="s2">"self"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -1013,10 +1025,12 @@
             <span class="n">discovered</span> <span class="o">=</span> <span class="n">_discover_configs_from_signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">discovered</span><span class="p">:</span>
                 <span class="n">wrapped</span> <span class="o">=</span> <span class="n">_create_runtime_config_wrapper</span><span class="p">(</span>
-                    <span class="n">func</span><span class="p">,</span> <span class="n">discovered</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span>
+                    <span class="n">func</span><span class="p">,</span> <span class="n">discovered</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">dependency_resolver</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="p">)</span>
+                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
+                    <span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">dependency_resolver</span>
+                <span class="p">)</span>
 
             <span class="n">op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">wrapped</span><span class="p">),</span>
@@ -1029,6 +1043,8 @@
                     <span class="p">),</span>
                     <span class="n">depends_on</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"depends_on"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
                     <span class="n">before</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"before"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">first</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"first"</span><span class="p">],</span>
+                    <span class="n">final</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"final"</span><span class="p">],</span>
                 <span class="p">),</span>
             <span class="p">)</span>
             <span class="n">ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
