@@ -72,7 +72,7 @@ pipeline (see :doc:`three-stage-init`).
         for algo_name in ("Pimple", "Simple", "Piso"):
             pressure_model = ctx.get(algo_name)
             if pressure_model is not None:
-                pressure_model.use_boussinesq = True
+                pressure_model.config.use_boussinesq = True
                 return
 
     @boussinesq.build

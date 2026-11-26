@@ -298,12 +298,14 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.execution_observer.html">neofoam.framework.execution_observer</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.graph.wrapping.html">neofoam.framework.graph.wrapping</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../../../reference/api/neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -670,12 +672,40 @@
 <span class="sd">subdict only).</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ModelSpec</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pimpleAlgorithm</span><span class="w"> </span><span class="kn">import</span> <span class="n">pimpleNeoN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.simpleAlgorithm</span><span class="w"> </span><span class="kn">import</span> <span class="n">simpleNeoN</span>
+
+
+<div class="viewcode-block" id="PressureVelocitySettingsNeoN">
+<a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocitySettingsNeoN">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PressureVelocitySettingsNeoN</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One run's settings, kept off the spec that regions and runs share.</span>
+
+<span class="sd">    Use it as the ``config`` of a NeoN pressure-velocity runtime; obtain it through</span>
+<span class="sd">    :meth:`PressureVelocityAlgorithmNeoN.create` or ``detect_and_create`` instead of</span>
+<span class="sd">    building one. Frozen, so it is safe to read from any thread.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        settings = PressureVelocityAlgorithmNeoN.create(algorithm_type="PIMPLE").config</span>
+<span class="sd">    """</span>
+
+    <span class="n">algorithm_type</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_runtime</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">ModelSpec</span><span class="p">,</span> <span class="n">algorithm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelRuntime</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">ModelRuntime</span><span class="p">(</span>
+        <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">PressureVelocitySettingsNeoN</span><span class="p">(</span><span class="n">algorithm_type</span><span class="p">)</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="PressureVelocityAlgorithmNeoN">
@@ -694,8 +724,8 @@
 <div class="viewcode-block" id="PressureVelocityAlgorithmNeoN.detect_and_create">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.detect_and_create">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">detect_and_create</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Detect algorithm from fvSolution and prime its state."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_and_create</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelRuntime</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Detect the algorithm from fvSolution: a fresh runtime of its spec."""</span>
         <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">):</span>
@@ -707,26 +737,22 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"PIMPLE"</span>
 
-        <span class="n">algorithm_model</span> <span class="o">=</span> <span class="n">simpleNeoN</span> <span class="k">if</span> <span class="n">algorithm_type</span> <span class="o">==</span> <span class="s2">"SIMPLE"</span> <span class="k">else</span> <span class="n">pimpleNeoN</span>
-        <span class="n">algorithm_model</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="n">algorithm_type</span>  <span class="c1"># type: ignore[attr-defined]</span>
-        <span class="k">return</span> <span class="n">algorithm_model</span></div>
+        <span class="k">return</span> <span class="n">_runtime</span><span class="p">(</span><span class="n">simpleNeoN</span> <span class="k">if</span> <span class="n">algorithm_type</span> <span class="o">==</span> <span class="s2">"SIMPLE"</span> <span class="k">else</span> <span class="n">pimpleNeoN</span><span class="p">,</span> <span class="n">algorithm_type</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PressureVelocityAlgorithmNeoN.create">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Programmatically create a pressure-velocity algorithm model."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelRuntime</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Programmatically create a pressure-velocity algorithm runtime."""</span>
         <span class="k">if</span> <span class="n">algorithm_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"Simple"</span><span class="p">,</span> <span class="s2">"SIMPLE"</span><span class="p">}:</span>
-            <span class="n">simpleNeoN</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"SIMPLE"</span>  <span class="c1"># type: ignore[attr-defined]</span>
-            <span class="k">return</span> <span class="n">simpleNeoN</span>
+            <span class="k">return</span> <span class="n">_runtime</span><span class="p">(</span><span class="n">simpleNeoN</span><span class="p">,</span> <span class="s2">"SIMPLE"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">algorithm_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"Pimple"</span><span class="p">,</span> <span class="s2">"PIMPLE"</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"incompressibleFluidNeoN only supports the PIMPLE and SIMPLE "</span>
                 <span class="sa">f</span><span class="s2">"algorithms; requested </span><span class="si">{</span><span class="n">algorithm_type</span><span class="si">!r}</span><span class="s2">."</span>
             <span class="p">)</span>
-        <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"PIMPLE"</span>  <span class="c1"># type: ignore[attr-defined]</span>
-        <span class="k">return</span> <span class="n">pimpleNeoN</span></div>
+        <span class="k">return</span> <span class="n">_runtime</span><span class="p">(</span><span class="n">pimpleNeoN</span><span class="p">,</span> <span class="s2">"PIMPLE"</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
