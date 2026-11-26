@@ -1,0 +1,77 @@
+name: Clean up closed PRs
+
+# When a PR is closed (merged or not), cancel its running CI (the GitHub Actions runs on its branch
+# and the LRZ GitLab pipelines that the gpu job of ci.yaml triggered), then delete the copy of its
+# branch that the gpu job pushed to the LRZ GitLab mirror, so stale branches don't pile up there
+# and CI can't pick an outdated one (#226). Branches of this repository are deleted by GitHub on
+# merge (delete_branch_on_merge). Runs as pull_request_target to get the LRZ token for fork PRs
+# too; it only checks out the base branch (for the ci/github scripts) and uses the PR's branch
+# name, never its code. Mirrors NeoN's workflow of the same name.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    if: github.repository == 'exasim-project/NeoFOAM'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      LRZ_GROUP: greole
+      LRZ_HOST: gitlab-ce.lrz.de
+      REPO_NAME: ${{ github.event.repository.name }}
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
+    steps:
+      - name: Check branch name
+        id: check
+        run: |
+          git check-ref-format --branch "$BRANCH" > /dev/null
+          case "$BRANCH" in
+            develop|main|gh-pages)
+              echo "::notice::Keeping protected branch '$BRANCH'"; echo "delete=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
+          esac
+          # Another open PR from a branch of the same name still needs the LRZ copy
+          others=$(gh pr list --state open --head "$BRANCH" --json number --jq "[.[] | select(.number != $PR_NUMBER)] | length")
+          if [[ "$others" != 0 ]]; then
+            echo "::notice::Branch '$BRANCH' is used by another open PR, keeping it"; echo "delete=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "delete=true" >> "$GITHUB_OUTPUT"
+
+      - name: Cancel GitHub Actions runs of the branch
+        if: steps.check.outputs.delete == 'true'
+        run: |
+          for status in queued in_progress waiting requested pending; do
+            gh run list --branch "$BRANCH" --status "$status" --limit 100 --json databaseId,workflowName \
+              --jq '.[] | select(.workflowName != "${{ github.workflow }}") | .databaseId'
+          done | sort -u | while read -r id; do
+            echo "Cancelling run $id"
+            gh run cancel "$id" || true
+          done
+
+      # Checks out the base branch: pull_request_target never checks out the PR head by default
+      - name: Checkout base branch
+        if: steps.check.outputs.delete == 'true' && env.LRZ_GITLAB_PROJECT_TOKEN != ''
+        uses: actions/checkout@v4
+
+      - name: Cancel LRZ GitLab pipelines of the branch
+        if: steps.check.outputs.delete == 'true' && env.LRZ_GITLAB_PROJECT_TOKEN != ''
+        run: ./ci/github/cancel_triggered_pipelines.sh "${BRANCH}"
+
+      - name: Delete branch on LRZ GitLab
+        if: steps.check.outputs.delete == 'true' && env.LRZ_GITLAB_PROJECT_TOKEN != ''
+        run: |
+          remote="https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_GROUP}/${REPO_NAME}.git"
+          if git ls-remote --exit-code --heads "$remote" "refs/heads/$BRANCH" > /dev/null; then
+            git push "$remote" --delete "refs/heads/$BRANCH"
+            echo "Deleted '$BRANCH' on LRZ GitLab"
+          else
+            echo "No branch '$BRANCH' on LRZ GitLab"
+          fi
