@@ -40,7 +40,7 @@ broken commit occupies as few of the organization's shared runners as possible:
    on PRs, the documentation preview.
 #. After the Python job: the Python tests on 3.11 and 3.13, on every PR and push that builds.
 
-The Linux builds (clang and gcc), IWYU and the Python job do not build NeoN themselves when they
+The Linux builds (clang and gcc), macOS, IWYU and the Python job do not build NeoN themselves when they
 test against NeoN ``develop``: they install the Open MPI flavour of the nightly ``neon-pde`` conda
 package from `exasim-project/nightlies <https://prefix.dev/channels/exasim-project/nightlies>`_ and
 configure NeoFOAM with ``-DNEOFOAM_USE_INSTALLED_NEON=ON``. The clang and IWYU builds install the clang-built
@@ -49,7 +49,10 @@ requires-clauses differently, so clang-compiled code cannot link a GCC-built Neo
 the IWYU build, whose compilation database it uses. The Python job runs on the package
 environment's Python 3.12 (the Python version of the Open MPI build), which also provides the
 ``neon`` module; NeoFOAM's bindings then take nanobind from the Python build environment, the same
-nanobind ABI the package's ``_neon`` was built with. If the package cannot be installed, these
+nanobind ABI the package's ``_neon`` was built with. macOS installs the ``osx-arm64`` Open MPI
+flavour (``cpu_openmpi_py312_*``) together with exactly the Open MPI build that OpenFOAM for macOS
+bundles (read from its ``conda-meta``), so NeoN and OpenFOAM's ``libPstream`` share one Open MPI. If
+the package cannot be installed, these
 builds fall back to building NeoN and warn.
 
 That NeoN is a Release build of ``develop`` from the last night. To test against the current

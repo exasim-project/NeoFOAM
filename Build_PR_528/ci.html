@@ -705,7 +705,7 @@ the Python job. The Python job builds the package once and runs pytest with cove
 on PRs, the documentation preview.</p></li>
 <li><p>After the Python job: the Python tests on 3.11 and 3.13, on every PR and push that builds.</p></li>
 </ol>
-<p>The Linux builds (clang and gcc), IWYU and the Python job do not build NeoN themselves when they
+<p>The Linux builds (clang and gcc), macOS, IWYU and the Python job do not build NeoN themselves when they
 test against NeoN <code class="docutils literal notranslate"><span class="pre">develop</span></code>: they install the Open MPI flavour of the nightly <code class="docutils literal notranslate"><span class="pre">neon-pde</span></code> conda
 package from <a class="reference external" href="https://prefix.dev/channels/exasim-project/nightlies">exasim-project/nightlies</a> and
 configure NeoFOAM with <code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_USE_INSTALLED_NEON=ON</span></code>. The clang and IWYU builds install the clang-built
@@ -714,7 +714,10 @@ requires-clauses differently, so clang-compiled code cannot link a GCC-built Neo
 the IWYU build, whose compilation database it uses. The Python job runs on the package
 environment’s Python 3.12 (the Python version of the Open MPI build), which also provides the
 <code class="docutils literal notranslate"><span class="pre">neon</span></code> module; NeoFOAM’s bindings then take nanobind from the Python build environment, the same
-nanobind ABI the package’s <code class="docutils literal notranslate"><span class="pre">_neon</span></code> was built with. If the package cannot be installed, these
+nanobind ABI the package’s <code class="docutils literal notranslate"><span class="pre">_neon</span></code> was built with. macOS installs the <code class="docutils literal notranslate"><span class="pre">osx-arm64</span></code> Open MPI
+flavour (<code class="docutils literal notranslate"><span class="pre">cpu_openmpi_py312_*</span></code>) together with exactly the Open MPI build that OpenFOAM for macOS
+bundles (read from its <code class="docutils literal notranslate"><span class="pre">conda-meta</span></code>), so NeoN and OpenFOAM’s <code class="docutils literal notranslate"><span class="pre">libPstream</span></code> share one Open MPI. If
+the package cannot be installed, these
 builds fall back to building NeoN and warn.</p>
 <p>That NeoN is a Release build of <code class="docutils literal notranslate"><span class="pre">develop</span></code> from the last night. To test against the current
 <code class="docutils literal notranslate"><span class="pre">develop</span></code> with the <code class="docutils literal notranslate"><span class="pre">develop</span></code> preset’s Kokkos debug and bounds checks, set the
