@@ -40,6 +40,7 @@ jobs:
     if: github.repository == 'exasim-project/NeoFOAM'
     runs-on: ubuntu-latest
     outputs:
+      stack: ${{ steps.stack.outputs.key }}
       lint: ${{ steps.gate.outputs.lint }}
       changelog: ${{ steps.gate.outputs.changelog }}
       build: ${{ steps.gate.outputs.build }}
@@ -139,6 +140,29 @@ jobs:
           echo "Resolved NeoN ref: $NEON_BRANCH"
           echo "branch=$NEON_BRANCH" >> "$GITHUB_OUTPUT"
 
+      # PRs of one stacked-PR chain queue their build jobs behind each other instead of occupying a
+      # full set of runners each (see the job-level concurrency groups below). Other runs get a key
+      # of their own, so nothing else is serialized.
+      - name: Find the PR's stack
+        id: stack
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # How many PRs of one stack may run their build jobs at the same time
+          STACK_SLOTS: 1
+        run: |
+          key="run-${GITHUB_RUN_ID}"
+          if [[ -n "$PR_NUMBER" ]]; then
+            stack=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+              --jq 'select(.stack != null) | "\(.stack.number) \(.stack.position) \(.stack.size)"' || true)
+            if [[ -n "$stack" ]]; then
+              read -r number position size <<<"$stack"
+              key="stack-${number}-slot-$(( position % STACK_SLOTS ))"
+              echo "::notice::PR #$PR_NUMBER is $position of $size in stack $number, its build jobs queue behind the stack's other PRs"
+            fi
+          fi
+          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+
   # ---------------------------------------------------------------- cheap checks, no build
   pre-commit:
     name: Pre-commit run
@@ -187,6 +211,10 @@ jobs:
     needs: gate
     if: needs.gate.outputs.build == 'true'
     runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-linux-${{ strategy.job-index }}
+      cancel-in-progress: false
+      queue: max
     strategy:
       matrix:
         compiler:
@@ -307,6 +335,10 @@ jobs:
     needs: [gate, linux]
     if: needs.gate.outputs.build == 'true'
     runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-linux-gcc-${{ strategy.job-index }}
+      cancel-in-progress: false
+      queue: max
     strategy:
       matrix:
         compiler:
@@ -323,6 +355,10 @@ jobs:
     needs: [gate, linux]
     if: needs.gate.outputs.build == 'true'
     runs-on: macos-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-macos
+      cancel-in-progress: false
+      queue: max
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
@@ -443,6 +479,10 @@ jobs:
     needs: [gate, linux]
     if: needs.gate.outputs.build == 'true'
     runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-iwyu
+      cancel-in-progress: false
+      queue: max
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
       NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
@@ -494,8 +534,12 @@ jobs:
 
   clang-tidy:
     name: Clang-tidy Check
-    needs: iwyu
+    needs: [gate, iwyu]
     runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-clang-tidy
+      cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@v4
         with:
@@ -578,6 +622,10 @@ jobs:
           (needs.gate.outputs.build == 'true' && needs.linux.result == 'success') ||
           needs.gate.outputs.docs-only == 'true') }}
     runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-python
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: write # docs preview on gh-pages
       pull-requests: write # docs preview comment
@@ -663,6 +711,10 @@ jobs:
     needs: [gate, python]
     if: needs.gate.outputs.python-all == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-python-versions-${{ strategy.job-index }}
+      cancel-in-progress: false
+      queue: max
     strategy:
       fail-fast: false
       matrix:
@@ -693,6 +745,10 @@ jobs:
     needs: [gate, linux]
     if: ${{ !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-gpu
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 1440 # 24 hours
     env:
       LRZ_GROUP: greole

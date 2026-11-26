@@ -59,6 +59,7 @@
 - Add a pure-Python NeoN turbulence family on the ModelSpec framework (`laminar`/`kEpsilon`/`SpalartAllmaras`/`kOmegaSST`), unifying the NeoN and pybFoam closures behind one runtime selection and wiring them into `incompressibleFluidNeoN`; steady SIMPLE runs match native `simpleFoam` on pitzDaily, backed by new `neofoam_bindings` for wall distance, the strain/vorticity/grad-dot-grad invariants, and the epsilon/omega wall-function near-wall cell treatment [#359](https://github.com/exasim-project/NeoFOAM/pull/359)
 
 ## Development
+- Run the build-and-test jobs of stacked pull requests one stack member at a time, through per-stack job concurrency groups that queue, instead of a full set of runners per pull request
 - Install NeoN from the `osx-arm64` Open MPI `neon-pde` package in the macOS CI job instead of building it, with the same Open MPI build as OpenFOAM for macOS
 - When a PR is closed, cancel its GitHub Actions runs and LRZ GitLab pipelines and delete the LRZ copy of its branch; merged branches are deleted on GitHub automatically [#226](https://github.com/exasim-project/NeoFOAM/issues/226)
 - Skip the build-and-test jobs, on GitHub and LRZ, for PRs that only change documentation; the docs are still built [#126](https://github.com/exasim-project/NeoFOAM/issues/126)

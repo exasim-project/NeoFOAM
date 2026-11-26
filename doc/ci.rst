@@ -107,6 +107,12 @@ reStructuredText files or ``CITATION.cff``) skip the build-and-test jobs automat
 LRZ GitLab. The Python 3.12 job still installs the package and builds the documentation preview,
 without pytest and mypy.
 
+Pull requests that are part of a stack (stacked pull requests) run their build-and-test jobs one
+stack member at a time: the gate looks up the stack, and each build job joins a concurrency group
+per stack and job that queues (``queue: max``) instead of running in parallel. Every pull request
+still gets its own results, they just arrive later for the upper ones. ``STACK_SLOTS`` in the gate
+sets how many members of one stack may build at the same time.
+
 When a pull request is closed, merged or not, ``.github/workflows/cleanup-pr-branches.yaml`` cancels
 its running GitHub Actions runs and LRZ GitLab pipelines and deletes the copy of its branch that the
 GPU job pushed to the LRZ GitLab mirror. GitHub deletes the branch itself on merge.
