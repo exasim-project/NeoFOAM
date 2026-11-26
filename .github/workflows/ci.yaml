@@ -48,6 +48,7 @@ jobs:
       skip-amd: ${{ steps.gate.outputs.skip-amd }}
       skip-intel: ${{ steps.gate.outputs.skip-intel }}
       skip-validation: ${{ steps.gate.outputs.skip-validation }}
+      docs-only: ${{ steps.gate.outputs.docs-only }}
       neon-branch: ${{ steps.neon.outputs.branch }}
       neon-from-package: ${{ steps.gate.outputs.neon-from-package }}
     steps:
@@ -57,6 +58,11 @@ jobs:
           LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           LABEL_EVENT: ${{ github.event.action == 'labeled' || github.event.action == 'unlabeled' }}
           LABEL: ${{ github.event.label.name }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # Files a PR may change and still skip the builds (#126). examples/ is not included: the
+          # docs gallery runs the examples, but pytest covers them too.
+          DOCS_ONLY_RE: '^(doc/|LICENSES/)|\.(md|rst)$|^CITATION\.cff$'
         run: |
           has() { jq -e --arg l "$1" '(. // []) | index($l) != null' <<<"${LABELS:-[]}" >/dev/null; }
           is_pr=$([[ "$GITHUB_EVENT_NAME" == pull_request ]] && echo true || echo false)
@@ -79,6 +85,19 @@ jobs:
           lint=$rebuild
           build=$rebuild
           if $is_pr && has skip-build; then build=false; fi
+
+          # A PR that only changes documentation skips the builds, here and on LRZ; the Python 3.12
+          # job still installs the package and builds the docs (without pytest and mypy)
+          docs_only=false
+          if $is_pr && [[ "$build" == true ]]; then
+            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename')
+            if [[ -n "$files" ]] && ! grep -qvE "$DOCS_ONLY_RE" <<<"$files"; then
+              echo "::notice::Only documentation changed, skipping the builds"
+              docs_only=true
+              build=false
+            fi
+          fi
+
           # Python 3.11/3.13 run wherever the builds do, PRs included
           python_all=$build
 
@@ -91,12 +110,13 @@ jobs:
             echo "skip-amd=$(has skip-amd && echo true || echo false)"
             echo "skip-intel=$(has skip-intel && echo true || echo false)"
             echo "skip-validation=$(has skip-validation && echo true || echo false)"
+            echo "docs-only=$docs_only"
             echo "neon-from-package=$($is_pr && has neon_from_source && echo false || echo true)"
           } | tee -a "$GITHUB_OUTPUT"
 
       - name: Determine NeoN branch
         id: neon
-        if: steps.gate.outputs.build == 'true'
+        if: steps.gate.outputs.build == 'true' || steps.gate.outputs.docs-only == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -500,7 +520,11 @@ jobs:
   python:
     name: Python 3.12 (tests, coverage, mypy, docs)
     needs: [gate, linux]
-    if: needs.gate.outputs.build == 'true'
+    # On docs-only PRs linux is skipped, and this job only builds the docs
+    if: >-
+      ${{ !cancelled() && (
+          (needs.gate.outputs.build == 'true' && needs.linux.result == 'success') ||
+          needs.gate.outputs.docs-only == 'true') }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write # docs preview on gh-pages
@@ -545,10 +569,11 @@ jobs:
 
       # The checks below run even if an earlier one fails, as long as the install succeeded
       - name: Test with pytest
+        if: needs.gate.outputs.docs-only != 'true'
         run: pytest --cov=neofoam --cov-report=xml --cov-report=term
 
       - name: Check types with mypy
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && needs.gate.outputs.docs-only != 'true' }}
         run: poe type_check
 
       - name: Build docs
