@@ -192,6 +192,13 @@ def serve(case_dir: Path, executor: str) -> None:
         nfb.update_velocity_buoyant(fields["U"], fields["rAU"], numerator, rauf, corrected)
         return _to_numpy(corrected.internal_vector())
 
+    def viscous_stress() -> np.ndarray:
+        """div(nu*dev2(T(grad(U)))) with nu = 1, nut = 0, the momentum equation's explicit term."""
+        nu = nfb.create_uniform_volume_field(rt, "nu", 1.0)
+        nut = nfb.create_uniform_volume_field(rt, "nut", 0.0)
+        grad_u = nfb.GradScheme(rt, "U").grad_tensor(fields["U"])
+        return explicit_vector(nfb.viscous_stress(nu, nut, grad_u), fv_schemes)
+
     def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
         interp = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
         return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
@@ -232,6 +239,7 @@ def serve(case_dir: Path, executor: str) -> None:
         ("simplecFluxCorrection", ("rAU", "rAtU", "T")): lambda s, d: simplec_flux_correction(s),
         ("exp.grad", ("T",)): lambda s, d: explicit_vector(nn.exp.grad(fields["T"]), fv_schemes),
         ("exp.gradTensor", ("U",)): lambda s, d: grad_tensor(s, "U"),
+        ("exp.viscousStress", ("U",)): lambda s, d: viscous_stress(),
         ("exp.div", ("phi",)): lambda s, d: explicit_scalar(nn.exp.div(fields["phi"]), fv_schemes),
         ("exp.div", ("phi", "T")): lambda s, d: explicit_scalar(
             nn.exp.div(fields["phi"], fields["T"]), div_tokens(s, "T")

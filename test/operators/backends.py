@@ -237,6 +237,10 @@ class NeonExp:
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("exp.laplacian", (gamma.name, field.name))
 
+    def viscous_stress(self, field: "Field") -> np.ndarray:
+        """``nfb.viscous_stress``: div(nu*dev2(T(grad(field)))) with nu = 1, nut = 0."""
+        return _neon_worker(field).evaluate("exp.viscousStress", (field.name,))
+
 
 class NeonImp:
     """``neon.imp`` — implicit DSL operators, assembled via
