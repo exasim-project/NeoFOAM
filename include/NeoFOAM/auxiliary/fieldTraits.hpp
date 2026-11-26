@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 namespace NeoFOAM
 {

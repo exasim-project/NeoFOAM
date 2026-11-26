@@ -14,7 +14,12 @@
 #include <nanobind/stl/vector.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/executor/serialExecutor.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/dsl/explicit.hpp"
+#include "NeoN/dsl/implicit.hpp"
 
 #include "bindings.hpp"
 

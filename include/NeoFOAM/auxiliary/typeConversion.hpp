@@ -6,7 +6,11 @@
 #include "surfaceFields.H"
 #include "DynamicField.H"
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/fields/field.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 #include "NeoFOAM/auxiliary/convert.hpp"
 

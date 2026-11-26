@@ -4,7 +4,25 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/error.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/input.hpp"
+#include "NeoN/core/primitives/tensor.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/runtimeSelectionFactory.hpp"
+#include "NeoN/core/tokenList.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/dsl/coeff.hpp"
+#include "NeoN/dsl/explicit.hpp"
+#include "NeoN/dsl/implicit.hpp"
+#include "NeoN/dsl/operator.hpp"
+#include "NeoN/dsl/spatialOperator.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/interpolation/linear.hpp"
+#include "NeoN/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
 
 #include "NeoFOAM/fvcc/operators/devStress.hpp"
 

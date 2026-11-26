@@ -7,7 +7,10 @@
  */
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/fields/field.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 #include "GeometricField.H"
 #include "volMesh.H"

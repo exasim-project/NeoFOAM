@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
+#include "NeoN/core/memory/umpire.hpp"
+
 #include "NeoFOAM/auxiliary/setup.hpp"
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
 #include "NeoFOAM/datastructures/databaseWrapper.hpp"

@@ -19,7 +19,14 @@
 #include <nanobind/stl/string.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/error.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/boundaryContext.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 // OpenFOAM headers
 #include "wallDist.H"     // Foam::wallDist for read_wall_distance

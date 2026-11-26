@@ -4,7 +4,15 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/tokenList.hpp"
+#include "NeoN/dsl/expression.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gradOperator.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 

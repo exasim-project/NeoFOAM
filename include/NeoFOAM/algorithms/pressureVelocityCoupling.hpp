@@ -5,7 +5,11 @@
 
 #include "NeoFOAM/datastructures/pde.hpp"
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gradOperator.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 using scalar = NeoN::scalar;

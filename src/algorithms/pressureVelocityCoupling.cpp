@@ -1,7 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/error.hpp"
+#include "NeoN/core/input.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/tokenList.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/dsl/coeff.hpp"
+#include "NeoN/dsl/explicit.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoN/finiteVolume/cellCentred/faceNormalGradient/faceNormalGradient.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gradOperator.hpp"
+#include "NeoN/linearAlgebra/matrix.hpp"
 
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
 #include "Kokkos_Core.hpp"

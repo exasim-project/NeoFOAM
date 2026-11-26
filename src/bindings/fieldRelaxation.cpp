@@ -9,7 +9,10 @@
 #include <nanobind/stl/string.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/dsl/solver.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoN/dsl/solver.hpp" // fieldRelaxationSnapshot / applyFieldRelaxation
 
 // NeoFOAM headers

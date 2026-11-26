@@ -4,7 +4,7 @@
 
 #include <tuple>
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/executor/executor.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
 
 #include "argList.H"

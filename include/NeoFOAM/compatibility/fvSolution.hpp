@@ -15,11 +15,11 @@
 #include "NeoN/core/dictionary.hpp"
 #include "NeoN/core/primitives/scalar.hpp"
 
-#include "NeoFOAM/datastructures/runTime.hpp"
-
 
 namespace NeoFOAM
 {
+
+struct RunTime;
 
 /* @brief No fvSolution entry matches a field name.
  *

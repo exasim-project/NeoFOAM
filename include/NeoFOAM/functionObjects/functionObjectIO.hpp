@@ -13,7 +13,7 @@
 
 // NeoN must be included before OpenFOAM headers: OpenFOAM defines a NotImplemented
 // macro that conflicts with gko::NotImplemented in the Ginkgo linear algebra library.
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
 
 #include "functionObject.H"
 #include "Time.H"

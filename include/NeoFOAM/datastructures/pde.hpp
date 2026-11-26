@@ -4,7 +4,23 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/error.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/logging.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/core/view.hpp"
+#include "NeoN/dsl/expression.hpp"
+#include "NeoN/dsl/optimizer.hpp"
+#include "NeoN/dsl/solver.hpp"
+#include "NeoN/dsl/spatialOperator.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/ddtOperator.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
+#include "NeoN/linearAlgebra/meshIterationStrategies.hpp"
+#include "NeoN/linearAlgebra/solver.hpp"
+#include "NeoN/linearAlgebra/utilities.hpp"
 
 #include <algorithm>
 #include <cmath>

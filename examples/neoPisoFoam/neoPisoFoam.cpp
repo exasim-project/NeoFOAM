@@ -1,7 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2025 nf authors
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/database/fieldCollection.hpp"
+#include "NeoN/core/database/oldTimeCollection.hpp"
+#include "NeoN/core/initialization.hpp"
+#include "NeoN/core/logging.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/tokenList.hpp"
+#include "NeoN/dsl/ddt.hpp"
+#include "NeoN/dsl/explicit.hpp"
+#include "NeoN/dsl/implicit.hpp"
+#include "NeoN/dsl/solver.hpp"
+#include "NeoN/finiteVolume/cellCentred/auxiliary/coNum.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/ddtFluxCorr.hpp"
+#include "NeoN/linearAlgebra/solver.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"

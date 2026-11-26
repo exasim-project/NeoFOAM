@@ -7,7 +7,17 @@
 #include <nanobind/stl/tuple.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/database/fieldCollection.hpp"
+#include "NeoN/core/executor/serialExecutor.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/surface/processor.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/processor.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/volume/processor.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/surface/processor.hpp"
 
