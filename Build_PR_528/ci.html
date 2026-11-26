@@ -754,8 +754,19 @@ the same name as the PR’s branch is always built from source.</p>
 <p><strong>Relevant Labels:</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-build</span></code> — Skip all build-and-test jobs on both GitHub and LRZ GitLab.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> — Build NeoN from source with debug options instead of installing the nightly
-conda package.</p></li>
+</ul>
+<p>Pull requests that only change documentation (<code class="docutils literal notranslate"><span class="pre">doc/</span></code>, <code class="docutils literal notranslate"><span class="pre">LICENSES/</span></code>, Markdown and
+reStructuredText files or <code class="docutils literal notranslate"><span class="pre">CITATION.cff</span></code>) skip the build-and-test jobs automatically, here and on
+LRZ GitLab. The Python 3.12 job still installs the package and builds the documentation preview,
+without pytest and mypy.</p>
+<p>When a pull request is closed, merged or not, <code class="docutils literal notranslate"><span class="pre">.github/workflows/cleanup-pr-branches.yaml</span></code> cancels
+its running GitHub Actions runs and LRZ GitLab pipelines and deletes the copy of its branch that the
+GPU job pushed to the LRZ GitLab mirror. GitHub deletes the branch itself on merge.
+* <code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> — Build NeoN from source with debug options instead of installing the nightly</p>
+<blockquote>
+<div><p>conda package.</p>
+</div></blockquote>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-changelog</span></code> — Skip the changelog check.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-validation</span></code> — Skip the solver validation runs in the LRZ GitLab build-and-test job.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">skip-nvidia</span></code>, <code class="docutils literal notranslate"><span class="pre">skip-amd</span></code>, <code class="docutils literal notranslate"><span class="pre">skip-intel</span></code> — Skip the GPU jobs on the respective vendor’s hardware.</p></li>
