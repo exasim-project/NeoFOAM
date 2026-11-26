@@ -762,6 +762,11 @@ the same name as the PR’s branch is always built from source.</p>
 reStructuredText files or <code class="docutils literal notranslate"><span class="pre">CITATION.cff</span></code>) skip the build-and-test jobs automatically, here and on
 LRZ GitLab. The Python 3.12 job still installs the package and builds the documentation preview,
 without pytest and mypy.</p>
+<p>Pull requests that are part of a stack (stacked pull requests) run their build-and-test jobs one
+stack member at a time: the gate looks up the stack, and each build job joins a concurrency group
+per stack and job that queues (<code class="docutils literal notranslate"><span class="pre">queue:</span> <span class="pre">max</span></code>) instead of running in parallel. Every pull request
+still gets its own results, they just arrive later for the upper ones. <code class="docutils literal notranslate"><span class="pre">STACK_SLOTS</span></code> in the gate
+sets how many members of one stack may build at the same time.</p>
 <p>When a pull request is closed, merged or not, <code class="docutils literal notranslate"><span class="pre">.github/workflows/cleanup-pr-branches.yaml</span></code> cancels
 its running GitHub Actions runs and LRZ GitLab pipelines and deletes the copy of its branch that the
 GPU job pushed to the LRZ GitLab mirror. GitHub deletes the branch itself on merge.
