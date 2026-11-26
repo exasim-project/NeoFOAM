@@ -26,7 +26,7 @@ Example::
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import neon._neon as nn  # NeoN Python bindings
 from pydantic import ConfigDict
@@ -216,7 +216,7 @@ def mrf_neon_frame_acceleration(self: Any, U: nn.VectorVolumeField) -> nn.Spatia
     # Omega x (Omega x r), which belongs to the relative-velocity (SRF)
     # formulation. The binding refreshes one acceleration buffer it owns and
     # sources from it, so no field is allocated per outer iteration.
-    return self.frame.DDt(U)
+    return cast(nn.SpatialOperatorVector, self.frame.DDt(U))
 
 
 @mrfNeoN.contributes(pressure_extension.predicted_flux)
