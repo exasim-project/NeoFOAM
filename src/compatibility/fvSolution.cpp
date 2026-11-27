@@ -672,27 +672,20 @@ static std::optional<NeoN::scalar> lookupRelaxation(
     // matchKey honours OpenFOAM regex keys, e.g. "(k|omega|epsilon).*" covering both
     // `epsilon` and `epsilonFinal`.
     //
-    // On the final iteration OpenFOAM looks up only "<field>Final" (fvMatrix::relax() and
-    // GeometricField::relax() select the name with the "Final" suffix, then ask
-    // solution::relaxEquation / relaxField, which accept that key or a "default" entry). It does
-    // not fall back to the base "<field>" key: a dictionary with only `U 0.7;` relaxes every outer
-    // iteration except the final one. If neither "<field>Final" nor "default" exists, nothing is
-    // relaxed on the final iteration.
-    if (finalIter)
-    {
-        if (const auto finalKey = matchKey(sub, field + "Final"))
-        {
-            return asScalar(sub, *finalKey);
-        }
-        if (sub.contains("default"))
-        {
-            return asScalar(sub, "default");
-        }
-        return std::nullopt;
-    }
-    if (const auto key = matchKey(sub, field))
+    // OpenFOAM selects the name with the "Final" suffix on the final iteration (fvMatrix::relax()
+    // and GeometricField::relax()) and then asks solution::relaxEquation / relaxField, which accept
+    // an entry of that name (found with regex keys) or a "default" entry; the factor is that entry,
+    // else the "default" one. On the final iteration there is no fall back to the base "<field>"
+    // key: a dictionary with only `U 0.7;` relaxes every outer iteration except the final one. If
+    // neither the name nor "default" exists, nothing is relaxed.
+    const std::string name = finalIter ? field + "Final" : field;
+    if (const auto key = matchKey(sub, name))
     {
         return asScalar(sub, *key);
+    }
+    if (sub.contains("default"))
+    {
+        return asScalar(sub, "default");
     }
     return std::nullopt;
 }
