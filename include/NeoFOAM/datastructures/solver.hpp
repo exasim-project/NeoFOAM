@@ -29,12 +29,13 @@ namespace NeoFOAM
 template<
     typename ValueType,
     typename MatrixValueType = NeoN::scalar,
-    typename IndexType = NeoN::localIdx>
+    typename IndexType = NeoN::localIdx,
+    typename SystemMatrixType = NeoN::la::CSRMatrix<MatrixValueType, IndexType>>
 class Solver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
-    using PDEType = PDE<ValueType, MatrixValueType, IndexType>;
-    using LinearSystemType = NeoN::la::LinearSystem<MatrixValueType, ValueType>;
+    using PDEType = PDE<ValueType, MatrixValueType, IndexType, SystemMatrixType>;
+    using LinearSystemType = NeoN::la::LinearSystem<MatrixValueType, ValueType, SystemMatrixType>;
 
 public:
 
