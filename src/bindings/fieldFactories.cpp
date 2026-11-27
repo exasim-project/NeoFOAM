@@ -10,6 +10,9 @@
 #include "NeoN/NeoN.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/volume/processor.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/surface/processor.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/waveTransmissive.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/pressureInletOutletVelocity.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/sineFixedValue.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
@@ -63,6 +66,16 @@ using ScalarSurfBCFactory = NeoN::finiteVolume::cellCentred::SurfaceBoundaryFact
     &ScalarVolBCFactory::Register<vb::Processor<NeoN::scalar>>::REGISTERED,
     &VectorVolBCFactory::Register<vb::Processor<NeoN::Vec3>>::REGISTERED,
     &ScalarSurfBCFactory::Register<sb::Processor<NeoN::scalar>>::REGISTERED,
+};
+
+// Same workaround again for the compressible-outlet/time-varying BCs used by the
+// sineWaveDamping-style tutorials (waveTransmissive, pressureInletOutletVelocity,
+// sineFixedValue): none of them are templated, so there is no explicit
+// `template class ...<scalar>;` elsewhere in this binary to ODR-use them either.
+[[maybe_unused]] const bool* const registerCompressibleOutletBCs[] = {
+    &ScalarVolBCFactory::Register<vb::WaveTransmissive>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::SineFixedValue>::REGISTERED,
+    &VectorVolBCFactory::Register<vb::PressureInletOutletVelocity>::REGISTERED,
 };
 } // namespace
 
