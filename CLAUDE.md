@@ -85,6 +85,8 @@ tooling, CLI entry point).
 
 Python changes in `src/neofoam` (edited or new files) need no rebuild. After C++/binding
 or `pyproject.toml` changes, run `poe build`: only changed C++ files are recompiled.
+Other poe tasks (`test`, `lint`, `format`, `type_check`, `precommit`, docs): see
+`[tool.poe.tasks]` in `pyproject.toml` and the build doc.
 
 Never delete or weaken an existing test to get green — surface the conflict instead.
 
