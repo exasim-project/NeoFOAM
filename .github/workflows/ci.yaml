@@ -449,15 +449,7 @@ jobs:
           # MPI_Init segfaults at run time.
           # With the NeoN package, its prefix goes first in CMAKE_PREFIX_PATH; this overrides the
           # CMAKE_PREFIX_PATH from the neon-args cmake-args, which only has the package prefix.
-          # Apple clang defaults to an older C++ ABI that leaves C++20 requires-clauses out of the
-          # mangled names; the package is built with conda-forge's clang, which includes them, so
-          # its constrained members (e.g. Vector<double>::operator*=) only link with the upstream
-          # ABI.
-          abi_flags=()
-          if [[ -n "$NEON_PREFIX" ]]; then
-            abi_flags=(-DCMAKE_CXX_FLAGS=-fclang-abi-compat=latest)
-          fi
-          cmake --preset develop ${{ steps.neon-args.outputs.cmake-args }} "${abi_flags[@]}" \
+          cmake --preset develop ${{ steps.neon-args.outputs.cmake-args }} \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_WITH_MPI=ON \
