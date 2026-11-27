@@ -11,7 +11,7 @@ import pytest
 
 from neofoam.solver.incompressibleFluidNeoN.models import incompressibleFluidNeoNModel
 
-CASES = Path(__file__).parent / "cases"
+CASES = Path(__file__).parents[1] / "cases"
 
 
 def _detected(case: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:

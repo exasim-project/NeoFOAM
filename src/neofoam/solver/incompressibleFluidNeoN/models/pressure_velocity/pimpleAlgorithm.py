@@ -605,16 +605,10 @@ def continuity_boussinesq(
         nfb.constrain_pressure(p_rgh, U, phiHbyA, rAUf)
 
         while state.piso.correct_non_orthogonal():
-            pEqn = nfb.PDESolverScalar(
-                nn.imp.laplacian(rAUf, p_rgh) - nn.exp.div(phiHbyA), p_rgh, rt
-            )
+            pEqn = _p_rgh_equation(p_rgh, rAUf, phiHbyA, reference, rt)
             pEqn.set_final_iter(final_outer and state.piso.final_inner_iter())
-            if reference.needs_ref:
-                # as pEqn.H: the reference value is p_rgh's own current value there
-                pEqn.set_reference(reference.cell, _cell_value(p_rgh, reference.cell))
             stats = pEqn.solve()
-            if p_res is None:
-                p_res = (stats.entries[0].initial_residual, stats.entries[0].final_residual)
+            p_res = p_res or (stats.entries[0].initial_residual, stats.entries[0].final_residual)
             p_rgh.correct_boundary_conditions()
 
             if state.piso.final_non_orthogonal_iter():
@@ -638,6 +632,17 @@ def continuity_boussinesq(
     return FieldUpdates({"U": U, "p": p, "p_rgh": p_rgh, "phi": phi})
 
 
+def _p_rgh_equation(
+    p_rgh: Any, rAUf: Any, phiHbyA: Any, reference: PressureReference, runtime: Any
+) -> Any:
+    """The p_rgh equation of pEqn.H, pinned in the reference cell when p needs a reference."""
+    pEqn = nfb.PDESolverScalar(nn.imp.laplacian(rAUf, p_rgh) - nn.exp.div(phiHbyA), p_rgh, runtime)
+    if reference.needs_ref:
+        # as pEqn.H: the reference value is p_rgh's own current value there
+        pEqn.set_reference(reference.cell, _cell_value(p_rgh, reference.cell))
+    return pEqn
+
+
 def _report_continuity_errors(phi: Any, state: PimpleNeoNState, runtime: Any) -> None:
     """continuityErrs.H."""
     sum_local, global_err = nfb.compute_continuity_error(phi, runtime)
@@ -648,7 +653,9 @@ def _report_continuity_errors(phi: Any, state: PimpleNeoNState, runtime: Any) ->
     )
 
 
-def _hydrostatic_pressure(p: Any, p_rgh: Any, rhok: Any, gh: Any, reference: Any) -> None:
+def _hydrostatic_pressure(
+    p: Any, p_rgh: Any, rhok: Any, gh: Any, reference: PressureReference
+) -> None:
     """``p = p_rgh + rhok*gh``, shifted to ``pRefValue`` (and ``p_rgh`` with it) when referenced."""
     p.assign(p_rgh + rhok * gh)
     if reference.needs_ref:

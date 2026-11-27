@@ -60,17 +60,17 @@ void requireSameMesh(
 } // namespace
 
 void constrainPressure(
-    nnfvcc::VolumeField<scalar>& p_rgh,
+    nnfvcc::VolumeField<scalar>& pRgh,
     const nnfvcc::VolumeField<Vec3>& U,
     const nnfvcc::SurfaceField<scalar>& phiHbyA,
     const nnfvcc::SurfaceField<scalar>& rAUf
 )
 {
-    const auto& mesh = p_rgh.mesh();
+    const auto& mesh = pRgh.mesh();
     requireSameMesh(mesh, U.mesh(), "constrain_pressure", "U");
     requireSameMesh(mesh, phiHbyA.mesh(), "constrain_pressure", "phiHbyA");
     requireSameMesh(mesh, rAUf.mesh(), "constrain_pressure", "rAUf");
-    auto refGrad = p_rgh.boundaryData().refGrad().view();
+    auto refGrad = pRgh.boundaryData().refGrad().view();
     const auto [phiHbyABc, uBc, rAUfBc, sfBc, magSfBc] = views(
         phiHbyA.boundaryData().value(),
         U.boundaryData().value(),
@@ -79,7 +79,7 @@ void constrainPressure(
         mesh.boundaryMesh().faceAreas()
     );
 
-    const auto& pBCs = p_rgh.boundaryConditions();
+    const auto& pBCs = pRgh.boundaryConditions();
     for (auto patchi = 0; patchi < pBCs.size(); ++patchi)
     {
         if (pBCs[patchi].name() != "fixedFluxPressure")
@@ -87,8 +87,8 @@ void constrainPressure(
             continue;
         }
         parallelFor(
-            p_rgh.exec(),
-            p_rgh.boundaryData().range(patchi),
+            pRgh.exec(),
+            pRgh.boundaryData().range(patchi),
             NEON_LAMBDA(const size_t bfacei) {
                 // geometricOneField / NullMRF branch: rho == 1, MRF.relative == identity.
                 refGrad[bfacei] = (phiHbyABc[bfacei] - (sfBc[bfacei] & uBc[bfacei]))
@@ -98,7 +98,7 @@ void constrainPressure(
         );
     }
 
-    p_rgh.correctBoundaryConditions();
+    pRgh.correctBoundaryConditions();
 }
 
 void updateVelocityBuoyant(
@@ -325,6 +325,10 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 }
 
 
+namespace
+{
+
+/* @brief The snGradSchemes entry for fieldName, mirroring fvc::snGrad's lookup. */
 NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::string& fieldName)
 {
     if (fvSchemes.contains("snGradSchemes"))
@@ -347,6 +351,8 @@ NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::strin
     }
     return NeoN::TokenList({std::string("corrected")});
 }
+
+} // namespace
 
 nnfvcc::SurfaceField<scalar>
 snGrad(const nnfvcc::VolumeField<scalar>& field, const NeoN::Dictionary& fvSchemes)

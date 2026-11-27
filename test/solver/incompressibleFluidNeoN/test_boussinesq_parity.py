@@ -35,11 +35,13 @@ laminar case to 3e-8 of the peak against OpenFOAM, hence ``1e-7`` for that compa
 
 from __future__ import annotations
 
+import functools
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -101,29 +103,26 @@ def _last_time(case: Path) -> Path:
 
 
 @pytest.fixture(scope="module")
-def runs(tmp_path_factory: pytest.TempPathFactory) -> dict[tuple[str, str], Path]:
-    """``{(case, solver): run directory}``, each run once per module on demand."""
-    cache: dict[tuple[str, str], Path] = {}
+def runs(tmp_path_factory: pytest.TempPathFactory) -> Callable[[str, str], Path]:
+    """``runs(case, solver)``: the run directory, each run once per module on demand."""
     commands = {
         "openfoam": ["buoyantBoussinesqPimpleFoam"],
         "neon": [sys.executable, "-c", NEON],
         "pybfoam": [sys.executable, "-c", PYBFOAM],
     }
 
-    class Runs(dict):  # type: ignore[type-arg]
-        def __missing__(self, key: tuple[str, str]) -> Path:
-            case, solver = key
-            meshed = tmp_path_factory.getbasetemp() / case / "meshed"
-            if not meshed.is_dir():
-                shutil.copytree(_CASES / case, meshed)
-                _mesh(meshed)
-            run_dir = meshed.parent / solver
-            shutil.copytree(meshed, run_dir)
-            _run(commands[solver], run_dir, f"{solver} on {case}")
-            self[key] = run_dir
-            return run_dir
+    @functools.cache
+    def run(case: str, solver: str) -> Path:
+        meshed = tmp_path_factory.getbasetemp() / case / "meshed"
+        if not meshed.is_dir():
+            shutil.copytree(_CASES / case, meshed)
+            _mesh(meshed)
+        run_dir = meshed.parent / solver
+        shutil.copytree(meshed, run_dir)
+        _run(commands[solver], run_dir, f"{solver} on {case}")
+        return run_dir
 
-    return Runs(cache)
+    return run
 
 
 def _last(run_dir: Path, field: str) -> np.ndarray:
@@ -138,28 +137,28 @@ def _peak(field: str, reference: np.ndarray) -> float:
 
 @pytest.mark.parametrize(("case", "field"), NATIVE)
 def test_neon_boussinesq_matches_openfoam(
-    runs: dict[tuple[str, str], Path], case: str, field: str
+    runs: Callable[[str, str], Path], case: str, field: str
 ) -> None:
-    reference = _last(runs[case, "openfoam"], field)
+    reference = _last(runs(case, "openfoam"), field)
 
-    result = _last(runs[case, "neon"], field)
+    result = _last(runs(case, "neon"), field)
 
     np.testing.assert_allclose(
         result,
         reference,
         rtol=0.0,
         atol=CASE_RTOL_OF_PEAK.get(case, RTOL_OF_PEAK) * _peak(field, reference),
-        err_msg=f"{case}: {field} after {_last_time(runs[case, 'neon']).name} s",
+        err_msg=f"{case}: {field} after {_last_time(runs(case, 'neon')).name} s",
     )
 
 
 @pytest.mark.parametrize(("case", "field"), PYBFOAM_FIELDS)
 def test_neon_boussinesq_matches_incompressible_fluid(
-    runs: dict[tuple[str, str], Path], case: str, field: str
+    runs: Callable[[str, str], Path], case: str, field: str
 ) -> None:
-    reference = _last(runs[case, "pybfoam"], field)
+    reference = _last(runs(case, "pybfoam"), field)
 
-    result = _last(runs[case, "neon"], field)
+    result = _last(runs(case, "neon"), field)
 
     if field in ("p", "p_rgh"):
         reference = reference - reference[REF_CELL]

@@ -199,7 +199,7 @@ def _uniform(value: Any) -> float:
     raise ValueError(f"prghPressure: only a uniform scalar p is supported, got {value!r}")
 
 
-def impose_prgh_pressure(p_rgh: Any, rhok: Any, gh: Any, patches: list[tuple[int, float]]) -> None:
+def _impose_prgh_pressure(p_rgh: Any, rhok: Any, gh: Any, patches: list[tuple[int, float]]) -> None:
     """Set each prghPressure patch of ``p_rgh`` to ``p - rhok*gh`` with the current ``rhok``."""
     offset = p_rgh.mesh().boundary_mesh().offset()
     rhok_b = _host(rhok.boundary_data_value())
@@ -233,7 +233,7 @@ def build(config: BoussinesqConfig) -> list[Any]:
 
     def create_rhok(ctx: dict[str, Any]) -> Any:
         rhok = nfb.create_uniform_volume_field(ctx["_neon_runtime"], "rhok", 1.0)
-        update_rhok_field(rhok, ctx["fields.T"], config)
+        _update_rhok_field(rhok, ctx["fields.T"], config)
         return rhok
 
     def create_prgh_patches(ctx: dict[str, Any]) -> list[tuple[int, float]]:
@@ -294,7 +294,7 @@ def build(config: BoussinesqConfig) -> list[Any]:
     ]
 
 
-def update_rhok_field(rhok: Any, T: Any, config: BoussinesqConfig) -> None:
+def _update_rhok_field(rhok: Any, T: Any, config: BoussinesqConfig) -> None:
     """``rhok = 1 - beta*(T - TRef)``, in the native solver's operation order."""
     rhok.assign(1.0 - (T - config.TRef) * config.beta)
 
@@ -334,8 +334,8 @@ def update_rhok(
     prgh_pressure_patches: Annotated[Any, "models"],
 ) -> None:
     """The end of TEqn.H: ``rhok`` from the new ``T``; the prghPressure patches follow it."""
-    update_rhok_field(rhok, T, self.config)
-    impose_prgh_pressure(p_rgh, rhok, gh, prgh_pressure_patches)
+    _update_rhok_field(rhok, T, self.config)
+    _impose_prgh_pressure(p_rgh, rhok, gh, prgh_pressure_patches)
 
 
 def _linear_interpolation(runtime: Any) -> Any:

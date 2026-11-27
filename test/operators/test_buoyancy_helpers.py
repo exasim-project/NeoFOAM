@@ -8,7 +8,8 @@ incompressibleFluidNeoN's buoyancy builds buoyantBoussinesqPimpleFoam's pEqn.H f
 ``nfb.create_gh``/``create_ghf`` (gh.H), ``nfb.constrain_pressure`` (constrainPressure)
 and ``nfb.update_velocity_buoyant`` (``U = HbyA + rAU*reconstruct(phi/rAUf)``). Each is
 compared with the OpenFOAM operation on the orthogonal and the sheared mesh, the latter
-the one where ``corrected`` and ``uncorrected`` snGrad differ.
+the one where ``corrected`` and ``uncorrected`` snGrad differ (by ~30% of the peak there,
+so a scheme selection that falls back to one of them is caught by a 5% bound).
 
 ``g = (0 -9.81 -2)`` and ``hRef = 0.5`` (``cases/common/constant``) are off-axis, so the
 gh.H reference ``ghRef = g & (cmptMag(g)/|g|) * hRef`` is not just ``g_y * hRef``; the
@@ -83,7 +84,6 @@ def test_sn_grad_matches_openfoam(mesh: str, scheme: str, executor: str) -> None
 
 @pytest.mark.parametrize("executor", EXECUTORS)
 def test_sn_grad_scheme_selection_is_not_vacuous(executor: str) -> None:
-    """On ``sheared`` the corrected snGrad differs from the uncorrected one by ~30% of peak."""
     T, _, _, _ = _seed(simulation("sheared", executor))
 
     corrected = nb.buoyancy.sn_grad(T, "corrected")

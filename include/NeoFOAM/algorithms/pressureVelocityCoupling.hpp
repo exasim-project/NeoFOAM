@@ -32,14 +32,14 @@ void constrainHbyA(
  * Foam::constrainPressure (rho == 1, no MRF): for every boundary patch whose BC is
  * fixedFluxPressure, sets the per-face reference gradient
  *   refGrad_b = (phiHbyA_b - (Sf_b & U_b)) / (magSf_b * rAUf_b)
- * then calls p_rgh.correctBoundaryConditions(). On noSlip walls U_b == 0, so the wall
+ * then calls pRgh.correctBoundaryConditions(). On noSlip walls U_b == 0, so the wall
  * gradient reduces to phiHbyA_b/(magSf_b*rAUf_b) — exactly the buoyancy face flux
  * carried in phiHbyA (via phig), which the pressure projection then cancels (zero wall-normal
  * flux). Patches with any other BC are left untouched.
  * @throws std::invalid_argument if the fields do not share one mesh
  */
 void constrainPressure(
-    nnfvcc::VolumeField<scalar>& p_rgh,
+    nnfvcc::VolumeField<scalar>& pRgh,
     const nnfvcc::VolumeField<Vec3>& U,
     const nnfvcc::SurfaceField<scalar>& phiHbyA,
     const nnfvcc::SurfaceField<scalar>& rAUf
@@ -62,16 +62,10 @@ void updateVelocityBuoyant(
     nnfvcc::VolumeField<Vec3>& U
 );
 
-/* @brief The snGradSchemes entry for fieldName, mirroring fvc::snGrad's lookup.
- *
- * snGrad(<fieldName>) if present, else default, else corrected.
- */
-NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::string& fieldName);
-
 /* @brief Face-normal gradient fvc::snGrad(field) with the case's snGrad scheme.
  *
- * The scheme comes from the snGradSchemes subdict of fvSchemes (see readSnGradScheme), so
- * corrected and limitedCorrected carry their non-orthogonal correction.
+ * The scheme is snGrad(<name>) of the snGradSchemes subdict of fvSchemes, else default, else
+ * corrected, so corrected and limitedCorrected carry their non-orthogonal correction.
  */
 nnfvcc::SurfaceField<scalar>
 snGrad(const nnfvcc::VolumeField<scalar>& field, const NeoN::Dictionary& fvSchemes);

@@ -101,11 +101,11 @@ void registerPressureVelocityCoupling(nb::module_& m)
 
     m.def(
         "constrain_pressure",
-        [](fvcc::VolumeField<NeoN::scalar>& p_rgh,
+        [](fvcc::VolumeField<NeoN::scalar>& pRgh,
            const fvcc::VolumeField<NeoN::Vec3>& U,
            const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const fvcc::SurfaceField<NeoN::scalar>& rAUf)
-        { nf::constrainPressure(p_rgh, U, phiHbyA, rAUf); },
+        { nf::constrainPressure(pRgh, U, phiHbyA, rAUf); },
         "p_rgh"_a,
         "U"_a,
         "phiHbyA"_a,
