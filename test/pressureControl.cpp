@@ -31,12 +31,14 @@ TEST_CASE("pressureControl")
 
     // p with the given internal values; fixesValue selects fixedValue patches (boundary value
     // pBoundary) over calculated ones.
-    auto makeP = [&](const std::vector<NeoN::scalar>& values, bool fixesValue, NeoN::scalar pBoundary)
+    auto makeP =
+        [&](const std::vector<NeoN::scalar>& values, bool fixesValue, NeoN::scalar pBoundary)
     {
         std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
         if (fixesValue)
         {
-            for (NeoN::localIdx patchi = 0; patchi < static_cast<NeoN::localIdx>(mesh.nBoundaries());
+            for (NeoN::localIdx patchi = 0;
+                 patchi < static_cast<NeoN::localIdx>(mesh.nBoundaries());
                  ++patchi)
             {
                 NeoN::Dictionary dict;
@@ -66,8 +68,10 @@ TEST_CASE("pressureControl")
         NeoN::fill(rho.boundaryData().value(), rhoBoundary);
         return rho;
     };
-    auto internal = [](fvcc::VolumeField<NeoN::scalar>& f) { return f.internalVector().copyToHost(); };
-    // View() on the temporary copyToHost() returns is deleted, so read the first cell via a named copy.
+    auto internal = [](fvcc::VolumeField<NeoN::scalar>& f)
+    { return f.internalVector().copyToHost(); };
+    // View() on the temporary copyToHost() returns is deleted, so read the first cell via a named
+    // copy.
     auto first = [](fvcc::VolumeField<NeoN::scalar>& f)
     {
         auto host = f.internalVector().copyToHost();
@@ -192,7 +196,8 @@ TEST_CASE("pressureControl")
         SECTION("a mixed patch counts as value-fixing for the factors")
         {
             std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
-            for (NeoN::localIdx patchi = 0; patchi < static_cast<NeoN::localIdx>(mesh.nBoundaries());
+            for (NeoN::localIdx patchi = 0;
+                 patchi < static_cast<NeoN::localIdx>(mesh.nBoundaries());
                  ++patchi)
             {
                 NeoN::Dictionary dict;

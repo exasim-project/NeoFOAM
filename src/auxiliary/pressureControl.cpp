@@ -25,7 +25,8 @@ struct MinMax
 
 // Free functions: NEON_LAMBDA is an extended __device__ lambda under CUDA, which nvcc does not
 // allow in a constructor or inside another lambda.
-MinMax minMaxOf(const NeoN::Executor& exec, const NeoN::Vector<scalar>& vec, localIdx start, localIdx end)
+MinMax
+minMaxOf(const NeoN::Executor& exec, const NeoN::Vector<scalar>& vec, localIdx start, localIdx end)
 {
     MinMax r;
     if (end <= start) return r;
@@ -90,9 +91,9 @@ void clipInternal(
 }
 
 // OpenFOAM's pressureControl looks for patches whose fvPatchField::fixesValue() is true, and that
-// includes every mixed patch (mixedFvPatchField::fixesValue() is true). NeoN keeps fixesValue = false
-// for mixed patches, because it drives the gradient treatment, and flags them with `mixed` instead.
-// The requires-expression keeps this building against a NeoN that predates the attribute.
+// includes every mixed patch (mixedFvPatchField::fixesValue() is true). NeoN keeps fixesValue =
+// false for mixed patches, because it drives the gradient treatment, and flags them with `mixed`
+// instead. The requires-expression keeps this building against a NeoN that predates the attribute.
 template<class Attributes>
 bool fixesValueLikeOpenFOAM(const Attributes& attributes)
 {
@@ -111,7 +112,8 @@ bool fixesValueLikeOpenFOAM(const Attributes& attributes)
     throw std::runtime_error(
         std::string("pressureControl: '") + wanted + "' specified rather than '" + instead
         + "' but the corresponding reference pressure cannot be evaluated from the boundary "
-          "conditions: no p patch fixes its value. Please specify '" + instead + "'."
+          "conditions: no p patch fixes its value. Please specify '"
+        + instead + "'."
     );
 }
 
@@ -138,7 +140,8 @@ PressureControl::PressureControl(
         const auto bcs = p.boundaryConditions();
         for (localIdx patchID = 0; patchID < static_cast<localIdx>(bcs.size()); ++patchID)
         {
-            if (!fixesValueLikeOpenFOAM(bcs[static_cast<std::size_t>(patchID)].attributes())) continue;
+            if (!fixesValueLikeOpenFOAM(bcs[static_cast<std::size_t>(patchID)].attributes()))
+                continue;
             pLimits = true;
             const auto [start, end] = p.boundaryData().range(patchID);
             pRef = combine(pRef, minMaxOf(p.exec(), p.boundaryData().value(), start, end));

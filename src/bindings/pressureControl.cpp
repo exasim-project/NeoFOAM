@@ -32,7 +32,9 @@ void registerPressureControl(nb::module_& m)
                std::optional<NeoN::scalar> rhoMax)
             {
                 new (self) NeoFOAM::PressureControl(
-                    p, rho, {pMin, pMax, pMinFactor, pMaxFactor, rhoMin, rhoMax}
+                    p,
+                    rho,
+                    {pMin, pMax, pMinFactor, pMaxFactor, rhoMin, rhoMax}
                 );
             },
             "p"_a,

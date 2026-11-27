@@ -28,9 +28,9 @@ struct PressureLimitSettings
  * rhoPimpleFoam uses): an absolute pMin/pMax pair wins; otherwise pMax (pMin) is the explicit
  * value, pMaxFactor (pMinFactor) times the largest (smallest) boundary value of p over the
  * patches that fix its value (OpenFOAM counts every mixed patch as fixing it, which NeoN flags
- * with the `mixed` boundary attribute when its version has it), or, for backward compatibility, the pressure belonging to
- * rhoMax (rhoMin) at the reference density. The factor and rho forms need at least one
- * value-fixing p patch and throw otherwise, as OpenFOAM does.
+ * with the `mixed` boundary attribute when its version has it), or, for backward compatibility, the
+ * pressure belonging to rhoMax (rhoMin) at the reference density. The factor and rho forms need at
+ * least one value-fixing p patch and throw otherwise, as OpenFOAM does.
  *
  * limit() then clips p where it leaves [pMin, pMax], like pressureControl::limit(). The caller
  * re-evaluates p's boundary conditions afterwards when limit() returns true.
