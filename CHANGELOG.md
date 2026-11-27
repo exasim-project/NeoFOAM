@@ -56,7 +56,6 @@
 
 ## Development
 - Run the build-and-test jobs of stacked pull requests one stack member at a time, through per-stack job concurrency groups that queue, instead of a full set of runners per pull request
-- Install NeoN from the `osx-arm64` Open MPI `neon-pde` package in the macOS CI job instead of building it, with the same Open MPI build as OpenFOAM for macOS
 - When a PR is closed, cancel its GitHub Actions runs and LRZ GitLab pipelines and delete the LRZ copy of its branch; merged branches are deleted on GitHub automatically [#226](https://github.com/exasim-project/NeoFOAM/issues/226)
 - Skip the build-and-test jobs, on GitHub and LRZ, for PRs that only change documentation; the docs are still built [#126](https://github.com/exasim-project/NeoFOAM/issues/126)
 - Run CI as one staged workflow (`ci.yaml`): cheap checks first, then one Linux build, then the other builds, the LRZ GPU pipeline and a single Python job (tests, coverage, mypy, docs preview), so a PR occupies far fewer runners; the GPU benchmarks run weekly on develop instead of per labelled PR; the Linux, IWYU, clang-tidy and Python jobs use the nightly NeoN conda package (`NEOFOAM_USE_INSTALLED_NEON`) unless the PR has the `neon_from_source` label [#528](https://github.com/exasim-project/NeoFOAM/pull/528)
