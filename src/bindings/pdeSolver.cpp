@@ -93,12 +93,11 @@ void registerPDESolver(nb::module_& m)
             const NeoN::UnstructuredMesh& mesh = rt.nfMesh;
             std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
             bcs.reserve(patchTypes.size());
-            for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(patchTypes.size());
+            for (NeoN::localIdx patchID = 0;
+                 patchID < static_cast<NeoN::localIdx>(patchTypes.size());
                  ++patchID)
             {
-                NeoN::Dictionary patchDict(
-                    {{"type", patchTypes[static_cast<size_t>(patchID)]}}
-                );
+                NeoN::Dictionary patchDict({{"type", patchTypes[static_cast<size_t>(patchID)]}});
                 bcs.emplace_back(mesh, patchDict, patchID);
             }
             return fvcc::VolumeField<NeoN::scalar>(exec, std::move(name), mesh, bcs);
@@ -119,7 +118,10 @@ void registerPDESolver(nb::module_& m)
            NeoN::scalar Tref)
         {
             fvcc::mapEnergyBoundaryFromTemperature(
-                temperature.boundaryData(), energy.boundaryData(), Cv, Tref
+                temperature.boundaryData(),
+                energy.boundaryData(),
+                Cv,
+                Tref
             );
         },
         "temperature"_a,
