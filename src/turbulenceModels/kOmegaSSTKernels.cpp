@@ -418,8 +418,7 @@ void kernelApplyDensity(
             const scalar gammaI = f1V[i] * (gamma1 - gamma2) + gamma2;
             const scalar cOmega = (scalar(2) / scalar(3)) * rho * gammaI * divU;
 
-            omegaSourceV[i] =
-                rho * omegaSourceV[i] + Kokkos::max(-cOmega, scalar(0)) * omegaSafe;
+            omegaSourceV[i] = rho * omegaSourceV[i] + Kokkos::max(-cOmega, scalar(0)) * omegaSafe;
             spOmegaV[i] = rho * spOmegaV[i] + Kokkos::max(cOmega, scalar(0));
         },
         "kOmegaSST::applyDensity"

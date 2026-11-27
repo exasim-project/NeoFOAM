@@ -241,11 +241,11 @@ private:
     {
         Scratch(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh);
 
-        nnfvcc::SurfaceField<scalar> rhoF;   ///< interpolated density
-        nnfvcc::SurfaceField<scalar> phiv;   ///< volumetric flux phi/rhoF
-        nnfvcc::VolumeField<scalar> divU;    ///< div(phiv)
-        nnfvcc::VolumeField<scalar> mu;      ///< rho*nu
-        nnfvcc::VolumeField<scalar> rhoNut;  ///< rho*nut
+        nnfvcc::SurfaceField<scalar> rhoF;      ///< interpolated density
+        nnfvcc::SurfaceField<scalar> phiv;      ///< volumetric flux phi/rhoF
+        nnfvcc::VolumeField<scalar> divU;       ///< div(phiv)
+        nnfvcc::VolumeField<scalar> mu;         ///< rho*nu
+        nnfvcc::VolumeField<scalar> rhoNut;     ///< rho*nut
         nnfvcc::VolumeField<scalar> dkCell;     ///< rho*(alphaK(F1)*nut + nu)
         nnfvcc::VolumeField<scalar> domegaCell; ///< rho*(alphaOmega(F1)*nut + nu)
     };

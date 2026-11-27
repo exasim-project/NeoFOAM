@@ -332,20 +332,12 @@ void KOmegaSST::correct(
     correctImpl(U, phi, &rho, k, omega, nut, rt);
 }
 
-KOmegaSST::Scratch::Scratch(
-    const NeoN::Executor& exec,
-    const NeoN::UnstructuredMesh& mesh
-)
+KOmegaSST::Scratch::Scratch(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh)
     : rhoF(exec, "rhoF", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
     , phiv(exec, "phiv", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
     , divU(exec, "divU", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
     , mu(exec, "muSST", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
-    , rhoNut(
-          exec,
-          "rhoNut",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      )
+    , rhoNut(exec, "rhoNut", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
     , dkCell(exec, "DkCell", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
     , domegaCell(
           exec,
@@ -612,8 +604,8 @@ void KOmegaSST::correctImpl(
     // ----- k equation -----
     PDESolver<scalar> kEqn(
         (rho ? dsl::imp::ddt(*rho, k) : dsl::imp::ddt(k)) + dsl::imp::div(phi, k)
-            - dsl::imp::laplacian(dkEffFTmp_, k)
-            + dsl::imp::source(spKTmp_, k) - dsl::exp::source(PkTmp_),
+            - dsl::imp::laplacian(dkEffFTmp_, k) + dsl::imp::source(spKTmp_, k)
+            - dsl::exp::source(PkTmp_),
         k,
         rt
     );
@@ -625,7 +617,10 @@ void KOmegaSST::correctImpl(
     k.correctBoundaryConditions(ctx);
 
     freeVecs(
-        PkTmp_.internalVector(), gRawTmp_, spKTmp_.internalVector(), dkEffFTmp_.internalVector()
+        PkTmp_.internalVector(),
+        gRawTmp_,
+        spKTmp_.internalVector(),
+        dkEffFTmp_.internalVector()
     );
     correctNutInternal(k, omega, nut);
     nut.correctBoundaryConditions(ctx);

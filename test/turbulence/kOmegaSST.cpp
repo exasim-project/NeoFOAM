@@ -546,7 +546,11 @@ static CorrectedFields correctOnce(bool compressible, Scalar rhoValue, const Neo
         auto host = v.copyToHost();
         return std::vector<Scalar>(host.view().begin(), host.view().end());
     };
-    return {toStd(nfK.internalVector()), toStd(nfOmega.internalVector()), toStd(nfNut.internalVector())};
+    return {
+        toStd(nfK.internalVector()),
+        toStd(nfOmega.internalVector()),
+        toStd(nfNut.internalVector())
+    };
 }
 
 TEST_CASE("kOmegaSST: compressible correct() does not depend on a uniform density")
