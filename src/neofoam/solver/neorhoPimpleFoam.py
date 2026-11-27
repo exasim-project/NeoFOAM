@@ -5,8 +5,12 @@
 neorhoPimpleFoam.py — Transient compressible PIMPLE solver using NeoN +
 NeoFOAM bindings.
 
-Minimal first version: laminar only, subsonic (no transonic pEqn branch), no
-SIMPLEC/consistent variant. perfectGas equation of state, constant Cv-or-Cp,
+Minimal first version: laminar or RAS (any runtime-selected turbulence model with a
+compressible formulation, today kOmegaSST), subsonic (no transonic pEqn branch), no
+SIMPLEC/consistent variant. With a RAS model the momentum diffusion coefficient is
+mu + rho*nut and the energy diffusivity gains alphat = rho*nut/Prt (times gamma for the
+internal-energy form, as heThermo::alphaEff does), see _PRT.
+perfectGas equation of state, constant Cv-or-Cp,
 const-or-sutherland transport, read from constant/thermophysicalProperties
 (see neofoam.thermo.perfectGas.PerfectGasTransport). Energy equation is
 solved for he = Cv*(T - Tstd) (sensibleInternalEnergy) or h = Cp*(T - Tstd)
@@ -39,6 +43,7 @@ an old-time slot before the time loop, so the first rotate_old_times() creates l
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import Any
 
 import neon._neon as nn
@@ -64,16 +69,41 @@ from neofoam.thermo.perfectGas import PerfectGasTransport
 # map_energy_boundary_from_temperature rather than derived from scratch.
 _TSTD = 298.15
 
+# Turbulent Prandtl number of OpenFOAM's EddyDiffusivity (compressible turbulence models), which
+# reads "Prt" from the model coefficients and defaults to 1.0 (the 0.85 default belongs to the
+# separate thermophysicalTransport models). Used instead of reading alphat from the case: with
+# alphat = rho*nut/Prt on every patch the compressible::alphatWallFunction value is the
+# same expression evaluated at the wall face, so alphat needs no boundary condition of its own.
+_PRT = 1.0
+
+# The file the turbulence model factory reads (relative to the case, like the fvOptions paths).
+_TURBULENCE_PROPERTIES = "constant/turbulenceProperties"
+
 
 def _read_int(d: Any, key: str, default: int) -> int:
     return int(d.get_int(key)) if d.contains(key) else default
 
 
-def _pressure_limits_active(d: Any) -> bool:
-    """OpenFOAM's pressureControl limits p when any of these PIMPLE entries is present."""
-    return any(
-        d.contains(k) for k in ("pMax", "pMin", "pMaxFactor", "pMinFactor", "rhoMax", "rhoMin")
-    )
+def _read_scalar(d: Any, key: str) -> float:
+    """A scalar entry; a literal without a decimal point or exponent (``pMax 101350;``) is
+    stored as an integer, which ``get_double`` rejects, while OpenFOAM reads it as a scalar."""
+    try:
+        return float(d.get_double(key))
+    except RuntimeError:
+        return float(d.get_int(key))
+
+
+def _pressure_limit_entries(d: Any) -> dict[str, float]:
+    """The pressureControl entries of the PIMPLE dictionary, as PressureControl kwargs."""
+    keys = {
+        "pMin": "p_min",
+        "pMax": "p_max",
+        "pMinFactor": "p_min_factor",
+        "pMaxFactor": "p_max_factor",
+        "rhoMin": "rho_min",
+        "rhoMax": "rho_max",
+    }
+    return {kw: _read_scalar(d, key) for key, kw in keys.items() if d.contains(key)}
 
 
 def _read_switch(d: Any, key: str, default: bool) -> bool:
@@ -85,18 +115,27 @@ def _read_switch(d: Any, key: str, default: bool) -> bool:
         return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
+# Temperature patch types that are mixed (derived from mixedFvPatchField) in OpenFOAM.
+_MIXED_T_TYPES = frozenset(
+    {"inletOutlet", "outletInlet", "mixed", "freestream", "advective", "waveTransmissive"}
+)
+
+
 def _energy_patch_types(t_patch_types: list[str]) -> list[str]:
     """Derive the energy field's per-patch BC types from T's literal ones, mirroring
     OpenFOAM's own fixedEnergyFvPatchScalarField/gradientEnergyFvPatchScalarField
-    derivation: fixedValue -> fixedEnergy, empty -> empty, anything else (zeroGradient,
-    inletOutlet, ...) -> gradientEnergy. General over patch count/order (reads T's own
-    case-file types rather than assuming a fixed layout)."""
+    derivation (heThermo::heBoundaryTypes): fixedValue -> fixedEnergy, empty -> empty, a mixed
+    type (inletOutlet, ...) -> mixedEnergy, anything else (zeroGradient, ...) -> gradientEnergy.
+    General over patch count/order (reads T's own case-file types rather than assuming a fixed
+    layout)."""
     mapped = []
     for t in t_patch_types:
         if t == "fixedValue":
             mapped.append("fixedEnergy")
         elif t == "empty":
             mapped.append("empty")
+        elif t in _MIXED_T_TYPES:
+            mapped.append("mixedEnergy")
         else:
             mapped.append("gradientEnergy")
     return mapped
@@ -124,8 +163,6 @@ class NeoRhoPimpleFoam:
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
 
-        pressure_limits = _pressure_limits_active(pimple_dict)
-
         gas = PerfectGasTransport(rt)
 
         rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
@@ -147,6 +184,12 @@ class NeoRhoPimpleFoam:
             # name lookup would silently miss, leaving that field's solver/preconditioner
             # as the raw OpenFOAM name the Ginkgo factory doesn't recognise.
             nfb.map_solver_settings(solvers, name)
+
+        # This solver passes U (and phi) in the BoundaryContext when it evaluates the patch
+        # values, so the far-field family can be translated faithfully: freestreamVelocity /
+        # freestreamPressure follow OpenFOAM's flow-direction blends instead of the fixedValue /
+        # zeroGradient approximations.
+        nfb.set_faithful_freestream(True)
 
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
@@ -184,6 +227,10 @@ class NeoRhoPimpleFoam:
         rho_seed.assign(gas.rho(psi, p))
         rho = nfb.register_computed_scalar_field(rt, rho_seed, "rho")
 
+        # rhoPimpleFoam's `pressureControl pressureControl(p, rho, pimple.dict(), false)`; limit()
+        # is applied at the end of every pressure corrector (see below).
+        pressure_control = nfb.PressureControl(p, rho, **_pressure_limit_entries(pimple_dict))
+
         K_seed = nfb.create_uniform_volume_field(rt, "K", 0.0)
         K_seed.assign(0.5 * nn.mag_sqr(U))
         K = nfb.register_computed_scalar_field(rt, K_seed, "K")
@@ -195,7 +242,6 @@ class NeoRhoPimpleFoam:
         # per-cell field (not a plain float, which create_uniform_volume_field needs) for
         # sutherland, since they're evaluated from the current T there -- seed at 0 and
         # .assign() the real (possibly spatially-varying) value instead in that case.
-        zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
         if gas.transport_type == "sutherland":
             mu_vol = nfb.create_uniform_volume_field(rt, "mu", 0.0)
             mu_vol.assign(gas.mu(T))
@@ -210,6 +256,24 @@ class NeoRhoPimpleFoam:
             alpha_energy_vol = nfb.create_uniform_volume_field(
                 rt, "alphaEnergy", gas.alphaEnergy(T)
             )
+        # Runtime-selected turbulence model (laminar or RAS, per constant/turbulenceProperties).
+        # It owns nut and, for RAS, k/omega; it reads the KINEMATIC viscosity from nu_vol, which
+        # is therefore refreshed in place to mu/rho wherever mu or rho changed (see below), the
+        # counterpart of OpenFOAM's live thermo.mu()/rho. nut stays kinematic; the dynamic
+        # coefficients mu + rho*nut are assembled here.
+        #
+        # A case without constant/turbulenceProperties (the solver ran such cases before
+        # turbulence was wired in) stays laminar: no model, and nut is a zero field.
+        zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
+        if Path(_TURBULENCE_PROPERTIES).is_file():
+            nu_vol = nfb.create_uniform_volume_field(rt, "nu", 0.0)
+            nu_vol.assign(mu_vol / rho)
+            turb = nfb.create_turbulence_model(rt, nu_vol)
+            turb.validate(U)
+        else:
+            nu_vol = None
+            turb = None
+
         # Feature-for-feature port of literal rhoPimpleFoam's `psip0 = psi*p` /
         # `thermo.correctRho(psi*p - psip0, rhoMin, rhoMax)` -- captured once per PISO
         # pass, used to replace the plain EOS rho.assign() with literal's incremental
@@ -239,7 +303,11 @@ class NeoRhoPimpleFoam:
         # UEqn's `== fvOptions(rho, U)`; raises on option types not implemented for NeoN.
         fv_options = NeonFvOptions.from_case(rt, U)
 
-        p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
+        # rhoPimpleFoam only builds a pressure reference for an incompressible thermo (rhoConst),
+        # `pressureReference(p, pimple.dict(), thermo.incompressible())`. With perfectGas the
+        # ddt(psi, p) term keeps the pressure matrix non-singular even when every p patch is
+        # zeroGradient (a closed cavity), and set_ref_cell would raise "supply pRefCell" there.
+        p_ref_cell, p_ref_value, needs_ref = 0, 0.0, False
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
 
         def boundary_context(evaluate_only: bool = False) -> Any:
@@ -270,6 +338,11 @@ class NeoRhoPimpleFoam:
                 mf = max(mf, e.final_residual)
             return (mi, mf)
 
+        # OpenFOAM's eddyDiffusivity stores alphat = rho*nut/Prt when the turbulence is corrected,
+        # so the energy equation sees the rho of that moment (the construction, then the end of the
+        # previous step), not the live rho of the current outer iteration.
+        alphat_rho_nut = rho * (turb.nut() if turb is not None else zero_nut)
+
         while runTime.loop():
             print(f"Time = {runTime.timeName()}")
 
@@ -281,6 +354,8 @@ class NeoRhoPimpleFoam:
             nn.rotate_old_times(psi)
             nn.rotate_old_times(K)
             nn.rotate_old_times(phi)
+            if turb is not None:
+                turb.rotate_old_times()
             n_steps += 1
 
             max_co, mean_co = nn.compute_co_num(phi, rt.dt)
@@ -328,18 +403,21 @@ class NeoRhoPimpleFoam:
                     mu_vol.assign(gas.mu(T))
                     alpha_energy_vol.assign(gas.alphaEnergy(T))
 
-                # Literal's divDevRhoReff coefficient is alpha*rho*nuEff(), and for this
-                # laminar (Stokes) model nuEff()==nu()==mu/rho, so the coefficient
-                # collapses to mu -- NOT rho*mu -- for *both* the implicit laplacian and
-                # the explicit dev2 correction below.
-                mu_face = surf_interp.interpolate(mu_vol)
+                # Literal's divDevRhoReff coefficient is alpha*rho*nuEff() with nuEff() =
+                # nu + nut and nu = mu/rho, so it is mu + rho*nut -- NOT rho*mu -- for *both*
+                # the implicit laplacian and the explicit dev2 correction below. For the
+                # laminar model nut is zero and this collapses to mu. nut is the turbulence
+                # model's kinematic value from its last correct() (fixed across the PIMPLE
+                # loop, as in OpenFOAM, where the model is corrected once per step).
+                rho_nut = rho * (turb.nut() if turb is not None else zero_nut)
+                mu_face = surf_interp.interpolate(mu_vol + rho_nut)
                 mu_face.name = "mu"
 
                 ueqn_expr = (
                     nn.imp.ddt(rho, U)
                     + nn.imp.div(phi, U)
                     - nn.imp.laplacian(mu_face, U)
-                    + nfb.viscous_stress(mu_vol, zero_nut, grad_u, compressible=True)
+                    + nfb.viscous_stress(mu_vol, rho_nut, grad_u, compressible=True)
                 )
                 ueqn_expr = fv_options.add_momentum_sources(ueqn_expr, rho, U, runTime.value())
 
@@ -375,7 +453,14 @@ class NeoRhoPimpleFoam:
                 nfb.map_energy_boundary_from_temperature(T, energy, gas.energy_coeff, _TSTD)
                 energy.correct_boundary_conditions()
 
-                alphaEff = surf_interp.interpolate(alpha_energy_vol)
+                # eddyDiffusivity: alphaEff = CpByCpv*(alpha + alphat) (heThermo::alphaEff),
+                # alphat = rho*nut/Prt; CpByCpv is 1 for the enthalpy form and gamma for the
+                # internal-energy form, and alpha_energy_vol already carries it for the
+                # laminar part (gas.alphaEnergy).
+                alphat_factor = (1.0 if gas.is_enthalpy else gas.gamma) / _PRT
+                alphaEff = surf_interp.interpolate(
+                    alpha_energy_vol + alphat_factor * alphat_rho_nut
+                )
                 alphaEff.name = "alphaEff"
 
                 # sensibleInternalEnergy (he): +div(phiv,p). sensibleEnthalpy (h): -dpdt
@@ -414,6 +499,9 @@ class NeoRhoPimpleFoam:
                     prev_T,
                     nfb.lookup_field_relaxation(rt.fv_solution_dict, energy.name, final_iter),
                 )
+                # literal EEqn: `fvOptions.correct(he)`, e.g. limitTemperature; it re-evaluates he's
+                # boundary conditions afterwards, which the call below does.
+                fv_options.limit_energy(energy, gas.energy_coeff, _TSTD, runTime.value())
                 energy.correct_boundary_conditions()
                 # Convert energy back to T for the EOS/reporting -- a plain affine field
                 # expression, so it updates internal AND boundary values consistently in
@@ -507,13 +595,12 @@ class NeoRhoPimpleFoam:
                     K.assign(0.5 * nn.mag_sqr(U))
                     # literal pEqn.H:
                     # `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
-                    # limit() is true whenever pMin/pMax (or a factor) is set, even if no cell is
-                    # clipped, so p's patches are evaluated once more here -- and this evaluation,
-                    # the first since the one that ends the solve, does recompute the Dirichlet
-                    # patches that update only in updateCoeffs (fixedMean, plenumPressure) from the
-                    # final flux and cells of the corrector. The clipping itself is not ported
-                    # (p never leaves [pMin, pMax] in the cases run so far).
-                    if pressure_limits:
+                    # limit() clips p to [pMin, pMax] and is true whenever a limit is set, even if
+                    # no cell is clipped, so p's patches are evaluated once more here -- and this
+                    # evaluation, the first since the one that ends the solve, does recompute the
+                    # Dirichlet patches that update only in updateCoeffs (fixedMean,
+                    # plenumPressure) from the final flux and cells of the corrector.
+                    if pressure_control.limit(p):
                         p.correct_boundary_conditions(boundary_context())
                     rho.assign(rho + psi * p - psip0)
 
@@ -532,6 +619,14 @@ class NeoRhoPimpleFoam:
                 if have_p_res:
                     residuals["p"] = p_res
 
+            # literal rhoPimpleFoam: `if (pimple.turbCorr()) { turbulence->correct(); }`, which
+            # with the default turbOnFinalIterOnly is the last outer iteration, i.e. once per
+            # step after the loop. The model reads nu, so bring it to the step's final mu/rho.
+            if turb is not None:
+                nu_vol.assign(mu_vol / rho)
+                turb.correct_compressible(U, phi, rho, rt)
+                alphat_rho_nut = rho * turb.nut()
+
             fv_options.end_of_time_step(rt.dt)
 
             if runTime.outputTime():
@@ -540,6 +635,8 @@ class NeoRhoPimpleFoam:
                 nfb.write_scalar_field(T, rt)
                 nfb.write_scalar_field(rho, rt)
                 nfb.write_vector_field(U, rt)
+                if turb is not None:
+                    turb.write(rt.mesh)
 
             runTime.printExecutionTime()
 
