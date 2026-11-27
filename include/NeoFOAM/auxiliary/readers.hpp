@@ -461,7 +461,11 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                          // flux, so the context-less path handles it too.
                          dict.insert("type", std::string("freestreamVelocity"));
                          detail::insertUniformValue<type_primitive_t>(
-                             dict, "freestreamValue", "freestreamValue", activePatchName, activeFoamPatch
+                             dict,
+                             "freestreamValue",
+                             "freestreamValue",
+                             activePatchName,
+                             activeFoamPatch
                          );
                          return;
                      }
@@ -501,7 +505,11 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                          // BoundaryContext (without it, zeroGradient).
                          dict.insert("type", std::string("freestreamPressure"));
                          detail::insertUniformValue<type_primitive_t>(
-                             dict, "freestreamValue", "freestreamValue", activePatchName, activeFoamPatch
+                             dict,
+                             "freestreamValue",
+                             "freestreamValue",
+                             activePatchName,
+                             activeFoamPatch
                          );
                          return;
                      }
