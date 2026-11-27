@@ -2,7 +2,10 @@
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/label.hpp"
+#include "NeoN/core/primitives/scalar.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
 
 #include <type_traits>
 
