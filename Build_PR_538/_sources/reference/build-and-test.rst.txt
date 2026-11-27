@@ -70,6 +70,7 @@ Tasks are defined in ``pyproject.toml`` under ``[tool.poe.tasks]``:
     poe lint        # ruff check
     poe format      # ruff format src test
     poe type_check  # mypy
+    poe precommit   # pre-commit run --all-files
     poe build_docs  # sphinx-build -b html doc doc/_build
     poe serve_docs  # serve doc/_build on http://localhost:8000
     poe view_docs   # open the served docs in the browser
