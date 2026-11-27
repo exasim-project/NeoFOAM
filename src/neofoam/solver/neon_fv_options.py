@@ -213,7 +213,10 @@ class LimitTemperature:
         return clipped
 
 
-_TYPES = {"acousticDampingSource": AcousticDampingSource, "limitTemperature": LimitTemperature}
+_TYPES: dict[str, Any] = {
+    "acousticDampingSource": AcousticDampingSource,
+    "limitTemperature": LimitTemperature,
+}
 
 
 class NeonFvOptions:

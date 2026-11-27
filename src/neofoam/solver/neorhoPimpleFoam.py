@@ -9,7 +9,8 @@ Minimal first version: laminar or RAS (any runtime-selected turbulence model wit
 compressible formulation, today kOmegaSST), subsonic (no transonic pEqn branch), no
 SIMPLEC/consistent variant. With a RAS model the momentum diffusion coefficient is
 mu + rho*nut and the energy diffusivity gains alphat = rho*nut/Prt (times gamma for the
-internal-energy form, as heThermo::alphaEff does), see _PRT. perfectGas equation of state, constant Cv-or-Cp,
+internal-energy form, as heThermo::alphaEff does), see _PRT.
+perfectGas equation of state, constant Cv-or-Cp,
 const-or-sutherland transport, read from constant/thermophysicalProperties
 (see neofoam.thermo.perfectGas.PerfectGasTransport). Energy equation is
 solved for he = Cv*(T - Tstd) (sensibleInternalEnergy) or h = Cp*(T - Tstd)
@@ -84,8 +85,8 @@ def _read_int(d: Any, key: str, default: int) -> int:
 
 
 def _read_scalar(d: Any, key: str) -> float:
-    """A scalar entry; a literal without a decimal point or exponent (``pMax 101350;``) is stored as an
-    integer, which ``get_double`` rejects, while OpenFOAM reads it as a scalar."""
+    """A scalar entry; a literal without a decimal point or exponent (``pMax 101350;``) is
+    stored as an integer, which ``get_double`` rejects, while OpenFOAM reads it as a scalar."""
     try:
         return float(d.get_double(key))
     except RuntimeError:
@@ -93,7 +94,7 @@ def _read_scalar(d: Any, key: str) -> float:
 
 
 def _pressure_limit_entries(d: Any) -> dict[str, float]:
-    """The pressureControl entries of the PIMPLE dictionary, as PressureControl keyword arguments."""
+    """The pressureControl entries of the PIMPLE dictionary, as PressureControl kwargs."""
     keys = {
         "pMin": "p_min",
         "pMax": "p_max",
@@ -184,9 +185,10 @@ class NeoRhoPimpleFoam:
             # as the raw OpenFOAM name the Ginkgo factory doesn't recognise.
             nfb.map_solver_settings(solvers, name)
 
-        # This solver passes U (and phi) in the BoundaryContext when it evaluates the patch values, so the
-        # far-field family can be translated faithfully: freestreamVelocity / freestreamPressure follow
-        # OpenFOAM's flow-direction blends instead of the fixedValue / zeroGradient approximations.
+        # This solver passes U (and phi) in the BoundaryContext when it evaluates the patch
+        # values, so the far-field family can be translated faithfully: freestreamVelocity /
+        # freestreamPressure follow OpenFOAM's flow-direction blends instead of the fixedValue /
+        # zeroGradient approximations.
         nfb.set_faithful_freestream(True)
 
         p = nfb.read_scalar_volume_field(rt, "p")
@@ -591,7 +593,8 @@ class NeoRhoPimpleFoam:
                     # this outer iteration and feeds EEqn's explicit K terms next outer
                     # iteration using pre-pressure-correction U.
                     K.assign(0.5 * nn.mag_sqr(U))
-                    # literal pEqn.H: `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
+                    # literal pEqn.H:
+                    # `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
                     # limit() clips p to [pMin, pMax] and is true whenever a limit is set, even if
                     # no cell is clipped, so p's patches are evaluated once more here -- and this
                     # evaluation, the first since the one that ends the solve, does recompute the

@@ -135,8 +135,9 @@ def test_neorhoPimpleFoam_ras_cavity_runs_with_kOmegaSST_and_pressure_limits(
 
     ``pMax``/``pMin`` are written as integers (OpenFOAM accepts both), which the settings
     reader must not reject. After 5 steps the unlimited run peaks at p = 100000.014, so the
-    second parametrisation's ``pMax 100000`` is exceeded and the pressure control has to clip. Turbulence is proven to
-    have run by nut leaving its zero initial value and by k, omega staying positive.
+    second parametrisation's ``pMax 100000`` is exceeded and the pressure control has to clip.
+    Turbulence is proven to have run by nut leaving its zero initial value and by k, omega
+    staying positive.
     """
     repo_root = Path(__file__).parents[2]
     source_case = repo_root / "test" / "setup_rhoPimpleRAS"
