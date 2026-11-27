@@ -53,6 +53,7 @@ from .configs import ControlDictConfig
 from .models.field_writer import fieldWriter, neon_writer_backend_steps
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.solution_loop import neon_loop_backend_steps, solutionLoop
+from .solver_settings import build_neon_solver_settings
 from .solver_spec import incompressibleFluidNeoN
 
 # Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents. The
@@ -79,6 +80,13 @@ _MAPPED_SOLVER_DICTS = (
 def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
     """Map each active optional model to its model name (see incompressibleFluid)."""
     return {m.name: m for m in optional_models}
+
+
+def _case_directory(argv: list[str]) -> Path:
+    """The global case directory: the ``-case`` argument, else the working directory."""
+    if "-case" in argv:
+        return Path(argv[argv.index("-case") + 1]).resolve()
+    return Path.cwd()
 
 
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
@@ -152,6 +160,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # front (mirrors the legacy port's setup block).
             rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
             solvers = rt.fv_solution_dict.subDict("solvers")
+            build_neon_solver_settings(solvers, _case_directory(argv))
             for name in _MAPPED_SOLVER_DICTS:
                 # Resolves OpenFOAM regex keys ("(U|k|epsilon)"), skips absent
                 # fields and never maps one entry twice.

@@ -1,0 +1,53 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      rejectedBlocks;
+}
+
+ConfigFileWithType { solver Ginkgo; configFile x.json; type solver::Bicg; }
+ConfigFileWithTolerance { solver Ginkgo; configFile x.json; tolerance 1e-06; }
+ConfigFileNoSolver { configFile x.json; }
+ConfigFileAbsolute { solver Ginkgo; configFile /abs/x.json; }
+ConfigFileOpenFOAMSolver { solver PCG; preconditioner DIC; configFile x.json; }
+StrayType { solver PCG; preconditioner DIC; type solver::Bicg; }
+GinkgoNoType { solver Ginkgo; tolerance 1e-06; }
+LowerCaseGinkgo { solver ginkgo; type solver::Cg; }
+TopLevelMultigrid { solver Ginkgo; type solver::Multigrid; }
+UnknownGinkgoType { solver Ginkgo; type solver::Direct; }
+NoSolver { isoFaceTol 1e-08; surfCellTol 1e-08; }
+AlreadyMapped { solver Ginkgo; type solver::Cg; reportName Jacobi+Cg; preconditioner DIC; }
+CgUnknownKey { solver Ginkgo; type solver::Cg; preconditioner DIC; notAKey 1; }
+CgBackendKey { solver Ginkgo; type solver::Cg; preconditioner DIC; backend ginkgo; }
+CgCriteriaIteration { solver Ginkgo; type solver::Cg; preconditioner DIC; criteria { iteration 50; } }
+CgCriteriaRelative { solver Ginkgo; type solver::Cg; preconditioner DIC; criteria { relative_residual_norm 0.01; } }
+IrRelaxation { solver Ginkgo; type solver::Ir; relaxation_factor 0.9; }
+PCGUnknownKey { solver PCG; preconditioner DIC; agglomerator faceAreaPair; }
+PCGBackendKey { solver PCG; preconditioner DIC; backend openfoam; }
+GAMGBackendKey { solver GAMG; smoother GaussSeidel; backend openfoam; }
+GAMGCoupled { solver GAMG; smoother GaussSeidel; coupled true; }
+SmoothSolverMules { solver smoothSolver; smoother symGaussSeidel; nAlphaCorr 2; MULESCorr yes; }
+MultigridOnBicg { solver Bicg; preconditioner Multigrid; }
+MultigridOnBicgstab { solver Bicgstab; preconditioner Multigrid; }
+MultigridOnGmres { solver Gmres; preconditioner Multigrid; }
+MultigridOnIr { solver Ir; preconditioner Multigrid; }
+PBiCGWithGAMG { solver PBiCG; preconditioner GAMG; }
+PBiCGStabWithGAMG { solver PBiCGStab; preconditioner GAMG; }
+IrNone { solver Ir; preconditioner none; }
+SmoothSolverNone { solver smoothSolver; smoother symGaussSeidel; preconditioner none; }
+PCGNoPreconditioner { solver PCG; tolerance 1e-06; }
+NativeNoPreconditioner { solver Ginkgo; type solver::Cg; tolerance 1e-06; }
+PCGFdic { solver PCG; preconditioner FDIC; }
+NativeSchwarz { solver Ginkgo; type solver::Cg; preconditioner { type preconditioner::Schwarz; local_solver { type preconditioner::Jacobi; max_block_size 1; } } }
+NativeTunedIc { solver Ginkgo; type solver::Cg; preconditioner { type preconditioner::Ic; factorization { type factorization::ParIc; iterations 5; } } }
+L1Off { solver PCG; preconditioner DIC; l1ScaledResidual false; }
+CheckFrequency { solver PCG; preconditioner DIC; checkFrequency 5; }
+ReuseOff { solver PCG; preconditioner DIC; reuseSetup false; }
+MinIterFactor { solver GAMG; smoother GaussSeidel; minIterFactor 0.5; }
+TuningWithoutMultigrid { solver Cg; preconditioner Ic; nPreSweeps 2; }
+SimpleUnknownKey { solver Cg; preconditioner Ic; smoother none; }
+UnknownPreconditioner { solver Cg; preconditioner DIC; }
+TuningOnIc { solver Cg; preconditioner { type Ic; nPreSweeps 2; } }
+TunedMultigridOnBicg { solver Bicg; preconditioner { type Multigrid; nPreSweeps 2; } }
+UnknownPreconditionerOption { solver Cg; preconditioner { type Multigrid; notAKey 1; } }

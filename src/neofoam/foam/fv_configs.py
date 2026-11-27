@@ -91,14 +91,22 @@ def _sanitize_name(s: str) -> str:
     )
 
 
+def _declared(value: Any) -> tuple[Any, dict[str, Any]]:
+    """A declared key or type and its schema metadata, unwrapping :func:`advanced`."""
+    if isinstance(value, FieldInfo):
+        return value.default, dict(value.json_schema_extra)  # type: ignore[arg-type]
+    return value, {}
+
+
 def _register_entry(
     cls: type,
     section_name: str,
     key: str,
     value_type: Any,
     optional: bool = False,
+    schema_extra: Optional[dict[str, Any]] = None,
 ) -> None:
-    """Record one (section, key, value_type, optional) on ``cls._pending_sections``.
+    """Record one (value_type, key, optional, schema_extra) on ``cls._pending_sections``.
 
     Storage is per-subclass; the actual Pydantic submodels are
     (re-)synthesised by :func:`_rebuild_sections` after every change.
@@ -107,7 +115,7 @@ def _register_entry(
     """
     section = cls._pending_sections.setdefault(section_name, {})  # type: ignore[attr-defined]
     attr_name = _sanitize_name(key)
-    section.setdefault(attr_name, (value_type, key, optional))
+    section.setdefault(attr_name, (value_type, key, optional, schema_extra or None))
 
 
 def _expand_default(cls: type, data: Any) -> Any:
@@ -181,14 +189,14 @@ def _rebuild_sections(cls: type) -> None:
     """
     for section_name, entries in cls._pending_sections.items():  # type: ignore[attr-defined]
         field_defs: dict[str, Any] = {}
-        for attr, (value_type, alias, optional) in entries.items():
+        for attr, (value_type, alias, optional, schema_extra) in entries.items():
             if optional:
                 field_defs[attr] = (
                     Optional[value_type],
-                    Field(alias=alias, default=None),
+                    Field(alias=alias, default=None, json_schema_extra=schema_extra),
                 )
             else:
-                field_defs[attr] = (value_type, Field(alias=alias))
+                field_defs[attr] = (value_type, Field(alias=alias, json_schema_extra=schema_extra))
         validators = {"_expand_default": _EXPAND_DEFAULT_VALIDATOR}
         if section_name in _SCHEME_TYPE_BY_SECTION:
             validators["_tokenize_extras"] = _tokenize_extras_validator(
@@ -257,7 +265,7 @@ def _canonical_controls(section_name: str, declared_aliases: list[str]) -> dict[
     """
     block: dict[str, Any] = dict(_CONTROL_CORRECTORS.get(section_name, {}))
     for alias in declared_aliases:
-        block[alias] = 0
+        block.setdefault(alias, 0)
     return block
 
 
@@ -357,7 +365,7 @@ class fvSchemes(BaseConfig):
         out: dict[str, Any] = {}
         for section_name, entries in cls._pending_sections.items():
             section_out: dict[str, Any] = {}
-            for _attr, (_value_type, alias, optional) in entries.items():
+            for _attr, (_value_type, alias, optional, _extra) in entries.items():
                 if optional:
                     continue
                 scheme = _canonical_scheme(section_name, alias)
@@ -368,20 +376,26 @@ class fvSchemes(BaseConfig):
         return out or None
 
     @classmethod
-    def add(cls, **section_to_keys: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def add(
+        cls, *, field: Optional[str] = None, **section_to_keys: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Extend this subclass with typed entries.
 
         Each kwarg maps a short section name to either a single entry
-        key (``"div(phi,U)"``) or a list of keys. Returns an identity
-        decorator so call sites can stack ``@<Subclass>.add(...)`` on
-        top of ``@spec.operation(...)``.
+        key (``"div(phi,U)"``) or a list of keys, each optionally wrapped
+        in :func:`advanced`. ``field`` names the wizard's collapsible group
+        of these keys. Returns an identity decorator so call sites can stack
+        ``@<Subclass>.add(...)`` on top of ``@spec.operation(...)``.
         """
         for short_name, keys in section_to_keys.items():
             section_name, value_type = _SCHEMES_SECTIONS.get(short_name, (short_name, str))
             if not isinstance(keys, list):
                 keys = [keys]
-            for key in keys:
-                _register_entry(cls, section_name, key, value_type)
+            for declared_key in keys:
+                key, schema_extra = _declared(declared_key)
+                if field is not None:
+                    schema_extra = {"nfField": field, "nfLevel": "main", **schema_extra}
+                _register_entry(cls, section_name, key, value_type, schema_extra=schema_extra)
         _rebuild_sections(cls)
 
         def _decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -420,20 +434,35 @@ class fvSolution(BaseConfig):
         out: dict[str, Any] = {}
         solvers = cls._pending_sections.get("solvers", {})
         solvers_out: dict[str, Any] = {}
-        for _attr, (_value_type, alias, optional) in solvers.items():
+        for _attr, (_value_type, alias, optional, _extra) in solvers.items():
             if optional:
                 continue
-            solvers_out[alias] = _canonical_solver(alias)
+            solvers_out[alias] = cls._starter_solver(alias)
         if solvers_out:
             out["solvers"] = solvers_out
         for section_name, entries in cls._pending_sections.items():
             if section_name == "solvers":
                 continue
-            aliases = [alias for _attr, (_vt, alias, _opt) in entries.items()]
+            aliases = [alias for _attr, (_vt, alias, _opt, _extra) in entries.items()]
             block = _canonical_controls(section_name, aliases)
             if block:
                 out[section_name] = block
         return out or None
+
+    @classmethod
+    def _solver_value_type(cls, field_name: str) -> Any:
+        """The value type of one ``solvers.<field>`` entry."""
+        return SolverControls
+
+    @classmethod
+    def _starter_solver(cls, alias: str) -> dict[str, Any]:
+        """The form prefill of one ``solvers.<field>`` entry."""
+        return _canonical_solver(alias)
+
+    @classmethod
+    def _solver_schema_extra(cls, alias: str) -> Optional[dict[str, Any]]:
+        """The wizard metadata of one ``solvers.<field>`` entry."""
+        return None
 
     @classmethod
     def add(
@@ -451,9 +480,21 @@ class fvSolution(BaseConfig):
         ``final_required=False`` so a case without ``Final`` entries loads.
         """
         for field_name in fields:
-            _register_entry(cls, "solvers", field_name, SolverControls)
+            final_name = f"{field_name}Final"
             _register_entry(
-                cls, "solvers", f"{field_name}Final", SolverControls, optional=not final_required
+                cls,
+                "solvers",
+                field_name,
+                cls._solver_value_type(field_name),
+                schema_extra=cls._solver_schema_extra(field_name),
+            )
+            _register_entry(
+                cls,
+                "solvers",
+                final_name,
+                cls._solver_value_type(final_name),
+                optional=not final_required,
+                schema_extra=cls._solver_schema_extra(final_name),
             )
         _rebuild_sections(cls)
 
@@ -470,8 +511,10 @@ class fvSolution(BaseConfig):
         e.g. ``PIMPLE { pRefCell; pRefValue; }`` for closed-domain pressure
         referencing. Optional (default ``None``) so cases that don't need them
         (open domains with a fixed-pressure BC) still validate, and
-        ``exclude_none`` keeps them out of the written file unless set.
+        ``exclude_none`` keeps them out of the written file unless set. A type
+        may be wrapped in :func:`advanced`.
         """
-        for key, value_type in key_to_type.items():
-            _register_entry(cls, section, key, value_type, optional=True)
+        for key, declared_type in key_to_type.items():
+            value_type, schema_extra = _declared(declared_type)
+            _register_entry(cls, section, key, value_type, optional=True, schema_extra=schema_extra)
         _rebuild_sections(cls)

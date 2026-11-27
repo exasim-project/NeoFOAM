@@ -1,0 +1,23 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      simpleBlocks;
+}
+
+CgIc { solver Cg; preconditioner Ic; tolerance 1e-06; relTol 0.05; maxIter 1000; }
+CgNone { solver Cg; preconditioner none; tolerance 1e-06; minIter 2; }
+CgMultigrid { solver Cg; preconditioner Multigrid; tolerance 1e-06; }
+CgMultigridTuned { solver Cg; preconditioner { type Multigrid; nCellsInCoarsestLevel 10; nPreSweeps 2; } tolerance 1e-06; relTol 0.01; }
+CgMultigridAdvanced { solver Cg; preconditioner { type Multigrid; nCellsInCoarsestLevel 50; max_levels 8; cycle f; nPreSweeps 2; nCoarsestSweeps 12; coarsening { max_iterations 20; max_unassigned_ratio 0.1; deterministic yes; skip_sorting no; } } tolerance 1e-06; }
+BicgIlu { solver Bicg; preconditioner Ilu; tolerance 1e-07; }
+BicgstabJacobi { solver Bicgstab; preconditioner Jacobi; relTol 0.1; }
+GmresIc { solver Gmres; preconditioner Ic; maxIter 200; }
+GmresKrylov { solver Gmres; preconditioner Ic; maxIter 200; krylov_dim 40; }
+BicgstabJacobiBlocks { solver Bicgstab; preconditioner { type Jacobi; max_block_size 4; } relTol 0.1; }
+IrRelaxed { solver Ir; preconditioner Jacobi; tolerance 1e-08; relaxation_factor 0.8; }
+IrJacobi { solver Ir; preconditioner Jacobi; tolerance 1e-08; }
+IrIlu { solver Ir; preconditioner Ilu; relTol 0.1; }
+ConfigFile { solver Ginkgo; configFile settings.json; }
+ConfigFileControls { solver Ginkgo; configFile settings.json; tolerance 1e-06; maxIter 50; l1ScaledResidual true; checkFrequency 2; }

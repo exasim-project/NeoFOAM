@@ -9,10 +9,17 @@
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
+#include <unistd.h>
+
 #include <algorithm>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <limits>
 #include <map>
 #include <regex>
 #include <set>
+#include <sstream>
 
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
@@ -197,31 +204,39 @@ NeoN::Dictionary makeJacobiSmoother(int nSweeps, bool distributed)
     return smoother;
 }
 
+// The tunable part of the multigrid. Defaults follow Ginkgo's shipped
+// pgm-multigrid-cg.json: V-cycle, up to 10 levels, and 8 smoother sweeps on the coarsest
+// level for a reasonably converged coarse solve.
+struct MultigridOptions
+{
+    int minCoarseRows = 64;
+    int nSweeps = 1;
+    int nCoarsestSweeps = 8;
+    int maxLevels = 10;
+    std::string cycle = "v";
+    NeoN::Dictionary mgLevel =
+        NeoN::Dictionary({{std::string("type"), std::string("multigrid::Pgm")}});
+};
+
 // Build a Ginkgo algebraic-multigrid factory dictionary - the NeoN analogue of OpenFOAM's
 // GAMG. Coarsening is Pgm (parallel graph match aggregation, Ginkgo's built-in AMG
 // coarsening); smoother and coarsest-level solver are Jacobi-preconditioned (see
-// makeJacobiSmoother). Fixed defaults follow Ginkgo's shipped pgm-multigrid-cg.json:
-//   - V-cycle, up to 10 levels,
-//   - 8 smoother sweeps on the coarsest level for a reasonably converged coarse solve,
-//   - a single V-cycle per application, which is how the multigrid is used both as the
-//     GAMG solver (CG-accelerated) and as a GAMG preconditioner.
+// makeJacobiSmoother). One cycle runs per application, which is how the multigrid is used
+// both as the GAMG solver (CG-accelerated) and as a GAMG preconditioner.
 // Ginkgo's post smoother is the pre smoother (post_uses_pre defaults to true): turning
 // that off takes a boolean, and NeoN's dictionary->pnode conversion has no boolean type
 // (it aborts with "unsupported type"), so the sweep count is shared - see
 // makeGamgReplacement's handling of nPostSweeps.
-NeoN::Dictionary makeMultigridDict(int minCoarseRows, int nSweeps, bool distributed)
+NeoN::Dictionary makeMultigridDict(const MultigridOptions& options, bool distributed)
 {
-    NeoN::Dictionary mgLevel;
-    mgLevel.insert("type", std::string("multigrid::Pgm"));
-
     NeoN::Dictionary mg;
     mg.insert("type", std::string("solver::Multigrid"));
-    mg.insert("max_levels", 10);
-    mg.insert("min_coarse_rows", minCoarseRows);
-    mg.insert("cycle", std::string("v"));
-    mg.insert("mg_level", mgLevel);
-    mg.insert("pre_smoother", makeJacobiSmoother(nSweeps, distributed));
-    mg.insert("coarsest_solver", makeJacobiSmoother(8, distributed));
+    mg.insert("max_levels", options.maxLevels);
+    mg.insert("min_coarse_rows", options.minCoarseRows);
+    mg.insert("cycle", options.cycle);
+    mg.insert("mg_level", options.mgLevel);
+    mg.insert("pre_smoother", makeJacobiSmoother(options.nSweeps, distributed));
+    mg.insert("coarsest_solver", makeJacobiSmoother(options.nCoarsestSweeps, distributed));
     mg.insert("default_initial_guess", std::string("zero"));
     mg.insert("criteria", makeIterationCriterion(1));
     return mg;
@@ -238,6 +253,156 @@ int consumeCount(NeoN::Dictionary& dict, const std::string& key)
     return value;
 }
 
+NeoN::scalar readScalar(const NeoN::Dictionary& dict, const std::string& key)
+{
+    return dict.isType<int>(key) ? NeoN::scalar(dict.get<int>(key)) : dict.get<NeoN::scalar>(key);
+}
+
+// A dictionary file stores a boolean as a word, so accept the words of OpenFOAM's Switch
+// next to a real bool and 0/1.
+bool readSwitch(const NeoN::Dictionary& dict, const std::string& key)
+{
+    if (dict.isType<bool>(key)) return dict.get<bool>(key);
+    if (dict.isType<int>(key)) return dict.get<int>(key) != 0;
+    if (dict.isType<std::string>(key))
+    {
+        const std::string& word = dict.get<std::string>(key);
+        if (word == "true" || word == "yes" || word == "on") return true;
+        if (word == "false" || word == "no" || word == "off") return false;
+    }
+    throw std::runtime_error("coarsening entry " + key + " must be true or false");
+}
+
+// Write @p json to a file that lives as long as this process and return its path. One
+// file per distinct content, since GinkgoSolver re-reads it on every solve.
+std::string processConfigFile(const std::string& json)
+{
+    struct Files
+    {
+        pid_t owner = getpid();
+        std::map<std::string, std::string> pathOf;
+
+        ~Files()
+        {
+            // A forked child inherits this table but not the files.
+            if (getpid() != owner) return;
+            std::error_code ignored;
+            for (const auto& entry : pathOf)
+                std::filesystem::remove(entry.second, ignored);
+        }
+    };
+    static Files files;
+
+    const auto known = files.pathOf.find(json);
+    if (known != files.pathOf.end()) return known->second;
+
+    std::string path = (std::filesystem::temp_directory_path() / "neofoam-pgm-XXXXXX").string();
+    const int descriptor = mkstemp(path.data());
+    if (descriptor < 0) throw std::runtime_error("Cannot create Pgm config file " + path);
+    close(descriptor);
+
+    std::ofstream file(path);
+    file << json;
+    file.close();
+    if (!file) throw std::runtime_error("Cannot write Pgm config file " + path);
+    files.pathOf.emplace(json, path);
+    return path;
+}
+
+// Build the multigrid level from the `coarsening` sub-dictionary.
+//
+// A true `deterministic`/`skip_sorting` cannot be stored in the level dictionary: NeoN's
+// dictionary->pnode conversion has no boolean type, and Ginkgo's Pgm reads them with
+// get_boolean, which rejects an int or a string. NeoN does parse a nested `configFile`
+// into a pnode, JSON booleans included, so such a level is handed over as a small file.
+NeoN::Dictionary makePgmLevel(const NeoN::Dictionary& coarsening)
+{
+    static const std::set<std::string> knownKeys =
+        {"deterministic", "max_iterations", "max_unassigned_ratio", "skip_sorting"};
+    for (const auto& key : sortedKeys(coarsening))
+    {
+        if (knownKeys.count(key) == 0)
+        {
+            throw std::runtime_error(
+                "Unknown coarsening entry " + key
+                + "; valid entries: " + join({knownKeys.begin(), knownKeys.end()})
+            );
+        }
+    }
+
+    NeoN::Dictionary level;
+    level.insert("type", std::string("multigrid::Pgm"));
+    std::ostringstream json;
+    json.precision(std::numeric_limits<double>::max_digits10);
+    json << R"({"type": "multigrid::Pgm")";
+    if (coarsening.contains("max_iterations"))
+    {
+        NeoN::Dictionary counts = coarsening;
+        const int maxIterations = consumeCount(counts, "max_iterations");
+        level.insert("max_iterations", maxIterations);
+        json << R"(, "max_iterations": )" << maxIterations;
+    }
+    if (coarsening.contains("max_unassigned_ratio"))
+    {
+        const NeoN::scalar ratio = readScalar(coarsening, "max_unassigned_ratio");
+        level.insert("max_unassigned_ratio", ratio);
+        json << R"(, "max_unassigned_ratio": )" << static_cast<double>(ratio);
+    }
+
+    bool needsFile = false;
+    for (const std::string key : {"deterministic", "skip_sorting"})
+    {
+        if (!coarsening.contains(key) || !readSwitch(coarsening, key)) continue;
+        needsFile = true;
+        json << ", \"" << key << "\": true";
+    }
+    if (!needsFile) return level;
+
+    json << "}\n";
+    NeoN::Dictionary fileLevel;
+    fileLevel.insert("configFile", processConfigFile(json.str()));
+    return fileLevel;
+}
+
+// Solver options that Ginkgo reads from the solver block itself, so a GAMG preconditioner
+// must not drop them. Only for the solver that has the option: on any other solver the key
+// stays an unknown GAMG entry, dropped with a warning as before.
+bool isOuterSolverOption(const NeoN::Dictionary& solverDict, const std::string& key)
+{
+    if (!solverDict.contains("type")) return false;
+    const std::string& type = solverDict.get<std::string>("type");
+    return (key == "krylov_dim" && type == "solver::Gmres")
+        || (key == "relaxation_factor" && type == "solver::Ir");
+}
+
+// Move the multigrid tuning entries of @p solverDict into @p options.
+void consumeMultigridOptions(NeoN::Dictionary& solverDict, MultigridOptions& options)
+{
+    if (solverDict.contains("max_levels"))
+    {
+        options.maxLevels = consumeCount(solverDict, "max_levels");
+    }
+    if (solverDict.contains("cycle"))
+    {
+        options.cycle = solverDict.get<std::string>("cycle");
+        if (options.cycle != "v" && options.cycle != "f" && options.cycle != "w")
+        {
+            throw std::runtime_error("GAMG cycle must be v, f or w, got " + options.cycle);
+        }
+        solverDict.remove("cycle");
+    }
+    // As for nPreSweeps: an Iteration criterion of 0 would never run the smoother.
+    if (solverDict.contains("nCoarsestSweeps"))
+    {
+        options.nCoarsestSweeps = std::max(1, consumeCount(solverDict, "nCoarsestSweeps"));
+    }
+    if (solverDict.contains("coarsening") && solverDict.isDict("coarsening"))
+    {
+        options.mgLevel = makePgmLevel(solverDict.subDict("coarsening"));
+        solverDict.remove("coarsening");
+    }
+}
+
 // Build the Ginkgo multigrid that replaces OpenFOAM's GAMG, consuming the GAMG tuning
 // keys of @p solverDict as it goes.
 //
@@ -247,7 +412,12 @@ int consumeCount(NeoN::Dictionary& dict, const std::string& key)
 // mergeLevels, ...) reaches Ginkgo's config_check_decorator and aborts the process.
 // Each dropped key is named in a warning - a silently ignored setting is worse than a
 // slower solve.
-NeoN::Dictionary makeGamgReplacement(NeoN::Dictionary& solverDict, bool distributed)
+//
+// @p honourTuning is true only for `preconditioner GAMG`, the form typed blocks reach the
+// mapper in. A raw `solver GAMG` block keeps dropping the Multigrid tuning keys, because
+// they are not OpenFOAM GAMG entries.
+NeoN::Dictionary
+makeGamgReplacement(NeoN::Dictionary& solverDict, bool distributed, bool honourTuning)
 {
     // The keys that legitimately survive this entry: consumed later by
     // updatePreconditioner (smoother, nSweeps, preconditioner), by updateCriteria
@@ -273,19 +443,19 @@ NeoN::Dictionary makeGamgReplacement(NeoN::Dictionary& solverDict, bool distribu
 
     // OpenFOAM coarsens until a level has fewer than nCellsInCoarsestLevel cells; Ginkgo's
     // min_coarse_rows is the same knob. 64 is Ginkgo's own default.
-    int minCoarseRows = 64;
+    MultigridOptions options;
     if (solverDict.contains("nCellsInCoarsestLevel"))
     {
-        minCoarseRows = consumeCount(solverDict, "nCellsInCoarsestLevel");
+        options.minCoarseRows = consumeCount(solverDict, "nCellsInCoarsestLevel");
     }
 
     // OpenFOAM defaults nPreSweeps to 0. A smoother with an Iteration criterion of 0
     // never runs at all, so clamp to a single sweep.
-    int nSweeps = 1;
     if (solverDict.contains("nPreSweeps"))
     {
-        nSweeps = std::max(1, consumeCount(solverDict, "nPreSweeps"));
+        options.nSweeps = std::max(1, consumeCount(solverDict, "nPreSweeps"));
     }
+    if (honourTuning) consumeMultigridOptions(solverDict, options);
 
     // The post smoother is the pre smoother (see makeMultigridDict), so a separate
     // post-sweep count cannot be honoured - say so rather than pretend it was read.
@@ -300,7 +470,7 @@ NeoN::Dictionary makeGamgReplacement(NeoN::Dictionary& solverDict, bool distribu
 
     for (const auto& key : sortedKeys(solverDict))
     {
-        if (keptKeys.count(key) != 0) continue;
+        if (keptKeys.count(key) != 0 || isOuterSolverOption(solverDict, key)) continue;
         NeoN::Logging::warn(
             "Dropping GAMG entry {} - the Ginkgo multigrid has no equivalent setting",
             key
@@ -308,7 +478,7 @@ NeoN::Dictionary makeGamgReplacement(NeoN::Dictionary& solverDict, bool distribu
         solverDict.remove(key);
     }
 
-    return makeMultigridDict(minCoarseRows, nSweeps, distributed);
+    return makeMultigridDict(options, distributed);
 }
 
 } // namespace
@@ -346,7 +516,7 @@ void updateSolver(NeoN::Dictionary& solverDict)
             );
             // Assign through the reference before the dictionary is rewritten below.
             solverName = mapEntry->second.first;
-            NeoN::Dictionary multigrid = makeGamgReplacement(solverDict, isDistributedRun());
+            NeoN::Dictionary multigrid = makeGamgReplacement(solverDict, isDistributedRun(), false);
             solverDict.insert("type", mapEntry->second.second);
             solverDict.insert("preconditioner", multigrid);
             return;
@@ -430,9 +600,40 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     // diagonal (block-Jacobi) instead, which is always defined and matches the intended behaviour.
     const bool isIr =
         solverDict.contains("type") && solverDict.get<std::string>("type") == "solver::Ir";
-    if (!solverDict.contains("preconditioner") && (solverDict.contains("smoother") || isIr))
+    const bool defaultsToJacobi =
+        !solverDict.contains("preconditioner") && (solverDict.contains("smoother") || isIr);
+
+    // A flat max_block_size tunes the Jacobi that `diagonal` expands to. Beside GAMG it stays
+    // an unknown entry for makeGamgReplacement to drop; on any other preconditioner Ginkgo
+    // would abort on it at the first solve, so fail here with the reason.
+    std::optional<int> maxBlockSize;
+    const std::string preconditionerWord =
+        solverDict.contains("preconditioner") && !solverDict.isDict("preconditioner")
+            ? solverDict.get<std::string>("preconditioner")
+            : std::string();
+    if (solverDict.contains("max_block_size") && preconditionerWord != "GAMG")
     {
-        solverDict.insert("preconditioner", activeMap.at("diagonal"));
+        if (!defaultsToJacobi && preconditionerWord != "diagonal")
+        {
+            throw std::runtime_error("max_block_size needs the diagonal (Jacobi) preconditioner");
+        }
+        maxBlockSize = consumeCount(solverDict, "max_block_size");
+    }
+    auto jacobiPreconditioner = [&]()
+    {
+        NeoN::Dictionary preconditioner = activeMap.at("diagonal");
+        if (maxBlockSize)
+        {
+            NeoN::Dictionary& jacobi =
+                distributed ? preconditioner.subDict("local_solver") : preconditioner;
+            jacobi.insert("max_block_size", *maxBlockSize);
+        }
+        return preconditioner;
+    };
+
+    if (defaultsToJacobi)
+    {
+        solverDict.insert("preconditioner", jacobiPreconditioner());
     }
 
     if (solverDict.contains("smoother"))
@@ -469,7 +670,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                 "Replacing preconditioner GAMG by Pgm algebraic multigrid{}",
                 distributed ? " (Schwarz-wrapped smoothers for distributed run)" : ""
             );
-            solverDict.insert("preconditioner", makeGamgReplacement(solverDict, distributed));
+            solverDict.insert("preconditioner", makeGamgReplacement(solverDict, distributed, true));
             return;
         }
 
@@ -482,7 +683,10 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                 mapEntry->second.get<std::string>("type"),
                 distributed ? " (Schwarz-wrapped for distributed run)" : ""
             );
-            solverDict.insert("preconditioner", mapEntry->second);
+            solverDict.insert(
+                "preconditioner",
+                preconditionerName == "diagonal" ? jacobiPreconditioner() : mapEntry->second
+            );
         }
     }
 }
@@ -595,6 +799,21 @@ std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
 
 } // namespace
 
+// Ginkgo's config getters are strict: get_integer rejects a real and get_real an integer,
+// while a dictionary file writes `relaxation_factor 1` as an integer.
+static void normaliseSolverOptions(NeoN::Dictionary& solverDict)
+{
+    if (solverDict.contains("krylov_dim"))
+    {
+        const int krylovDim = consumeCount(solverDict, "krylov_dim");
+        solverDict.insert("krylov_dim", krylovDim);
+    }
+    if (solverDict.contains("relaxation_factor"))
+    {
+        solverDict.insert("relaxation_factor", readScalar(solverDict, "relaxation_factor"));
+    }
+}
+
 NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
 {
     NeoN::Dictionary modSolverDict = solverDict;
@@ -619,6 +838,7 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
                         "for fine grained Ginkgo solver control\n");
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
+    normaliseSolverOptions(modSolverDict);
     updateCriteria(modSolverDict);
 
     // Stash the Ginkgo solver/preconditioner label (e.g. "Ic+Cg") that fvSolution

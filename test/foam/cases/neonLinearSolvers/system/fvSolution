@@ -1,0 +1,55 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-06;
+        relTol          0.05;
+    }
+    pFinal
+    {
+        solver          Ginkgo;
+        type            solver::Cg;
+        preconditioner
+        {
+            type            preconditioner::Jacobi;
+            max_block_size  1;
+        }
+        tolerance       1e-06;
+        relTol          0;
+    }
+    U
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-08;
+        relTol          0.1;
+    }
+    UFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0;
+    }
+    k
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        customKey       kept;
+    }
+}
+
+PIMPLE
+{
+    nCorrectors     2;
+}
