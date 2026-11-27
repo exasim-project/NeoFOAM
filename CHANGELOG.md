@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Include only the NeoN headers each file uses instead of `NeoN/NeoN.hpp`, and bump NeoN for its extern-template boundary conditions and schemes: a clean build is 44 % faster [#537](https://github.com/exasim-project/NeoFOAM/pull/537)
 - Add the `neofoam.region_solvers` entry-point group: the solver registry lists and resolves solvers of separately installed packages [#491](https://github.com/exasim-project/NeoFOAM/pull/491)
 - Add the `neofoam.plugins` and `neofoam.solvers` entry-point groups: separately installed packages can register plugins (models, post-processing nodes, ...) and add `neofoam solver <name>` commands; solvers load optional models from their bound families, so a plugin can add a new optional family [#461](https://github.com/exasim-project/NeoFOAM/pull/461)
 - Write the solver comparison test cases into `tmp_path` instead of the repository [#429](https://github.com/exasim-project/NeoFOAM/pull/429)
