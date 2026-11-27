@@ -1,0 +1,96 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-10;
+        relTol          0.01;
+        maxIter         1000;
+    }
+
+    rho
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-10;
+        relTol          0.01;
+        maxIter         1000;
+    }
+
+    T
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-10;
+        relTol          0.1;
+        maxIter         1000;
+    }
+
+    he
+    {
+        $T;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-10;
+        relTol          0.1;
+        maxIter         1000;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    momentumPredictor yes;
+    consistent      no;
+    // Flat (absolute-tolerance-only) form: Foam::simpleControl::read() calls
+    // solutionControl::read(true), which expects "<field> <tol>;" entries here --
+    // unlike pimpleControl's read(false), which wants the {tolerance; relTol;} dict
+    // form. Unused by both neorhoSimpleFoam.py (which never reads residualControl)
+    // and neorhoSimpleFoam.cpp (which loops via runTime.loop(), not simple.loop()),
+    // but Foam::simpleControl's constructor parses it eagerly regardless.
+    residualControl
+    {
+        p 1e-6;
+        U 1e-6;
+        T 1e-6;
+    }
+    pRefCell        0;
+    pRefValue       1e5;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        U   0.7;
+        T   0.7;
+    }
+    fields
+    {
+        p     0.3;
+    }
+}
+
+// ************************************************************************* //
