@@ -221,6 +221,22 @@ void registerFieldFactories(nb::module_& m)
     );
 
     m.def(
+        "create_ddt_flux_corr_field",
+        [](nf::RunTime& rt, const std::string& name)
+        {
+            // zero on physical boundary faces, calculated on processor faces: the patches the
+            // density-weighted ddt_flux_corr(out, ...) expects of its output
+            return fvcc::SurfaceField<NeoN::scalar>(
+                rt.exec, name, rt.nfMesh, fvcc::createDensityWeightedFluxCorrBCs(rt.nfMesh)
+            );
+        },
+        "runtime"_a,
+        "name"_a,
+        "Create the output field of the density-weighted ddt_flux_corr(out, rho, U, phi, dt, "
+        "scheme) with the patches it requires"
+    );
+
+    m.def(
         "set_ref_cell",
         [](nf::RunTime& rt, const std::string& fieldName, const std::string& pisoDict
         ) -> std::tuple<int, double, bool>
