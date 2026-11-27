@@ -1,12 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The NeoN Boussinesq model is detected and loaded from the case directory it is given.
-
-``beta``/``TRef`` in ``constant/transportProperties`` switch it on; ``cases/hotRoomLaminar``
-has them, ``cases/turbulentBox`` does not. The working directory is elsewhere, as for a
-region of a multiRun case (case directory ``<region>/``).
-"""
+"""The NeoN Boussinesq model is detected from ``beta`` and ``TRef`` of the case it runs in."""
 
 import shutil
 from pathlib import Path
@@ -20,13 +15,13 @@ CASES = Path(__file__).parent / "cases"
 
 
 def _detected(case: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    """The optional models detected in ``case`` as the region ``fluid/``, by name."""
-    shutil.copytree(CASES / case, tmp_path / "fluid")
-    monkeypatch.chdir(tmp_path)
-    return {m.spec.name: m for m in incompressibleFluidNeoNModel.detect_models(Path("fluid"))}
+    """The optional models detected in ``case``, run from its directory, by name."""
+    shutil.copytree(CASES / case, tmp_path / case)
+    monkeypatch.chdir(tmp_path / case)
+    return {m.spec.name: m for m in incompressibleFluidNeoNModel.detect_models()}
 
 
-def test_boussinesq_is_detected_and_loaded_from_the_case_dir(
+def test_boussinesq_is_detected_from_beta_and_tref(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     boussinesq = _detected("hotRoomLaminar", tmp_path, monkeypatch)["boussinesq"]
