@@ -44,7 +44,7 @@ jobs:
           git push --force lrz "HEAD:refs/heads/${BRANCH}"
 
       # No cancel step: it would cancel the GPU tests of a concurrent push to the same branch.
-      # NEON_BRANCH also keeps the ci.yaml GPU job from cancelling this pipeline.
+      # BENCHMARK=true keeps the cancel step of the ci.yaml GPU job from cancelling this pipeline.
       - name: Trigger LRZ GitLab CI pipeline for benchmarking
         id: trigger
         run: |

@@ -61,8 +61,13 @@ else
       "https://${HOST}/api/v4/projects/${GROUP}%2F${PROJECT}/pipelines/$id/variables")
 
     trigger_source=$(echo "$vars" | jq -r '.[] | select(.key=="TRIGGER_SOURCE") | .value' || true)
+    benchmark=$(echo "$vars" | jq -r '.[] | select(.key=="BENCHMARK") | .value' || true)
 
-    if [ "$trigger_source" == "$PROJECT" ]; then
+    # Benchmark pipelines (gpu_benchmark.yaml) run on the same branch as CI; a CI run must not
+    # cancel them
+    if [ "$benchmark" == "true" ]; then
+      echo "Keeping pipeline $id (benchmark)"
+    elif [ "$trigger_source" == "$PROJECT" ]; then
       echo "Canceling pipeline $id (TRIGGER_SOURCE matches $PROJECT)"
       curl -s --request POST \
         --header "PRIVATE-TOKEN: ${TOKEN}" \

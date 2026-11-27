@@ -4,9 +4,11 @@ name: Clean up closed PRs
 # and the LRZ GitLab pipelines that the gpu job of ci.yaml triggered), then delete the copy of its
 # branch that the gpu job pushed to the LRZ GitLab mirror, so stale branches don't pile up there
 # and CI can't pick an outdated one (#226). Branches of this repository are deleted by GitHub on
-# merge (delete_branch_on_merge). Runs as pull_request_target to get the LRZ token for fork PRs
-# too; it only checks out the base branch (for the ci/github scripts) and uses the PR's branch
-# name, never its code. Mirrors NeoN's workflow of the same name.
+# merge (delete_branch_on_merge). Only PRs from this repository: fork PRs never reach LRZ (the
+# gpu job skips them), and their branch name may equal an unrelated branch here, whose runs and
+# LRZ copy must not be touched. Runs as pull_request_target for the LRZ token; it only checks out
+# the base branch (for the ci/github scripts) and uses the PR's branch name, never its code.
+# Mirrors NeoN's workflow of the same name.
 on:
   pull_request_target:
     types: [closed]
@@ -18,7 +20,9 @@ permissions:
 
 jobs:
   cleanup:
-    if: github.repository == 'exasim-project/NeoFOAM'
+    if: >-
+      github.repository == 'exasim-project/NeoFOAM' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}

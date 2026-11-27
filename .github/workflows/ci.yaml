@@ -260,8 +260,8 @@ jobs:
       # With NEON_FROM_PACKAGE, NeoN comes from the nightly neon-pde conda package instead of being
       # built here. The nightlies are built from NeoN develop, so a matching NeoN branch is still
       # built from source, as is every build of a PR with the neon_from_source label: the package
-      # is a Release build, so only a source build gets the develop preset's Kokkos debug and bounds
-      # checks, and it tests the current NeoN develop rather than last night's. openmpi=*=external_* makes the package use the system Open MPI, which
+      # is a Release build, so only a C++ source build gets the develop preset's Kokkos debug and bounds
+      # checks (the Python builds always use a release preset), and it tests the current NeoN develop rather than last night's. openmpi=*=external_* makes the package use the system Open MPI, which
       # OpenFOAM links too; conda-forge only publishes the 4.1 external builds under the
       # mpi-external label. NEON_PACKAGE_BUILD picks the GCC or the clang build of the package:
       # clang 18+ and GCC mangle C++20 requires-clauses differently, so the clang job needs the
@@ -611,9 +611,19 @@ jobs:
 
       - uses: pyvista/setup-headless-display-action@v3
 
+      # Without the package, build the NeoN branch the gate resolved (e.g. a coordinated PR's
+      # branch), as the C++ jobs do, rather than the pinned submodule
       - name: Install NeoFOAM
         id: install
-        run: pip install -v .[all] ${{ steps.neon-args.outputs.pip-args }}
+        env:
+          PIP_NEON_ARGS: ${{ steps.neon-args.outputs.pip-args }}
+        run: |
+          args="$PIP_NEON_ARGS"
+          if [[ -z "$args" && -n "$NEON_BRANCH" ]]; then
+            args="-Ccmake.define.NEOFOAM_NEON_VERSION=$NEON_BRANCH"
+          fi
+          # shellcheck disable=SC2086 # several -C arguments
+          pip install -v .[all] $args
 
       # The checks below run even if an earlier one fails, as long as the install succeeded
       - name: Test with pytest
@@ -663,6 +673,8 @@ jobs:
       group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-python-versions-${{ strategy.job-index }}
       cancel-in-progress: false
       queue: max
+    env:
+      NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
     strategy:
       fail-fast: false
       matrix:
@@ -680,8 +692,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Builds NeoN from source: the gate's branch, like the C++ jobs, not the pinned submodule
       - name: Install NeoFOAM
-        run: pip install -v .[all]
+        run: pip install -v .[all] ${NEON_BRANCH:+"-Ccmake.define.NEOFOAM_NEON_VERSION=$NEON_BRANCH"}
 
       - name: Test with pytest
         run: pytest
