@@ -37,6 +37,7 @@ SCHEMES = ["corrected", "uncorrected"]
 
 
 def _rtol(executor: str) -> float:
+    """The relative tolerance of a comparison on ``executor``."""
     return 1e-9 if executor == "Serial" else 1e-8
 
 

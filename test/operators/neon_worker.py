@@ -165,6 +165,7 @@ def serve(case_dir: Path, executor: str) -> None:
             rt.fv_schemes_dict = staged
 
     def linear() -> Any:
+        """A linear face interpolation."""
         return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def buoyancy_flux() -> Any:

@@ -4,32 +4,7 @@
 # NB: no ``from __future__ import annotations`` — the dependency_resolver
 # matches ``Annotated[..., "models"]`` live.
 
-"""Boussinesq buoyancy for incompressibleFluidNeoN, as OpenFOAM's buoyantBoussinesqPimpleFoam.
-
-Use it for a natural-convection case: it is *detected* from ``beta`` and ``TRef`` in
-``constant/transportProperties``, with ``constant/g``, ``0/T``, ``0/p_rgh`` and
-``0/alphat``; the files of the native solver,
-read the same way as by the pybFoam twin (:mod:`neofoam.solver.incompressibleFluid.models.
-boussinesq`, whose configs and detection it shares). It adds
-
-* the fields ``T`` and ``p_rgh`` (solved), ``alphat`` (``nut/Prt``,
-  ``alphatJayatillekeWallFunction`` walls evaluated here), ``rhok = 1 - beta (T - TRef)``
-  and the geopotential ``gh``/``ghf``; ``p = p_rgh + rhok gh`` is computed;
-* per outer corrector, after the momentum predictor and before the pressure correction
-  (the order of the native solver: U, T, rhok, p_rgh): the energy equation with
-  ``alphaEff = nu/Pr + alphat`` and the ``rhok`` update.
-
-The momentum predictor and the ``p_rgh`` corrector are the ``*_boussinesq`` arms of the
-PIMPLE algorithm, switched on in ``@resolve``. ``prghPressure`` patches of ``p_rgh`` get
-``p - rhok gh`` after every ``rhok`` update. Not supported: SIMPLE, fvOptions, MRF and a
-moving mesh together with buoyancy, and a coupled region (``0/T`` is read from the working
-directory, as the rest of the NeoN solver reads its case). No ``Model.field`` declarations:
-on an optional model they would be synthesised as pybFoam reads.
-
-Example (``constant/transportProperties``)::
-
-    nu 1e-05; beta 3e-03; TRef 300; Pr 0.7; Prt 0.85;
-"""
+"""Boussinesq buoyancy for incompressibleFluidNeoN, as OpenFOAM's buoyantBoussinesqPimpleFoam."""
 
 import ctypes
 import os
@@ -78,13 +53,23 @@ boussinesqNeoN.detect(detect_model)
 
 @boussinesqNeoN.load
 def load(case_dir: Path, _instance_id: str) -> BoussinesqConfig:
-    """``beta``, ``TRef``, ``Pr``, ``Prt`` of ``constant/transportProperties``."""
+    """``beta``, ``TRef``, ``Pr``, ``Prt`` of ``constant/transportProperties``.
+
+    Use the model for a natural-convection case: it is *detected* from ``beta`` and
+    ``TRef`` there, with ``constant/g``, ``0/T``, ``0/p_rgh`` and ``0/alphat``; the files
+    of the native solver, read the same way as by the pybFoam twin
+    (:mod:`neofoam.solver.incompressibleFluid.models.boussinesq`, whose configs and
+    detection it shares). Not supported: SIMPLE, fvOptions, MRF and a moving mesh
+    together with buoyancy. Example (``constant/transportProperties``)::
+
+        nu 1e-05; beta 3e-03; TRef 300; Pr 0.7; Prt 0.85;
+    """
     return BoussinesqConfig.load(case_dir=case_dir)
 
 
 @boussinesqNeoN.resolve
 def resolve(_config: BoussinesqConfig, ctx: ConfigContext) -> None:
-    """Switch the PIMPLE algorithm to its ``p_rgh`` arms."""
+    """Switch the PIMPLE algorithm to its ``*_boussinesq`` momentum and ``p_rgh`` arms."""
     if not ctx.contains(_PIMPLE):
         raise ValueError(
             "incompressibleFluidNeoN: Boussinesq buoyancy needs the transient PIMPLE algorithm"
@@ -99,7 +84,10 @@ class ThermalDiffusivity:
     As the TEqn.H of buoyantBoussinesqPimpleFoam, called once per energy solve: ``alphat``
     takes the turbulence model's current ``nut``, then its
     ``alphatJayatillekeWallFunction`` faces take the thermal wall law (from the near-wall
-    ``k``, so zero for a laminar model). Not thread safe.
+    ``k``, so zero for a laminar model). The model builds it as
+    ``ctx.models["thermal_diffusivity"]``. Not thread safe. Example::
+
+        T_equation = nn.imp.laplacian(thermal_diffusivity(), T)
     """
 
     def __init__(
@@ -223,13 +211,17 @@ def impose_prgh_pressure(p_rgh: Any, rhok: Any, gh: Any, patches: list[tuple[int
         )
 
 
+# no Model.field declarations: on an optional model they would be synthesised as pybFoam reads
 @boussinesqNeoN.build
 def build(config: BoussinesqConfig) -> list[Any]:
     """The Boussinesq fields and the thermal diffusivity the energy equation solves with.
 
-    In createFields.H order: ``T``, ``p_rgh``, ``alphat``, ``rhok``, ``gh``/``ghf``, then
-    ``p = p_rgh + rhok gh``, shifted to ``pRefValue`` in the reference cell when ``p_rgh``
-    needs a reference (``p_rgh`` itself is not shifted at start, as in the native solver).
+    In createFields.H order: ``T`` and ``p_rgh`` (solved), ``alphat`` (``nut/Prt``,
+    ``alphatJayatillekeWallFunction`` walls evaluated here), ``rhok = 1 - beta (T - TRef)``,
+    the geopotential ``gh``/``ghf``, then ``p = p_rgh + rhok gh``, shifted to ``pRefValue``
+    in the reference cell when ``p_rgh`` needs a reference (``p_rgh`` itself is not
+    shifted at start, as in the native solver). The patch types come from the field
+    files of the start time of the run's case directory (``<region>/`` for a region).
     """
 
     def read(name: str) -> Any:
@@ -317,7 +309,11 @@ def solve_energy(
     pimple_state: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
 ) -> FieldUpdates:
-    """TEqn.H: the energy equation with this outer corrector's flux (``TFinal`` on the last)."""
+    """TEqn.H: the energy equation with this outer corrector's flux (``TFinal`` on the last).
+
+    Per outer corrector after the momentum predictor and before the pressure correction
+    (the native solver's order: U, T, rhok, p_rgh), with ``alphaEff = nu/Pr + alphat``.
+    """
     equation = nn.imp.ddt(T) + nn.imp.div(phi, T) - nn.imp.laplacian(thermal_diffusivity(), T)
     solver = nfb.PDESolverScalar(equation, T, neon_runtime)
     solver.set_final_iter(bool(pimple_state.control.final_iter()))
@@ -350,11 +346,9 @@ def _linear_interpolation(runtime: Any) -> Any:
 
 
 def _load_generic_patch_fields() -> None:
-    """Load OpenFOAM's generic patch fields, so ``0/alphat`` may name a compressible wall law.
-
-    OpenFOAM reads a patch type it does not know (with its value) only through them;
-    NeoFOAM's reader then maps it to calculated. Loading twice is a no-op.
-    """
+    """Load OpenFOAM's generic patch fields, so ``0/alphat`` may name a compressible wall law."""
+    # OpenFOAM reads a patch type it does not know (with its value) only through them;
+    # NeoFOAM's reader then maps it to calculated. Loading twice is a no-op
     library = Path(os.environ["FOAM_LIBBIN"]) / "libgenericPatchFields.so"
     ctypes.CDLL(str(library), mode=ctypes.RTLD_GLOBAL)
 

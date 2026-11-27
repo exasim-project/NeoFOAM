@@ -85,7 +85,7 @@ def _unit(dimensions: Any) -> Any:
     return pyf.dimensionedScalar("unit", dimensions, 1.0)
 
 
-def _constrain_pressure(p_rgh: Any, u: Any, rau: Any, t: Any, mesh: Any) -> np.ndarray:
+def _constrain_pressure(p_rgh: Any, u: Any, rau: Any, t: Any) -> np.ndarray:
     """The fixedFluxPressure gradient constrainPressure sets on the walls."""
     rauf = pyf.surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rau))
     flux_unit = _unit(pyf.dimless / pyf.dimTemperature)
@@ -120,11 +120,9 @@ def _generate_mesh(case_dir: Path, runtime: Any) -> None:
 
 
 def _set_field(field: Any, values: np.ndarray | None, correct: bool = True) -> None:
-    """Copy pushed values into the field and persist 0/<name> for neon.
-
-    ``correct=False`` for a fixedFluxPressure field, which may not evaluate its
-    boundary before constrainPressure gave it a gradient.
-    """
+    """Copy pushed values into the field and persist 0/<name> for neon."""
+    # correct=False for a fixedFluxPressure field, which may not evaluate its boundary
+    # before constrainPressure gave it a gradient
     assert values is not None
     view = np.asarray(field.internalField())
     view[:] = values.reshape(view.shape)
@@ -173,7 +171,7 @@ def run(case_dir: Path) -> None:
         ("mesh.magSf", ()): lambda s, d: _with_walls(mesh.magSf()),
         ("fvc.snGrad", ("T",)): lambda s, d: _with_walls(fvc.snGrad(t, scheme=s).ref()),
         ("constrainPressure", ("p_rgh", "U", "rAU", "T")): lambda s, d: _constrain_pressure(
-            p_rgh, u, rau, t, mesh
+            p_rgh, u, rau, t
         ),
         ("updateVelocityBuoyant", ("U", "rAU", "T")): lambda s, d: _update_velocity_buoyant(
             u, rau, t

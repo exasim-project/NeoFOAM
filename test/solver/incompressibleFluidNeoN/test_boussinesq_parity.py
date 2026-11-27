@@ -76,6 +76,7 @@ PYBFOAM_FIELDS = [
 
 
 def _run(command: list[str], case: Path, label: str) -> None:
+    """Run ``command`` in ``case``; fail naming ``label`` with its output's tail."""
     env = {**os.environ, "FOAM_SIGFPE": "false"}
     result = subprocess.run(
         command, cwd=case, env=env, capture_output=True, text=True, timeout=1200
@@ -87,12 +88,14 @@ def _run(command: list[str], case: Path, label: str) -> None:
 
 
 def _mesh(case: Path) -> None:
+    """Mesh ``case`` and set its fields where it has a setFieldsDict."""
     _run(["blockMesh"], case, "blockMesh")
     if (case / "system" / "setFieldsDict").is_file():
         _run(["setFields"], case, "setFields")
 
 
 def _last_time(case: Path) -> Path:
+    """The latest time directory of ``case``."""
     times = [d for d in case.iterdir() if d.is_dir() and d.name.replace(".", "").isdigit()]
     return max(times, key=lambda d: float(d.name))
 
@@ -124,10 +127,12 @@ def runs(tmp_path_factory: pytest.TempPathFactory) -> dict[tuple[str, str], Path
 
 
 def _last(run_dir: Path, field: str) -> np.ndarray:
+    """The cell values of ``field`` at the run's latest time."""
     return np.asarray(FoamFieldFile(_last_time(run_dir) / field).internal_field, dtype=float)
 
 
 def _peak(field: str, reference: np.ndarray) -> float:
+    """The scale of ``reference``: its peak, ``T``'s about ``T_REF``."""
     return float(np.abs(reference - T_REF).max() if field == "T" else np.abs(reference).max())
 
 

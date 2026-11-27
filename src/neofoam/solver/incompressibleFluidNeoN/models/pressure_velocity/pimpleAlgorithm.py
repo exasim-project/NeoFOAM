@@ -185,11 +185,21 @@ class PimpleNeoNState:
 
 
 def _uses_boussinesq(owner: Any) -> bool:
-    """Whether the run of ``owner`` has the boussinesq model (its resolve set the flag).
-
-    ``owner`` is the run's runtime, or the spec itself (``build_steps``), which has no run.
-    """
+    """Whether the run of ``owner`` has the boussinesq model (its resolve set the flag)."""
+    # owner is the run's runtime, or the spec itself (build_steps), which has no run
     return isinstance(owner, ModelRuntime) and bool(owner.config.use_boussinesq)
+
+
+def _pressure_reference(runtime: Any, algorithm: str, boussinesq: bool) -> PressureReference:
+    """The reference cell and value of ``p`` from the ``algorithm`` block of fvSolution."""
+    # A Boussinesq case solves p_rgh but keeps the pRefCell/pRefValue entries of p.
+    if boussinesq:
+        cell, value, needs_ref = nfb.set_ref_cell(
+            runtime, "p", algorithm, solved_field_name="p_rgh"
+        )
+    else:
+        cell, value, needs_ref = nfb.set_ref_cell(runtime, "p", algorithm)
+    return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
 
 
 @pimpleNeoN.build
@@ -233,12 +243,7 @@ def build(self: Any) -> list[Any]:
         # Same block as the corrector counts: a pisoFoam case would otherwise
         # abort with *Entry 'PIMPLE' not found in fvSolution*.
         algorithm = _control_block_name(rt.fv_solution_dict)
-        # A Boussinesq case solves p_rgh but keeps the pRefCell/pRefValue entries of p.
-        if _uses_boussinesq(self):
-            cell, value, needs_ref = nfb.set_ref_cell(rt, "p", algorithm, solved_field_name="p_rgh")
-        else:
-            cell, value, needs_ref = nfb.set_ref_cell(rt, "p", algorithm)
-        return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
+        return _pressure_reference(rt, algorithm, _uses_boussinesq(self))
 
     def create_surf_interp(context: dict[str, Any]) -> Any:
         rt = context["_neon_runtime"]

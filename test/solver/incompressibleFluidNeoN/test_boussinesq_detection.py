@@ -20,6 +20,7 @@ CASES = Path(__file__).parent / "cases"
 
 
 def _detected(case: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """The optional models detected in ``case`` as the region ``fluid/``, by name."""
     shutil.copytree(CASES / case, tmp_path / "fluid")
     monkeypatch.chdir(tmp_path)
     return {m.spec.name: m for m in incompressibleFluidNeoNModel.detect_models(Path("fluid"))}

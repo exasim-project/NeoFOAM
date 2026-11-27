@@ -190,9 +190,8 @@ class PybBuoyancy:
     def constrain_pressure(
         self, p_rgh: "Field", u: "Field", rau: "Field", t: "Field"
     ) -> np.ndarray:
-        """The walls' gradient ``constrainPressure`` gives ``p_rgh``.
-
-        ``phiHbyA = flux(U) + flux(U)*interpolate(T)``, ``rAUf = interpolate(rAU)``."""
+        """The walls' gradient ``constrainPressure`` gives ``p_rgh``."""
+        # phiHbyA = flux(U) + flux(U)*interpolate(T), rAUf = interpolate(rAU)
         return _of_worker(p_rgh).evaluate("constrainPressure", _names((p_rgh, u, rau, t)))
 
     def update_velocity_buoyant(self, u: "Field", rau: "Field", t: "Field") -> np.ndarray:
@@ -287,14 +286,16 @@ class NeonBackend:
 
 
 class NeonBuoyancy:
-    """The NeoFOAM Boussinesq helpers (``nfb.sn_grad``, ``mag_sf``, ``create_gh`` …).
+    """The NeoFOAM Boussinesq helpers (``nfb.sn_grad``, ``mag_sf``, ``create_gh`` …)."""
 
-    Surface results: internal faces, then the boundary faces."""
+    # surface results: internal faces, then the boundary faces
 
     def sn_grad(self, field: "Field", scheme: str) -> np.ndarray:
+        """``nfb.sn_grad(field)`` with ``scheme`` as the snGrad default."""
         return _neon_worker(field).evaluate("snGrad", (field.name,), scheme)
 
     def mag_sf(self, case: str, executor: str) -> np.ndarray:
+        """``nfb.mag_sf``."""
         return POOL.neon_worker(case, executor).evaluate("magSf", ())
 
     def gh(self, case: str, executor: str) -> np.ndarray:
@@ -302,6 +303,7 @@ class NeonBuoyancy:
         return POOL.neon_worker(case, executor).evaluate("gh", ())
 
     def ghf(self, case: str, executor: str) -> np.ndarray:
+        """``create_ghf``."""
         return POOL.neon_worker(case, executor).evaluate("ghf", ())
 
     def constrain_pressure(
@@ -317,6 +319,7 @@ class NeonBuoyancy:
         _neon_worker(p_rgh).command("constrainPressure.foreignMesh", _names((p_rgh, u, rau)))
 
     def update_velocity_buoyant(self, u: "Field", rau: "Field", t: "Field") -> np.ndarray:
+        """``U + rAU*reconstruct(flux(U)*snGrad(T)/rAUf)``."""
         return _neon_worker(u).evaluate("updateVelocityBuoyant", _names((u, rau, t)))
 
 
