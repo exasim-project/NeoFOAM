@@ -300,7 +300,8 @@ namespace NeoFOAM
 NeoN::dsl::SpatialOperator<NeoN::Vec3> makeViscousStress(
     const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nu,
     const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nut,
-    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU,
+    bool compressible
 )
 {
     namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -310,7 +311,7 @@ NeoN::dsl::SpatialOperator<NeoN::Vec3> makeViscousStress(
     // only ever reached through the -fvisibility=hidden Python bindings. addSubType()
     // is idempotent.
     fvcc::ViscousStressOperatorFactory::Register<fvcc::GaussViscousStress>::addSubType();
-    return NeoN::dsl::exp::viscousStress(nu, nut, gradU);
+    return NeoN::dsl::exp::viscousStress(nu, nut, gradU, compressible);
 }
 
 } // namespace NeoFOAM

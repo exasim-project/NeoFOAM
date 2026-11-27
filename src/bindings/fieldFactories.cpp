@@ -13,6 +13,10 @@
 #include "NeoN/finiteVolume/cellCentred/boundary/volume/waveTransmissive.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/volume/pressureInletOutletVelocity.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/volume/sineFixedValue.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/fixedMean.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/flowRateInletVelocity.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/plenumPressure.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/pressureInletVelocity.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"

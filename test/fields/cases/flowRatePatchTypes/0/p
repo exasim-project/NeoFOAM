@@ -1,0 +1,62 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 5;
+
+boundaryField
+{
+    // meanValue as a constant Function1, as the helmholtzResonance outlet writes it. The
+    // internal field of 5 is far below it, so the patch is shifted onto 100.
+    xMax
+    {
+        type            fixedMean;
+        meanValue       constant 100;
+        value           uniform 5;
+    }
+    // A bare number is a valid Function1 too.
+    yMin
+    {
+        type            fixedMean;
+        meanValue       80;
+        value           uniform 5;
+    }
+    // the plenum of helmholtzResonance, with its parameters as OpenFOAM writes them (bare scalars,
+    // some of them integers) and an initial value the patch must hold without a flux
+    zMax
+    {
+        type            plenumPressure;
+        gamma           1.4;
+        R               287.04;
+        supplyMassFlowRate 0.0001;
+        supplyTotalTemperature 300;
+        plenumVolume    0.000125;
+        plenumDensity   1.1613;
+        plenumTemperature 300;
+        inletAreaRatio  1;
+        inletDischargeCoefficient 0.8;
+        timeScale       1e-4;
+        value           uniform 7;
+    }
+    ".*"
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //

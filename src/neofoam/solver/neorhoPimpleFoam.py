@@ -69,6 +69,13 @@ def _read_int(d: Any, key: str, default: int) -> int:
     return int(d.get_int(key)) if d.contains(key) else default
 
 
+def _pressure_limits_active(d: Any) -> bool:
+    """OpenFOAM's pressureControl limits p when any of these PIMPLE entries is present."""
+    return any(
+        d.contains(k) for k in ("pMax", "pMin", "pMaxFactor", "pMinFactor", "rhoMax", "rhoMin")
+    )
+
+
 def _read_switch(d: Any, key: str, default: bool) -> bool:
     if not d.contains(key):
         return default
@@ -116,6 +123,8 @@ class NeoRhoPimpleFoam:
             n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
+
+        pressure_limits = _pressure_limits_active(pimple_dict)
 
         gas = PerfectGasTransport(rt)
 
@@ -233,20 +242,24 @@ class NeoRhoPimpleFoam:
         p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
 
-        def boundary_context() -> Any:
+        def boundary_context(evaluate_only: bool = False) -> Any:
             # Built fresh at each call site from whatever phi/rho/psi/p currently hold --
             # matches literal OpenFOAM's own per-call BC evaluation, not a value cached once
             # per timestep. Covers every context-aware BC this solver's fields can carry:
             # inletOutlet/totalPressure (phi), waveTransmissive (phi, rho, psi, p's own
             # old-time, deltaT), pressureInletOutletVelocity (phi), a sine-forced fixedValue
-            # (time). A BC that doesn't need a given key simply never looks it up.
+            # (time), plenumPressure (phi, U, p's own old-time, deltaT, timeIndex). A BC that
+            # doesn't need a given key simply never looks it up.
             ctx = nn.BoundaryContext()
             ctx.insert("phi", phi)
             ctx.insert("rho", rho)
             ctx.insert("psi", psi)
             ctx.insert("p", p)
+            ctx.insert("U", U)
             ctx.insert_value("deltaT", rt.dt)
             ctx.insert_value("time", runTime.value())
+            ctx.insert_value("timeIndex", float(n_steps))
+            ctx.insert_value("evaluateOnly", 1.0 if evaluate_only else 0.0)
             return ctx
 
         def reduce_u(stats: Any) -> tuple[float, float]:
@@ -298,6 +311,14 @@ class NeoRhoPimpleFoam:
 
                 prev_p = nfb.field_relaxation_snapshot(p)
 
+                # OpenFOAM builds the momentum matrix with fvm::ddt(rho, U), whose fvMatrix
+                # constructor updates U's patch coefficients (flowRateInletVelocity re-evaluates
+                # its velocity from the current rho) before the matrix and grad(U) are used.
+                # Without this the first outer iteration of the first step sees the written
+                # initial patch values -- an inlet at rest -- and the whole sequence lags by one
+                # corrector.
+                U.correct_boundary_conditions(boundary_context())
+
                 grad_u = grad_op.grad_tensor(U)
 
                 # Sutherland transport depends on T, so mu/alphaEnergy are refreshed from
@@ -318,7 +339,7 @@ class NeoRhoPimpleFoam:
                     nn.imp.ddt(rho, U)
                     + nn.imp.div(phi, U)
                     - nn.imp.laplacian(mu_face, U)
-                    + nfb.viscous_stress(mu_vol, zero_nut, grad_u)
+                    + nfb.viscous_stress(mu_vol, zero_nut, grad_u, compressible=True)
                 )
                 ueqn_expr = fv_options.add_momentum_sources(ueqn_expr, rho, U, runTime.value())
 
@@ -437,16 +458,23 @@ class NeoRhoPimpleFoam:
                             rt,
                         )
                         pEqn.set_final_iter(final_iter)
+                        # update_face_velocity adds the non-orthogonal flux correction of a
+                        # corrected laplacian back to phi; the system must keep it.
+                        pEqn.keep_face_flux_correction()
 
                         if needs_ref:
                             pEqn.set_reference(p_ref_cell, p_ref_value)
 
+                        # OpenFOAM updates fixedMean-type patches once, when pEqn is built; the
+                        # evaluations after the solve (the end of fvMatrix::solve, the relaxation)
+                        # keep those values, so U is corrected with the patch values of the cells
+                        # before the solve.
                         stats_p = pEqn.solve()
                         if not have_p_res:
                             entry = stats_p.entries[0]
                             p_res = (entry.initial_residual, entry.final_residual)
                             have_p_res = True
-                        p.correct_boundary_conditions(boundary_context())
+                        p.correct_boundary_conditions(boundary_context(evaluate_only=True))
 
                         if piso.final_non_orthogonal_iter():
                             # pEqn above is assembled +ddt(psi,p) + div(phiHbyA) -
@@ -467,7 +495,7 @@ class NeoRhoPimpleFoam:
                         prev_p,
                         nfb.lookup_field_relaxation(rt.fv_solution_dict, p.name, final_iter),
                     )
-                    p.correct_boundary_conditions(boundary_context())
+                    p.correct_boundary_conditions(boundary_context(evaluate_only=True))
 
                     nfb.update_velocity(hByA, rAU, p, U, rt)
                     U.correct_boundary_conditions(boundary_context())
@@ -477,6 +505,16 @@ class NeoRhoPimpleFoam:
                     # this outer iteration and feeds EEqn's explicit K terms next outer
                     # iteration using pre-pressure-correction U.
                     K.assign(0.5 * nn.mag_sqr(U))
+                    # literal pEqn.H:
+                    # `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
+                    # limit() is true whenever pMin/pMax (or a factor) is set, even if no cell is
+                    # clipped, so p's patches are evaluated once more here -- and this evaluation,
+                    # the first since the one that ends the solve, does recompute the Dirichlet
+                    # patches that update only in updateCoeffs (fixedMean, plenumPressure) from the
+                    # final flux and cells of the corrector. The clipping itself is not ported
+                    # (p never leaves [pMin, pMax] in the cases run so far).
+                    if pressure_limits:
+                        p.correct_boundary_conditions(boundary_context())
                     rho.assign(rho + psi * p - psip0)
 
                     # literal pEqn.H: dpdt = fvc::ddt(p), same BDF order as the implicit
