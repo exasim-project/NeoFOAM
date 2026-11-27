@@ -248,8 +248,8 @@ class NeoRhoPimpleFoam:
             # per timestep. Covers every context-aware BC this solver's fields can carry:
             # inletOutlet/totalPressure (phi), waveTransmissive (phi, rho, psi, p's own
             # old-time, deltaT), pressureInletOutletVelocity (phi), a sine-forced fixedValue
-            # (time), plenumPressure (phi, U, p's own old-time, deltaT, timeIndex). A BC that doesn't
-            # need a given key simply never looks it up.
+            # (time), plenumPressure (phi, U, p's own old-time, deltaT, timeIndex). A BC that
+            # doesn't need a given key simply never looks it up.
             ctx = nn.BoundaryContext()
             ctx.insert("phi", phi)
             ctx.insert("rho", rho)
@@ -505,7 +505,8 @@ class NeoRhoPimpleFoam:
                     # this outer iteration and feeds EEqn's explicit K terms next outer
                     # iteration using pre-pressure-correction U.
                     K.assign(0.5 * nn.mag_sqr(U))
-                    # literal pEqn.H: `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
+                    # literal pEqn.H:
+                    # `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
                     # limit() is true whenever pMin/pMax (or a factor) is set, even if no cell is
                     # clipped, so p's patches are evaluated once more here -- and this evaluation,
                     # the first since the one that ends the solve, does recompute the Dirichlet
