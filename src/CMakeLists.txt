@@ -22,6 +22,7 @@ target_sources(
           "auxiliary/writers.cpp"
           "auxiliary/comparison.cpp"
           "auxiliary/bound.cpp"
+          "auxiliary/pressureControl.cpp"
           "datastructures/meshAdapter.cpp"
           "datastructures/databaseWrapper.cpp"
           "datastructures/pde.cpp"
