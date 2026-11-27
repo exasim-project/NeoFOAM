@@ -7,27 +7,22 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-# ``neofoam.ui`` is a separate feature not present on this branch; skip cleanly
-# (the sweep-runner source itself has no UI dependency).
-pytest.importorskip("neofoam.ui")
-
-import shutil
-import subprocess
-import sys
-
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
-from neofoam.mcp import tools  # noqa: E402
-from neofoam.mcp.registry import resolve_solver  # noqa: E402
-from neofoam.solver.incompressibleFluid.models.boussinesq import BoussinesqConfig  # noqa: E402
+from neofoam.mcp import tools
+from neofoam.mcp.registry import resolve_solver
+from neofoam.solver.incompressibleFluid.models.boussinesq import BoussinesqConfig
 from neofoam.tooling.workflow import sweep_runner
 from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
 from neofoam.tooling.workflow.patch_set import PatchSet
-from neofoam.tooling.workflow.sweep_runner import (  # noqa: E402
+from neofoam.tooling.workflow.sweep_runner import (
     _load_payloads,
     apply_configs,
     clone_case,
@@ -38,8 +33,10 @@ from neofoam.tooling.workflow.sweep_runner import (  # noqa: E402
     setup_mesh_case,
 )
 from neofoam.tools.block_mesh import BlockMeshDictConfig
-from neofoam.ui.scaffold import scaffold_runnable_case  # noqa: E402
-from neofoam.viscosity.config import TransportPropertiesConfig  # noqa: E402
+from neofoam.viscosity.config import TransportPropertiesConfig
+
+#: The OpenFOAM-convention ``Allrun`` that makes a saved case runnable.
+_ALLRUN = Path(__file__).resolve().parents[3] / "scripts" / "Allrun"
 
 _CONTROL = {
     "application": "pimpleFoam",
@@ -59,7 +56,7 @@ def _make_base(tmp_path: Path, extra: dict[str, dict[str, object]] | None = None
         **(extra or {}),
     }
     tools.save_case(solver, spec, str(base))
-    scaffold_runnable_case(base)
+    shutil.copy2(_ALLRUN, base / "Allrun")
     return base
 
 

@@ -38,14 +38,8 @@ Run the tests
 
     pytest test/<area>                # scoped tests while working
     pytest                            # whole suite (testpaths=test) verify before done
-    pytest test/ui -m browser         # opt-in: the wizard forms in headless Chromium
-    bun test                          # in src/neofoam/ui/jsonforms_module: the JS renderer rules
     pre-commit run --files <changed>  # format + lint + mypy on your diff
     pre-commit run -a                 # format + lint + mypy on all files
-
-The browser tests need ``playwright install chromium`` once. After editing the
-wizard's JS sources, rebuild the checked-in bundle (``bunx vite build``) and commit
-it with the change — see :doc:`ui-architecture`.
 
 Poe tasks
 ---------

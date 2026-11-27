@@ -18,7 +18,7 @@ from neofoam.io.dictread import foam_case, set_foam_case  # noqa: E402
 
 #: A case whose snappyHexMeshDict includes OpenFOAM's shipped .cfg, which ends in
 #: ``#include "<system>/meshQualityDict"``.
-_ETC_INCLUDE_CASE = Path(__file__).resolve().parents[1] / "ui" / "cases" / "etc_include"
+_ETC_INCLUDE_CASE = Path(__file__).resolve().parent / "cases" / "etc_include"
 
 #: Reading it aborts the process outright when the tag cannot resolve, so the read is
 #: done in a child and judged by its exit code — an exception never arrives.
