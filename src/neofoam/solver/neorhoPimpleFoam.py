@@ -456,7 +456,9 @@ class NeoRhoPimpleFoam:
                 # internal-energy form, and alpha_energy_vol already carries it for the
                 # laminar part (gas.alphaEnergy).
                 alphat_factor = (1.0 if gas.is_enthalpy else gas.gamma) / _PRT
-                alphaEff = surf_interp.interpolate(alpha_energy_vol + alphat_factor * alphat_rho_nut)
+                alphaEff = surf_interp.interpolate(
+                    alpha_energy_vol + alphat_factor * alphat_rho_nut
+                )
                 alphaEff.name = "alphaEff"
 
                 # sensibleInternalEnergy (he): +div(phiv,p). sensibleEnthalpy (h): -dpdt
