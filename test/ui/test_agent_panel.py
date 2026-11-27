@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -19,8 +20,15 @@ from trame.app import get_server  # noqa: E402
 
 from neofoam.agent.case_fill import build_case_output_model, case_spec_to_configs  # noqa: E402
 from neofoam.framework.solver.configurations import configurations  # noqa: E402
-from neofoam.ui.agent_panel import _summary, build_agent_panel  # noqa: E402
+from neofoam.mcp.registry import resolve_solver  # noqa: E402
+from neofoam.ui.agent_panel import (  # noqa: E402
+    AgentPanel,
+    _drop_stale_companions,
+    _summary,
+    build_agent_panel,
+)
 from neofoam.ui.forms import build_forms  # noqa: E402
+from neofoam.ui.steps import selection_key  # noqa: E402
 
 #: A real on-disk case for the ``load_case`` tool (the fixture test/agent uses).
 SOURCE_CASE = (
@@ -611,3 +619,38 @@ def test_auto_save_never_writes_to_the_launch_dir(
 
     assert list(tmp_path.iterdir()) == []
     assert "**Wrote to**" not in server.state.chat_log[-1]["content"]
+
+
+#: A NeoN case whose ``p`` block no linear-solver plugin accepts (read-only).
+REJECTED_BLOCK_CASE = Path(__file__).resolve().parent / "cases" / "neon_rejected_block"
+
+
+def test_autosave_leaves_a_file_with_a_rejected_block_byte_identical(tmp_path, server):
+    neon = resolve_solver("incompressibleFluidNeoN")
+    case = shutil.copytree(REJECTED_BLOCK_CASE, tmp_path / "case")
+    before = (case / "system" / "fvSolution").read_bytes()
+    server.state.target_dir = str(case)
+    agent = _StubAgent(build_case_output_model(solver=neon).model_construct())
+    panel = AgentPanel(server, build_forms(neon), neon, agent_factory=lambda **_: agent)
+    for entry in panel._entries:
+        if entry.owner_model:
+            server.state[selection_key(entry.owner_model)] = True
+    panel.load_target_case()
+
+    notes = panel._autosave([_default_slice(neon)])
+
+    assert (case / "system" / "fvSolution").read_bytes() == before
+    assert any("could not be loaded" in note for note in notes)
+
+
+def _default_slice(solver: Any) -> Any:
+    return configurations(solver)["PimpleNeoN_fvSolution"]()
+
+
+def test_stale_companion_pass_skips_a_typed_block():
+    typed = SimpleNamespace(root=object())
+    config = SimpleNamespace(solvers=[("p", typed)])
+
+    _drop_stale_companions([config])
+
+    assert config.solvers == [("p", typed)]

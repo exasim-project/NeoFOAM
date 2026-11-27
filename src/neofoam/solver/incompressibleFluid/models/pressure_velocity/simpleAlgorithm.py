@@ -47,7 +47,7 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam import advanced, fvSchemes, openfoamFvSolution
 from neofoam.foam.algorithm_configs import SimpleAlgorithmConfig
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
@@ -68,11 +68,11 @@ simple = Model("Simple")
 
 # Per-spec fvSchemes / fvSolution slices (see pimpleAlgorithm).
 SimpleFvSchemes = simple.config(fvSchemes)
-SimpleFvSolution = simple.config(fvSolution)
+SimpleFvSolution = simple.config(openfoamFvSolution)
 
 # Optional SIMPLE control keys read straight from ``system/fvSolution`` by
 # ``setRefCell`` — a closed domain needs a pressure reference.
-SimpleFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
+SimpleFvSolution.add_controls("SIMPLE", pRefCell=advanced(int), pRefValue=advanced(float))
 
 # Declared so ``configurations(solver)`` and the MCP export the key set.
 # Loading is unaffected: its runtime is built without ``instantiate`` and never
@@ -175,8 +175,9 @@ def inner_loop(ctx: Context) -> bool:
 
 @simple.operation(operation_number="2.1")
 @SimpleFvSchemes.add(
+    field="U",
     ddt="ddt(U)",
-    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    div=["div(phi,U)", advanced("div((nuEff*dev2(T(grad(U)))))")],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
 )
@@ -218,10 +219,11 @@ def momentum(
 
 @simple.operation(operation_number="2.2", depends_on=["momentum"])
 @SimpleFvSchemes.add(
+    field="p",
     grad="grad(p)",
     laplacian="laplacian(rAtU,p)",
-    interpolation=["flux(HbyA)", "interpolate((1|A(U)))"],
-    snGrad="snGrad(p)",
+    interpolation=[advanced("flux(HbyA)"), advanced("interpolate((1|A(U)))")],
+    snGrad=advanced("snGrad(p)"),
 )
 @SimpleFvSolution.add("p", final_required=False)
 def continuity(

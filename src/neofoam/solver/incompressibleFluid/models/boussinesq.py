@@ -43,7 +43,7 @@ from neofoam.fields import (
     SymmetryPlaneBC,
     ZeroGradientBC,
 )
-from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam import fvSchemes, openfoamFvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, field, lazy
 from neofoam.io import OF, BaseConfig, IOStrategy
@@ -169,7 +169,7 @@ boussinesq.config(GravityConfig)
 
 # Per-spec fvSchemes / fvSolution slices for the energy equation.
 BoussinesqFvSchemes = boussinesq.config(fvSchemes)
-BoussinesqFvSolution = boussinesq.config(fvSolution)
+BoussinesqFvSolution = boussinesq.config(openfoamFvSolution)
 
 # 0/<name> declarations the boussinesq plugin adds on top of pimple's
 # ``U``/``p``. The disk schemas land in ``configurations(solver).fields``
@@ -350,7 +350,10 @@ def build(configs: BoussinesqConfig) -> list[object]:
 
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
-@BoussinesqFvSchemes.add(ddt="default", div="div(phi,T)", grad="grad(T)", laplacian="default")
+# ``default``: the laplacian's key is a generated name (``alpha_eff``) no case spells out.
+@BoussinesqFvSchemes.add(
+    field="T", ddt="default", div="div(phi,T)", grad="grad(T)", laplacian="default"
+)
 @BoussinesqFvSolution.add("T")
 def solve_energy(
     self: Any,

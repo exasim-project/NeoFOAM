@@ -1,12 +1,18 @@
 // Unit tests of the renderers' pure rules: `bun test` (run by test/ui/test_jsonforms_module.py).
 
-import { expect, test } from 'bun:test'
+import * as per from './sectionSchema.mjs'
+import { describe, expect, test } from 'bun:test'
 import {
   LAYOUTS,
   PATH_UNSAFE,
   LAYOUT_BY_KEYWORD,
+  armFields,
+  discriminatorLabel,
+  discriminatorOf,
   entryKeys,
   formatNumber,
+  keptValues,
+  withoutRuleErrors,
   parseNumberInput,
   pinnedKeys,
   rowsSchema,
@@ -185,4 +191,214 @@ test.each(['wall.left', 'div(phi,alpha.water)', 'a[0]'])('%p cannot be part of a
 
 test('a plain key can be part of a data path', () => {
   expect(PATH_UNSAFE.test('div(phi,U)')).toBe(false)
+})
+
+const NUMBER = { type: 'number' }
+const CHOICE = (...values) => ({ type: 'string', enum: values })
+const flatArm = (solver, properties) => ({
+  title: solver,
+  properties: { solver: { const: solver, default: solver }, ...properties },
+})
+const CG = flatArm('Cg', { preconditioner: CHOICE('none', 'Ic'), tolerance: NUMBER })
+const GMRES = flatArm('Gmres', { preconditioner: CHOICE('none'), tolerance: NUMBER })
+const FILE = flatArm('configFile', { path: { type: 'string' } })
+const enumFits = (property, value) => !property.enum || property.enum.includes(value)
+
+test('a union names its arm by type unless the schema says otherwise', () => {
+  expect(discriminatorOf({ oneOf: [] })).toBe('type')
+  expect(discriminatorOf({ nfDiscriminator: 'solver' })).toBe('solver')
+})
+
+test('only a named discriminator titles the select', () => {
+  expect(discriminatorLabel({ nfDiscriminator: 'solver' })).toBe('Solver')
+  expect(discriminatorLabel({ oneOf: [] })).toBeNull()
+})
+
+test('a switch keeps a shared value the new arm accepts', () => {
+  const data = { solver: 'Cg', preconditioner: 'none', tolerance: 1e-3 }
+  expect(keptValues(CG, GMRES, data, enumFits)).toEqual({ preconditioner: 'none', tolerance: 1e-3 })
+})
+
+test('a switch drops a shared value the new arm rejects', () => {
+  const data = { solver: 'Cg', preconditioner: 'Ic', tolerance: 1e-3 }
+  expect(keptValues(CG, GMRES, data, enumFits)).toEqual({ tolerance: 1e-3 })
+})
+
+test('a switch to an arm sharing no field keeps nothing', () => {
+  expect(keptValues(CG, FILE, { solver: 'Cg', tolerance: 1e-3 }, enumFits)).toEqual({})
+})
+
+test('a dictionary no arm of a named union claims is a free-form block', () => {
+  const union = { nfDiscriminator: 'solver', oneOf: [CG, GMRES] }
+  const section = { nfUnions: true, properties: { p: union } }
+  const schema = rowsSchema(section, { k: { solver: 'PBiCGStab' } }, {})
+  expect(schema.properties.k.nfDict).toBe(true)
+})
+
+test('an added entry naming an arm of a named union keeps the union', () => {
+  const union = { nfDiscriminator: 'solver', oneOf: [CG, GMRES] }
+  const section = { nfUnions: true, properties: { p: union } }
+  const schema = rowsSchema(section, { k: { solver: 'Cg' } }, {})
+  expect(schema.properties.k.oneOf).toBe(union.oneOf)
+})
+
+const TUNED = flatArm('Tuned', { tolerance: NUMBER, depth: NUMBER })
+const NEEDS = { ...flatArm('Needs', { path: { type: 'string' }, tolerance: NUMBER }), required: ['path'] }
+
+test('a named union hides a field only its arm declares while it is unset', () => {
+  expect(armFields(TUNED, [TUNED, CG], { solver: 'Tuned' }, true)).toEqual(['tolerance'])
+})
+
+test('a named union draws an arm-only field once the data sets it', () => {
+  expect(armFields(TUNED, [TUNED, CG], { depth: 2 }, true)).toEqual(['tolerance', 'depth'])
+})
+
+test('a named union always draws a required arm-only field', () => {
+  expect(armFields(NEEDS, [NEEDS, CG], {}, true)).toEqual(['path', 'tolerance'])
+})
+
+test('a union on type draws every field of its arm', () => {
+  expect(armFields(TUNED, [TUNED, CG], {}, false)).toEqual(['tolerance', 'depth'])
+})
+
+describe('per-field form rules', () => {
+  const multigrid = {
+    title: 'Multigrid',
+    properties: {
+      type: { const: 'Multigrid' },
+      max_levels: { type: 'integer', nfLevel: 'advanced', nfGroup: 'Hierarchy', nfDefaultHint: 10 },
+      coarsening: {
+        type: 'object',
+        nfLevel: 'advanced',
+        nfGroup: 'Pgm coarsening',
+        properties: { skip_sorting: { type: 'boolean', nfLevel: 'advanced', nfDefaultHint: false } },
+      },
+    },
+  }
+  const none = { title: 'none', properties: { type: { const: 'none' } } }
+  const block = {
+    nfDiscriminator: 'solver',
+    oneOf: [
+      {
+        title: 'Cg',
+        properties: {
+          solver: { const: 'Cg' },
+          preconditioner: { oneOf: [none, multigrid] },
+          tolerance: { type: 'number' },
+          minIter: { type: 'integer', nfLevel: 'advanced' },
+        },
+      },
+    ],
+  }
+
+  test('advanced entries follow the selected arms', () => {
+    const titles = (data) => per.advancedGroups(block, data).map((group) => group.title)
+    expect(titles({ solver: 'Cg', preconditioner: { type: 'none' } })).toEqual(['Solver: Cg'])
+    expect(titles({ solver: 'Cg', preconditioner: { type: 'Multigrid' } })).toEqual([
+      'Solver: Cg',
+      'Multigrid: Hierarchy',
+      'Multigrid: Pgm coarsening',
+    ])
+  })
+
+  test('an arm draws no advanced entry inline, even when set', () => {
+    expect(per.armFields(block.oneOf[0], block.oneOf, { minIter: 2 }, true)).not.toContain('minIter')
+  })
+
+  test('clearing the last nested option removes its dictionary', () => {
+    const data = { type: 'Multigrid', coarsening: { skip_sorting: true } }
+    expect(per.withValueAt(data, ['coarsening', 'skip_sorting'], undefined)).toEqual({
+      type: 'Multigrid',
+    })
+  })
+
+  test('a false hint is a hint', () => {
+    expect(per.hintText({ nfDefaultHint: false })).toBe('false')
+    expect(per.hintText({})).toBe('none')
+  })
+
+  test('a switch drops what the new arm refuses', () => {
+    const from = { properties: { tolerance: {} } }
+    const to = { nfSwitchDrops: ['tolerance'], properties: { tolerance: {} } }
+    expect(per.keptValues(from, to, { tolerance: 1 }, () => true)).toEqual({})
+  })
+
+  test('a Final block counts as same only when it equals its base', () => {
+    const rows = [{ kind: 'solver', blocks: ['p', 'pFinal'], finalOf: { pFinal: 'p' } }]
+    const p = { solver: 'Cg', preconditioner: { type: 'Ic' } }
+    expect(per.sameFinals(rows, { p, pFinal: structuredClone(p) })).toEqual({ pFinal: true })
+    expect(per.sameFinals(rows, { p, pFinal: { solver: 'Bicg' } })).toEqual({ pFinal: false })
+    expect(per.sameFinals(rows, { p })).toEqual({ pFinal: false })
+  })
+
+  test('summaries read as in a case file', () => {
+    const data = { solver: 'Cg', preconditioner: { type: 'Multigrid' }, tolerance: 1e-7, relTol: 0.01 }
+    expect(per.solverSummary(block, data)).toBe('Cg · Multigrid · tol 1e-07 · relTol 0.01')
+    expect(per.schemeWords({ type: 'Gauss', interpolation: { type: 'linear' } })).toBe('Gauss linear')
+  })
+})
+
+describe('field choices of a typed OpenFOAM block', () => {
+  const smoother = { type: 'string', examples: ['DIC', 'DILU'] }
+  const gamg = { title: 'GAMG', properties: { type: { const: 'GAMG' }, smoother } }
+  const dilu = { title: 'DILU', properties: { type: { const: 'DILU' } } }
+  const pcg = {
+    title: 'PCG',
+    properties: { solver: { const: 'PCG' }, preconditioner: { oneOf: [gamg, dilu] } },
+  }
+  const pbicg = { title: 'PBiCG', properties: { solver: { const: 'PBiCG' } } }
+  const other = {
+    title: 'Other',
+    properties: { solver: { const: 'Other' }, solverName: { type: 'string' } },
+  }
+  const block = {
+    nfDiscriminator: 'solver',
+    nfRefusedChoices: { solver: ['PBiCG'], preconditioner: ['DILU'], smoother: ['DILU'] },
+    oneOf: [pcg, pbicg, other],
+  }
+
+  test('refused solvers, preconditioners and smoothers are gone', () => {
+    const narrowed = per.withFieldChoices(block)
+    expect(narrowed.oneOf.map((arm) => arm.title)).toEqual(['PCG', 'Other'])
+    const arms = narrowed.oneOf[0].properties.preconditioner.oneOf
+    expect(arms.map((arm) => arm.title)).toEqual(['GAMG'])
+    expect(arms[0].properties.smoother.examples).toEqual(['DIC'])
+  })
+
+  test('a field default names the preconditioner of a new block', () => {
+    const narrowed = per.withFieldChoices({
+      nfDiscriminator: 'solver',
+      nfDefaultChoices: { preconditioner: 'DILU' },
+      oneOf: [pcg],
+    })
+    expect(narrowed.oneOf[0].properties.preconditioner.default).toEqual({ type: 'DILU' })
+  })
+
+  test('a block without field keywords is the same object', () => {
+    const plain = { nfDiscriminator: 'solver', oneOf: [pcg] }
+    expect(per.withFieldChoices(plain)).toBe(plain)
+  })
+
+  test('undeclared keys stay reachable, at both levels', () => {
+    const data = {
+      solver: 'PCG',
+      custom: 1,
+      preconditioner: { type: 'GAMG', mine: 2 },
+    }
+    expect(per.openKeyGroups(block, data)).toEqual([
+      { title: 'Other keys', path: [], keys: ['custom'] },
+      { title: 'GAMG: other keys', path: ['preconditioner'], keys: ['mine'] },
+    ])
+  })
+
+  test('the kept block can always name its solver', () => {
+    expect(per.armFields(other, block.oneOf, { solver: 'Other' }, true)).toContain('solverName')
+    expect(per.solverSummary(block, { solver: 'Other', solverName: 'petsc' })).toBe('petsc')
+  })
+})
+
+test('a required companion reports only its own message', () => {
+  const errors = 'must match "then" schema\nis a required property'
+  expect(withoutRuleErrors(errors)).toBe('is a required property')
+  expect(withoutRuleErrors(undefined)).toBe('')
 })

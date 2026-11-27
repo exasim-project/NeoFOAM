@@ -46,13 +46,14 @@ import neon._neon as nn
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
+from neofoam.foam import fvSchemes, transportFvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
 from neofoam.io import BaseConfig
 
-from ..config import TurbulencePropertiesConfig, load_with_coefficients
+from ..config import TurbulencePropertiesConfig, WallDistConfig, load_with_coefficients
 from ..momentumTransport import Model, register_momentum_transport
 
 __all__ = ["kOmegaSST", "KOmegaSSTCoeffs"]
@@ -123,6 +124,15 @@ kOmegaSST.config(TurbulencePropertiesConfig)
 # the instance out of the ``RAS`` block, but declaring the class here is what
 # exports its schema through ``configurations(solver)`` / the MCP.
 kOmegaSST.config(KOmegaSSTCoeffs)
+KOmegaSSTFvSchemes = kOmegaSST.config(fvSchemes)
+KOmegaSSTFvSolution = kOmegaSST.config(transportFvSolution)
+
+
+class kOmegaSST_wallDist(WallDistConfig):  # noqa: N801
+    """The wall distance kOmegaSST reads."""
+
+
+kOmegaSST.config(kOmegaSST_wallDist)
 
 
 @kOmegaSST.load
@@ -184,7 +194,9 @@ def build(config: SimpleNamespace) -> list[InitStep]:
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
-        return ctx["models.komega_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
+        return ctx["models.komega_surf"].interpolate(
+            ctx["fields.nut"] + ctx["models.nu_vol"], name="nuEff"
+        )
 
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
@@ -308,6 +320,14 @@ def blend(
 
 
 @kOmegaSST.operation(name="kOmegaSSTCorrectOmega")
+@KOmegaSSTFvSchemes.add(
+    field="omega",
+    ddt="ddt(omega)",
+    div="div(phi,omega)",
+    grad="grad(omega)",
+    laplacian="laplacian(DomegaEff,omega)",
+)
+@KOmegaSSTFvSolution.add("omega", final_required=False)
 def correct_omega(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -330,7 +350,7 @@ def correct_omega(
     nn.rotate_old_times(omega)
     nu = nfb.read_transport_viscosity(neon_runtime)
     d_omega = komega_surf.interpolate(
-        _blend(komega_F1, coeffs.alphaOmega1, coeffs.alphaOmega2) * nut + nu
+        _blend(komega_F1, coeffs.alphaOmega1, coeffs.alphaOmega2) * nut + nu, name="DomegaEff"
     )
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(omega)
@@ -357,6 +377,10 @@ def correct_omega(
 
 
 @kOmegaSST.operation(name="kOmegaSSTCorrectK")
+@KOmegaSSTFvSchemes.add(
+    field="k", ddt="ddt(k)", div="div(phi,k)", grad="grad(k)", laplacian="laplacian(DkEff,k)"
+)
+@KOmegaSSTFvSolution.add("k", final_required=False)
 def correct_k(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -376,7 +400,9 @@ def correct_k(
     """k transport: ddt + div - laplacian == Pk - SuSp - Sp(betaStar*omega, k) (new omega)."""
     nn.rotate_old_times(k)
     nu = nfb.read_transport_viscosity(neon_runtime)
-    d_k = komega_surf.interpolate(_blend(komega_F1, coeffs.alphaK1, coeffs.alphaK2) * nut + nu)
+    d_k = komega_surf.interpolate(
+        _blend(komega_F1, coeffs.alphaK1, coeffs.alphaK2) * nut + nu, name="DkEff"
+    )
     eps_by_k = coeffs.betaStar * omega  # epsilonByk, uses the updated omega
     # Pk = min(G, c1*betaStar*k*omega) — kOmegaSSTBase::Pk(G), evaluated here (after
     # the omega solve) so the near-wall log-law G is capped against the *pinned*
@@ -426,7 +452,7 @@ def correct_nut(
     nut.assign(_correct_nut(coeffs, k, omega, _f2(coeffs, k, omega, y, nu), s2))
     # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
     nfb.correct_scalar_bc_ctx(nut, k, nu_vol, komega_nearWallDist)
-    return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol)})
+    return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol, name="nuEff")})
 
 
 @kOmegaSST.operation(name="kOmegaSSTCorrect", fallback=True)

@@ -54,7 +54,7 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam import advanced, fvSchemes, neonFvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
 from neofoam.framework.model import BoundExtension
@@ -75,10 +75,15 @@ simpleNeoN = Model("SimpleNeoN")
 # Per-spec fvSchemes / fvSolution slices — schema-only (see pimpleAlgorithm:
 # at run time the NeoN runtime maps the on-disk dicts instead).
 SimpleNeoNFvSchemes = simpleNeoN.config(fvSchemes)
-SimpleNeoNFvSolution = simpleNeoN.config(fvSolution)
+SimpleNeoNFvSolution = simpleNeoN.config(neonFvSolution)
 
 # Optional SIMPLE control keys read by ``set_ref_cell``.
-SimpleNeoNFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
+SimpleNeoNFvSolution.add_controls(
+    "SIMPLE",
+    nNonOrthogonalCorrectors=advanced(int),
+    pRefCell=advanced(int),
+    pRefValue=advanced(float),
+)
 
 # 0/<name> field declarations (same arm sets as the PIMPLE spec; the actual
 # NeoN reads are emitted by ``@simpleNeoN.build`` below).
@@ -244,7 +249,8 @@ def rotate_and_report(
 
 @simpleNeoN.operation(operation_number="2.1")
 @SimpleNeoNFvSchemes.add(
-    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    field="U",
+    div=["div(phi,U)", advanced("div((nuEff*dev2(T(grad(U)))))")],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
 )
@@ -302,10 +308,11 @@ def momentum(
 
 @simpleNeoN.operation(operation_number="2.2", depends_on=["momentum"])
 @SimpleNeoNFvSchemes.add(
+    field="p",
     grad="grad(p)",
     laplacian="laplacian(rAUf,p)",
-    interpolation=["flux(HbyA)", "interpolate(rAU)"],
-    snGrad="snGrad(p)",
+    interpolation=[advanced("flux(HbyA)"), advanced("interpolate(rAU)")],
+    snGrad=advanced("snGrad(p)"),
 )
 @SimpleNeoNFvSolution.add("p", final_required=False)
 def continuity(

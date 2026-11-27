@@ -26,6 +26,7 @@ __all__ = [
     "RASProperties",
     "LESProperties",
     "TurbulencePropertiesConfig",
+    "WallDistConfig",
     "model_coefficients",
     "load_with_coefficients",
 ]
@@ -54,6 +55,25 @@ class LESProperties(BaseModel):
     LESModel: str
     turbulence: bool = True
     delta: str = "cubeRootVol"
+
+
+@IOStrategy(OF("system/fvSchemes", subdict="wallDist"))
+class WallDistConfig(BaseConfig):
+    """The ``wallDist`` block of ``system/fvSchemes``, for a closure reading ``y``.
+
+    Use one subclass per closure: a config two models share is not hidden with either,
+    so a case without those models would get the block too. Other keys stay as read.
+
+    Example::
+
+        class kOmegaSST_wallDist(WallDistConfig): ...
+
+        kOmegaSST.config(kOmegaSST_wallDist)
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    method: str = "meshWave"
 
 
 @IOStrategy(OF("constant/turbulenceProperties"))

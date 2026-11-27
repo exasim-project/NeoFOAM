@@ -45,6 +45,68 @@
 .nf-compact-adder .v-input {
   flex: 0 1 20rem;
 }
+/* A section of named unions (nfUnions): key, select, select and numbers on one line. */
+.nf-union-row {
+  flex-wrap: nowrap;
+}
+.nf-union-row .nf-compact-key {
+  flex: 0 0 3.75rem;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+/* Fixed columns, so a block's fields line up with the blocks above and below it. */
+.nf-union-row .nf-compact-controls {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.45fr) repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+/* Vuetify sets the padding on .v-field itself; its default clips `1000` in a narrow cell. */
+.nf-union-row .v-field {
+  --v-field-padding-start: 6px;
+  --v-field-padding-end: 2px;
+  font-size: 0.875rem;
+}
+.nf-union-row .v-field__input {
+  font-size: 0.875rem;
+}
+.nf-union-row .v-field__clearable {
+  display: none;
+}
+.nf-union-row .v-field__append-inner {
+  padding-inline-start: 0;
+}
+.nf-union-row .v-select .v-select__selection {
+  margin-inline-end: 0;
+}
+.nf-union-row .nf-compact-controls .v-input {
+  width: auto;
+  min-width: 0;
+}
+.nf-union-row .nf-compact-controls > .v-card {
+  grid-column: 1 / -1;
+}
+.nf-union-row .nf-compact-controls > .v-btn {
+  grid-column: -2 / -1;
+  justify-self: end;
+}
+/* An integer's spinner buttons would take most of a one-line cell. */
+.nf-union-row .v-number-input__control {
+  display: none;
+}
+@media (max-width: 959.98px) {
+  .nf-union-row {
+    flex-wrap: wrap;
+  }
+  .nf-union-row .nf-compact-key {
+    flex-basis: 100%;
+  }
+  .nf-union-row .nf-compact-controls {
+    flex-basis: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 /* fvSolution solver cards: six columns at the wizard's width, fewer when narrow. */
 .nf-card-entry,
 .nf-cell {
@@ -85,4 +147,136 @@
   font-size: 0.875rem;
   line-height: 1.1;
   white-space: normal;
+}
+/* A per-field numerics form (fieldForm.mjs). */
+.nf-field-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nf-backend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f2f5fa;
+  color: #445064;
+  font-size: 0.8125rem;
+}
+.nf-backend b {
+  color: #1f2a3c;
+  font-weight: 500;
+}
+.nf-field {
+  border: 1px solid #e1e6ef;
+  border-radius: 6px;
+}
+.nf-field-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  text-align: left;
+}
+.nf-field-head:hover {
+  background: #f7f9fc;
+}
+.nf-field-head:focus-visible,
+.nf-all-toggle:focus-visible {
+  outline: 2px solid #1f5fbf;
+  outline-offset: 1px;
+}
+.nf-field-name {
+  flex: none;
+  min-width: 64px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.nf-field-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #566176;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nf-chevron {
+  flex: none;
+  transition: transform 0.12s;
+}
+.nf-chevron-open {
+  transform: rotate(180deg);
+}
+.nf-field-body {
+  padding: 4px 12px 14px;
+  border-top: 1px solid #edf0f5;
+}
+.nf-field-final {
+  margin-top: 12px;
+  border-top: 1px dashed #d8dee9;
+}
+.nf-final-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  color: #566176;
+  font-size: 0.8125rem;
+}
+.nf-final-head .v-input {
+  flex: none;
+}
+.nf-field-block .nf-union-row {
+  flex-wrap: wrap;
+  border-bottom: 0;
+}
+.nf-field-all {
+  flex: 1 1 100%;
+}
+.nf-all-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: #1f5fbf;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.nf-all {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #f7f9fc;
+}
+.nf-all-heading {
+  margin: 0 0 8px;
+  color: #445064;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.nf-all-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+.nf-option-key {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #566176;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

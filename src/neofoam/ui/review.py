@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-__all__ = ["FindingRow", "findings_to_rows", "save_error_rows"]
+__all__ = ["FindingRow", "findings_to_rows", "rejected_slice_rows", "save_error_rows"]
 
 # Finding level → Vuetify VAlert `type`.
 _LEVEL_COLOR = {"error": "error", "warning": "warning"}
@@ -39,6 +39,54 @@ def findings_to_rows(report: Any) -> list[FindingRow]:
         )
         for f in report.findings
     ]
+
+
+def _rejected_blocks(reason: str) -> list[str]:
+    """The ``section.entry`` blocks a load's rejection reason names, in order."""
+    if reason.startswith("regex keys "):
+        return reason.removeprefix("regex keys ").split(", ")
+    if reason.startswith("missing "):
+        locations = reason.removeprefix("missing ").split(", ")
+    else:
+        lines = reason.splitlines()
+        locations = [
+            line
+            for line, after in zip(lines[1:], lines[2:])
+            if not line.startswith(" ") and after.startswith("  ")
+        ]
+    return list(dict.fromkeys(".".join(loc.split(".")[:2]) for loc in locations))
+
+
+def _regex_row(file: str, named: str) -> FindingRow:
+    """The warning for a valid file whose regex keys the forms cannot write back."""
+    return FindingRow(
+        level="warning",
+        color="warning",
+        file=file,
+        message=f"Left unchanged: {named} use regex keys, so form edits here are not saved.",
+        fix=f"Edit {file} directly, or spell the keys out and use Load case again.",
+    )
+
+
+def rejected_slice_rows(refused: dict[str, list[dict[str, str]]]) -> list[FindingRow]:
+    """One row per file a save left alone: a warning for regex keys, else an error."""
+    rows = []
+    for file, slices in refused.items():
+        blocks = list(dict.fromkeys(b for s in slices for b in _rejected_blocks(s["reason"])))
+        named = ", ".join(blocks) if blocks else ", ".join(s["config"] for s in slices)
+        if all(s.get("cause") == "regex" for s in slices):
+            rows.append(_regex_row(file, named))
+            continue
+        rows.append(
+            FindingRow(
+                level="error",
+                color="error",
+                file=file,
+                message=f"Not saved: {named} could not be loaded, so this file was left unchanged.",
+                fix=f"Correct {named} in {file}, then use Load case again.",
+            )
+        )
+    return rows
 
 
 def _config_label(loc: tuple[Any, ...]) -> tuple[str, str]:

@@ -27,8 +27,12 @@ bunx vite build                 # writes static/neofoam_jsonforms.{umd.js,css}
   - `NfCompactSection` — a keyed section as `rows` (fvSchemes, patches), `cards`
     (`solvers`, MRFProperties, fvOptions) or `cells` (a solver block, a sub-dictionary),
     each with its own "add" row;
-  - `NfInlineOneOf` — a discriminated union as one select, its arm's fields inline;
+  - `NfInlineOneOf` — a discriminated union as one select, its arm's fields inline; a
+    union with an `nfDiscriminator` (a discriminator other than `type`) titles the select after it and keeps
+    the values both arms declare on a switch;
   - `NfGridLayout` — an all-scalar object as a wrapping grid of the stock controls.
+- `fieldForm.mjs` — `NfFieldForm`, a numerics file (`nfFieldForm`) as one collapsible row
+  per field: main entries, "All entries", the `Final` block's "Same as" switch;
 - `sectionSchema.mjs` — the pure rules those renderers decide by (layout per keyword,
   entry schemas, pinned keys, stale companion keys, number parsing). It imports no UI
   library; `sectionSchema.test.mjs` tests it with `bun test`.

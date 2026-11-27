@@ -48,7 +48,7 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam import advanced, fvSchemes, neonFvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
 from neofoam.framework.model import BoundExtension
@@ -71,11 +71,18 @@ pimpleNeoN = Model("PimpleNeoN")
 # at run time the NeoN runtime maps the on-disk dicts via ``map_fv_schemes`` /
 # ``map_fv_solution`` instead of loading these classes).
 PimpleNeoNFvSchemes = pimpleNeoN.config(fvSchemes)
-PimpleNeoNFvSolution = pimpleNeoN.config(fvSolution)
+PimpleNeoNFvSolution = pimpleNeoN.config(neonFvSolution)
 
 # Optional PIMPLE control keys read by ``set_ref_cell``: a closed domain (no
 # fixed-pressure BC) needs a pressure reference; an open domain doesn't.
-PimpleNeoNFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+PimpleNeoNFvSolution.add_controls(
+    "PIMPLE",
+    nOuterCorrectors=int,
+    nCorrectors=int,
+    nNonOrthogonalCorrectors=advanced(int),
+    pRefCell=advanced(int),
+    pRefValue=advanced(float),
+)
 
 # 0/<name> field declarations PIMPLE owns — schema-only here: the framework's
 # read-field synthesis is pybFoam-backed, so the actual NeoN reads are emitted
@@ -275,16 +282,17 @@ def rotate_and_report(
 
 @pimpleNeoN.operation(operation_number="2.1")
 @PimpleNeoNFvSchemes.add(
+    field="U",
     ddt="ddt(U)",
     # ``div(phi,U)`` (convection) + the viscous-stress divergence emitted by
     # ``divDevReff(U)`` — both required for the momentum predictor.
-    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    div=["div(phi,U)", advanced("div((nuEff*dev2(T(grad(U)))))")],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
     # ``flux(U)`` builds the initial face flux phi (``nfb.create_phi``); the NeoN
     # runtime looks it up in interpolationSchemes, so it must be declared or the
     # case aborts with *Entry 'flux(U)' not found*.
-    interpolation="flux(U)",
+    interpolation=advanced("flux(U)"),
 )
 @PimpleNeoNFvSolution.add("U")
 def momentum(
@@ -348,10 +356,15 @@ def momentum(
 
 @pimpleNeoN.operation(operation_number="2.2", depends_on=["momentum"])
 @PimpleNeoNFvSchemes.add(
+    field="p",
     grad="grad(p)",
     laplacian="laplacian(rAUf,p)",
-    interpolation=["flux(HbyA)", "interpolate(rAU)", "dotInterpolate(S,U_0)"],
-    snGrad="snGrad(p)",
+    interpolation=[
+        advanced("flux(HbyA)"),
+        advanced("interpolate(rAU)"),
+        advanced("dotInterpolate(S,U_0)"),
+    ],
+    snGrad=advanced("snGrad(p)"),
 )
 @PimpleNeoNFvSolution.add("p")
 def continuity(

@@ -31,13 +31,21 @@ from neofoam.io import write_configs
 from neofoam.ui._markdown import _chat_html
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open
-from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
+from neofoam.ui.case_load import (
+    apply_configs_to_forms,
+    conversion_notes,
+    read_case_configs,
+    rejected_slices,
+    remember_rejected_slices,
+    undeclared_entries_note,
+)
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.geometry_agent import (
     apply_assignments,
     build_geometry_agent,
     geometry_prompt,
 )
+from neofoam.ui.review import rejected_slice_rows
 from neofoam.ui.steps import build_model_families
 
 __all__ = ["AgentPanel", "build_agent_panel", "SUGGESTED_PROMPTS"]
@@ -82,6 +90,14 @@ def _invalid_note(warnings: list[dict[str, str]]) -> str:
     return f"Present but invalid: {files}."
 
 
+def _regex_note(warnings: list[dict[str, str]]) -> list[str]:
+    """One line for files whose regex keys the forms show as defaults and do not write."""
+    files = sorted({w["file"] for w in warnings if w.get("cause") == "regex"})
+    if not files:
+        return []
+    return [f"{', '.join(files)} uses regex keys: its forms show defaults and Save keeps the file."]
+
+
 def _unread_fields_note(case_dir: Path) -> list[str]:
     """One line for a case with its fields in ``0.orig/`` only: they are read from ``0/``."""
     if (case_dir / "0").is_dir() or not (case_dir / "0.orig").is_dir():
@@ -95,13 +111,25 @@ def _drop_stale_companions(configs: list[Any]) -> None:
     The form does this for an edit of ``solver`` alone; a fill that changes more keys
     at once looks like a loaded case there, which is shown as it is.
     """
-    blocks = [block for config in configs for _, block in getattr(config, "solvers", None) or ()]
+    blocks: list[Any] = [
+        block for config in configs for _, block in getattr(config, "solvers", None) or ()
+    ]
     for block in filter(None, blocks):
-        keep = SOLVER_COMPANION.get(block.get("solver"))
+        root = None if isinstance(block, dict) else block.root
+        name = block.get("solver") if root is None else getattr(root, "solver", None)
+        keep = SOLVER_COMPANION.get(str(name))
         # A solver the map does not know (``Ginkgo``) drops nothing, as in the form.
         stale = set(SOLVER_COMPANION.values()) - {keep} if keep else set()
+        # A typed block holds a key its solver does not declare among its extras.
+        keys = block if root is None else getattr(root, "model_extra", None) or {}
         for key in stale:
-            block.pop(key, None)
+            keys.pop(key, None)
+
+
+def _config_file(config: Any) -> str | None:
+    """The case file ``config`` is written to, if it is bound to one."""
+    io = getattr(type(config), "io_config", None)
+    return io.file if io else None
 
 
 class AgentPanel:
@@ -142,6 +170,7 @@ class AgentPanel:
         state.suggested_prompts = list(SUGGESTED_PROMPTS)
         # Owned by the geometry panel; defaulted here so the chat is usable standalone.
         state.setdefault("geometry_patches", [])
+        state.setdefault("rejected_slices", [])
         self._ctrl.register_chat_handler = self.register_chat_handler
         self._ctrl.send_message = self.send_message
         self._ctrl.load_target_case = self.load_target_case
@@ -179,10 +208,16 @@ class AgentPanel:
             configs = read_case_configs(path, self._solver, warnings)
         except Exception as exc:  # noqa: BLE001 - report to the model, don't kill the run
             return f"Could not read {path}: {exc}"
+        remember_rejected_slices(self._state, path, warnings)
         self._loaded["dir"] = str(path)
         self._loaded["configs"] = configs
-        invalid = [_invalid_note(warnings)] if warnings else []
-        self._loaded["invalid"] = invalid + _unread_fields_note(path)
+        # A "partial" slice matters only if its model is selected: Save reports that one.
+        rejected = [w for w in warnings if w.get("cause") not in ("regex", "partial")]
+        invalid = [_invalid_note(rejected)] if rejected else []
+        converted = [f"Converted: {note}." for note in conversion_notes(path, configs)]
+        self._loaded["invalid"] = (
+            converted + invalid + _regex_note(warnings) + _unread_fields_note(path)
+        )
 
         names = sorted(type(c).__name__ for c in configs)
         reply = f"Loaded {len(names)} configs from {path}: {', '.join(names)}."
@@ -211,7 +246,8 @@ class AgentPanel:
             models = apply_configs_to_forms(
                 state, self._entries, self._families, configs, Path(loaded_dir)
             )
-            reply = _summary(configs, models, loaded_dir, self._loaded["invalid"])
+            notes = undeclared_entries_note(state, self._entries, configs)
+            reply = _summary(configs, models, loaded_dir, [*self._loaded["invalid"], *notes])
         self._loaded.clear()
         self._say("assistant", reply)
         state.ai_panel = state.ai_panel_mobile = True
@@ -283,6 +319,8 @@ class AgentPanel:
                 Path(loaded_dir) if loaded_dir else None,
             )
             saved = self._autosave(configs)
+            if loaded_dir:
+                saved += undeclared_entries_note(self._state, self._entries, configs)
             self._say("assistant", _summary(configs, filled_models, self._loaded.get("dir"), saved))
         except Exception as exc:  # noqa: BLE001
             self._say("assistant", f"**Fill failed:** {exc}")
@@ -301,10 +339,13 @@ class AgentPanel:
             target = _resolve_target(raw, "target directory")
             # Not save_case(result.output): a loaded case lives in `configs`, not
             # in the agent's own output, and must be written out too.
-            written = write_configs(configs, target)
+            refused = rejected_slices(self._state, self._entries, target)
+            writable = [c for c in configs if _config_file(c) not in refused]
+            written = write_configs(writable, target)
         except Exception as exc:  # noqa: BLE001 - report, don't crash the chat
             return [f"_(auto-save skipped: {exc})_"]
-        return [f"**Wrote to** `{target}`:"] + [f"- {Path(f).name}" for f in written]
+        notes = [f"**{r.file}:** {r.message} {r.fix}" for r in rejected_slice_rows(refused)]
+        return [f"**Wrote to** `{target}`:"] + [f"- {Path(f).name}" for f in written] + notes
 
     async def _fill_geometry(self, prompt: str) -> None:
         """Assign patch roles / refinement from ``prompt`` when patches are loaded."""

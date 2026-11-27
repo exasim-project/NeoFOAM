@@ -5,8 +5,12 @@
 
 from __future__ import annotations
 
+import pybFoam as pyf
+import pytest
+
 from neofoam.agent.case_fill import build_case_output_model
 from neofoam.framework.solver.configurations import configurations
+from neofoam.io.strategies.openfoam_strategy import _to_python
 from neofoam.mcp import tools
 from neofoam.ui.case_spec import (
     configs_to_form_state,
@@ -116,3 +120,25 @@ def test_models_filled_by_returns_optional_owner(solver):
 
     filled = models_filled_by(entries, [boussinesq, transport])
     assert filled == {"boussinesq"}  # transport is owned by required Newtonian → not returned
+
+
+@pytest.mark.parametrize(
+    ("model", "wall_dist"),
+    [
+        ("kOmegaSST", {"method": "meshWave"}),
+        ("SpalartAllmaras", {"method": "meshWave"}),
+        ("kEpsilon", None),
+        ("realizableKE", None),
+        ("laminar", None),
+    ],
+)
+def test_new_case_has_wall_distance_only_for_models_reading_it(tmp_path, solver, model, wall_dist):
+    entries = build_forms(solver)
+    spec = state_to_case_spec(entries, _state_from_defaults(entries), {"Pimple", model})
+    names = {e.config_name for e in entries if e.title.startswith(("fvSchemes", "wallDist"))}
+    schemes = {name: data for name, data in spec.items() if name in names}
+
+    tools.save_case(solver, schemes, str(tmp_path))
+
+    written = _to_python(pyf.dictionary.read(str(tmp_path / "system/fvSchemes")))
+    assert written.get("wallDist") == wall_dist

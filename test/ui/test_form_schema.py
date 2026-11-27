@@ -5,13 +5,18 @@
 
 from __future__ import annotations
 
-import pytest
+from typing import Annotated, Literal, Union
 
+import pytest
+from pydantic import BaseModel, ConfigDict, Field
+
+from neofoam.foam import linear_solver_entry
 from neofoam.framework.solver.registry import (  # built-ins only: no installed plugin
     _discover_solver_names as builtin_solver_names,
 )
 from neofoam.mcp import tools
 from neofoam.mcp.registry import resolve_solver
+from neofoam.ui.form_schema import jsonforms_schema
 from neofoam.ui.forms import build_field_forms, build_forms, build_mesh_forms
 
 
@@ -280,12 +285,16 @@ def test_objects_of_scalars_only_render_as_a_grid(solver_name):
     assert {key: sites for key, sites in grids.items() if sites} == _SCALAR_GRIDS[solver_name]
 
 
+#: Solvers whose linear-solver blocks are typed unions, drawn by the generic union path.
+_TYPED_BLOCK_SOLVERS = {"incompressibleFluidNeoN"}
+
+
 def _solver_blocks():
-    """Every ``(id, block schema)`` under a ``solvers`` section, across all solvers."""
-    for name in builtin_solver_names():
+    """Every ``(id, block schema)`` of a ``solvers`` section of an open-dictionary solver."""
+    for name in sorted(set(builtin_solver_names()) - _TYPED_BLOCK_SOLVERS):
         for entry in build_forms(resolve_solver(name)):
             section = entry.schema.get("properties", {}).get("solvers")
-            if entry.cls_name.endswith("fvSolution") and section:
+            if entry.cls_name.endswith("fvSolution") and section and "nfUnions" not in section:
                 for field, block in section["properties"].items():
                     yield pytest.param(section, block, id=f"{name}-{entry.cls_name}-{field}")
 
@@ -307,11 +316,62 @@ def test_solver_blocks_pin_the_standard_controls(section, block):
     assert block["additionalProperties"] is True
 
 
-def test_solver_block_names_the_companion_key_of_every_suggested_solver(solver):
+@pytest.mark.parametrize("config", ["PimpleNeoN_fvSolution", "SimpleNeoN_fvSolution"])
+def test_neon_solver_blocks_are_flat_unions_on_solver(config):
+    entries = build_forms(resolve_solver("incompressibleFluidNeoN"))
+    section = next(e for e in entries if e.cls_name == config).schema["properties"]["solvers"]
+
+    assert "nfSolvers" not in section
+    assert section["nfUnions"] is True
+    for block in section["properties"].values():
+        assert "nfSolver" not in block
+        assert block["nfDiscriminator"] == "solver"
+        assert {"Cg", "Bicg", "Bicgstab", "Gmres", "Ir"} <= {arm["title"] for arm in block["oneOf"]}
+        assert not any("backend" in arm["properties"] for arm in block["oneOf"])
+
+
+def _open_pressure_block():
+    """The ``p_rgh`` block of VoF, whose ``fvSolution`` is still an open dictionary."""
+    entries = {e.key: e for e in build_forms(resolve_solver("incompressibleVoF"))}
+    solvers = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]
+    return solvers["properties"]["p_rgh"]
+
+
+@pytest.mark.parametrize("config", ["Pimple_fvSolution", "Simple_fvSolution"])
+def test_openfoam_solver_blocks_are_unions_with_the_standard_controls(config):
+    entries = build_forms(resolve_solver("incompressibleFluid"))
+    section = next(e for e in entries if e.cls_name == config).schema["properties"]["solvers"]
+
+    assert "nfSolvers" not in section
+    assert section["nfUnions"] is True
+    for block in section["properties"].values():
+        arms = {arm["title"]: arm for arm in block["oneOf"]}
+        assert block["nfDiscriminator"] == "solver"
+        assert {"PCG", "PBiCGStab", "smoothSolver", "GAMG", "Other"} <= set(arms)
+        assert all({"tolerance", "relTol"} <= set(arm["properties"]) for arm in arms.values())
+
+
+@pytest.mark.parametrize(
+    ("data", "plugin"),
+    [
+        # NeoN/Ginkgo names are not OpenFOAM's; a loaded case must not turn red.
+        (
+            {"solver": "Ginkgo", "type": "solver::Bicgstab", "tolerance": 1e-6, "relTol": 0},
+            "FoamOtherBlock",
+        ),
+        # OpenFOAM's GAMG-preconditioned PCG nests a dictionary under `preconditioner`.
+        ({"solver": "PCG", "preconditioner": {"preconditioner": "GAMG", "nVcycles": 2}}, "FoamPCG"),
+    ],
+)
+def test_openfoam_block_outside_the_typed_choices_still_loads(data, plugin):
+    entry = linear_solver_entry("openfoam", "pressure").model_validate(data)
+    assert type(entry.root).__name__ == plugin
+
+
+def test_solver_block_names_the_companion_key_of_every_suggested_solver():
     # A Krylov solver takes a preconditioner, a smoothing one a smoother: the block's
     # `nfSolver` map tells the renderer which of the two sits next to `solver`.
-    entries = {e.key: e for e in build_forms(solver)}
-    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
+    block = _open_pressure_block()
     assert block["nfSolver"]["PCG"] == "preconditioner"
     assert block["nfSolver"]["GAMG"] == block["nfSolver"]["smoothSolver"] == "smoother"
     assert set(block["nfSolver"]) == set(block["properties"]["solver"]["examples"])
@@ -326,11 +386,9 @@ def test_solver_block_names_the_companion_key_of_every_suggested_solver(solver):
         {"solver": "PCG", "preconditioner": {"preconditioner": "GAMG", "nVcycles": 2}},
     ],
 )
-def test_solver_choices_are_suggestions_not_a_closed_enum(data, solver):
+def test_solver_choices_are_suggestions_not_a_closed_enum(data):
     jsonschema = pytest.importorskip("jsonschema")
-    entries = {e.key: e for e in build_forms(solver)}
-    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
-    jsonschema.Draft202012Validator(block).validate(data)
+    jsonschema.Draft202012Validator(_open_pressure_block()).validate(data)
 
 
 @pytest.mark.parametrize(
@@ -559,3 +617,70 @@ def test_transport_properties_form_requires_nu_for_a_newtonian_fluid(solver):
     entry = next(e for e in build_forms(solver) if e.config_name == "transport_properties_config")
     assert entry.schema["if"] == {"properties": {"transportModel": {"const": "Newtonian"}}}
     assert entry.schema["then"] == {"required": ["nu"]}
+
+
+class _FlatCg(BaseModel):
+    solver: Literal["Cg"] = "Cg"
+    preconditioner: Literal["none", "Jacobi", "Ic"] = "Jacobi"
+    tolerance: float = 1e-6
+
+
+class _FlatGmres(BaseModel):
+    solver: Literal["Gmres"] = "Gmres"
+    preconditioner: Literal["none", "Jacobi"] = "Jacobi"
+    tolerance: float = 1e-6
+
+
+_FlatBlock = Annotated[Union[_FlatCg, _FlatGmres], Field(discriminator="solver")]
+
+
+class _FlatSolvers(BaseModel):
+    model_config = ConfigDict(extra="allow", title="_solvers")
+    p: _FlatBlock = _FlatCg()
+    U: _FlatBlock = _FlatGmres()
+
+
+class _FlatConfig(BaseModel):
+    solvers: _FlatSolvers = _FlatSolvers()
+
+
+def _flat_block() -> dict:
+    return jsonforms_schema(_FlatConfig.model_json_schema())["properties"]["solvers"]["properties"][
+        "p"
+    ]
+
+
+def test_union_on_solver_titles_each_arm_by_its_plugin_name():
+    assert [arm["title"] for arm in _flat_block()["oneOf"]] == ["Cg", "Gmres"]
+
+
+def test_union_on_solver_hides_its_discriminator_in_each_arm():
+    arm = _flat_block()["oneOf"][1]
+
+    assert arm["properties"]["solver"] == {"const": "Gmres", "default": "Gmres"}
+
+
+def test_union_on_solver_names_its_discriminator_for_the_renderer():
+    assert _flat_block()["nfDiscriminator"] == "solver"
+
+
+def test_section_of_unions_on_solver_is_one_compact_row_per_block():
+    section = jsonforms_schema(_FlatConfig.model_json_schema())["properties"]["solvers"]
+
+    assert (section["nfUnions"], section["i18n"]) == (True, "nf.solver")
+    assert "nfSolvers" not in section
+
+
+def test_union_on_type_names_no_discriminator():
+    class _One(BaseModel):
+        type: Literal["one"] = "one"
+
+    class _Two(BaseModel):
+        type: Literal["two"] = "two"
+
+    class _Holder(BaseModel):
+        entry: Annotated[Union[_One, _Two], Field(discriminator="type")] = _One()
+
+    entry = jsonforms_schema(_Holder.model_json_schema())["properties"]["entry"]
+
+    assert "nfDiscriminator" not in entry

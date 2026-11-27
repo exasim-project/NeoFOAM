@@ -1107,3 +1107,30 @@ def test_palette_stacks_above_the_canvas_on_a_phone():
     # Side by side, the 300 px palette leaves a 400 px phone no canvas at all.
     phone = _CSS.split("@media (max-width: 959.98px)")[1]
     assert ".nf-sweep-stage { flex-direction: column; }" in phone
+
+
+def test_export_refuses_a_dimension_whose_file_was_rejected_on_load(request, tmp_path):
+    case = shutil.copytree(
+        Path(__file__).resolve().parent / "cases" / "neon_rejected_block", tmp_path / "case"
+    )
+    wizard = build_app(
+        solver_name="incompressibleFluidNeoN",
+        server=get_server(f"neon_{request.node.name}"),
+        plugins=[],
+    )
+    wizard.state.target_dir = str(case)
+    wizard.controller.load_target_case()
+    wizard.state.scaffolded = ["Allrun"]
+    slice_entry = next(
+        e for e in wizard.controller.get_entries() if e.cls_name == "PimpleNeoN_fvSolution"
+    )
+    wizard.controller.sweep_add_dimension(slice_entry.config_name)
+    dims = wizard.state.sweep_dims_on_canvas
+    wizard.state.sweep_valid = True
+    wizard.state.sweep_out_dir = str(tmp_path / "sweep")
+
+    wizard.controller.sweep_export()
+
+    assert dims
+    assert "system/fvSolution could not be loaded" in wizard.state.sweep_error
+    assert not (tmp_path / "sweep").exists()
