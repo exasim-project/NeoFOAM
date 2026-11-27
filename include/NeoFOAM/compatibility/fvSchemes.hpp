@@ -99,13 +99,13 @@ NeoN::Dictionary expandSchemeDefaults(
     {
         if (op.getName() == "ViscousStressOperator")
         {
-            // the key depends on the solver: incompressible or rho*nuEff, see viscousStressSchemeKey
+            // the key depends on the solver: incompressible or rho*nuEff, see
+            // viscousStressSchemeKey
             auto config = op.getConfig();
             fillDefault(
                 "divSchemes",
-                config.contains("schemeKey")
-                    ? config.template get<std::string>("schemeKey")
-                    : std::string("div((nuEff*dev2(T(grad(U)))))")
+                config.contains("schemeKey") ? config.template get<std::string>("schemeKey")
+                                             : std::string("div((nuEff*dev2(T(grad(U)))))")
             );
             continue;
         }

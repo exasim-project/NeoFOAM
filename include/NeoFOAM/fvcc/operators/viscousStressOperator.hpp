@@ -117,7 +117,9 @@ public:
         , nut_(nut)
         , gradUTensor_(&gradU)
         , schemeKey_(std::move(schemeKey))
-        , viscousOp_(ViscousStressOperatorFactory::create(this->exec_, nut.mesh(), input, schemeKey_))
+        , viscousOp_(
+              ViscousStressOperatorFactory::create(this->exec_, nut.mesh(), input, schemeKey_)
+          )
     {}
 
     ViscousStressOperator(
@@ -296,7 +298,11 @@ inline SpatialOperator<Vec3> viscousStress(
 )
 {
     return SpatialOperator<Vec3>(fvcc::ViscousStressOperator(
-        dsl::Operator::Type::Explicit, nu, nut, gradU, fvcc::viscousStressSchemeKey(compressible)
+        dsl::Operator::Type::Explicit,
+        nu,
+        nut,
+        gradU,
+        fvcc::viscousStressSchemeKey(compressible)
     ));
 }
 

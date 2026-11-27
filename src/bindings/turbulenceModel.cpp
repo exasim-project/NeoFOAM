@@ -524,8 +524,7 @@ void registerTurbulenceModel(nb::module_& m)
         [](const fvcc::VolumeField<NeoN::scalar>& nu,
            const fvcc::VolumeField<NeoN::scalar>& nut,
            const fvcc::VolumeField<NeoN::Tensor>& gradU,
-           bool compressible)
-        { return nf::makeViscousStress(nu, nut, gradU, compressible); },
+           bool compressible) { return nf::makeViscousStress(nu, nut, gradU, compressible); },
         "nu"_a,
         "nut"_a,
         "grad_u"_a,
