@@ -96,8 +96,16 @@ class NeoRhoPimpleFoam:
         rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
         solvers = rt.fv_solution_dict.subDict("solvers")
         for name in (
-            "p", "U", "rho", "T", "he",
-            "pFinal", "UFinal", "rhoFinal", "TFinal", "heFinal",
+            "p",
+            "U",
+            "rho",
+            "T",
+            "he",
+            "pFinal",
+            "UFinal",
+            "rhoFinal",
+            "TFinal",
+            "heFinal",
         ):
             if solvers.contains(name):
                 solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
@@ -238,7 +246,9 @@ class NeoRhoPimpleFoam:
                 mu_face.name = "mu"
 
                 ueqn_expr = (
-                    nn.imp.ddt(rho, U) + nn.imp.div(phi, U) - nn.imp.laplacian(mu_face, U)
+                    nn.imp.ddt(rho, U)
+                    + nn.imp.div(phi, U)
+                    - nn.imp.laplacian(mu_face, U)
                     + nfb.viscous_stress(mu_vol, zero_nut, grad_u)
                 )
 
@@ -278,8 +288,11 @@ class NeoRhoPimpleFoam:
                 phiv.name = "phiv"
 
                 eeqn_expr = (
-                    nn.imp.ddt(rho, he) + nn.imp.div(phi, he) - nn.imp.laplacian(alphaEff, he)
-                    + nn.exp.ddt(rho, K) + nn.exp.div(phi, K)
+                    nn.imp.ddt(rho, he)
+                    + nn.imp.div(phi, he)
+                    - nn.imp.laplacian(alphaEff, he)
+                    + nn.exp.ddt(rho, K)
+                    + nn.exp.div(phi, K)
                     + nn.exp.div(phiv, p)
                 )
                 EEqn = nfb.PDESolverScalar(
@@ -336,7 +349,8 @@ class NeoRhoPimpleFoam:
 
                     while piso.correct_non_orthogonal():
                         pEqn = nfb.PDESolverScalar(
-                            nn.imp.ddt(psi, p) - nn.exp.source(p_ddt_psi)
+                            nn.imp.ddt(psi, p)
+                            - nn.exp.source(p_ddt_psi)
                             + nn.exp.div(phiHbyA)
                             - nn.imp.laplacian(rhorAUf, p),
                             p,

@@ -227,7 +227,10 @@ void registerFieldFactories(nb::module_& m)
             // zero on physical boundary faces, calculated on processor faces: the patches the
             // density-weighted ddt_flux_corr(out, ...) expects of its output
             return fvcc::SurfaceField<NeoN::scalar>(
-                rt.exec, name, rt.nfMesh, fvcc::createDensityWeightedFluxCorrBCs(rt.nfMesh)
+                rt.exec,
+                name,
+                rt.nfMesh,
+                fvcc::createDensityWeightedFluxCorrBCs(rt.nfMesh)
             );
         },
         "runtime"_a,
@@ -287,10 +290,11 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "register_computed_scalar_field",
-        [](nf::RunTime& rt, const fvcc::VolumeField<NeoN::scalar>& field, const std::string& name)
-            -> fvcc::VolumeField<NeoN::scalar>&
+        [](nf::RunTime& rt, const fvcc::VolumeField<NeoN::scalar>& field, const std::string& name
+        ) -> fvcc::VolumeField<NeoN::scalar>&
         {
-            fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
             return vc.registerVector<fvcc::VolumeField<NeoN::scalar>>(
                 fvcc::CreateFromExistingVector<fvcc::VolumeField<NeoN::scalar>> {
                     .name = name,
@@ -311,10 +315,11 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "register_computed_surface_field",
-        [](nf::RunTime& rt, const fvcc::SurfaceField<NeoN::scalar>& field, const std::string& name)
-            -> fvcc::SurfaceField<NeoN::scalar>&
+        [](nf::RunTime& rt, const fvcc::SurfaceField<NeoN::scalar>& field, const std::string& name
+        ) -> fvcc::SurfaceField<NeoN::scalar>&
         {
-            fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
             return vc.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
                 fvcc::CreateFromExistingVector<fvcc::SurfaceField<NeoN::scalar>> {
                     .name = name,
