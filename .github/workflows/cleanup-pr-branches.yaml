@@ -4,25 +4,24 @@ name: Clean up closed PRs
 # and the LRZ GitLab pipelines that the gpu job of ci.yaml triggered), then delete the copy of its
 # branch that the gpu job pushed to the LRZ GitLab mirror, so stale branches don't pile up there
 # and CI can't pick an outdated one (#226). Branches of this repository are deleted by GitHub on
-# merge (delete_branch_on_merge). Only PRs from this repository: fork PRs never reach LRZ (the
-# gpu job skips them), and their branch name may equal an unrelated branch here, whose runs and
-# LRZ copy must not be touched. Runs as pull_request_target for the LRZ token; it only checks out
-# the base branch (for the ci/github scripts) and uses the PR's branch name, never its code.
-# Mirrors NeoN's workflow of the same name.
+# merge (delete_branch_on_merge). A fork PR is only cleaned up if mirror-fork-pr mirrored it
+# (mirror-pr/<number> exists): otherwise it never reached LRZ, and its branch name may equal an
+# unrelated branch here, whose runs and LRZ copy must not be touched. For a mirrored fork PR the
+# mirror branches here are deleted too. Runs as pull_request_target for the LRZ token; it only
+# checks out the base branch (for the ci/github scripts) and uses the PR's branch name, never its
+# code. Mirrors NeoN's workflow of the same name.
 on:
   pull_request_target:
     types: [closed]
 
 permissions:
-  contents: read
+  contents: write
   actions: write
   pull-requests: read
 
 jobs:
   cleanup:
-    if: >-
-      github.repository == 'exasim-project/NeoFOAM' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    if: github.repository == 'exasim-project/NeoFOAM'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -32,6 +31,7 @@ jobs:
       REPO_NAME: ${{ github.event.repository.name }}
       BRANCH: ${{ github.event.pull_request.head.ref }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
+      IS_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
       LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
     steps:
       - name: Check branch name
@@ -39,9 +39,14 @@ jobs:
         run: |
           git check-ref-format --branch "$BRANCH" > /dev/null
           case "$BRANCH" in
-            develop|main|gh-pages)
+            develop|main|gh-pages|mirror-pr/*)
               echo "::notice::Keeping protected branch '$BRANCH'"; echo "delete=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
           esac
+          # A fork PR only reached LRZ, under its branch name, if it was mirrored
+          if [[ "$IS_FORK" == true ]] &&
+             ! gh api "repos/$GH_REPO/git/ref/heads/mirror-pr/$PR_NUMBER" > /dev/null 2>&1; then
+            echo "::notice::Fork PR #$PR_NUMBER was not mirrored, nothing to clean up"; echo "delete=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           # Another open PR from a branch of the same name still needs the LRZ copy
           others=$(gh pr list --state open --head "$BRANCH" --json number --jq "[.[] | select(.number != $PR_NUMBER)] | length")
           if [[ "$others" != 0 ]]; then
@@ -79,3 +84,10 @@ jobs:
           else
             echo "No branch '$BRANCH' on LRZ GitLab"
           fi
+
+      - name: Delete fork mirror branches
+        if: steps.check.outputs.delete == 'true' && env.IS_FORK == 'true'
+        run: |
+          gh api --method DELETE "repos/$GH_REPO/git/refs/heads/$BRANCH" || true
+          gh api --method DELETE "repos/$GH_REPO/git/refs/heads/mirror-pr/$PR_NUMBER"
+          echo "Deleted mirror branches '$BRANCH' and 'mirror-pr/$PR_NUMBER'"

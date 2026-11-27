@@ -111,6 +111,14 @@ per stack and job that queues (``queue: max``) instead of running in parallel. E
 still gets its own results, they just arrive later for the upper ones. ``STACK_SLOTS`` in the gate
 sets how many members of one stack may build at the same time.
 
+Pull requests from forks get no repository secrets, so their own CI run skips the LRZ GPU
+pipeline. After reviewing the changes, including any under ``.github/``, a maintainer adds the
+``ready-for-review`` label: ``.github/workflows/mirror-fork-pr.yaml`` then pushes the PR's head
+commit to a branch of the same name (plus ``mirror-pr/<number>``) in this repository and dispatches
+``ci.yaml`` on it with ``lrz_only``, which runs only the GPU job. Its result shows up in the PR's
+checks. The dispatched run uses the workflow files of the PR, which is why the review comes first.
+New commits need a fresh approval: remove and re-add the label.
+
 When a pull request is closed, merged or not, ``.github/workflows/cleanup-pr-branches.yaml`` cancels
 its running GitHub Actions runs and LRZ GitLab pipelines and deletes the copy of its branch that the
 GPU job pushed to the LRZ GitLab mirror. GitHub deletes the branch itself on merge.

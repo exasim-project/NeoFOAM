@@ -1,0 +1,72 @@
+name: Mirror fork PR
+
+# Fork PRs can't use the LRZ secrets, so their own CI run skips the GPU jobs.
+# When a maintainer sets ready-for-review, push the fork's PR head to a branch of
+# the same name here and start the LRZ pipeline on it (ci.yaml with lrz_only; the
+# fork PR's own run already lints and builds the same commit). Its results show
+# up in the PR's checks. This only runs on `labeled`, so new fork commits need a
+# fresh approval: re-apply the label. Approving also means reviewing the PR's
+# changes to .github/: the dispatched run uses the workflow files of the PR.
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: write
+
+jobs:
+  mirror:
+    if: >
+      github.repository == 'exasim-project/NeoFOAM' &&
+      github.event.label.name == 'ready-for-review' &&
+      github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      # Never check out or run the fork's code here, only move git objects.
+      - uses: actions/checkout@v4
+
+      - name: Validate branch name
+        run: |
+          git check-ref-format --branch "$BRANCH" > /dev/null
+          case "$BRANCH" in
+            develop|main|gh-pages|mirror-pr/*)
+              echo "::error::Refusing to use branch name '$BRANCH'"; exit 1 ;;
+          esac
+          # Only overwrite an existing branch if this workflow created it for this PR
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null &&
+             ! git ls-remote --exit-code --heads origin "mirror-pr/$PR_NUMBER" > /dev/null; then
+            echo "::error::Branch '$BRANCH' already exists and is not a mirror of #$PR_NUMBER"; exit 1
+          fi
+
+      - name: Push PR head
+        run: |
+          git fetch origin "refs/pull/$PR_NUMBER/head"
+          test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
+          # workflow_dispatch runs the workflow file of the dispatched branch
+          if ! git cat-file -e "$HEAD_SHA:.github/workflows/ci.yaml"; then
+            gh pr comment "$PR_NUMBER" --body "Can't start the LRZ pipeline: this branch has no \`.github/workflows/ci.yaml\` yet. Please rebase onto \`develop\`, then a maintainer can re-apply \`ready-for-review\`."
+            echo "::error::$HEAD_SHA has no .github/workflows/ci.yaml"; exit 1
+          fi
+          git push --force origin "$HEAD_SHA:refs/heads/$BRANCH" "$HEAD_SHA:refs/heads/mirror-pr/$PR_NUMBER"
+
+      # Pushes made with GITHUB_TOKEN don't trigger workflows, but workflow_dispatch does
+      - name: Trigger LRZ pipeline
+        id: trigger
+        run: |
+          RUN_URL=$(gh api --method POST \
+            "repos/${{ github.repository }}/actions/workflows/ci.yaml/dispatches" \
+            -f ref="$BRANCH" -f "inputs[lrz_only]=true" -F return_run_details=true --jq .html_url)
+          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comment
+        env:
+          RUN_URL: ${{ steps.trigger.outputs.run_url }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "Mirrored \`${HEAD_SHA::7}\` to \`$BRANCH\` and triggered the [LRZ pipeline]($RUN_URL). Re-apply \`ready-for-review\` to sync new commits."

@@ -9,6 +9,12 @@ on:
   schedule:
     - cron: "00 8 * * 0" # weekly full run, Sundays 10 AM CEST (08:00 UTC)
   workflow_dispatch:
+    inputs:
+      lrz_only:
+        # Set by mirror-fork-pr: the fork PR's own run already lints and builds the same commit
+        description: "Only run the LRZ GPU pipeline"
+        type: boolean
+        default: false
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
@@ -59,6 +65,7 @@ jobs:
           LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           LABEL_EVENT: ${{ github.event.action == 'labeled' || github.event.action == 'unlabeled' }}
           LABEL: ${{ github.event.label.name }}
+          LRZ_ONLY: ${{ inputs.lrz_only == true }}
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           # Files a PR may change and still skip the builds (#126). examples/ is not included: the
@@ -98,6 +105,9 @@ jobs:
               build=false
             fi
           fi
+
+          # A mirrored fork PR (mirror-fork-pr) only needs the LRZ GPU pipeline
+          if [[ "$LRZ_ONLY" == true ]]; then lint=false; changelog=false; build=false; docs_only=false; fi
 
           # Python 3.11/3.13 run wherever the builds do, PRs included
           python_all=$build
@@ -700,11 +710,16 @@ jobs:
         run: pytest
 
   # ---------------------------------------------------------------- GPU (LRZ GitLab)
-  # Fork PRs get no secrets, so they cannot trigger the LRZ pipeline.
+  # Fork PRs get no secrets, so they cannot trigger the LRZ pipeline themselves; a maintainer
+  # mirrors them with the ready-for-review label (mirror-fork-pr.yaml).
   gpu:
     name: Build and test NeoFOAM on GPU
     needs: [gate, linux]
-    if: ${{ !github.event.pull_request.head.repo.fork }}
+    # Fork PRs get no secrets, so their own run skips this; mirror-fork-pr runs it with lrz_only
+    if: >-
+      ${{ !cancelled() && needs.gate.result == 'success' &&
+          (needs.linux.result == 'success' || inputs.lrz_only) &&
+          !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ needs.gate.outputs.stack }}-gpu
