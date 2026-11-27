@@ -129,10 +129,10 @@ class BlockMeshDictConfig(BaseConfig):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     scale: float = 1.0
-    vertices: Union[list[Vec3], str] = Field(default_factory=list)
-    blocks: Union[list[Block], str] = Field(default_factory=list)
+    vertices: Union[list[Vec3], str] = Field(default_factory=lambda: [])
+    blocks: Union[list[Block], str] = Field(default_factory=lambda: [])
     edges: str = "( )"
-    boundary: Union[list[BlockPatch], str] = Field(default_factory=list)
+    boundary: Union[list[BlockPatch], str] = Field(default_factory=lambda: [])
     merge_patch_pairs: str = Field(default="( )", alias="mergePatchPairs")
 
     @model_validator(mode="before")

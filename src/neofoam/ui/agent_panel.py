@@ -96,7 +96,7 @@ def _drop_stale_companions(configs: list[Any]) -> None:
     at once looks like a loaded case there, which is shown as it is.
     """
     blocks = [block for config in configs for _, block in getattr(config, "solvers", None) or ()]
-    for block in filter(None, blocks):
+    for block in (block for block in blocks if block):
         keep = SOLVER_COMPANION.get(block.get("solver"))
         # A solver the map does not know (``Ginkgo``) drops nothing, as in the form.
         stale = set(SOLVER_COMPANION.values()) - {keep} if keep else set()
