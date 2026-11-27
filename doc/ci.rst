@@ -54,7 +54,8 @@ builds fall back to building NeoN and warn.
 
 That NeoN is a Release build of ``develop`` from the last night. To test against the current
 ``develop`` with the ``develop`` preset's Kokkos debug and bounds checks, set the
-``neon_from_source`` label: every build of the PR then builds NeoN from source. A NeoN branch with
+``neon_from_source`` label: every build of the PR then builds NeoN from source (the Python jobs
+build it too, but always with a release preset). A NeoN branch with
 the same name as the PR's branch is always built from source.
 
 ``build_doc.yaml`` deploys the documentation of merged PRs and release tags, and
