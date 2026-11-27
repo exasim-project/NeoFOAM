@@ -29,7 +29,18 @@ optional features you need: ``dev``, ``docs``, ``agent``, ``mcp``,
 The editable install uses scikit-build's ``redirect`` mode: edits to
 ``src/neofoam/*.py`` take effect on the next Python start without
 reinstalling. Automatic rebuilds are off (``editable.rebuild = false``), so
-C++/binding changes still need a re-run of ``pip install -e ".[all]" -v``.
+C++/binding changes still need a rebuild. After the first install, rebuild with
+
+.. code-block:: bash
+
+    poe build   # pip install --no-build-isolation -e .[all] -v
+
+Without build isolation pip reuses the build dependencies from the venv (the
+``dev`` extra installs ``scikit-build-core`` and ``nanobind``), so the
+``_skbuild`` build directory stays valid and Ninja recompiles only the C++
+files that changed. With isolation, every install builds in a fresh temporary
+environment whose changed nanobind path makes CMake reconfigure and recompile
+the bindings.
 
 Run the tests
 -------------
