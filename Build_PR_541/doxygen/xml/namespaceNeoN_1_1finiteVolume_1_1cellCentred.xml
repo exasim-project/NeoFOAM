@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="namespaceNeoN_1_1finiteVolume_1_1cellCentred" kind="namespace" language="C++">
+    <compoundname>NeoN::finiteVolume::cellCentred</compoundname>
+    <innerclass refid="classNeoN_1_1finiteVolume_1_1cellCentred_1_1GaussViscousStress" prot="public">NeoN::finiteVolume::cellCentred::GaussViscousStress</innerclass>
+    <innerclass refid="classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator" prot="public">NeoN::finiteVolume::cellCentred::ViscousStressOperator</innerclass>
+    <innerclass refid="classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperatorFactory" prot="public">NeoN::finiteVolume::cellCentred::ViscousStressOperatorFactory</innerclass>
+    <innernamespace refid="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary">NeoN::finiteVolume::cellCentred::volumeBoundary</innernamespace>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1af0dbb30788fc3b74e4a630b0df105acb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>VolumeField&lt; Tensor &gt;</type>
+        <definition>VolumeField&lt; Tensor &gt; NeoN::finiteVolume::cellCentred::computeDevStress</definition>
+        <argsstring>(const VolumeField&lt; scalar &gt; &amp;nu, const VolumeField&lt; scalar &gt; &amp;nut, const VolumeField&lt; Tensor &gt; &amp;gradU)</argsstring>
+        <name>computeDevStress</name>
+        <qualifiedname>NeoN::finiteVolume::cellCentred::computeDevStress</qualifiedname>
+        <param>
+          <type>const VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>nu</declname>
+        </param>
+        <param>
+          <type>const VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>nut</declname>
+        </param>
+        <param>
+          <type>const VolumeField&lt; Tensor &gt; &amp;</type>
+          <declname>gradU</declname>
+        </param>
+        <briefdescription>
+<para>Compute the deviatoric stress field for the momentum equation: tau_ij = (nu + nut) * (dev2(gradU^T))_ij = (nu + nut) * (gradU_{ji} - (2/3)*tr(gradU)*delta_ij) </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Matches OpenFOAM&apos;s: nuEff * dev2(T(gradU)) Returns VolumeField&lt;Tensor&gt; (non-symmetric in general). Used by divDevReff for the momentum viscous term. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/operators/devStress.hpp" line="21" column="13" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/operators/devStress.hpp" declline="21" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1aac397c2e2aaea7b2e6cb89130315c39f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoN::finiteVolume::cellCentred::divDevReff</definition>
+        <argsstring>(const SurfaceInterpolation&lt; Tensor &gt; &amp;surfInterp, const VolumeField&lt; Tensor &gt; &amp;tau, Vector&lt; Vec3 &gt; &amp;rhs, dsl::Coeff operatorScaling)</argsstring>
+        <name>divDevReff</name>
+        <qualifiedname>NeoN::finiteVolume::cellCentred::divDevReff</qualifiedname>
+        <param>
+          <type>const SurfaceInterpolation&lt; Tensor &gt; &amp;</type>
+          <declname>surfInterp</declname>
+        </param>
+        <param>
+          <type>const VolumeField&lt; Tensor &gt; &amp;</type>
+          <declname>tau</declname>
+        </param>
+        <param>
+          <type>Vector&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <param>
+          <type>dsl::Coeff</type>
+          <declname>operatorScaling</declname>
+        </param>
+        <briefdescription>
+<para>Gauss divergence of the deviatoric stress field → momentum RHS. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Interpolates tau to faces, accumulates -tau_f &amp; S_f into rhs (normalised by cell volume). Uses SurfaceInterpolation&lt;Tensor&gt;. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/operators/devStress.hpp" line="33" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/operators/devStress.hpp" declline="33" declcolumn="6"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp" line="14" column="1"/>
+  </compounddef>
+</doxygen>
