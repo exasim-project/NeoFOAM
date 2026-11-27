@@ -223,6 +223,9 @@ class NeoRhoPimpleFoam:
         phi_seed = rho_face * nfb.flux(U)
         phi_seed.name = "phi"
         phi = nfb.register_computed_surface_field(rt, phi_seed, "phi")
+        # The density-weighted ddtCorr is written into this field every PISO corrector, so the
+        # time loop allocates no field for it (see nfb.ddt_flux_corr(out, ...)).
+        ddt_corr = nfb.create_ddt_flux_corr_field(rt, "ddtCorr")
 
         # UEqn's `== fvOptions(rho, U)`; raises on option types not implemented for NeoN.
         fv_options = NeonFvOptions.from_case(rt, U)
@@ -412,9 +415,8 @@ class NeoRhoPimpleFoam:
                     rhorAUf = surf_interp.interpolate(rho * rAU)
                     rhorAUf.name = "rhorAUf"
                     # rhoPimpleFoam: interpolate(rho)*flux(HbyA) + rhorAUf*ddtCorr(rho, U, phi)
-                    phiHbyA = rho_face * nfb.flux(hByA) + rhorAUf * nfb.ddt_flux_corr(
-                        rho, U, phi, rt.dt, ddt_scheme
-                    )
+                    nfb.ddt_flux_corr(ddt_corr, rho, U, phi, rt.dt, ddt_scheme)
+                    phiHbyA = rho_face * nfb.flux(hByA) + rhorAUf * ddt_corr
 
                     # imp.ddt(psi, p) discretizes the full conservative d(psi*p)/dt
                     # (psi_new*p_new on the diagonal, psi_old*p_old on the rhs). That is
