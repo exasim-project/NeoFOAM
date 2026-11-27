@@ -156,6 +156,42 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "Compute ddt flux correction for PISO loop (BDF1/BDF2)"
     );
 
+    m.def(
+        "ddt_flux_corr",
+        [](const fvcc::VolumeField<NeoN::scalar>& rho,
+           const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phi,
+           double dt,
+           fvcc::DdtScheme scheme)
+        { return fvcc::ddtFluxCorr(rho, U, phi, static_cast<NeoN::scalar>(dt), scheme); },
+        "rho"_a,
+        "U"_a,
+        "phi"_a,
+        "dt"_a,
+        "scheme"_a,
+        "Density-weighted ddt flux correction for compressible PISO loop (BDF1/BDF2)"
+    );
+
+    m.def(
+        "ddt_flux_corr",
+        [](fvcc::SurfaceField<NeoN::scalar>& out,
+           const fvcc::VolumeField<NeoN::scalar>& rho,
+           const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phi,
+           double dt,
+           fvcc::DdtScheme scheme)
+        { fvcc::ddtFluxCorr(out, rho, U, phi, static_cast<NeoN::scalar>(dt), scheme); },
+        "out"_a,
+        "rho"_a,
+        "U"_a,
+        "phi"_a,
+        "dt"_a,
+        "scheme"_a,
+        "Density-weighted ddt flux correction written into `out` (create it once with "
+        "create_ddt_flux_corr_field and reuse it every step: unlike the overload that returns "
+        "a new field, this allocates nothing after the first call on a mesh)"
+    );
+
     // -------------------------------------------------------------------
     // Outer PIMPLE loop control (NeoFOAM-native, residual-driven).
     // residuals is a {field: (initResNorm, finalResNorm)} dict fed each pass.
@@ -191,6 +227,24 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "phi"_a,
         "runtime"_a,
         "Return (sum_local, global) time-step continuity errors from the face flux"
+    );
+
+    // -------------------------------------------------------------------
+    // Per-cell div(phi), for spatially localizing continuity imbalance
+    // (debugging helper, mirrors computeContinuityError's internal evaluation).
+    // -------------------------------------------------------------------
+    m.def(
+        "compute_div_phi",
+        [](const fvcc::SurfaceField<NeoN::scalar>& phi, const nf::RunTime& rt)
+        {
+            const auto nCells = static_cast<NeoN::localIdx>(rt.nfMesh.nCells());
+            NeoN::dsl::Expression<NeoN::scalar> divExpr(rt.exec);
+            divExpr.addOperator(NeoN::dsl::exp::div(phi));
+            return divExpr.explicitOperation(nCells);
+        },
+        "phi"_a,
+        "runtime"_a,
+        "Return the per-cell fvc::div(phi) field (debugging helper)"
     );
 }
 

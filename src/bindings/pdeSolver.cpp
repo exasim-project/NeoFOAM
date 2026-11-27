@@ -20,6 +20,9 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
 namespace dsl = NeoN::dsl;
 
+// PDE<Vec3>'s linear system (segregated vector-solve form: scalar matrix, Vec3 rhs).
+using Vec3PdeLinearSystem = NeoN::la::LinearSystem<NeoN::scalar, NeoN::Vec3>;
+
 namespace NeoFOAM::bindings
 {
 
@@ -83,7 +86,49 @@ void registerPDESolver(nb::module_& m)
             &nf::PDE<NeoN::scalar>::relax,
             "on"_a = true,
             "Request relaxationFactors.equations relaxation (fvMatrix::relax(); off by default)"
+        )
+        .def(
+            "linear_system",
+            // PDE::LinearSystem is a private nested alias; name the concrete type directly.
+            static_cast<NeoN::la::LinearSystem<NeoN::scalar>& (nf::PDE<NeoN::scalar>::*)()>(
+                &nf::PDE<NeoN::scalar>::linearSystem
+            ),
+            nb::rv_policy::reference_internal,
+            "Get the assembled linear system (matrix + rhs); call assemble() or solve() first"
         );
+
+    m.def(
+        "set_scalar_field_values",
+        [](fvcc::VolumeField<NeoN::scalar>& field, std::vector<NeoN::scalar> values)
+        {
+            // Debug-only (investigation_summary.md §4.35): overwrite a scalar field's
+            // internal values from a plain Python list -- used to write back an exact
+            // direct solve (scipy spsolve) result in place of the iterative solver's
+            // own output, to test whether the iterative solver itself is responsible
+            // for the NEORHO_ZERO_PDDT_PSI ablation's divergence.
+            field.internalVector() = NeoN::Vector<NeoN::scalar>(field.exec(), values);
+        },
+        "field"_a,
+        "values"_a,
+        "Debug: overwrite a scalar VolumeField's internal values from a plain Python list"
+    );
+
+    m.def(
+        "set_scalar_field_boundary_values",
+        [](fvcc::VolumeField<NeoN::scalar>& field, std::vector<NeoN::scalar> values)
+        {
+            // he/T boundary-mapping path (investigation_summary.md): write a live,
+            // per-iteration-recomputed boundary value into a scalar field -- mirrors
+            // literal OpenFOAM's fixedEnergy/gradientEnergy BCs, which recompute he's
+            // boundary value from T's current boundary value every call, not once at
+            // setup. Same pattern as set_scalar_field_values above, targeting the
+            // boundary storage instead of the internal one.
+            field.boundaryData().value() = NeoN::Vector<NeoN::scalar>(field.exec(), values);
+        },
+        "field"_a,
+        "values"_a,
+        "Overwrite a scalar VolumeField's boundary values from a plain Python list"
+    );
 
     m.def(
         "create_scalar_field_with_boundary_types",
@@ -192,6 +237,15 @@ void registerPDESolver(nb::module_& m)
             "ddt_scheme",
             &nf::PDE<NeoN::Vec3>::ddtScheme,
             "Get the ddt scheme determined from fvSchemes"
+        )
+        .def(
+            "linear_system",
+            // PDE::LinearSystem is a private nested alias; name the concrete type directly.
+            static_cast<Vec3PdeLinearSystem& (nf::PDE<NeoN::Vec3>::*)()>(
+                &nf::PDE<NeoN::Vec3>::linearSystem
+            ),
+            nb::rv_policy::reference_internal,
+            "Get the assembled linear system (matrix + rhs); call assemble() or solve() first"
         );
 }
 
