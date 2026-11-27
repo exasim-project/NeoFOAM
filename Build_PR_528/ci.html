@@ -705,7 +705,7 @@ the Python job. The Python job builds the package once and runs pytest with cove
 on PRs, the documentation preview.</p></li>
 <li><p>After the Python job: the Python tests on 3.11 and 3.13, on every PR and push that builds.</p></li>
 </ol>
-<p>The Linux builds (clang and gcc), macOS, IWYU and the Python job do not build NeoN themselves when they
+<p>The Linux builds (clang and gcc), IWYU and the Python job do not build NeoN themselves when they
 test against NeoN <code class="docutils literal notranslate"><span class="pre">develop</span></code>: they install the Open MPI flavour of the nightly <code class="docutils literal notranslate"><span class="pre">neon-pde</span></code> conda
 package from <a class="reference external" href="https://prefix.dev/channels/exasim-project/nightlies">exasim-project/nightlies</a> and
 configure NeoFOAM with <code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_USE_INSTALLED_NEON=ON</span></code>. The clang and IWYU builds install the clang-built
@@ -714,14 +714,12 @@ requires-clauses differently, so clang-compiled code cannot link a GCC-built Neo
 the IWYU build, whose compilation database it uses. The Python job runs on the package
 environment’s Python 3.12 (the Python version of the Open MPI build), which also provides the
 <code class="docutils literal notranslate"><span class="pre">neon</span></code> module; NeoFOAM’s bindings then take nanobind from the Python build environment, the same
-nanobind ABI the package’s <code class="docutils literal notranslate"><span class="pre">_neon</span></code> was built with. macOS installs the <code class="docutils literal notranslate"><span class="pre">osx-arm64</span></code> Open MPI
-flavour (<code class="docutils literal notranslate"><span class="pre">cpu_openmpi_py312_*</span></code>) together with exactly the Open MPI build that OpenFOAM for macOS
-bundles (read from its <code class="docutils literal notranslate"><span class="pre">conda-meta</span></code>), so NeoN and OpenFOAM’s <code class="docutils literal notranslate"><span class="pre">libPstream</span></code> share one Open MPI. If
-the package cannot be installed, these
+nanobind ABI the package’s <code class="docutils literal notranslate"><span class="pre">_neon</span></code> was built with. If the package cannot be installed, these
 builds fall back to building NeoN and warn.</p>
 <p>That NeoN is a Release build of <code class="docutils literal notranslate"><span class="pre">develop</span></code> from the last night. To test against the current
 <code class="docutils literal notranslate"><span class="pre">develop</span></code> with the <code class="docutils literal notranslate"><span class="pre">develop</span></code> preset’s Kokkos debug and bounds checks, set the
-<code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> label: every build of the PR then builds NeoN from source. A NeoN branch with
+<code class="docutils literal notranslate"><span class="pre">neon_from_source</span></code> label: every build of the PR then builds NeoN from source (the Python jobs
+build it too, but always with a release preset). A NeoN branch with
 the same name as the PR’s branch is always built from source.</p>
 <p><code class="docutils literal notranslate"><span class="pre">build_doc.yaml</span></code> deploys the documentation of merged PRs and release tags, and
 <code class="docutils literal notranslate"><span class="pre">gpu_benchmark.yaml</span></code> runs the GPU benchmarks of <code class="docutils literal notranslate"><span class="pre">develop</span></code> once a week. Their results are on the
@@ -767,6 +765,13 @@ stack member at a time: the gate looks up the stack, and each build job joins a 
 per stack and job that queues (<code class="docutils literal notranslate"><span class="pre">queue:</span> <span class="pre">max</span></code>) instead of running in parallel. Every pull request
 still gets its own results, they just arrive later for the upper ones. <code class="docutils literal notranslate"><span class="pre">STACK_SLOTS</span></code> in the gate
 sets how many members of one stack may build at the same time.</p>
+<p>Pull requests from forks get no repository secrets, so their own CI run skips the LRZ GPU
+pipeline. After reviewing the changes, including any under <code class="docutils literal notranslate"><span class="pre">.github/</span></code>, a maintainer adds the
+<code class="docutils literal notranslate"><span class="pre">ready-for-review</span></code> label: <code class="docutils literal notranslate"><span class="pre">.github/workflows/mirror-fork-pr.yaml</span></code> then pushes the PR’s head
+commit to a branch of the same name (plus <code class="docutils literal notranslate"><span class="pre">mirror-pr/&lt;number&gt;</span></code>) in this repository and dispatches
+<code class="docutils literal notranslate"><span class="pre">ci.yaml</span></code> on it with <code class="docutils literal notranslate"><span class="pre">lrz_only</span></code>, which runs only the GPU job. Its result shows up in the PR’s
+checks. The dispatched run uses the workflow files of the PR, which is why the review comes first.
+New commits need a fresh approval: remove and re-add the label.</p>
 <p>When a pull request is closed, merged or not, <code class="docutils literal notranslate"><span class="pre">.github/workflows/cleanup-pr-branches.yaml</span></code> cancels
 its running GitHub Actions runs and LRZ GitLab pipelines and deletes the copy of its branch that the
 GPU job pushed to the LRZ GitLab mirror. GitHub deletes the branch itself on merge.
