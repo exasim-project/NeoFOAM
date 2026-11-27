@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
   <compounddef id="classNeoFOAM_1_1PDE" kind="class" language="C++" prot="public">
     <compoundname>NeoFOAM::PDE</compoundname>
     <includes refid="pde_8hpp" local="no">pde.hpp</includes>
@@ -305,7 +305,7 @@
         <name>PDE</name>
         <qualifiedname>NeoFOAM::PDE::PDE</qualifiedname>
         <param>
-          <type>const PDE &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref> &amp;</type>
           <declname>expr</declname>
         </param>
         <briefdescription>
@@ -358,7 +358,7 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="136" column="23" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="136" bodyend="136"/>
       </memberdef>
-      <memberdef kind="function" id="classNeoFOAM_1_1PDE_1ad7837cb66df5a2d02a51079865fd9b69" prot="public" static="no" nodiscard="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+      <memberdef kind="function" id="classNeoFOAM_1_1PDE_1ad7837cb66df5a2d02a51079865fd9b69" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>LinearSystem &amp;</type>
         <definition>LinearSystem &amp; NeoFOAM::PDE&lt; ValueType, MatrixValueType, IndexType &gt;::linearSystem</definition>
         <argsstring>()</argsstring>
@@ -372,7 +372,7 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="139" column="19" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="139" bodyend="146"/>
       </memberdef>
-      <memberdef kind="function" id="classNeoFOAM_1_1PDE_1abf7d5b6d2580ccb4c3afdb73e06e39e9" prot="public" static="no" nodiscard="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+      <memberdef kind="function" id="classNeoFOAM_1_1PDE_1abf7d5b6d2580ccb4c3afdb73e06e39e9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
         <type>const LinearSystem &amp;</type>
         <definition>const LinearSystem &amp; NeoFOAM::PDE&lt; ValueType, MatrixValueType, IndexType &gt;::linearSystem</definition>
         <argsstring>() const</argsstring>
@@ -553,8 +553,7 @@
 <para><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref>&apos;s analogue of OpenFOAM&apos;s <computeroutput>fvOptions.constrain(eqn)</computeroutput> (e.g. the velocityDampingConstraint, see <ref refid="velocityDamping_8hpp" kindref="compound">NeoFOAM/algorithms/velocityDamping.hpp</ref>). simpleFoam&apos;s UEqn.H orders these as <verbatim>UEqn.relax();
 fvOptions.constrain(UEqn);
 solve(UEqn == -fvc::grad(p));
-</verbatim></para>
-<para>so the callback runs AFTER relaxation (also when no relaxation is requested) and BEFORE the rhs term is added, the reference cell is set and the system is solved. It operates on the owned linear system, hence it is also seen by computeRAUandHByA (as it is in OpenFOAM, where the constrained diagonal feeds rAU). Unlike <ref refid="classNeoFOAM_1_1PDE_1afa2dcd0c96d7c1593df5b41cbb867ab2" kindref="member">setConstraints()</ref>, which pins cell values, this may modify the system arbitrarily. </para>
+</verbatim> so the callback runs AFTER relaxation (also when no relaxation is requested) and BEFORE the rhs term is added, the reference cell is set and the system is solved. It operates on the owned linear system, hence it is also seen by computeRAUandHByA (as it is in OpenFOAM, where the constrained diagonal feeds rAU). Unlike <ref refid="classNeoFOAM_1_1PDE_1afa2dcd0c96d7c1593df5b41cbb867ab2" kindref="member">setConstraints()</ref>, which pins cell values, this may modify the system arbitrarily. </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>

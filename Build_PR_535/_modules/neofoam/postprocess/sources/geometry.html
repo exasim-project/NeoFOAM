@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/_modules/neofoam/postprocess/sources/geometry.html">
 
-    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>neofoam.postprocess.sources.geometry - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -377,8 +377,10 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.mcp.html">neofoam.mcp</a><input aria-label="Toggle navigation of neofoam.mcp" class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" role="switch" type="checkbox"/><label for="toctree-checkbox-22"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.mcp.app.html">neofoam.mcp.app</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.mcp.dto.html">neofoam.mcp.dto</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.mcp.registry.html">neofoam.mcp.registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.mcp.server.html">neofoam.mcp.server</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.mcp.tools.html">neofoam.mcp.tools</a></li>
 </ul>
 </li>
@@ -776,6 +778,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">neon</span>  <span class="c1"># noqa: PLC0415  # NeoN is only needed on the NeoN path</span>
 
+        <span class="n">_ensure_kokkos</span><span class="p">()</span>
         <span class="n">centres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">C</span><span class="p">()</span><span class="o">.</span><span class="n">internalField</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_positions</span> <span class="o">=</span> <span class="n">neon</span><span class="o">.</span><span class="n">VectorVector</span><span class="p">(</span><span class="n">executor</span><span class="p">,</span> <span class="p">[</span><span class="n">neon</span><span class="o">.</span><span class="n">Vec3</span><span class="p">(</span><span class="o">*</span><span class="n">centre</span><span class="p">)</span> <span class="k">for</span> <span class="n">centre</span> <span class="ow">in</span> <span class="n">centres</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_volumes</span> <span class="o">=</span> <span class="n">neon</span><span class="o">.</span><span class="n">ScalarVector</span><span class="p">(</span><span class="n">executor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">V</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
@@ -808,6 +811,18 @@
 <span class="n">_RELEASE_REGISTERED</span> <span class="o">=</span> <span class="kc">False</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_kokkos</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Initialize NeoN/Kokkos if no NeoN solver has done so yet.</span>
+
+<span class="sd">    A host solver (``incompressibleFluid``) can feed a NeoN-path pipeline without</span>
+<span class="sd">    ever starting NeoN; since Kokkos 5.1 creating a NeoN vector then aborts the</span>
+<span class="sd">    process ("execution space is being constructed before initialize()").</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.neon_runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_neon_initialized</span>  <span class="c1"># noqa: PLC0415</span>
+
+    <span class="n">ensure_neon_initialized</span><span class="p">([</span><span class="s2">"neofoam-postprocess"</span><span class="p">])</span>
+
+
 <div class="viewcode-block" id="neon_cell_geometry">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.neon_cell_geometry">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">neon_cell_geometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeonCellGeometry</span><span class="p">:</span>
@@ -815,6 +830,9 @@
     <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">mesh</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">executor</span><span class="p">))</span>
     <span class="n">cached</span> <span class="o">=</span> <span class="n">_NEON_CELL_GEOMETRIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Before the release hook: atexit runs last-registered-first, so Kokkos'</span>
+        <span class="c1"># finalize, registered on initialization, has to come first to run last.</span>
+        <span class="n">_ensure_kokkos</span><span class="p">()</span>
         <span class="n">_release_the_cache_before_kokkos_finalizes</span><span class="p">()</span>
         <span class="n">cached</span> <span class="o">=</span> <span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">NeonCellGeometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">executor</span><span class="p">))</span>
         <span class="n">_NEON_CELL_GEOMETRIES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cached</span>
