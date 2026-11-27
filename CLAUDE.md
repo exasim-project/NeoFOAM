@@ -66,8 +66,15 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 
 Guidance for the **Python** side of this repo: `src/neofoam/` and its tests
-(`test/`). The C++/NeoN core and the `pybFoam` bindings are out of scope for these
-notes (mypy and these conventions skip them).
+(`test/`). The NeoN submodule and the `pybFoam` bindings are out of scope for these
+notes; the code style also applies to NeoFOAM's C++.
+
+## Conventions — read before writing code or tests
+
+**Loaded automatically as rules when you touch matching files; read them before writing code or tests:**
+
+- Code (Python and C++) → **[`.claude/rules/CODE_STYLE.md`](.claude/rules/CODE_STYLE.md)**
+- Tests (`test/`) → **[`.claude/rules/TEST_STYLE.md`](.claude/rules/TEST_STYLE.md)**
 
 ## Build & test
 
@@ -76,19 +83,15 @@ setup (pip workflow), scoped vs. full `pytest`, `pre-commit`, and the build gotc
 (non-editable install, never `rm -rf _skbuild`, pre-existing whole-repo failures,
 tooling, CLI entry point).
 
+Python changes in `src/neofoam` (edited or new files) need no rebuild. After C++/binding
+or `pyproject.toml` changes, run `poe build`: only changed C++ files are recompiled.
+
 Never delete or weaken an existing test to get green — surface the conflict instead.
 
 ## CLI
 
 The `neofoam` command (`solver`, `preprocess`, `agent`, `mcp`, `telemetry`, `ui`):
 see **[doc/reference/cli.rst](doc/reference/cli.rst)**.
-
-## Conventions
-
-Detailed guides — read the relevant one before writing code or test
-
-- **[`.claude/CODE_STYLE.md`](.claude/CODE_STYLE.md)**
-- **[`.claude/TEST_STYLE.md`](.claude/TEST_STYLE.md)**
 
 ## Project layout (where things live)
 

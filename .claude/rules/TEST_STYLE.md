@@ -1,3 +1,8 @@
+---
+paths:
+  - "test/**/*.py"
+---
+
 # Test rules (`test/`)
 
 ## Placement
