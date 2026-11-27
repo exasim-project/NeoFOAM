@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import neon._neon as nn
 import numpy as np
@@ -64,9 +64,9 @@ def _switch(word: str) -> bool:
     raise ValueError(f"fvOptions: cannot read {word!r} as a switch")
 
 
-def _host_view(vector: Any) -> np.ndarray:
+def _host_view(vector: Any) -> np.ndarray[Any, Any]:
     """Zero-copy numpy view of a host-resident NeoN Vector (``__array__``, CPU only)."""
-    return vector.__array__()
+    return cast("np.ndarray[Any, Any]", vector.__array__())
 
 
 class _RunningMean:
@@ -182,8 +182,8 @@ class NeonFvOptions:
         if path is None:
             return cls(sources, means)
         d = pyf.dictionary.read(str(path))
-        for name in d.toc():
-            name = str(name)
+        for toc_name in d.toc():
+            name = str(toc_name)
             if name == "FoamFile" or not d.isDict(name):
                 continue
             entry = d.subDict(name)
