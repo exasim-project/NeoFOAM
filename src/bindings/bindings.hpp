@@ -20,5 +20,6 @@ void registerWallFunctions(nanobind::module_& m);
 void registerFieldRelaxation(nanobind::module_& m);
 void registerMRF(nanobind::module_& m);
 void registerPostProcess(nanobind::module_& m);
+void registerBuoyancy(nanobind::module_& m);
 
 } // namespace NeoFOAM::bindings

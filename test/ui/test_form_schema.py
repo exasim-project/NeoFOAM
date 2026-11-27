@@ -259,6 +259,7 @@ _SCALAR_GRIDS = {
         "dict:KEpsilonCoeffs": [""],
         "dict:KOmegaSSTCoeffs": [""],
         "dict:SpalartAllmarasCoeffs": [""],
+        "dict:BoussinesqConfig": [""],
     },
     "incompressibleVoF": {
         "dict:Pimple_fvSolution": ["/properties/PIMPLE"],

@@ -26,9 +26,10 @@ lives on :class:`PimpleNeoNState` (``ctx.models["pimple_state"]``);
 ``continuity`` through ``FieldUpdates`` (never write-flagged).
 """
 
-from typing import Annotated, Any, Callable
+from typing import Annotated, Any, Callable, Optional
 
 import neon._neon as nn  # NeoN Python bindings
+import numpy as np
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.algorithms import PressureReference
@@ -61,7 +62,8 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
-from ..incompressibleFluidNeoNModel import Model
+from ..boussinesq import BoussinesqNeoNFvSchemes, BoussinesqNeoNFvSolution
+from ..incompressibleFluidNeoNModel import Model, ModelRuntime
 from .extension import momentum_extension, pressure_extension
 
 pimpleNeoN = Model("PimpleNeoN")
@@ -172,11 +174,32 @@ class PimpleNeoNState:
     the dict per call, so the Python dict stays authoritative).
     """
 
-    def __init__(self, control: Any, piso: PisoControl) -> None:
+    def __init__(
+        self, control: Any, piso: PisoControl, final_on_last_pimple_iter_only: bool = False
+    ) -> None:
         self.control = control
         self.piso = piso
+        self.final_on_last_pimple_iter_only = final_on_last_pimple_iter_only
         self.residuals: dict[str, tuple[float, float]] = {}
         self.cumulative_cont_err: float = 0.0
+
+
+def _uses_boussinesq(owner: Any) -> bool:
+    """Whether the run of ``owner`` has the boussinesq model (its resolve set the flag)."""
+    # owner is the run's runtime, or the spec itself (build_steps), which has no run
+    return isinstance(owner, ModelRuntime) and bool(owner.config.use_boussinesq)
+
+
+def _pressure_reference(runtime: Any, algorithm: str, boussinesq: bool) -> PressureReference:
+    """The reference cell and value of ``p`` from the ``algorithm`` block of fvSolution."""
+    # A Boussinesq case solves p_rgh but keeps the pRefCell/pRefValue entries of p.
+    if boussinesq:
+        cell, value, needs_ref = nfb.set_ref_cell(
+            runtime, "p", algorithm, solved_field_name="p_rgh"
+        )
+    else:
+        cell, value, needs_ref = nfb.set_ref_cell(runtime, "p", algorithm)
+    return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
 
 
 @pimpleNeoN.build
@@ -209,15 +232,18 @@ def build(self: Any) -> list[Any]:
             n_non_orthogonal_correctors=_read_int(control_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(control_dict, "momentumPredictor", True),
         )
-        return PimpleNeoNState(nfb.PimpleControl(rt.fv_solution_dict), piso)
+        return PimpleNeoNState(
+            nfb.PimpleControl(rt.fv_solution_dict),
+            piso,
+            _read_switch(control_dict, "finalOnLastPimpleIterOnly", False),
+        )
 
     def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         rt = context["_neon_runtime"]
         # Same block as the corrector counts: a pisoFoam case would otherwise
         # abort with *Entry 'PIMPLE' not found in fvSolution*.
         algorithm = _control_block_name(rt.fv_solution_dict)
-        cell, value, needs_ref = nfb.set_ref_cell(rt, "p", algorithm)
-        return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
+        return _pressure_reference(rt, algorithm, _uses_boussinesq(self))
 
     def create_surf_interp(context: dict[str, Any]) -> Any:
         rt = context["_neon_runtime"]
@@ -458,6 +484,190 @@ def turbulence_correct(
     turbulence.correct(U, phi, neon_runtime, final_iter=True)
 
 
+@pimpleNeoN.operation(operation_number="2.0")
+def rotate_and_report_boussinesq(
+    U: Any,
+    phi: Any,
+    T: Any,
+    turbulence: Annotated[Any, "models"],
+    pimple_state: Annotated[Any, "models"],
+    neon_runtime: Annotated[Any, "models"],
+) -> None:
+    """:func:`rotate_and_report`, also making ``T`` the old time of the energy equation."""
+    nn.rotate_old_times(T)
+    rotate_and_report(U, phi, turbulence, pimple_state, neon_runtime)
+
+
+@pimpleNeoN.operation(operation_number="2.1")
+@PimpleNeoNFvSchemes.add(
+    ddt="ddt(U)",
+    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
+    interpolation="flux(U)",
+)
+@PimpleNeoNFvSolution.add("U")
+def momentum_boussinesq(
+    U: Any,
+    phi: Any,
+    p_rgh: Any,
+    rhok: Any,
+    ghf: Any,
+    pimple_state: Annotated[Any, "models"],
+    turbulence: Annotated[Any, "models"],
+    grad_op: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
+    mag_sf: Annotated[Any, "models"],
+    neon_runtime: Annotated[Any, "models"],
+) -> FieldUpdates:
+    """UEqn.H of buoyantBoussinesqPimpleFoam: the predictor with the buoyancy face force.
+
+    ``UEqn == reconstruct((-ghf*snGrad(rhok) - snGrad(p_rgh))*magSf)``, both ``snGrad``
+    with the case's snGrad scheme.
+    """
+    final_iter = bool(pimple_state.control.final_iter())
+    prev_p_rgh = nfb.field_relaxation_snapshot(p_rgh)
+    grad_u = grad_op.grad_tensor(U)
+
+    UEqn = nfb.PDESolverVec3(
+        nn.imp.ddt(U)
+        + nn.imp.div(phi, U)
+        - nn.imp.laplacian(turbulence.nu_eff(), U)
+        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u),
+        U,
+        neon_runtime,
+    )
+    if UEqn.ddt_scheme() not in (nfb.DdtScheme.BDF1, nfb.DdtScheme.BDF2):
+        raise RuntimeError("incompressibleFluidNeoN: steadyState ddt unsupported (BDF1/BDF2 only)")
+    UEqn.set_final_iter(final_iter)
+    UEqn.relax()
+
+    if pimple_state.piso.momentum_predictor():
+        face_force = (
+            (-1.0 * ghf) * nfb.sn_grad(neon_runtime, rhok) - nfb.sn_grad(neon_runtime, p_rgh)
+        ) * mag_sf
+        stats_u = UEqn.solve_with_source(nn.exp.source(nn.reconstruct(face_force)))
+        pimple_state.residuals["U"] = _reduce_u(stats_u)
+    else:
+        UEqn.assemble_and_relax()
+
+    return FieldUpdates({"UEqn": UEqn, "prev_p_rgh": prev_p_rgh, "grad_u": grad_u, "U": U})
+
+
+@pimpleNeoN.operation(operation_number="2.2", depends_on=["momentum_boussinesq"])
+@BoussinesqNeoNFvSchemes.add(
+    grad="grad(rhok)",
+    laplacian="laplacian(rAUf,p_rgh)",
+    interpolation=["flux(HbyA)", "interpolate(rAU)", "dotInterpolate(S,U_0)"],
+    snGrad=["snGrad(rhok)", "snGrad(p_rgh)"],
+)
+@BoussinesqNeoNFvSolution.add("p_rgh")
+def continuity_boussinesq(
+    U: Any,
+    p: Any,
+    p_rgh: Any,
+    phi: Any,
+    rhok: Any,
+    gh: Any,
+    ghf: Any,
+    UEqn: Any,
+    prev_p_rgh: Any,
+    pimple_state: Annotated[Any, "models"],
+    surf_interp: Annotated[Any, "models"],
+    mag_sf: Annotated[Any, "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
+    neon_runtime: Annotated[Any, "models"],
+) -> FieldUpdates:
+    """pEqn.H of buoyantBoussinesqPimpleFoam: the p_rgh corrector with the buoyancy flux.
+
+    ``phig = -rAUf*ghf*snGrad(rhok)*magSf`` joins the predicted flux; constrainPressure
+    sets the fixedFluxPressure gradient so the walls stay closed; the velocity is
+    reconstructed from ``(phig - p_rghEqn.flux())/rAUf``; ``p = p_rgh + rhok*gh``. The
+    ``p_rghFinal`` settings apply on the final pass of the final PISO corrector of every
+    outer corrector (``finalOnLastPimpleIterOnly`` restricts it to the final one).
+    """
+    state = pimple_state
+    rt = neon_runtime
+    final_iter = bool(state.control.final_iter())
+    final_outer = final_iter or not state.final_on_last_pimple_iter_only
+    reference = pressure_reference
+    ddt_scheme = UEqn.ddt_scheme()
+    p_res: Optional[tuple[float, float]] = None
+
+    while state.piso.correct():
+        rAU, hByA = nfb.compute_rau_and_hbya(UEqn)
+        nfb.constrain_hbya(U, p_rgh, hByA)
+        rAUf = surf_interp.interpolate(rAU)
+        rAUf.name = "rAUf"
+
+        phig = (-1.0 * rAUf) * ghf * nfb.sn_grad(rt, rhok) * mag_sf
+        phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme) + phig
+        nfb.constrain_pressure(p_rgh, U, phiHbyA, rAUf)
+
+        while state.piso.correct_non_orthogonal():
+            pEqn = _p_rgh_equation(p_rgh, rAUf, phiHbyA, reference, rt)
+            pEqn.set_final_iter(final_outer and state.piso.final_inner_iter())
+            stats = pEqn.solve()
+            p_res = p_res or (stats.entries[0].initial_residual, stats.entries[0].final_residual)
+            p_rgh.correct_boundary_conditions()
+
+            if state.piso.final_non_orthogonal_iter():
+                nfb.update_face_velocity(phiHbyA, pEqn, phi)
+                nfb.apply_field_relaxation(
+                    p_rgh,
+                    prev_p_rgh,
+                    nfb.lookup_field_relaxation(rt.fv_solution_dict, p_rgh.name, final_iter),
+                )
+                p_rgh.correct_boundary_conditions()
+                # pEqn.flux() = phiHbyA - phi after the face-velocity update
+                nfb.update_velocity_buoyant(hByA, rAU, phig - (phiHbyA - phi), rAUf, U)
+                U.correct_boundary_conditions()
+
+        _report_continuity_errors(phi, state, rt)
+        _hydrostatic_pressure(p, p_rgh, rhok, gh, reference)
+
+    if p_res is not None:
+        state.residuals["p_rgh"] = p_res
+
+    return FieldUpdates({"U": U, "p": p, "p_rgh": p_rgh, "phi": phi})
+
+
+def _p_rgh_equation(
+    p_rgh: Any, rAUf: Any, phiHbyA: Any, reference: PressureReference, runtime: Any
+) -> Any:
+    """The p_rgh equation of pEqn.H, pinned in the reference cell when p needs a reference."""
+    pEqn = nfb.PDESolverScalar(nn.imp.laplacian(rAUf, p_rgh) - nn.exp.div(phiHbyA), p_rgh, runtime)
+    if reference.needs_ref:
+        # as pEqn.H: the reference value is p_rgh's own current value there
+        pEqn.set_reference(reference.cell, _cell_value(p_rgh, reference.cell))
+    return pEqn
+
+
+def _report_continuity_errors(phi: Any, state: PimpleNeoNState, runtime: Any) -> None:
+    """continuityErrs.H."""
+    sum_local, global_err = nfb.compute_continuity_error(phi, runtime)
+    state.cumulative_cont_err += global_err
+    print(
+        f"time step continuity errors : sum local = {sum_local}, "
+        f"global = {global_err}, cumulative = {state.cumulative_cont_err}"
+    )
+
+
+def _hydrostatic_pressure(
+    p: Any, p_rgh: Any, rhok: Any, gh: Any, reference: PressureReference
+) -> None:
+    """``p = p_rgh + rhok*gh``, shifted to ``pRefValue`` (and ``p_rgh`` with it) when referenced."""
+    p.assign(p_rgh + rhok * gh)
+    if reference.needs_ref:
+        p.assign(p + (reference.value - _cell_value(p, reference.cell)))
+        p_rgh.assign(p - rhok * gh)
+
+
+def _cell_value(field: Any, cell: int) -> float:
+    """One cell's value, as OpenFOAM's getRefCellValue (a host copy of the field)."""
+    return float(np.asarray(field.internal_vector().copy_to_host())[cell])
+
+
 def _alias_operation(
     op_func: Callable[..., Any],
     *,
@@ -479,6 +689,9 @@ def _alias_operation(
 def collected_operations(self: Any) -> Operations:
     """Wrap momentum/continuity inside the PIMPLE inner loop.
 
+    Dispatches to the ``*_boussinesq`` arms when ``self.config.use_boussinesq`` is set (the
+    boussinesq model flips it in its resolve stage).
+
     Also exposes the once-per-step ``rotate_and_report`` (before the inner
     loop) and ``turbulence_correct`` (after it) the solver's execution graph
     steps explicitly.
@@ -491,9 +704,14 @@ def collected_operations(self: Any) -> Operations:
         )
     )
 
-    wrapped_rotate = pimpleNeoN.wrap_operation(rotate_and_report, self)
-    wrapped_momentum = pimpleNeoN.wrap_operation(momentum, self)
-    wrapped_continuity = pimpleNeoN.wrap_operation(continuity, self)
+    buoyant = _uses_boussinesq(self)
+    rotate_op = rotate_and_report_boussinesq if buoyant else rotate_and_report
+    momentum_op = momentum_boussinesq if buoyant else momentum
+    continuity_op = continuity_boussinesq if buoyant else continuity
+
+    wrapped_rotate = pimpleNeoN.wrap_operation(rotate_op, self)
+    wrapped_momentum = pimpleNeoN.wrap_operation(momentum_op, self)
+    wrapped_continuity = pimpleNeoN.wrap_operation(continuity_op, self)
     wrapped_turbulence = pimpleNeoN.wrap_operation(turbulence_correct, self)
 
     model_ops.add(

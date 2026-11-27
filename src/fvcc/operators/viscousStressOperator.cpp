@@ -147,6 +147,9 @@ void divDevReff(
     const auto [Sf, tauV, vol, rhsV] =
         views(mesh.faceNormals(), tau.internalVector(), mesh.cellVolumes(), rhs);
     const auto tauB = tau.boundaryData().value().view();
+    // The boundary faces' own normals: mesh.faceNormals() is OpenFOAM's full face list, which
+    // still holds the faces of empty patches, so nIF + bfi misses every patch after one.
+    const auto bSf = mesh.boundaryMesh().faceNormals().view();
     const auto wV = weightsF.internalVector().view();
     const auto wB = weightsF.boundaryData().value().view();
 
@@ -173,7 +176,7 @@ void divDevReff(
             // Boundary face: linear interpolation reduces to wB * tau_boundary (see
             // computeLinearInterpolation boundary kernel).
             const Tensor tauFace = wB[bfi] * tauB[bfi];
-            const Vec3 flux = scalar(-1.0) * (tauFace & Sf[nIF + bfi]);
+            const Vec3 flux = scalar(-1.0) * (tauFace & bSf[bfi]);
             atomicAddVec3(&rhsV[faceCells[bfi]], flux);
         },
         "divDevReff::boundary"
@@ -188,7 +191,6 @@ void divDevReff(
     const localIdx nProcFaces = mesh.nProcBoundaryFaces();
     if (nProcFaces > 0)
     {
-        const auto bSf = mesh.boundaryMesh().faceNormals().view();
         parallelFor(
             exec,
             {0, nProcFaces},

@@ -501,7 +501,7 @@ def momentum_boussinesq(
             # Explicit final-iteration flag (see ``momentum``): pick UFinal via
             # U.select rather than the mesh finalIteration state.
             fvVectorMatrix(
-                UEqn + fvc.reconstruct((-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf())
+                UEqn - fvc.reconstruct((-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf())
             ).solve(U.select(pimple_control.finalIter()))
 
     return FieldUpdates({"UEqn": UEqn, "U": U})

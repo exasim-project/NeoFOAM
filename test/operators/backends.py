@@ -171,6 +171,33 @@ class PybFvc:
         writes it; ``scheme`` is handed to ``fvc.snGrad`` inline."""
         return _of_worker(rau).evaluate("fvc.simplecFluxCorrection", _names((rau, ratu, p)), scheme)
 
+    def sn_grad(self, field: "Field", scheme: str) -> np.ndarray:
+        """``fvc.snGrad(field, scheme)``: internal faces, then the boundary faces."""
+        return _of_worker(field).evaluate("fvc.snGrad", (field.name,), scheme)
+
+
+class PybBuoyancy:
+    """The OpenFOAM side of the Boussinesq helpers: mesh geometry and pEqn.H steps."""
+
+    def face_centres(self, case: str) -> np.ndarray:
+        """``mesh.Cf()``: internal faces, then the boundary faces."""
+        return POOL.of_worker(case).evaluate("mesh.Cf", ())
+
+    def mag_sf(self, case: str) -> np.ndarray:
+        """``mesh.magSf()``: internal faces, then the boundary faces."""
+        return POOL.of_worker(case).evaluate("mesh.magSf", ())
+
+    def constrain_pressure(
+        self, p_rgh: "Field", u: "Field", rau: "Field", t: "Field"
+    ) -> np.ndarray:
+        """The walls' gradient ``constrainPressure`` gives ``p_rgh``."""
+        # phiHbyA = flux(U) + flux(U)*interpolate(T), rAUf = interpolate(rAU)
+        return _of_worker(p_rgh).evaluate("constrainPressure", _names((p_rgh, u, rau, t)))
+
+    def update_velocity_buoyant(self, u: "Field", rau: "Field", t: "Field") -> np.ndarray:
+        """``U + rAU*reconstruct(flux(U)*snGrad(T)/rAUf)``."""
+        return _of_worker(u).evaluate("updateVelocityBuoyant", _names((u, rau, t)))
+
 
 class PybFvm:
     """``pybFoam.fvm`` — implicit operators, returned as the matrix applied to
@@ -189,6 +216,7 @@ class PybBackend:
     def __init__(self) -> None:
         self.fvc = PybFvc()
         self.fvm = PybFvm()
+        self.buoyancy = PybBuoyancy()
 
 
 class NeonExp:
@@ -207,6 +235,10 @@ class NeonExp:
 
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("exp.laplacian", (gamma.name, field.name))
+
+    def viscous_stress(self, field: "Field") -> np.ndarray:
+        """``nfb.viscous_stress``: div(nu*dev2(T(grad(field)))) with nu = 1, nut = 0."""
+        return _neon_worker(field).evaluate("exp.viscousStress", (field.name,))
 
 
 class NeonImp:
@@ -234,6 +266,7 @@ class NeonBackend:
     def __init__(self) -> None:
         self.exp = NeonExp()
         self.imp = NeonImp()
+        self.buoyancy = NeonBuoyancy()
 
     def interpolate(self, field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("interpolate", (field.name,))
@@ -250,6 +283,44 @@ class NeonBackend:
         operator as the ``snGradSchemes/default`` entry of the fvSchemes
         dictionary the worker hands over, as ``fvc::snGrad`` reads it."""
         return _neon_worker(rau).evaluate("simplecFluxCorrection", _names((rau, ratu, p)), scheme)
+
+
+class NeonBuoyancy:
+    """The NeoFOAM Boussinesq helpers (``nfb.sn_grad``, ``mag_sf``, ``create_gh`` …)."""
+
+    # surface results: internal faces, then the boundary faces
+
+    def sn_grad(self, field: "Field", scheme: str) -> np.ndarray:
+        """``nfb.sn_grad(field)`` with ``scheme`` as the snGrad default."""
+        return _neon_worker(field).evaluate("snGrad", (field.name,), scheme)
+
+    def mag_sf(self, case: str, executor: str) -> np.ndarray:
+        """``nfb.mag_sf``."""
+        return POOL.neon_worker(case, executor).evaluate("magSf", ())
+
+    def gh(self, case: str, executor: str) -> np.ndarray:
+        """``create_gh``: the cells, then the boundary faces."""
+        return POOL.neon_worker(case, executor).evaluate("gh", ())
+
+    def ghf(self, case: str, executor: str) -> np.ndarray:
+        """``create_ghf``."""
+        return POOL.neon_worker(case, executor).evaluate("ghf", ())
+
+    def constrain_pressure(
+        self, p_rgh: "Field", u: "Field", rau: "Field", t: "Field"
+    ) -> np.ndarray:
+        """The boundary snGrad of ``p_rgh`` after ``constrain_pressure``."""
+        return _neon_worker(p_rgh).evaluate("constrainPressure", _names((p_rgh, u, rau, t)))
+
+    def constrain_pressure_with_foreign_flux(
+        self, p_rgh: "Field", u: "Field", rau: "Field"
+    ) -> None:
+        """``constrain_pressure`` with a phiHbyA on a one-cell mesh of its own."""
+        _neon_worker(p_rgh).command("constrainPressure.foreignMesh", _names((p_rgh, u, rau)))
+
+    def update_velocity_buoyant(self, u: "Field", rau: "Field", t: "Field") -> np.ndarray:
+        """``U + rAU*reconstruct(flux(U)*snGrad(T)/rAUf)``."""
+        return _neon_worker(u).evaluate("updateVelocityBuoyant", _names((u, rau, t)))
 
 
 pyb = PybBackend()

@@ -26,6 +26,50 @@ void constrainHbyA(
     nnfvcc::VolumeField<Vec3>& HbyA
 );
 
+/* @brief Constrain the wall pressure gradient for the flux projection.
+ *
+ * @detail Transcribes the geometricOneField / NullMRF branch of OpenFOAM's
+ * Foam::constrainPressure (rho == 1, no MRF): for every boundary patch whose BC is
+ * fixedFluxPressure, sets the per-face reference gradient
+ *   refGrad_b = (phiHbyA_b - (Sf_b & U_b)) / (magSf_b * rAUf_b)
+ * then calls pRgh.correctBoundaryConditions(). On noSlip walls U_b == 0, so the wall
+ * gradient reduces to phiHbyA_b/(magSf_b*rAUf_b) — exactly the buoyancy face flux
+ * carried in phiHbyA (via phig), which the pressure projection then cancels (zero wall-normal
+ * flux). Patches with any other BC are left untouched.
+ * @throws std::invalid_argument if the fields do not share one mesh
+ */
+void constrainPressure(
+    nnfvcc::VolumeField<scalar>& pRgh,
+    const nnfvcc::VolumeField<Vec3>& U,
+    const nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::SurfaceField<scalar>& rAUf
+);
+
+/* @brief Buoyant velocity corrector: U = HbyA + rAU*reconstruct(numeratorFlux/rAUf).
+ *
+ * @details buoyantBoussinesqPimpleFoam's (and interFoam's) velocity correction reconstructs
+ * the buoyancy + pressure face-flux balance back onto the cell velocity, not just -grad(p):
+ *   U = HbyA + rAU*fvc::reconstruct((phig - p_rghEqn.flux())/rAUf)
+ * The caller passes numeratorFlux = phig - p_rghEqn.flux() (phig - (phiHbyA - phi) after
+ * updateFaceVelocity). Only the internal cells are set; correct U's boundary after.
+ * @throws std::invalid_argument if the fields do not share one mesh
+ */
+void updateVelocityBuoyant(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::SurfaceField<scalar>& numeratorFlux,
+    const nnfvcc::SurfaceField<scalar>& rAUf,
+    nnfvcc::VolumeField<Vec3>& U
+);
+
+/* @brief Face-normal gradient fvc::snGrad(field) with the case's snGrad scheme.
+ *
+ * The scheme is snGrad(<name>) of the snGradSchemes subdict of fvSchemes, else default, else
+ * corrected, so corrected and limitedCorrected carry their non-orthogonal correction.
+ */
+nnfvcc::SurfaceField<scalar>
+snGrad(const nnfvcc::VolumeField<scalar>& field, const NeoN::Dictionary& fvSchemes);
+
 /* @brief Inverse of the assembled momentum matrix diagonal: rAU = 1/diag.
  */
 nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr);
