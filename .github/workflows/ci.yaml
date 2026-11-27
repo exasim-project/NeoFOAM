@@ -361,7 +361,6 @@ jobs:
       queue: max
     env:
       NEON_BRANCH: ${{ needs.gate.outputs.neon-branch }}
-      NEON_FROM_PACKAGE: ${{ needs.gate.outputs.neon-from-package }}
     steps:
       - name: Checkout NeoFOAM
         uses: actions/checkout@v4
@@ -397,48 +396,7 @@ jobs:
       - name: Install python dependencies
         run: pip install foamlib pandas pydantic defusedxml
 
-      # OpenFOAM for macOS is a conda-forge environment with its own Open MPI. Install the osx-arm64
-      # Open MPI flavour of neon-pde with exactly that Open MPI build, so NeoN, libPstream and
-      # libOpenFOAM use the same library (one @rpath/libmpi.40.dylib per process). Falls back to
-      # building NeoN, as on Linux, if nothing resolves.
-      - name: Find OpenFOAM's Open MPI
-        id: foam-mpi
-        if: env.NEON_FROM_PACKAGE == 'true' && env.NEON_BRANCH == 'develop'
-        run: |
-          meta=("$WM_PROJECT_DIR"/env/conda-meta/openmpi-[0-9]*.json)
-          if [[ -f "${meta[0]}" ]]; then
-            spec="$(jq -r '"openmpi==\(.version)=\(.build)"' "${meta[0]}")"
-          else
-            echo "::warning::No conda-meta for OpenFOAM's Open MPI, using any Open MPI 5.0"
-            spec="openmpi=5.0.*"
-          fi
-          echo "OpenFOAM's Open MPI: $spec"
-          echo "spec=$spec" >> "$GITHUB_OUTPUT"
-
-      - name: Install NeoN from prefix.dev
-        id: neon
-        if: env.NEON_FROM_PACKAGE == 'true' && env.NEON_BRANCH == 'develop'
-        continue-on-error: true
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          micromamba-root-path: ${{ runner.temp }}/micromamba
-          environment-name: neon
-          create-args: >-
-            --override-channels
-            -c https://prefix.dev/exasim-project/nightlies
-            -c conda-forge
-            neon-pde=*=cpu_openmpi_py*
-            ${{ steps.foam-mpi.outputs.spec }}
-            pip
-          init-shell: none
-          post-cleanup: none
-
-      - *neon-args
-
       - name: Build NeoFOAM
-        env:
-          NEON_PREFIX: >-
-            ${{ steps.neon-args.outputs.package != '' && format('{0}/micromamba/envs/neon', runner.temp) || '' }}
         run: |
           # Pin find_package(MPI) to OpenFOAM's own bundled Open MPI wrapper
           # compilers (already first on PATH from the "Set up OpenFOAM" step)
@@ -447,15 +405,13 @@ jobs:
           # MPI; if NeoFOAM/NeoN link against a different Open MPI build,
           # two incompatible MPI runtimes end up in the same process and
           # MPI_Init segfaults at run time.
-          # With the NeoN package, its prefix goes first in CMAKE_PREFIX_PATH; this overrides the
-          # CMAKE_PREFIX_PATH from the neon-args cmake-args, which only has the package prefix.
-          cmake --preset develop ${{ steps.neon-args.outputs.cmake-args }} \
+          cmake --preset develop \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_WITH_MPI=ON \
             -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_PREFIX_PATH="${NEON_PREFIX:+$NEON_PREFIX;}$(brew --prefix)" \
+            -DCMAKE_PREFIX_PATH=$(brew --prefix) \
             -DMPI_C_COMPILER=$(command -v mpicc) \
             -DMPI_CXX_COMPILER=$(command -v mpicxx) \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
