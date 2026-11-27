@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Honour a `default` entry of `relaxationFactors.equations` / `.fields` on the non-final iterations too, as OpenFOAM's `solution::relaxEquation` / `relaxField` do: a field without a key of its own was not relaxed there [#NNN](https://github.com/exasim-project/NeoFOAM/pull/NNN)
 - Look up only the `<field>Final` (or `default`) relaxation factor on the final iteration, as OpenFOAM's `fvMatrix::relax()` and `GeometricField::relax()` do, instead of falling back to the base `<field>` key; a dictionary with only `U 0.7;` is no longer relaxed on the final iteration [#516](https://github.com/exasim-project/NeoFOAM/pull/516)
 - Add the compressible `kOmegaSST::correct(U, phi, rho, ...)` with density-weighted k and omega equations, `TurbulenceModel::correctCompressible` and the Python binding `correct_compressible` [#515](https://github.com/exasim-project/NeoFOAM/pull/515)
 - Add `PressureControl`, a port of `Foam::pressureControl` (`pMin`/`pMax`, `pMinFactor`/`pMaxFactor`, `rhoMin`/`rhoMax`) with a Python binding; patches with the NeoN `mixed` attribute count as value-fixing [#514](https://github.com/exasim-project/NeoFOAM/pull/514)

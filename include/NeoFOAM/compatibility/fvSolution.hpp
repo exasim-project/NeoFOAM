@@ -95,10 +95,11 @@ void updatePreconditioner(NeoN::Dictionary& solverDict);
 /* @brief Look up the equation under-relaxation factor for a field from fvSolution.
  *
  * Parses the OpenFOAM `relaxationFactors.equations` sub-dictionary and returns the
- * scalar relaxation factor for the given field. When `finalIter` is true the
- * `<field>Final` key is preferred (Final-suffix seam), falling back to the base
- * `<field>` key. Returns std::nullopt when no entry exists -> the caller uses 1.0 ->
- * the kernel is a no-op (matches OpenFOAM's "no entry, no relax" semantics).
+ * scalar relaxation factor for the given field, as OpenFOAM's `solution::relaxEquation`: the
+ * `<field>` key (regex keys included), or on the final iteration the `<field>Final` key
+ * (not the base key), else a `default` entry. Returns std::nullopt when neither exists ->
+ * the caller uses 1.0 -> the kernel is a no-op (matches OpenFOAM's "no entry, no relax"
+ * semantics).
  *
  * Keeping this parsing in NeoFOAM means NeoN's applyMatrixRelaxation only ever
  * sees a plain scalar; NeoN stays OpenFOAM-dictionary-agnostic.
@@ -113,10 +114,10 @@ lookupEqnRelaxation(const NeoN::Dictionary& fvSolution, const std::string& field
 /* @brief Look up the explicit field under-relaxation factor for a field from fvSolution.
  *
  * Parses the OpenFOAM `relaxationFactors.fields` sub-dictionary and returns the scalar
- * relaxation factor for the given field. When `finalIter` is true the `<field>Final` key is
- * preferred (Final-suffix seam), falling back to the base `<field>` key. Returns
- * std::nullopt when no entry exists -> the caller uses 1.0 -> the kernel is a no-op (matches
- * OpenFOAM's "no entry, no relax" semantics).
+ * relaxation factor for the given field, as OpenFOAM's `solution::relaxField`: the `<field>`
+ * key (regex keys included), or on the final iteration the `<field>Final` key (not the base
+ * key), else a `default` entry. Returns std::nullopt when neither exists -> the caller uses
+ * 1.0 -> the kernel is a no-op (matches OpenFOAM's "no entry, no relax" semantics).
  *
  * `relaxationFactors.equations` and `relaxationFactors.fields` are independent dicts:
  * a field present only under `equations` (e.g. momentum `U`) returns nullopt here, so
