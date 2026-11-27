@@ -45,11 +45,11 @@ import neon._neon as nn
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
+from neofoam.solver.neon_fv_options import NeonFvOptions
 from neofoam.solver.neon_runtime import (  # noqa: F401
     ensure_neon_initialized as _ensure_neon_initialized,
 )
 from neofoam.solver.neon_runtime import requested_executor
-from neofoam.solver.neon_fv_options import NeonFvOptions
 from neofoam.solver.pisoControl import PisoControl
 from neofoam.thermo.perfectGas import PerfectGasTransport
 
@@ -432,9 +432,7 @@ class NeoRhoPimpleFoam:
                         # level when the pEqn is assembled and solved.
                         p.correct_boundary_conditions(boundary_context())
                         pEqn = nfb.PDESolverScalar(
-                            nn.imp.ddt(psi, p)
-                            + nn.exp.div(phiHbyA)
-                            - nn.imp.laplacian(rhorAUf, p),
+                            nn.imp.ddt(psi, p) + nn.exp.div(phiHbyA) - nn.imp.laplacian(rhorAUf, p),
                             p,
                             rt,
                         )
@@ -487,7 +485,9 @@ class NeoRhoPimpleFoam:
                         p0 = nn.old_time(p)
                         if ddt_scheme == nfb.DdtScheme.BDF2 and n_steps >= 2:
                             p00 = nn.old_time(p0)
-                            dpdt.assign((1.5 / rt.dt) * p - (2.0 / rt.dt) * p0 + (0.5 / rt.dt) * p00)
+                            dpdt.assign(
+                                (1.5 / rt.dt) * p - (2.0 / rt.dt) * p0 + (0.5 / rt.dt) * p00
+                            )
                         else:
                             dpdt.assign((1.0 / rt.dt) * (p - p0))
 

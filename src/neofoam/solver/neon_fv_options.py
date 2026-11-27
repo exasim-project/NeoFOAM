@@ -104,7 +104,9 @@ class AcousticDampingSource:
         self.time_start = coeffs.get_scalar("timeStart") if coeffs.found("timeStart") else -1.0
         self.duration = coeffs.get_scalar("duration") if self.time_start >= 0 else 0.0
 
-        selection = str(coeffs.get_word("selectionMode")) if coeffs.found("selectionMode") else "all"
+        selection = (
+            str(coeffs.get_word("selectionMode")) if coeffs.found("selectionMode") else "all"
+        )
         if selection != "all":
             raise NotImplementedError(f"{name}: selectionMode {selection!r} (only 'all')")
         if coeffs.found("UNames"):
@@ -124,7 +126,9 @@ class AcousticDampingSource:
 
         frequency = coeffs.get_scalar("frequency")
         w = coeffs.get_scalar("w") if coeffs.found("w") else 20.0
-        origin = coeffs.get_vector("origin") if coeffs.found("origin") else coeffs.get_vector("centre")
+        origin = (
+            coeffs.get_vector("origin") if coeffs.found("origin") else coeffs.get_vector("centre")
+        )
         x0 = np.array([origin[0], origin[1], origin[2]], dtype=float)
         r1 = coeffs.get_scalar("radius1")
         r2 = coeffs.get_scalar("radius2")
