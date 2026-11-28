@@ -4,7 +4,7 @@
 """Helpers to drive JSON-schema forms from pydantic models.
 
 Pure pydantic + stdlib. These back the schema DTOs (:mod:`neofoam.io.schema`)
-and the case wizard (:mod:`neofoam.ui`), which render each config's
+and the case wizard of ``neofoam_ui``, which render each config's
 ``model_json_schema()`` as a form:
 
 - :func:`default_values` prefills a form with a config's defaults;

@@ -66,8 +66,15 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 
 Guidance for the **Python** side of this repo: `src/neofoam/` and its tests
-(`test/`). The C++/NeoN core and the `pybFoam` bindings are out of scope for these
-notes (mypy and these conventions skip them).
+(`test/`). The NeoN submodule and the `pybFoam` bindings are out of scope for these
+notes; the code style also applies to NeoFOAM's C++.
+
+## Conventions — read before writing code or tests
+
+**Loaded automatically as rules when you touch matching files; read them before writing code or tests:**
+
+- Code (Python and C++) → **[`.claude/rules/CODE_STYLE.md`](.claude/rules/CODE_STYLE.md)**
+- Tests (`test/`) → **[`.claude/rules/TEST_STYLE.md`](.claude/rules/TEST_STYLE.md)**
 
 ## Build & test
 
@@ -76,6 +83,11 @@ setup (pip workflow), scoped vs. full `pytest`, `pre-commit`, and the build gotc
 (non-editable install, never `rm -rf _skbuild`, pre-existing whole-repo failures,
 tooling, CLI entry point).
 
+Python changes in `src/neofoam` (edited or new files) need no rebuild. After C++/binding
+or `pyproject.toml` changes, run `poe build`: only changed C++ files are recompiled.
+Other poe tasks (`test`, `lint`, `format`, `type_check`, `precommit`, docs): see
+`[tool.poe.tasks]` in `pyproject.toml` and the build doc.
+
 Never delete or weaken an existing test to get green — surface the conflict instead.
 
 ## CLI
@@ -83,17 +95,10 @@ Never delete or weaken an existing test to get green — surface the conflict in
 The `neofoam` command (`solver`, `preprocess`, `agent`, `mcp`, `telemetry`, `ui`):
 see **[doc/reference/cli.rst](doc/reference/cli.rst)**.
 
-## Conventions
-
-Detailed guides — read the relevant one before writing code or test
-
-- **[`.claude/CODE_STYLE.md`](.claude/CODE_STYLE.md)**
-- **[`.claude/TEST_STYLE.md`](.claude/TEST_STYLE.md)**
-
 ## Project layout (where things live)
 
 The module map lives in the docs reference:
 **[`doc/reference/project-layout.rst`](doc/reference/project-layout.rst)**
 
-The case-wizard UI (`src/neofoam/ui/`) — module map, renderer contract, shared state:
-**[`doc/reference/ui-architecture.rst`](doc/reference/ui-architecture.rst)**
+The case wizard, the DAG stepper and the case-fill agent live in the separate
+`neofoam_ui` package (`neofoam ui …` / `neofoam agent …` via the `neofoam.cli` entry point).

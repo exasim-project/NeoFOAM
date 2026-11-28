@@ -8,8 +8,7 @@ from typing import Callable, Optional
 
 import typer
 
-from neofoam.agent import build_case_agent, fill_case
-from neofoam.core.entry_points import load_plugins, solver_entry_points
+from neofoam.core.entry_points import cli_entry_points, load_plugins, solver_entry_points
 from neofoam.solver.icofoam import IcoFoam
 from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
 from neofoam.solver.incompressibleFluidNeoN import run as run_neon
@@ -44,11 +43,6 @@ def _reject_postprocess(argv: list[str]) -> None:
 solver_app = typer.Typer()
 
 app.add_typer(solver_app, name="solver", help="Run foam solvers.")
-
-# Agent command group
-agent_app = typer.Typer()
-
-app.add_typer(agent_app, name="agent", help="LLM-driven case scaffolding.")
 
 # MCP server command group
 mcp_app = typer.Typer()
@@ -131,57 +125,6 @@ def mcp_serve(
     from neofoam.mcp.app import serve  # noqa: PLC0415
 
     serve(host=host, port=port, root=root, reload=reload)
-
-
-@agent_app.command("fill")
-def agent_fill(
-    source: str = typer.Argument(..., help="Source case directory."),
-    target: str = typer.Argument(..., help="Target case directory."),
-    no_llm: bool = typer.Option(
-        False,
-        "--no-llm",
-        help=(
-            "Skip the LLM and roundtrip the source configs from disk. Useful"
-            " for testing the schema + IO path without an API key."
-        ),
-    ),
-    model_name: str = typer.Option(
-        "claude-haiku-4-5",
-        "--model",
-        help="Anthropic model name when not in --no-llm mode.",
-    ),
-    prompt: Optional[str] = typer.Option(
-        None,
-        "--prompt",
-        help=(
-            "Extra natural-language guidance appended to the source-case"
-            " text before sending to the LLM."
-        ),
-    ),
-) -> None:
-    """Fill the configs of TARGET by reading SOURCE.
-
-    Copies mesh + ``0/``/``0.orig/`` fields from SOURCE, then either
-    asks an LLM to rewrite the configs (default) or roundtrips them from
-    disk (``--no-llm``). Either way TARGET ends up runnable by
-    ``neofoam solver incompressiblefluid``.
-    """
-    agent_obj = None
-    if not no_llm:
-        agent_obj = build_case_agent(model_name=model_name)
-        if prompt:
-            # The default prompt only contains source-case text; append the
-            # user note as an extra instruction the agent will see verbatim.
-            original_run = agent_obj.run_sync
-
-            def _run_sync(p: str, *args: object, **kwargs: object) -> object:
-                return original_run(f"{p}\n\nAdditional guidance:\n{prompt}")
-
-            agent_obj.run_sync = _run_sync
-
-    spec = fill_case(source, target, agent=agent_obj)
-    written = [n for n in type(spec).model_fields if getattr(spec, n) is not None]
-    typer.echo(f"Wrote configs to {target}: {', '.join(written)}")
 
 
 @solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
@@ -314,40 +257,39 @@ def preprocess(case: Path) -> None:
     run_preprocess([sys.argv[0], "-case", str(case)])
 
 
-@app.command("ui")
-def ui(
-    port: int = typer.Option(8080, "--port", help="Port to serve the wizard on."),
-    host: str = typer.Option("localhost", "--host", help="Bind host."),
-    solver: str = typer.Option(
-        "incompressibleFluid", "--solver", help="Solver whose configs to edit."
-    ),
-    no_browser: bool = typer.Option(
-        False, "--no-browser", help="Do not open a web browser on launch."
-    ),
-) -> None:
-    """Launch the interactive case-wizard web UI (trame + JSONForms).
-
-    A browser wizard: pick models on the left, fill the JSON-schema forms (or use
-    the AI chat on the right), then Save to write a runnable case (with
-    ``Allrun``/``Allclean``) and validate it. Needs the ``ui`` extra::
-
-        pip install 'neofoam\\[ui]'
-        neofoam ui --port 8080
-    """
-    # Imported at call time so the CLI works without the optional 'ui' extra.
-    from neofoam.ui import build_app  # noqa: PLC0415
-
+def _load_command_group(entry_point: metadata.EntryPoint) -> typer.Typer:
+    """Load the Typer group a ``neofoam.cli`` entry point names."""
     try:
-        server = build_app(solver_name=solver)
-    except ImportError as exc:  # pragma: no cover - only without the 'ui' extra
-        typer.echo(
-            "The case-wizard UI needs the 'ui' extra:  pip install 'neofoam[ui]'",
-            err=True,
+        group = entry_point.load()
+    except Exception as exc:
+        raise RuntimeError(
+            f"neofoam command {entry_point.name!r} ({entry_point.value}) failed to load: {exc}"
+        ) from exc
+    if not isinstance(group, typer.Typer):
+        raise TypeError(
+            f"neofoam command {entry_point.name!r} ({entry_point.value}) is a "
+            f"{type(group).__name__}, not a typer.Typer"
         )
-        raise typer.Exit(code=1) from exc
+    return group
 
-    typer.echo(f"NeoFOAM case wizard → http://{host}:{port}/")
-    server.start(host=host, port=port, open_browser=not no_browser)
+
+def _add_plugin_commands(cli: typer.Typer) -> None:
+    """Add one ``neofoam <name>`` command group per ``neofoam.cli`` entry point."""
+    taken = {group.name for group in cli.registered_groups} | {
+        command.name or (command.callback.__name__ if command.callback else "")
+        for command in cli.registered_commands
+    }
+    for entry_point in cli_entry_points():
+        if entry_point.name in taken:
+            raise ValueError(
+                f"plugin command {entry_point.name!r} ({entry_point.value}) clashes with the "
+                f"existing command {entry_point.name!r}"
+            )
+        taken.add(entry_point.name)
+        cli.add_typer(_load_command_group(entry_point), name=entry_point.name)
+
+
+_add_plugin_commands(app)
 
 
 if __name__ == "__main__":

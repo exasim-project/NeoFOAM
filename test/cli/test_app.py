@@ -19,8 +19,8 @@ import typer
 from typer.testing import CliRunner
 
 import neofoam.tools.run as run_mod
-from neofoam.cli.app import _add_plugin_solvers, app
-from neofoam.core.entry_points import PLUGIN_GROUP, SOLVER_GROUP
+from neofoam.cli.app import _add_plugin_commands, _add_plugin_solvers, app
+from neofoam.core.entry_points import CLI_GROUP, PLUGIN_GROUP, SOLVER_GROUP
 from neofoam.solver.incompressibleFluid.create_fields import create_init
 from neofoam.tools.run import run_preprocess
 
@@ -45,6 +45,22 @@ def _install_solvers(monkeypatch: pytest.MonkeyPatch, *names: str) -> None:
     monkeypatch.setattr(
         metadata, "entry_points", lambda group: installed if group == SOLVER_GROUP else []
     )
+
+
+def _install_commands(monkeypatch: pytest.MonkeyPatch, name: str, value: str) -> None:
+    """Make ``value`` the only ``neofoam.cli`` entry point, under ``name``."""
+    installed = [metadata.EntryPoint(name=name, value=value, group=CLI_GROUP)]
+    monkeypatch.setattr(
+        metadata, "entry_points", lambda group: installed if group == CLI_GROUP else []
+    )
+
+
+def _cli(*builtin: str) -> typer.Typer:
+    """A top-level CLI holding commands named ``builtin``."""
+    cli = typer.Typer()
+    for name in builtin:
+        cli.command(name=name)(lambda: None)
+    return cli
 
 
 def _solver_group(*builtin: str) -> typer.Typer:
@@ -196,3 +212,49 @@ def test_plugin_solvers_may_not_differ_only_by_case(monkeypatch: pytest.MonkeyPa
 
     with pytest.raises(ValueError, match="'addonesolver'"):
         _add_plugin_solvers(_solver_group())
+
+
+@pytest.mark.usefixtures("plugin_modules")
+def test_plugin_command_group_runs_with_the_passed_arguments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_commands(monkeypatch, "greet", "entry_point_test_commands:app")
+    cli = _cli("preprocess")
+    _add_plugin_commands(cli)
+
+    result = CliRunner().invoke(cli, ["greet", "hello", "world"])
+
+    import entry_point_test_commands  # noqa: PLC0415  (on sys.path only inside the test)
+
+    assert result.exit_code == 0, result.output
+    assert entry_point_test_commands.calls[-1] == "world"
+
+
+@pytest.mark.parametrize("builtin", ["preprocess", "solver"])
+@pytest.mark.usefixtures("plugin_modules")
+def test_plugin_command_group_may_not_shadow_a_builtin_command(
+    monkeypatch: pytest.MonkeyPatch, builtin: str
+) -> None:
+    _install_commands(monkeypatch, builtin, "entry_point_test_commands:app")
+    cli = _cli("preprocess")
+    cli.add_typer(typer.Typer(), name="solver")
+
+    with pytest.raises(ValueError, match=f"'{builtin}'"):
+        _add_plugin_commands(cli)
+
+
+def test_plugin_command_group_that_fails_to_import_names_its_entry_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_commands(monkeypatch, "broken", "no_such_module:app")
+
+    with pytest.raises(RuntimeError, match=r"'broken' \(no_such_module:app\) failed to load"):
+        _add_plugin_commands(_cli())
+
+
+@pytest.mark.usefixtures("plugin_modules")
+def test_plugin_command_must_be_a_typer_group(monkeypatch: pytest.MonkeyPatch) -> None:
+    _install_commands(monkeypatch, "greet", "entry_point_test_commands:not_a_group")
+
+    with pytest.raises(TypeError, match="not a typer.Typer"):
+        _add_plugin_commands(_cli())

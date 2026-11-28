@@ -6,7 +6,7 @@
 Use it when the extension lives in its own repository (e.g. ``neofoam_mdao``);
 code inside neofoam registers directly with :class:`~neofoam.core.plugin_system.PluginSystem`.
 
-Four groups extend neofoam; :mod:`neofoam.ui.plugins` reads the last, this module the rest:
+Five groups extend neofoam; ``neofoam_ui`` reads the last, this module the rest:
 
 * ``neofoam.plugins`` — each entry point names a **module**. Importing it runs its
   registrations (``Model(...).register_with(viscosityModel)``, ``@Node.register``,
@@ -20,7 +20,11 @@ Four groups extend neofoam; :mod:`neofoam.ui.plugins` reads the last, this modul
 * ``neofoam.region_solvers`` — each entry point names a ``SolverSpec``, which
   :func:`~neofoam.framework.solver.registry.resolve_solver` finds by name. A built-in
   solver of the same name takes precedence.
-* ``neofoam.ui.steps`` — each entry point names a factory of an extra wizard step.
+* ``neofoam.cli`` — each entry point names a ``typer.Typer``, exposed as the command
+  group ``neofoam <entry point name>`` (e.g. ``neofoam ui`` from ``neofoam_ui``). It may
+  not shadow a built-in command.
+* ``neofoam.ui.steps`` — each entry point names a factory of an extra step of the
+  ``neofoam_ui`` case wizard.
 
 A plugin that fails to import raises: a half-loaded extension would silently
 change which models a case resolves to.
@@ -38,14 +42,19 @@ Example ``pyproject.toml`` of a plugin package::
 
     [project.entry-points."neofoam.region_solvers"]
     mdaosolid = "neofoam_mdao.region:mdaosolid"
+
+    [project.entry-points."neofoam.cli"]
+    mdao = "neofoam_mdao.cli:app"
 """
 
 from importlib import metadata
 
 __all__ = [
+    "CLI_GROUP",
     "PLUGIN_GROUP",
     "REGION_SOLVER_GROUP",
     "SOLVER_GROUP",
+    "cli_entry_points",
     "load_plugins",
     "region_solver_entry_points",
     "solver_entry_points",
@@ -54,6 +63,7 @@ __all__ = [
 PLUGIN_GROUP = "neofoam.plugins"
 SOLVER_GROUP = "neofoam.solvers"
 REGION_SOLVER_GROUP = "neofoam.region_solvers"
+CLI_GROUP = "neofoam.cli"
 
 
 def load_plugins() -> None:
@@ -110,3 +120,18 @@ def region_solver_entry_points() -> list[metadata.EntryPoint]:
         names = [entry_point.name for entry_point in region_solver_entry_points()]
     """
     return list(metadata.entry_points(group=REGION_SOLVER_GROUP))
+
+
+def cli_entry_points() -> list[metadata.EntryPoint]:
+    """Return the installed ``neofoam.cli`` entry points without loading them.
+
+    Use it to find the command groups other packages add to ``neofoam``; the CLI loads
+    each one when it starts, so ``neofoam --help`` lists them.
+
+    Imports no plugin code.
+
+    Example::
+
+        names = [entry_point.name for entry_point in cli_entry_points()]
+    """
+    return list(metadata.entry_points(group=CLI_GROUP))
