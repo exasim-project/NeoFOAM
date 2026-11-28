@@ -95,5 +95,5 @@ Detailed guides — read the relevant one before writing code or test
 The module map lives in the docs reference:
 **[`doc/reference/project-layout.rst`](doc/reference/project-layout.rst)**
 
-The case-wizard UI (`src/neofoam/ui/`) — module map, renderer contract, shared state:
-**[`doc/reference/ui-architecture.rst`](doc/reference/ui-architecture.rst)**
+The case wizard, the DAG stepper and the case-fill agent live in the separate
+`neofoam_ui` package (`neofoam ui …` / `neofoam agent …` via the `neofoam.cli` entry point).

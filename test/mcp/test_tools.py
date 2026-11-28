@@ -8,11 +8,11 @@ from typing import Any
 
 import pytest
 
-from neofoam.agent.case_fill import load_case_from_disk
 from neofoam.framework.solver.configurations import configurations
 from neofoam.framework.tools.graph import PreprocessConfig
 from neofoam.framework.validation import checks as checks_mod
 from neofoam.io import write_configs
+from neofoam.io.case_spec import load_case_from_disk
 from neofoam.mcp import tools
 from neofoam.mcp.dto import (
     CaseSpecDTO,

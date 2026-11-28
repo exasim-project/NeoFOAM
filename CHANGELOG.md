@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Move the case wizard (`neofoam.ui`) and the case-fill agent (`neofoam.agent`) to the separate `neofoam_ui` package, which adds `neofoam ui wizard|run` and `neofoam agent fill` through the new `neofoam.cli` entry-point group; the case model and its disk roundtrip the MCP tools use stay as `neofoam.io.case_spec`; the `ui` and `agent` extras are removed
 - Add the `neofoam.region_solvers` entry-point group: the solver registry lists and resolves solvers of separately installed packages [#491](https://github.com/exasim-project/NeoFOAM/pull/491)
 - Add the `neofoam.plugins` and `neofoam.solvers` entry-point groups: separately installed packages can register plugins (models, post-processing nodes, ...) and add `neofoam solver <name>` commands; solvers load optional models from their bound families, so a plugin can add a new optional family [#461](https://github.com/exasim-project/NeoFOAM/pull/461)
 - Write the solver comparison test cases into `tmp_path` instead of the repository [#429](https://github.com/exasim-project/NeoFOAM/pull/429)

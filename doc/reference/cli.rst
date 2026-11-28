@@ -23,9 +23,9 @@ Available solvers: ``icofoam``, ``pimplefoam``, ``incompressiblefluid``,
 Plugin packages
 ~~~~~~~~~~~~~~~
 
-A separately installed package extends neofoam through four entry-point groups
-(``neofoam.core.entry_points``; ``neofoam.ui.steps`` is read by
-``neofoam.ui.plugins``):
+A separately installed package extends neofoam through five entry-point groups
+(``neofoam.core.entry_points``; ``neofoam.ui.steps`` is read by the case wizard of
+``neofoam_ui``):
 
 .. code-block:: toml
 
@@ -37,6 +37,9 @@ A separately installed package extends neofoam through four entry-point groups
 
     [project.entry-points."neofoam.region_solvers"]
     mdaosolid = "neofoam_mdao.region:mdaosolid"   # SolverSpec, found by name
+
+    [project.entry-points."neofoam.cli"]
+    mdao = "neofoam_mdao.cli:app"            # typer.Typer -> neofoam mdao ...
 
     [project.entry-points."neofoam.ui.steps"]
     mdaostep = "neofoam_mdao.ui:make_step"   # factory of an extra wizard step
@@ -54,6 +57,10 @@ lower-cased name matches another solver command is refused.
 
 A ``neofoam.region_solvers`` spec is found by the solver registry; a built-in
 solver of the same name takes precedence.
+
+A ``neofoam.cli`` group is added as ``neofoam <entry point name>`` when the CLI
+starts, so ``neofoam --help`` lists it. A group named like a built-in command is
+refused, and one that fails to import aborts the CLI.
 
 Adding a new kind of model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,18 +144,19 @@ Start the NeoFOAM MCP server (needs the ``mcp`` extra):
     neofoam mcp serve                # bind 127.0.0.1:8000
     neofoam mcp serve --root cases/  # confine case paths for untrusted clients
 
-Case wizard — ``neofoam ui``
-----------------------------
+Case wizard and agent — ``neofoam ui`` / ``neofoam agent``
+----------------------------------------------------------
 
-Launch the case-wizard web UI (needs the ``ui`` extra) — see
-:doc:`/tutorials/case-wizard` and :doc:`ui-architecture`:
+The case wizard, the DAG stepper and the LLM case-fill agent live in the separate
+``neofoam_ui`` package, which adds these command groups through ``neofoam.cli``
+once it is installed next to ``neofoam``:
 
 .. code-block:: bash
 
-    neofoam ui                              # serve http://localhost:8080/ and open a browser
-    neofoam ui --solver incompressibleVoF   # edit another solver's configs
-    neofoam ui --port 8081 --no-browser     # another port, no browser
-    neofoam ui --host 0.0.0.0               # bind every interface (phone on the LAN)
+    neofoam ui wizard                       # case wizard on http://localhost:8080/
+    neofoam ui wizard --solver incompressibleVoF
+    neofoam ui run --case my_case           # step through a solver run (DAG stepper)
+    neofoam agent fill source_case target_case --no-llm
 
 Telemetry — ``neofoam telemetry``
 ---------------------------------

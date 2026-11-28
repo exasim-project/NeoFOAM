@@ -21,17 +21,17 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from neofoam.agent.case_fill import (
+from neofoam.framework.tools.graph import PreprocessConfig, resolve_tools
+from neofoam.framework.validation import validate
+from neofoam.io import write_configs
+from neofoam.io.case_spec import (
     build_case_output_model,
     load_case_from_disk,
     read_case_text,
 )
-from neofoam.agent.case_fill import (
+from neofoam.io.case_spec import (
     save_case as _save_case,
 )
-from neofoam.framework.tools.graph import PreprocessConfig, resolve_tools
-from neofoam.framework.validation import validate
-from neofoam.io import write_configs
 from neofoam.io.schema import (  # re-export: canonical home is neofoam.io.schema
     config_schema as config_schema,
 )
