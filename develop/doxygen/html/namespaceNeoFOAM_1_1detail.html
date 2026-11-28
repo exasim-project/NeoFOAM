@@ -135,7 +135,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00029">29</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00045">45</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -249,7 +249,7 @@ template&lt;class SrcField, class DestField&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="writers_8hpp_source.html#l00023">23</a> of file <a class="el" href="writers_8hpp_source.html">writers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="writers_8hpp_source.html#l00028">28</a> of file <a class="el" href="writers_8hpp_source.html">writers.hpp</a>.</p>
 
 </div>
 </div>
@@ -273,7 +273,7 @@ template&lt;typename ValueType&gt; </div>
 <p>Pin a total-pressure patch at the value OpenFOAM evaluated when the field was read. </p>
 <p>Shared by <span class="tt">totalPressure</span> and <span class="tt">uniformTotalPressure</span>: <a class="el" href="namespaceNeoN.html">NeoN</a> models neither the dynamic-head correction nor a time-dependent p0, so the patch becomes a fixedValue at the start-time total pressure. Non-scalar (or valueless) falls back to zeroGradient. </p>
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00094">94</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00107">107</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -317,7 +317,7 @@ template&lt;typename ValueType&gt; </div>
 <p>The freestream family stores its patch value under <span class="tt">freestreamValue</span> in the same <span class="tt">uniform &lt;value&gt;</span> form the <span class="tt">value</span>/<span class="tt">inletValue</span> entries use: the components start at token index 1, one for a scalar and three for a vector, each promoted on its own because OpenFOAM types the numeric tokens independently (see tokenAsScalar).</p>
 <p>A short token list has exactly one benign cause: a decomposed run writes <span class="tt">nonuniform List&lt;...&gt; 0</span> for a patch that owns no faces on this rank, and the parse reduces that to a single token (the same quirk the <span class="tt">fixedValue</span> entry below sidesteps by reading the patch field). No face carries the value there, so zero is safe. With faces present it is an error, not a zero — the freestream family is a far-field datum, and silently reading it as zero would remove the only forcing in an external-aerodynamics case. </p>
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00129">129</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00142">142</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -344,7 +344,7 @@ template&lt;typename ValueType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00060">60</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00073">73</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -378,7 +378,7 @@ template&lt;typename ValueType&gt; </div>
 <p>Promote a single TokenList entry to a NeoN::scalar regardless of whether OpenFOAM's lexer classified it as a SCALAR (double) or a LABEL (int). </p>
 <p>OpenFOAM tokenizes numeric primitives per token: a literal with a decimal point (e.g. <span class="tt">0.1</span>) becomes a SCALAR while a bare integer (e.g. <span class="tt">0</span>) becomes a LABEL. The components of a single vector value can therefore have different stored types — <span class="tt">uniform (0.1 0 0)</span> yields [scalar, label, label]. A strict <span class="tt">TokenList::get&lt;NeoN::scalar&gt;</span> throws <span class="tt">bad_any_cast</span> on the label components, so each component must be probed and promoted independently. </p>
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00035">35</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00048">48</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -405,7 +405,7 @@ template&lt;class ContainerType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="fieldTraits_8hpp_source.html#l00025">25</a> of file <a class="el" href="fieldTraits_8hpp_source.html">fieldTraits.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="fieldTraits_8hpp_source.html#l00026">26</a> of file <a class="el" href="fieldTraits_8hpp_source.html">fieldTraits.hpp</a>.</p>
 
 </div>
 </div>
@@ -431,7 +431,7 @@ template&lt;class ContainerType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="fieldTraits_8hpp_source.html#l00037">37</a> of file <a class="el" href="fieldTraits_8hpp_source.html">fieldTraits.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="fieldTraits_8hpp_source.html#l00038">38</a> of file <a class="el" href="fieldTraits_8hpp_source.html">fieldTraits.hpp</a>.</p>
 
 </div>
 </div>
