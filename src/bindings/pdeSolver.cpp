@@ -4,7 +4,13 @@
 #include <nanobind/nanobind.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/dsl/expression.hpp"
+#include "NeoN/dsl/solver.hpp"
+#include "NeoN/dsl/spatialOperator.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/ddtOperator.hpp"
+#include "NeoN/timeIntegration/steadyState.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/pde.hpp"

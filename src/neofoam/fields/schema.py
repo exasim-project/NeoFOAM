@@ -181,7 +181,7 @@ def schema_for(decl: FieldDecl) -> type[BaseConfig]:
         },
         "FoamFile": default_header,
         "internalField": default_internal,
-        "boundaryField": Field(default_factory=dict),
+        "boundaryField": Field(default_factory=lambda: {}),
         "_validate_dimensions": _validate_dimensions,
         "_serialize_dimensions": _serialize_dimensions,
         "model_config": ConfigDict(populate_by_name=True),

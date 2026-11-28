@@ -5,7 +5,8 @@
 #include <nanobind/stl/string.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"

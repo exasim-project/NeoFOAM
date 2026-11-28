@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <filesystem>
 
+#include "NeoN/core/initialization.hpp"
 #include "NeoFOAM/NeoFOAM.hpp"
 
 #include "argList.H"

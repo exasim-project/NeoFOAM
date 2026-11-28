@@ -3,7 +3,12 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/database/oldTimeCollection.hpp"
+#include "NeoN/core/primitives/tensor.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/runtimeSelectionFactory.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;

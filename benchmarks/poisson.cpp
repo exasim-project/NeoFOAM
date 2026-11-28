@@ -5,9 +5,9 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
-#include "NeoFOAM/NeoFOAM.hpp"
-
 #include "NeoN/NeoN.hpp"
+
+#include "NeoFOAM/NeoFOAM.hpp"
 #include "benchmarks/catch_main.hpp"
 #include "test/catch2/executorGenerator.hpp"
 #include "../test/common.hpp"

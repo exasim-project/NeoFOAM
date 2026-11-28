@@ -16,8 +16,9 @@
 #include <catch2/matchers/catch_matchers_all.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "NeoFOAM/auxiliary/convert.hpp"
+// NeoN.hpp (Ginkgo) before any OpenFOAM header: error.H defines a NotImplemented macro
 #include "NeoN/NeoN.hpp"
+#include "NeoFOAM/auxiliary/convert.hpp"
 #include "executorGenerator.hpp"
 #include "NeoFOAM/NeoFOAM.hpp"
 

@@ -8,6 +8,7 @@
 
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/datastructures/runTime.hpp"
 
 #include <algorithm>
 #include <map>
@@ -17,6 +18,9 @@
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
+// The header-only "diagonal" solver registers itself in the including library; libNeoN does
+// not include it, so including it here keeps the "diagonal" solver selectable from fvSolution.
+#include <NeoN/linearAlgebra/diagonalSolver.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
 

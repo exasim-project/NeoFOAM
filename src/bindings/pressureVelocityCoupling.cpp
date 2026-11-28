@@ -8,7 +8,12 @@
 #include <nanobind/stl/tuple.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/ddtFluxCorr.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/ddtOperator.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"

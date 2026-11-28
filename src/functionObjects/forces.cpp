@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
+#include "NeoN/core/database/fieldCollection.hpp"
+#include "NeoN/core/primitives/symmTensor.hpp"
+
 #include "NeoFOAM/functionObjects/forces.hpp"
 #include "NeoFOAM/datastructures/databaseWrapper.hpp"
 

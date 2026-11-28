@@ -3,7 +3,14 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/logging.hpp"
+#include "NeoN/core/mpi/environment.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/dsl/explicit.hpp"
+#include "NeoN/dsl/expression.hpp"
+#include "NeoN/dsl/implicit.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
 
 namespace NeoFOAM

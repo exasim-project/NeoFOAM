@@ -3,7 +3,11 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/dsl/solver.hpp"
+#include "NeoN/dsl/spatialOperator.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
+#include "NeoN/linearAlgebra/solver.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"

@@ -4,7 +4,13 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/database/database.hpp"
+#include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/mpi/environment.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gradOperator.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
 
 #include "fvMesh.H"
 

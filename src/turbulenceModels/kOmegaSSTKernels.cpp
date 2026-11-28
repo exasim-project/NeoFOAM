@@ -4,7 +4,14 @@
 // Kernel functions for kOmegaSST split into a separate TU so each file stays
 // within Intel PVC's per-TU AOT compilation limit (~2 passes).
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/symmTensor.hpp"
+#include "NeoN/core/primitives/tensor.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
 
 #include "NeoFOAM/turbulenceModels/kOmegaSST.hpp"
 #include "NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp"

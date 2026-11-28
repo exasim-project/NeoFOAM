@@ -5,7 +5,18 @@
 
 #include "NeoFOAM/auxiliary/bound.hpp"
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/database/oldTimeCollection.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/primitives/symmTensor.hpp"
+#include "NeoN/core/primitives/tensor.hpp"
+#include "NeoN/core/primitives/vec3.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gradOperator.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"

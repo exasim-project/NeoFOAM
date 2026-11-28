@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/database/database.hpp"
 
 #include "regIOobject.H"
 

@@ -3,7 +3,13 @@
 
 #pragma once
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/logging.hpp"
+#include "NeoN/core/mpi/environment.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/scalar.hpp"
+#include "NeoN/core/vector/vector.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoN/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
 #include <optional>
 

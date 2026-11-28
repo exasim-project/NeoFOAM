@@ -5,7 +5,7 @@
 #include <nanobind/stl/string.h>
 
 // NeoN headers
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/dictionary.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"

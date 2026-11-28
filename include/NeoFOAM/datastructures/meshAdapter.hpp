@@ -7,7 +7,8 @@
 #include <functional>
 #include <memory>
 
-#include "NeoN/NeoN.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
 
 #include "fvMesh.H"
 
