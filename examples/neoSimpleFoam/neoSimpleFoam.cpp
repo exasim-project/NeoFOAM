@@ -10,18 +10,7 @@ Description
     the NeoFOAM/NeoN port of OpenFOAM's simpleFoam.
 \*---------------------------------------------------------------------------*/
 
-#include "NeoN/core/database/fieldCollection.hpp"
-#include "NeoN/core/initialization.hpp"
-#include "NeoN/core/logging.hpp"
-#include "NeoN/core/primitives/vec3.hpp"
-#include "NeoN/core/tokenList.hpp"
-#include "NeoN/dsl/explicit.hpp"
-#include "NeoN/dsl/implicit.hpp"
-#include "NeoN/dsl/solver.hpp"
-#include "NeoN/finiteVolume/cellCentred/boundary/boundaryContext.hpp"
-#include "NeoN/finiteVolume/cellCentred/fields/surfaceField.hpp"
-#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoN/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
