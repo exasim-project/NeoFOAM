@@ -1,11 +1,24 @@
-# NeoFOAM Python package — Code style
+---
+paths:
+  - "src/neofoam/**/*.py"
+  - "test/**/*.py"
+  - "src/{algorithms,auxiliary,bindings,compatibility,datastructures,functionObjects,fvcc,solutionControl,turbulenceModels}/**/*.{cpp,hpp,H,C}"
+  - "include/**/*.{cpp,hpp,H,C}"
+  - "examples/**/*.{cpp,hpp,H,C}"
+  - "benchmarks/**/*.{cpp,hpp}"
+  - "test/**/*.{cpp,hpp}"
+---
+
+# NeoFOAM code style (Python and C++)
+
+Applies to Python and C++; sections marked (Python) are Python-only.
 
 ## Tooling
 
 - Formatting and lint rules are enforced by tooling — never
   hand-format, never discuss style the tools already own.
 
-## Module & API structure
+## Module & API structure (Python)
 
 - `__init__.py` re-exports only the public API (functions and classes).
 - Private functions only used within this package/module start with `_`.
@@ -25,7 +38,7 @@
   over deep nesting.
 - minimize cognitive complexity and keep it below 10 per function;
 - try to reduce the parameters and do not exceed 5 parameters
-- No circular imports between modules.
+- No circular imports between modules (C++: no circular includes).
 
 ## Naming
 
@@ -42,6 +55,6 @@
 - Comment only the "why" (constraints, tradeoffs, workarounds),
   never the "what".
 
-## Typing
+## Typing (Python)
 
 - Fully type-annotate all functions and methods; code must pass mypy.

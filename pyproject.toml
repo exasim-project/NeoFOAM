@@ -199,10 +199,12 @@ ignore_missing_imports = true
 type = "simple"
 
 [tool.poe.tasks]
+build = "pip install --no-build-isolation -e .[all] -v"
 test = "pytest"
 lint = "ruff check"
 format = "ruff format src test"
 type_check = "mypy"
+precommit = "pre-commit run --all-files"
 build_docs = "sphinx-build -b html doc doc/_build"
 serve_docs = { shell = "cd doc/_build && python -m http.server 8000" }
 view_docs = { shell = "python -m webbrowser -t http://localhost:8000/index.html" }
